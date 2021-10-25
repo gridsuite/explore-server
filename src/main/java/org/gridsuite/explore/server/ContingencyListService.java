@@ -1,6 +1,5 @@
 package org.gridsuite.explore.server;
 
-import org.gridsuite.explore.server.dto.RenameElementAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -14,8 +13,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 import java.util.logging.Level;
-
-import static org.gridsuite.explore.server.ExploreException.Type.CONTINGENCY_LIST_NOT_FOUND;
 
 @Service
 public class ContingencyListService {
@@ -36,21 +33,6 @@ public class ContingencyListService {
 
     public void setActionsServerBaseUri(String actionsServerBaseUri) {
         this.actionsServerBaseUri = actionsServerBaseUri;
-    }
-
-    public Mono<Void> renameContingencyList(UUID id, String newElementName) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}/rename")
-            .buildAndExpand(id)
-            .toUriString();
-
-        return webClient.post()
-            .uri(actionsServerBaseUri + path)
-            .body(BodyInserters.fromValue(new RenameElementAttributes(newElementName)))
-            .retrieve()
-            .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, clientResponse -> Mono.error(new ExploreException(CONTINGENCY_LIST_NOT_FOUND)))
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
     public Mono<Void> deleteContingencyList(UUID id) {
@@ -97,9 +79,9 @@ public class ContingencyListService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> newScriptFromFiltersContingencyList(UUID id, String scriptName, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{id}/new-script/{scriptName}?newId={newId}")
-            .buildAndExpand(id, scriptName, newId)
+    public Mono<Void> newScriptFromFiltersContingencyList(UUID id, UUID newId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{id}/new-script?newId={newId}")
+            .buildAndExpand(id, newId)
             .toUriString();
 
         return webClient.post()

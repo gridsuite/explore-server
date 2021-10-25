@@ -47,7 +47,7 @@ class ExploreService {
 
     public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(null, studyName, STUDY,
-                new AccessRightsAttributes(isPrivate), userId, 0L);
+                new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         studyService.insertStudyWithExistingCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseUuid)
                                 .doOnError(err -> {
@@ -58,7 +58,7 @@ class ExploreService {
 
     public Mono<Void> createStudy(String studyName, Mono<FilePart> caseFile, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(null, studyName, STUDY,
-                new AccessRightsAttributes(isPrivate), userId, 0L);
+                new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         studyService.insertStudyWithCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseFile)
                                 .doOnError(err -> {
@@ -68,9 +68,9 @@ class ExploreService {
         );
     }
 
-    public Mono<Void> createScriptContingencyList(String listName, String content, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+    public Mono<Void> createScriptContingencyList(String listName, String content, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(null, listName, SCRIPT_CONTINGENCY_LIST,
-                new AccessRightsAttributes(isPrivate), userId, 0L);
+                new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertScriptContingencyList(elementAttributes1.getElementUuid(), content)
                                 .doOnError(err -> {
@@ -80,9 +80,9 @@ class ExploreService {
         );
     }
 
-    public Mono<Void> createFiltersContingencyList(String listName, String content, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+    public Mono<Void> createFiltersContingencyList(String listName, String content, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(null, listName, FILTERS_CONTINGENCY_LIST,
-                new AccessRightsAttributes(isPrivate), userId, 0L);
+                new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertFiltersContingencyList(elementAttributes1.getElementUuid(), content)
                                 .doOnError(err -> {
@@ -98,9 +98,9 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
-                    SCRIPT_CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L);
+                    SCRIPT_CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L, null);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
-                            contingencyListService.newScriptFromFiltersContingencyList(id, scriptName, elementAttributes1.getElementUuid())
+                            contingencyListService.newScriptFromFiltersContingencyList(id, elementAttributes1.getElementUuid())
                                     .doOnError(err -> {
                                         directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
 //                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
@@ -126,10 +126,10 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> createFilter(String filter, String filterName, String filterType, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
+    public Mono<Void> createFilter(String filter, String filterName, String filterType, String description, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
         String elementType = filterType.equals(FilterType.SCRIPT.name()) ? SCRIPT : FILTER;
         ElementAttributes elementAttributes = new ElementAttributes(null, filterName, elementType,
-                new AccessRightsAttributes(isPrivate), userId, 0);
+                new AccessRightsAttributes(isPrivate), userId, 0, description);
 
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         filterService.insertFilter(filter, elementAttributes1.getElementUuid(), userId)
@@ -146,9 +146,9 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
-                    SCRIPT, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0);
+                    SCRIPT, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0, null);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 -> {
-                return filterService.insertNewScriptFromFilter(filterId, scriptName, elementAttributes1.getElementUuid())
+                return filterService.insertNewScriptFromFilter(filterId, elementAttributes1.getElementUuid())
                         .doOnError(err -> {
                             directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
 //                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);

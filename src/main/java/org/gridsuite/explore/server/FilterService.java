@@ -1,12 +1,10 @@
 package org.gridsuite.explore.server;
 
-import org.gridsuite.explore.server.dto.RenameElementAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -54,24 +52,9 @@ public class FilterService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> renameFilter(UUID filterId, String newName) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/rename")
-                .buildAndExpand(filterId, newName)
-                .toUriString();
-
-        return webClient.post()
-                .uri(filterServerBaseUri + path)
-                .body(BodyInserters.fromValue(new RenameElementAttributes(newName)))
-                .retrieve()
-                .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, clientResponse -> Mono.error(new ExploreException(FILTER_NOT_FOUND)))
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
-    }
-
-    public Mono<Void> insertNewScriptFromFilter(UUID id, String scriptName, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script/{scriptId}/{scriptName}")
-                .buildAndExpand(id, newId, scriptName)
+    public Mono<Void> insertNewScriptFromFilter(UUID id, UUID newId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script/{scriptId}")
+                .buildAndExpand(id, newId)
                 .toUriString();
 
         return webClient.post()

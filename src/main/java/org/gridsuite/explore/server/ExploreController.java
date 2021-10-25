@@ -61,10 +61,11 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
     public ResponseEntity<Mono<Void>> createScriptContingencyList(@PathVariable("listName") String listName,
                                                                   @RequestBody(required = false) String content,
+                                                                  @RequestParam("description") String description,
                                                                   @RequestParam("isPrivate") Boolean isPrivate,
                                                                   @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/directories/filters-contingency-lists/{listName}")
@@ -72,10 +73,11 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filters contingency list has been created")})
     public ResponseEntity<Mono<Void>> createFiltersContingencyList(@PathVariable("listName") String listName,
                                                                    @RequestBody(required = false) String content,
+                                                                   @RequestParam("description") String description,
                                                                    @RequestParam("isPrivate") Boolean isPrivate,
                                                                    @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFiltersContingencyList(listName, content, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createFiltersContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/directories/filters-contingency-lists/{id}/new-script/{scriptName}")
@@ -103,10 +105,11 @@ public class ExploreController {
     public ResponseEntity<Mono<Void>> createFilter(@RequestBody String filter,
                                                    @RequestParam("name") String filterName,
                                                    @RequestParam("type") String filterType,
+                                                   @RequestParam("description") String description,
                                                    @RequestParam("isPrivate") Boolean isPrivate,
                                                    @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, filterType, isPrivate, parentDirectoryUuid, userId));
+        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, filterType, description, isPrivate, parentDirectoryUuid, userId));
     }
 
     @PostMapping(value = "/directories/filters/{id}/new-script/{scriptName}")
