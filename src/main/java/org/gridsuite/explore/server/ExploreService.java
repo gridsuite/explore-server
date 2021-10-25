@@ -163,7 +163,7 @@ class ExploreService {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            if (elementAttributes.getType() != FILTER) {
+            if (elementAttributes.getType().equals(FILTER)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return filterService.replaceFilterWithScript(id)
