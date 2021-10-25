@@ -17,6 +17,9 @@ import reactor.core.scheduler.Schedulers;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
+import static org.gridsuite.explore.server.ExploreException.Type.STUDY_NOT_FOUND;
+
 @Service
 public class StudyService {
     private static final String ROOT_CATEGORY_REACTOR = "reactor.";
@@ -88,6 +91,28 @@ public class StudyService {
                 .header(HEADER_USER_ID, userId)
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus != HttpStatus.OK, r -> Mono.empty())
+                .bodyToMono(Void.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    public Mono<Void> setStudyAccessRight(UUID studyUuid, String userId, boolean isPrivate) {
+        String path;
+        if (isPrivate) {
+            path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/private")
+                    .buildAndExpand(studyUuid)
+                    .toUriString();
+        } else {
+            path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/public")
+                    .buildAndExpand(studyUuid)
+                    .toUriString();
+        }
+        return webClient.post()
+                .uri(studyServerBaseUri + path)
+                .header(HEADER_USER_ID, userId)
+                .retrieve()
+                .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, clientResponse -> Mono.error(new ExploreException(STUDY_NOT_FOUND)))
+                .onStatus(httpStatus -> httpStatus == HttpStatus.FORBIDDEN, clientResponse -> Mono.error(new ExploreException(NOT_ALLOWED)))
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
