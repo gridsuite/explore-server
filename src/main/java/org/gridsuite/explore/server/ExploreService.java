@@ -63,7 +63,6 @@ class ExploreService {
                         studyService.insertStudyWithCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseFile)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
                                 })
         );
     }
@@ -75,7 +74,6 @@ class ExploreService {
                         contingencyListService.insertScriptContingencyList(elementAttributes1.getElementUuid(), content)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                                    emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
                                 })
         );
     }
@@ -87,7 +85,6 @@ class ExploreService {
                         contingencyListService.insertFiltersContingencyList(elementAttributes1.getElementUuid(), content)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                                    emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
                                 })
         );
     }
@@ -103,7 +100,6 @@ class ExploreService {
                             contingencyListService.newScriptFromFiltersContingencyList(id, scriptName, elementAttributes1.getElementUuid())
                                     .doOnError(err -> {
                                         directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
                                     })
             );
         });
@@ -120,8 +116,6 @@ class ExploreService {
             return contingencyListService.replaceFilterContingencyListWithScript(id)
                     .doOnSuccess(unused -> {
                         directoryService.updateElementType(id, SCRIPT_CONTINGENCY_LIST, userId);
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false,
-//                                NotificationType.UPDATE_DIRECTORY);
                     });
         });
     }
@@ -135,7 +129,6 @@ class ExploreService {
                         filterService.insertFilter(filter, elementAttributes1.getElementUuid(), userId)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-//                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
                                 })
         );
     }
@@ -147,13 +140,12 @@ class ExploreService {
             }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
                     SCRIPT, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0);
-            return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 -> {
-                return filterService.insertNewScriptFromFilter(filterId, scriptName, elementAttributes1.getElementUuid())
-                        .doOnError(err -> {
-                            directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                        });
-            });
+            return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 ->
+                filterService.insertNewScriptFromFilter(filterId, scriptName, elementAttributes1.getElementUuid())
+                    .doOnError(err -> {
+                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
+                    })
+            );
         });
     }
 
@@ -168,8 +160,6 @@ class ExploreService {
             return filterService.replaceFilterWithScript(id)
                     .doOnSuccess(unused -> {
                         directoryService.updateElementType(id, SCRIPT, userId);
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false,
-//                                NotificationType.UPDATE_DIRECTORY);
                     });
         });
     }
