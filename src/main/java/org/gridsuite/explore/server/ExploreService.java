@@ -49,7 +49,7 @@ class ExploreService {
         ElementAttributes elementAttributes = new ElementAttributes(null, studyName, STUDY,
                 new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
-                        studyService.insertStudyWithExistingCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseUuid)
+                        studyService.insertStudyWithExistingCaseFile(elementAttributes1.getElementUuid(), userId, isPrivate, caseUuid)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
                                 })
@@ -60,7 +60,7 @@ class ExploreService {
         ElementAttributes elementAttributes = new ElementAttributes(null, studyName, STUDY,
                 new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
-                        studyService.insertStudyWithCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseFile)
+                        studyService.insertStudyWithCaseFile(elementAttributes1.getElementUuid(), userId, isPrivate, caseFile)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
 //                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
