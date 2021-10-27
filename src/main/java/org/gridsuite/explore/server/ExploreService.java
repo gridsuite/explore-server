@@ -50,9 +50,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         studyService.insertStudyWithExistingCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseUuid)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
+                                )
         );
     }
 
@@ -61,9 +61,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         studyService.insertStudyWithCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseFile)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
+                                )
         );
     }
 
@@ -72,9 +72,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertScriptContingencyList(elementAttributes1.getElementUuid(), content)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                )
         );
     }
 
@@ -83,9 +83,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertFiltersContingencyList(elementAttributes1.getElementUuid(), content)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                )
         );
     }
 
@@ -98,9 +98,9 @@ class ExploreService {
                     SCRIPT_CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                             contingencyListService.newScriptFromFiltersContingencyList(id, scriptName, elementAttributes1.getElementUuid())
-                                    .doOnError(err -> {
-                                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-                                    })
+                                    .doOnError(err ->
+                                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                    )
             );
         });
     }
@@ -127,9 +127,9 @@ class ExploreService {
 
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         filterService.insertFilter(filter, elementAttributes1.getElementUuid(), userId)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
+                                )
         );
     }
 
@@ -142,9 +142,9 @@ class ExploreService {
                     SCRIPT, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 ->
                 filterService.insertNewScriptFromFilter(filterId, scriptName, elementAttributes1.getElementUuid())
-                    .doOnError(err -> {
-                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-                    })
+                    .doOnError(err ->
+                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                    )
             );
         });
     }
