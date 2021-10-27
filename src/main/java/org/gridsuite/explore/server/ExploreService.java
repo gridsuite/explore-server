@@ -52,7 +52,6 @@ class ExploreService {
                         studyService.insertStudyWithExistingCaseFile(elementAttributes1.getElementUuid(), studyName, description, userId, isPrivate, caseUuid)
                                 .doOnError(err -> {
                                     directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
                                 })
         );
     }
@@ -95,7 +94,7 @@ class ExploreService {
 
     public Mono<Void> newScriptFromFiltersContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (elementAttributes.getType().equals(FILTERS_CONTINGENCY_LIST)) {
+            if (!elementAttributes.getType().equals(FILTERS_CONTINGENCY_LIST)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
@@ -115,7 +114,7 @@ class ExploreService {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            if (elementAttributes.getType().equals(FILTERS_CONTINGENCY_LIST)) {
+            if (!elementAttributes.getType().equals(FILTERS_CONTINGENCY_LIST)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return contingencyListService.replaceFilterContingencyListWithScript(id)
@@ -143,7 +142,7 @@ class ExploreService {
 
     public Mono<Void> newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
         return directoryService.getElementInfos(filterId).flatMap(elementAttributes -> {
-            if (elementAttributes.getType().equals(FILTER)) {
+            if (!elementAttributes.getType().equals(FILTER)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
@@ -163,7 +162,7 @@ class ExploreService {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            if (elementAttributes.getType().equals(FILTER)) {
+            if (!elementAttributes.getType().equals(FILTER)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return filterService.replaceFilterWithScript(id)

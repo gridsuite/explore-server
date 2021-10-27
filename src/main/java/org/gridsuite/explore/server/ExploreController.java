@@ -32,7 +32,6 @@ public class ExploreController {
         this.exploreService = exploreService;
     }
 
-    /* handle STUDY objects */
     @PostMapping(value = "/directories/studies/{studyName}/cases/{caseUuid}")
     @Operation(summary = "create a study from an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
