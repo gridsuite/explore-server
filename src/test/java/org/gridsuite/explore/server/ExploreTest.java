@@ -44,8 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -253,8 +251,8 @@ public class ExploreTest {
     @Test
     public void testReplaceFilterContingencyListWithScript() {
         webTestClient.post()
-            .uri("/v1/directories/filters-contingency-lists/{id}/replace-with-script?parentDirectoryUuid={parentDirectoryUuid}",
-                    ELEMENT_UUID, PARENT_DIRECTORY_UUID)
+            .uri("/v1/directories/filters-contingency-lists/{id}/replace-with-script",
+                    ELEMENT_UUID)
             .header("userId", USER1)
             .exchange()
             .expectStatus().isOk();
@@ -297,8 +295,8 @@ public class ExploreTest {
     @Test
     public void testReplaceFilterWithScript() {
         webTestClient.post()
-                .uri("/v1/directories/filters/{id}/replace-with-script?parentDirectoryUuid={parentDirectoryUuid}",
-                        FILTER_UUID, PARENT_DIRECTORY_UUID)
+                .uri("/v1/directories/filters/{id}/replace-with-script",
+                        FILTER_UUID)
                 .header("userId", USER1)
                 .exchange()
                 .expectStatus().isOk();

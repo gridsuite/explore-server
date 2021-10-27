@@ -92,9 +92,8 @@ public class ExploreController {
     @Operation(summary = "Replace a filters contingency list with a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filters contingency list has been replaced successfully")})
     public ResponseEntity<Mono<Void>> replaceFilterContingencyListWithScript(@PathVariable("id") UUID id,
-                                                                             @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                                              @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.replaceFilterContingencyListWithScript(id, userId, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.replaceFilterContingencyListWithScript(id, userId));
     }
 
     @PostMapping(value = "/directories/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -123,9 +122,8 @@ public class ExploreController {
     @Operation(summary = "Replace a filter with a script")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been replaced successfully")})
     public ResponseEntity<Mono<Void>> replaceFilterWithScript(@PathVariable("id") UUID id,
-                                                              @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                               @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.replaceFilterWithScript(id, userId, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.replaceFilterWithScript(id, userId));
     }
 
     @DeleteMapping(value = "/directories/{elementUuid}")

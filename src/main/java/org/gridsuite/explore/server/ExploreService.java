@@ -105,7 +105,7 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> replaceFilterContingencyListWithScript(UUID id, String userId, UUID parentDirectoryUuid) {
+    public Mono<Void> replaceFilterContingencyListWithScript(UUID id, String userId) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
@@ -114,9 +114,9 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return contingencyListService.replaceFilterContingencyListWithScript(id)
-                    .doOnSuccess(unused -> {
-                        directoryService.updateElementType(id, SCRIPT_CONTINGENCY_LIST, userId);
-                    });
+                    .doOnSuccess(unused ->
+                        directoryService.updateElementType(id, SCRIPT_CONTINGENCY_LIST, userId)
+                    );
         });
     }
 
@@ -149,7 +149,7 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> replaceFilterWithScript(UUID id, String userId, UUID parentDirectoryUuid) {
+    public Mono<Void> replaceFilterWithScript(UUID id, String userId) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
@@ -158,9 +158,9 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return filterService.replaceFilterWithScript(id)
-                    .doOnSuccess(unused -> {
-                        directoryService.updateElementType(id, SCRIPT, userId);
-                    });
+                    .doOnSuccess(unused ->
+                        directoryService.updateElementType(id, SCRIPT, userId)
+                    );
         });
     }
 
