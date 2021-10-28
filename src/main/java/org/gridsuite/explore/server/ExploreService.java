@@ -50,9 +50,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         studyService.insertStudyWithExistingCaseFile(elementAttributes1.getElementUuid(), userId, isPrivate, caseUuid)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
+                                )
         );
     }
 
@@ -61,10 +61,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         studyService.insertStudyWithCaseFile(elementAttributes1.getElementUuid(), userId, isPrivate, caseFile)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
+                                )
         );
     }
 
@@ -73,10 +72,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertScriptContingencyList(elementAttributes1.getElementUuid(), content)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                                    emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                )
         );
     }
 
@@ -85,10 +83,9 @@ class ExploreService {
                 new AccessRightsAttributes(isPrivate), userId, 0L, description);
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertFiltersContingencyList(elementAttributes1.getElementUuid(), content)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                                    emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                )
         );
     }
 
@@ -101,15 +98,14 @@ class ExploreService {
                     SCRIPT_CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L, null);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                             contingencyListService.newScriptFromFiltersContingencyList(id, elementAttributes1.getElementUuid())
-                                    .doOnError(err -> {
-                                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                                    })
+                                    .doOnError(err ->
+                                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                    )
             );
         });
     }
 
-    public Mono<Void> replaceFilterContingencyListWithScript(UUID id, String userId, UUID parentDirectoryUuid) {
+    public Mono<Void> replaceFilterContingencyListWithScript(UUID id, String userId) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
@@ -118,11 +114,9 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return contingencyListService.replaceFilterContingencyListWithScript(id)
-                    .doOnSuccess(unused -> {
-                        directoryService.updateElementType(id, SCRIPT_CONTINGENCY_LIST, userId);
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false,
-//                                NotificationType.UPDATE_DIRECTORY);
-                    });
+                    .doOnSuccess(unused ->
+                        directoryService.updateElementType(id, SCRIPT_CONTINGENCY_LIST, userId)
+                    );
         });
     }
 
@@ -133,10 +127,9 @@ class ExploreService {
 
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         filterService.insertFilter(filter, elementAttributes1.getElementUuid(), userId)
-                                .doOnError(err -> {
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe();
-//                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                                })
+                                .doOnError(err ->
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
+                                )
         );
     }
 
@@ -147,17 +140,16 @@ class ExploreService {
             }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
                     SCRIPT, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0, null);
-            return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 -> {
-                return filterService.insertNewScriptFromFilter(filterId, elementAttributes1.getElementUuid())
-                        .doOnError(err -> {
-                            directoryService.deleteElement(elementAttributes1.getElementUuid(), userId);
-//                            emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false, NotificationType.UPDATE_DIRECTORY);
-                        });
-            });
+            return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 ->
+                filterService.insertNewScriptFromFilter(filterId, elementAttributes1.getElementUuid())
+                    .doOnError(err ->
+                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                    )
+            );
         });
     }
 
-    public Mono<Void> replaceFilterWithScript(UUID id, String userId, UUID parentDirectoryUuid) {
+    public Mono<Void> replaceFilterWithScript(UUID id, String userId) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
@@ -166,11 +158,9 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return filterService.replaceFilterWithScript(id)
-                    .doOnSuccess(unused -> {
-                        directoryService.updateElementType(id, SCRIPT, userId);
-//                        emitDirectoryChanged(parentDirectoryUuid, userId, isPrivateDirectory(parentDirectoryUuid), false,
-//                                NotificationType.UPDATE_DIRECTORY);
-                    });
+                    .doOnSuccess(unused ->
+                        directoryService.updateElementType(id, SCRIPT, userId)
+                    );
         });
     }
 
@@ -192,7 +182,7 @@ class ExploreService {
     public Mono<Void> setAccessRights(UUID elementUuid, boolean isPrivate, String userId) {
         return directoryService.getElementInfos(elementUuid).flatMap(elementAttributes -> {
             if (elementAttributes.getType().equals(STUDY)) {
-                return studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
+                studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
             }
             return directoryService.setAccessRights(elementUuid, isPrivate, userId);
         });
