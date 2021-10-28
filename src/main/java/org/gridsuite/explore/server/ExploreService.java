@@ -71,7 +71,7 @@ class ExploreService {
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertScriptContingencyList(elementAttributes1.getElementUuid(), content)
                                 .doOnError(err ->
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
                                 )
         );
     }
@@ -82,7 +82,7 @@ class ExploreService {
         return directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                         contingencyListService.insertFiltersContingencyList(elementAttributes1.getElementUuid(), content)
                                 .doOnError(err ->
-                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                    directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
                                 )
         );
     }
@@ -94,7 +94,7 @@ class ExploreService {
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
                             contingencyListService.newScriptFromFiltersContingencyList(id, scriptName, elementAttributes1.getElementUuid())
                                     .doOnError(err ->
-                                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
                                     )
             );
         });
@@ -131,7 +131,7 @@ class ExploreService {
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).flatMap(elementAttributes1 ->
                 filterService.insertNewScriptFromFilter(filterId, scriptName, elementAttributes1.getElementUuid())
                     .doOnError(err ->
-                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId)
+                        directoryService.deleteElement(elementAttributes1.getElementUuid(), userId).subscribe()
                     )
             );
         });
