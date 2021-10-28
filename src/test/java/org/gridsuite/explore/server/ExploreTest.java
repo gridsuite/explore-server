@@ -104,7 +104,7 @@ public class ExploreTest {
         contingencyListService.setActionsServerBaseUri(baseUrl);
 
         String elementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0));
-        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "FILTERS_CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0));
+        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0));
 
         final Dispatcher dispatcher = new Dispatcher() {
