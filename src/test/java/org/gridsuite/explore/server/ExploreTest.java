@@ -82,6 +82,7 @@ public class ExploreTest {
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
+    private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
@@ -103,7 +104,7 @@ public class ExploreTest {
         contingencyListService.setActionsServerBaseUri(baseUrl);
 
         String elementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0));
-        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, "filterContingencyList", "FILTERS_CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0));
+        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "FILTERS_CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0));
 
         final Dispatcher dispatcher = new Dispatcher() {
@@ -123,13 +124,20 @@ public class ExploreTest {
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(String.valueOf(elementAttributesAsString)).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + ELEMENT_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(String.valueOf(filterContingencyListAttributesAsString)).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(String.valueOf(filterAttributesAsString)).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/directories/" + ELEMENT_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(String.valueOf(elementAttributesAsString)).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + ELEMENT_UUID) && "DELETE".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/directories/" + FILTER_UUID) && "DELETE".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "DELETE".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
@@ -242,7 +250,7 @@ public class ExploreTest {
     public void testNewScriptFromFiltersContingencyList() {
         webTestClient.post()
             .uri("/v1/directories/filters-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                    ELEMENT_UUID, "scriptName", PARENT_DIRECTORY_UUID)
+                    CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
             .header("userId", USER1)
             .exchange()
             .expectStatus().isOk();
@@ -252,7 +260,7 @@ public class ExploreTest {
     public void testReplaceFilterContingencyListWithScript() {
         webTestClient.post()
             .uri("/v1/directories/filters-contingency-lists/{id}/replace-with-script",
-                    ELEMENT_UUID)
+                    CONTINGENCY_LIST_UUID)
             .header("userId", USER1)
             .exchange()
             .expectStatus().isOk();
@@ -302,14 +310,20 @@ public class ExploreTest {
                 .expectStatus().isOk();
     }
 
-    @Test
-    public void testDeleteElement() {
+    public void deleteElement(UUID elementUUid){
         webTestClient.delete()
                 .uri("/v1/directories/{elementUuid}",
-                        FILTER_UUID)
+                        elementUUid)
                 .header("userId", USER1)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    public void testDeleteElement() {
+        deleteElement(FILTER_UUID);
+        deleteElement(ELEMENT_UUID);
+        deleteElement(CONTINGENCY_LIST_UUID);
     }
 
     @Test
