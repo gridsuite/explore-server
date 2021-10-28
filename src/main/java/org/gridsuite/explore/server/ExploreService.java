@@ -109,7 +109,7 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> createFilter(String filter, String filterName, String filterType, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
+    public Mono<Void> createFilter(String filter, String filterName, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(null, filterName, FILTER,
                 new AccessRightsAttributes(isPrivate), userId, 0);
 

@@ -101,11 +101,10 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
     public ResponseEntity<Mono<Void>> createFilter(@RequestBody String filter,
                                                    @RequestParam("name") String filterName,
-                                                   @RequestParam("type") String filterType,
                                                    @RequestParam("isPrivate") Boolean isPrivate,
                                                    @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, filterType, isPrivate, parentDirectoryUuid, userId));
+        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, isPrivate, parentDirectoryUuid, userId));
     }
 
     @PostMapping(value = "/directories/filters/{id}/new-script/{scriptName}")
