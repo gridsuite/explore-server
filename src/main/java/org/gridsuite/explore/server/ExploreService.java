@@ -182,7 +182,7 @@ class ExploreService {
     public Mono<Void> setAccessRights(UUID elementUuid, boolean isPrivate, String userId) {
         return directoryService.getElementInfos(elementUuid).flatMap(elementAttributes -> {
             if (elementAttributes.getType().equals(STUDY)) {
-                return studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
+                studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
             }
             return directoryService.setAccessRights(elementUuid, isPrivate, userId);
         });
