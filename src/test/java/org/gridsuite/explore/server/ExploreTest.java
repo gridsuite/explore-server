@@ -310,7 +310,7 @@ public class ExploreTest {
                 .expectStatus().isOk();
     }
 
-    public void deleteElement(UUID elementUUid){
+    public void deleteElement(UUID elementUUid) {
         webTestClient.delete()
                 .uri("/v1/directories/{elementUuid}",
                         elementUUid)
