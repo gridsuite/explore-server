@@ -11,8 +11,14 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 
@@ -171,6 +177,34 @@ class ExploreService {
                 studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
             }
             return directoryService.setAccessRights(elementUuid, isPrivate, userId);
+        });
+    }
+
+    public Mono<List<ElementAttributes>> getElementsMetadata(List<UUID> ids) {
+        Mono<Map<UUID, ElementAttributes>> elementsAttributesMono = directoryService.getElementsAttribute(ids).collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
+
+        return elementsAttributesMono.flatMap(elementsAttributes -> {
+            List<UUID> filtersUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(FILTER)).map(filterAttribute -> filterAttribute.getElementUuid()).collect(Collectors.toList());
+            List<UUID> contingencyListsUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(CONTINGENCY_LIST)).map(filterAttribute -> filterAttribute.getElementUuid()).collect(Collectors.toList());
+
+            Mono<List<Map<String, Object>>> filtersMetadataMono = filterService.getFilterMetadata(filtersUuids).collectList();
+            Mono<List<Map<String, Object>>> contingencyListMetadataMono = contingencyListService.getContingencyListMetadata(contingencyListsUuids).collectList();
+
+            Mono<Tuple2<List<Map<String, Object>>, List<Map<String, Object>>>> metadata = Mono.zip(filtersMetadataMono, contingencyListMetadataMono);
+
+            return metadata.map(data -> {
+                Map<String, Map<String, Object>> filtersMetadataMap = data.getT1().stream().collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
+                Map<String, Map<String, Object>> contingenciesMetadataMap = data.getT2().stream().collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
+
+                elementsAttributes.values().forEach(e -> {
+                    if (e.getType().equals(FILTER)) {
+                        e.setSpecificMetadata(filtersMetadataMap.get(e.getElementUuid().toString()));
+                    } else if (e.getType().equals(CONTINGENCY_LIST)) {
+                        e.setSpecificMetadata(contingenciesMetadataMap.get(e.getElementUuid().toString()));
+                    }
+                });
+                return new ArrayList<>(elementsAttributes.values());
+            });
         });
     }
 }

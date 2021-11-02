@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -144,5 +146,12 @@ public class ExploreController {
                                                       @RequestBody boolean isPrivate,
                                                       @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.setAccessRights(elementUuid, isPrivate, userId));
+    }
+
+    @GetMapping(value = "/directories/elements")
+    @Operation(summary = "get element infos from ids given as parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
+    public ResponseEntity<Mono<List<ElementAttributes>>> getElementsAttributes(@RequestParam("id") List<UUID> ids) {
+        return ResponseEntity.ok().body(exploreService.getElementsMetadata(ids));
     }
 }

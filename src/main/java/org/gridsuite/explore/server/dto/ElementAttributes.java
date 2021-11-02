@@ -11,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -32,4 +34,10 @@ public class ElementAttributes {
     private String owner;
 
     private long subdirectoriesCount;
+
+    private Map<String, Object> specificMetadata = new HashMap<>();
+
+    public ElementAttributes(UUID elementUuid, String elementName, String type, AccessRightsAttributes accessRights, String owner, long subdirectoriesCount) {
+        this(elementUuid, elementName, type, accessRights, owner, subdirectoriesCount, null);
+    }
 }

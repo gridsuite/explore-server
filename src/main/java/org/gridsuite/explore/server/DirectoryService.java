@@ -9,10 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 @Service
@@ -109,6 +110,18 @@ public class DirectoryService {
                 .body(BodyInserters.fromValue(newIsPrivate))
                 .retrieve()
                 .bodyToMono(Void.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    public Flux<ElementAttributes> getElementsAttribute(List<UUID> ids) {
+        var idsStr = new StringJoiner("&id=");
+        ids.forEach(id -> idsStr.add(id.toString()));
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/elements").toUriString() + "?id=" + idsStr;
+        return webClient.get()
+                .uri(directoryServerBaseUri + path)
+                .retrieve()
+                .bodyToFlux(ElementAttributes.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
