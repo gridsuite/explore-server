@@ -116,7 +116,7 @@ public class ContingencyListService {
                 .toUriString();
         return webClient.get()
                 .uri(actionsServerBaseUri + path)
-                .header("ids", contingencyListsUuids.stream().map(uuid -> uuid.toString()).collect(Collectors.joining(",")))
+                .header("ids", contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() { })
                 .publishOn(Schedulers.boundedElastic())

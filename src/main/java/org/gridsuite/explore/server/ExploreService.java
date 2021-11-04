@@ -181,8 +181,8 @@ class ExploreService {
         Mono<Map<UUID, ElementAttributes>> elementsAttributesMono = directoryService.getElementsAttribute(ids).collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
 
         return elementsAttributesMono.flatMap(elementsAttributes -> {
-            List<UUID> filtersUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(FILTER)).map(filterAttribute -> filterAttribute.getElementUuid()).collect(Collectors.toList());
-            List<UUID> contingencyListsUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(CONTINGENCY_LIST)).map(filterAttribute -> filterAttribute.getElementUuid()).collect(Collectors.toList());
+            List<UUID> filtersUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(FILTER)).map(ElementAttributes::getElementUuid).collect(Collectors.toList());
+            List<UUID> contingencyListsUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(CONTINGENCY_LIST)).map(ElementAttributes::getElementUuid).collect(Collectors.toList());
 
             Mono<List<Map<String, Object>>> filtersMetadataMono = filterService.getFilterMetadata(filtersUuids).collectList();
             Mono<List<Map<String, Object>>> contingencyListMetadataMono = contingencyListService.getContingencyListMetadata(contingencyListsUuids).collectList();
