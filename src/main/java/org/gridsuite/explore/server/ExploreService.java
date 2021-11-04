@@ -151,10 +151,7 @@ class ExploreService {
             if (!elementAttributes.getType().equals(FILTER)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            return filterService.replaceFilterWithScript(id)
-                    .doOnSuccess(unused ->
-                        directoryService.updateElementType(id, FILTER, userId)
-                    );
+            return filterService.replaceFilterWithScript(id);
         });
     }
 

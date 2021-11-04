@@ -83,21 +83,6 @@ public class DirectoryService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> updateElementType(UUID elementUuid, String newType, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/updateType/{newType}")
-                .buildAndExpand(elementUuid, newType)
-                .toUriString();
-
-        return webClient.put()
-                .uri(directoryServerBaseUri + path)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(HEADER_USER_ID, userId)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
-    }
-
     public Mono<Void> setAccessRights(UUID elementUuid, boolean newIsPrivate, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/rights")
                 .buildAndExpand(elementUuid)
