@@ -38,11 +38,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -109,6 +105,7 @@ public class ExploreTest {
         String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0));
 
+        String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + filterContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
@@ -124,41 +121,48 @@ public class ExploreTest {
                 } else if (path.matches("/v1//studies/.*/private") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID) && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(String.valueOf(privateStudyAttributesAsString)).setResponseCode(200)
+                    return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(String.valueOf(filterContingencyListAttributesAsString)).setResponseCode(200)
+                    return new MockResponse().setBody(filterContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(String.valueOf(filterAttributesAsString)).setResponseCode(200)
+                    return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(String.valueOf(privateStudyAttributesAsString)).setResponseCode(200)
+                    return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(String.valueOf(publicStudyAttributesAsString)).setResponseCode(200)
+                    return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + PRIVATE_STUDY_UUID) && "DELETE".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/directories/elements\\?id=.*" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + FILTER_UUID) && "DELETE".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "DELETE".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/directories/.*/rights") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/contingency-lists/metadata") && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(filterContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/filters/metadata") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/directories/.*/updateType/.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/directories/.*/rights") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 }
                 return  new MockResponse().setResponseCode(500);
@@ -281,18 +285,6 @@ public class ExploreTest {
                 .body(BodyInserters.fromValue("Filter content"))
                 .exchange()
                 .expectStatus().isOk();
-        var requests = getRequestsDone(1);
-    }
-
-    private Set<String> getRequestsDone(int n) {
-        return IntStream.range(0, n).mapToObj(i -> {
-            try {
-                return server.takeRequest(0, TimeUnit.SECONDS).getPath();
-            } catch (InterruptedException e) {
-                //LOGGER.error("Error while attempting to get the request done : ", e);
-            }
-            return null;
-        }).collect(Collectors.toSet());
     }
 
     @Test
@@ -348,5 +340,14 @@ public class ExploreTest {
         setAccessRights(PRIVATE_STUDY_UUID, false);
         setAccessRights(PUBLIC_STUDY_UUID, true);
         setAccessRights(CONTINGENCY_LIST_UUID, false);
+    }
+
+    @Test
+    public void testGetElementsMetadata() {
+        webTestClient.get()
+                .uri("/v1/directories/elements?id=" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID)
+                .header("userId", USER1)
+                .exchange()
+                .expectStatus().isOk();
     }
 }
