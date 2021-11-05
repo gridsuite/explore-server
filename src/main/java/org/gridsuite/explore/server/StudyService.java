@@ -17,9 +17,6 @@ import reactor.core.scheduler.Schedulers;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
-import static org.gridsuite.explore.server.ExploreException.Type.STUDY_NOT_FOUND;
-
 @Service
 public class StudyService {
     private static final String ROOT_CATEGORY_REACTOR = "reactor.";
