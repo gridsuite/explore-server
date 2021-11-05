@@ -135,19 +135,6 @@ public class ExploreController {
         return ResponseEntity.ok().body(exploreService.deleteElement(elementUuid, userId));
     }
 
-    @PutMapping(value = "/directories/{elementUuid}/rights", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Modify element/directory's access rights")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Element/directory was successfully updated"),
-            @ApiResponse(responseCode = "404", description = "The element was not found"),
-            @ApiResponse(responseCode = "403", description = "Not authorized to update this element access rights")
-    })
-    public ResponseEntity<Mono<Void>> setAccessRights(@PathVariable("elementUuid") UUID elementUuid,
-                                                      @RequestBody boolean isPrivate,
-                                                      @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.setAccessRights(elementUuid, isPrivate, userId));
-    }
-
     @GetMapping(value = "/directories/elements")
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})

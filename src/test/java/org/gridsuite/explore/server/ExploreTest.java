@@ -144,8 +144,6 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "DELETE".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/directories/.*/rights") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/contingency-lists/metadata") && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -321,25 +319,6 @@ public class ExploreTest {
         deleteElement(FILTER_UUID);
         deleteElement(PRIVATE_STUDY_UUID);
         deleteElement(CONTINGENCY_LIST_UUID);
-    }
-
-    public void setAccessRights(UUID uuid, boolean newIsPrivate) {
-        webTestClient.put()
-                .uri("/v1/directories/{elementUuid}/rights",
-                        uuid)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(newIsPrivate))
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-    @Test
-    public void testSetAccessRights() {
-        setAccessRights(FILTER_UUID, false);
-        setAccessRights(PRIVATE_STUDY_UUID, false);
-        setAccessRights(PUBLIC_STUDY_UUID, true);
-        setAccessRights(CONTINGENCY_LIST_UUID, false);
     }
 
     @Test

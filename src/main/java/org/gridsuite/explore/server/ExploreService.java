@@ -95,6 +95,9 @@ class ExploreService {
 
     public Mono<Void> newScriptFromFiltersContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
+            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
+                return Mono.error(new ExploreException(NOT_ALLOWED));
+            }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
                     CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
@@ -111,7 +114,11 @@ class ExploreService {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            return contingencyListService.replaceFilterContingencyListWithScript(id);
+            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
+                return Mono.error(new ExploreException(NOT_ALLOWED));
+            }
+            return contingencyListService.replaceFilterContingencyListWithScript(id).doOnSuccess(unused ->
+                directoryService.sendUpdateTypeNotification(id, userId).subscribe());
         });
     }
 
@@ -151,7 +158,8 @@ class ExploreService {
             if (!elementAttributes.getType().equals(FILTER)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            return filterService.replaceFilterWithScript(id);
+            return filterService.replaceFilterWithScript(id).doOnSuccess(unused ->
+                directoryService.sendUpdateTypeNotification(id, userId).subscribe());
         });
     }
 
@@ -165,15 +173,6 @@ class ExploreService {
                 filterService.deleteFilter(elementAttributes.getElementUuid()).subscribe();
             }
             return directoryService.deleteElement(id, userId);
-        });
-    }
-
-    public Mono<Void> setAccessRights(UUID elementUuid, boolean isPrivate, String userId) {
-        return directoryService.getElementInfos(elementUuid).flatMap(elementAttributes -> {
-            if (elementAttributes.getType().equals(STUDY)) {
-                studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
-            }
-            return directoryService.setAccessRights(elementUuid, isPrivate, userId);
         });
     }
 

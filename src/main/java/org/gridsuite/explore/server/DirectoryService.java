@@ -83,22 +83,6 @@ public class DirectoryService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> setAccessRights(UUID elementUuid, boolean newIsPrivate, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/rights")
-                .buildAndExpand(elementUuid)
-                .toUriString();
-
-        return webClient.put()
-                .uri(directoryServerBaseUri + path)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(HEADER_USER_ID, userId)
-                .body(BodyInserters.fromValue(newIsPrivate))
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
-    }
-
     public Flux<ElementAttributes> getElementsAttribute(List<UUID> ids) {
         var idsStr = new StringJoiner("&id=");
         ids.forEach(id -> idsStr.add(id.toString()));
@@ -107,6 +91,20 @@ public class DirectoryService {
                 .uri(directoryServerBaseUri + path)
                 .retrieve()
                 .bodyToFlux(ElementAttributes.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    //TODO comment
+    public Mono<Void> sendUpdateTypeNotification(UUID elementUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/updateTypeNotification")
+                .buildAndExpand(elementUuid)
+                .toUriString();
+        return webClient.put()
+                .uri(directoryServerBaseUri + path)
+                .header(HEADER_USER_ID, userId)
+                .retrieve()
+                .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
