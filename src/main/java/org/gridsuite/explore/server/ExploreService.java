@@ -118,7 +118,7 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return contingencyListService.replaceFilterContingencyListWithScript(id).doOnSuccess(unused ->
-                directoryService.sendUpdateTypeNotification(id, userId).subscribe());
+                directoryService.notifyDirectoryChanged(id, userId).subscribe());
         });
     }
 
@@ -159,7 +159,7 @@ class ExploreService {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
             return filterService.replaceFilterWithScript(id).doOnSuccess(unused ->
-                directoryService.sendUpdateTypeNotification(id, userId).subscribe());
+                directoryService.notifyDirectoryChanged(id, userId).subscribe());
         });
     }
 

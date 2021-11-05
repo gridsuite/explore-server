@@ -95,10 +95,8 @@ public class DirectoryService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    // As explore-serve had no notification server, it is asked to the directory-server to notify. In the future, if the explore-server has a notification server, we should notify from
-    // and remove this call to the directory-server
-    public Mono<Void> sendUpdateTypeNotification(UUID elementUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/updateTypeNotification")
+    public Mono<Void> notifyDirectoryChanged(UUID elementUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/notify-parent")
                 .buildAndExpand(elementUuid)
                 .toUriString();
         return webClient.put()
