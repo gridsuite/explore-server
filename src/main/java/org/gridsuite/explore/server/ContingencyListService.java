@@ -2,17 +2,22 @@ package org.gridsuite.explore.server;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 @Service
 public class ContingencyListService {
@@ -103,5 +108,18 @@ public class ContingencyListService {
             .bodyToMono(Void.class)
             .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    public Flux<Map<String, Object>> getContingencyListMetadata(List<UUID> contingencyListsUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata")
+                .buildAndExpand()
+                .toUriString();
+        return webClient.get()
+                .uri(actionsServerBaseUri + path)
+                .header("ids", contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(",")))
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() { })
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 }

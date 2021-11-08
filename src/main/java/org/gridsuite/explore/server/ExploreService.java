@@ -11,8 +11,14 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 
@@ -89,6 +95,9 @@ class ExploreService {
 
     public Mono<Void> newScriptFromFiltersContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
+            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
+                return Mono.error(new ExploreException(NOT_ALLOWED));
+            }
             ElementAttributes newElementAttributes = new ElementAttributes(null, scriptName,
                     CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L, null);
             return directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).flatMap(elementAttributes1 ->
@@ -105,7 +114,11 @@ class ExploreService {
             if (!userId.equals(elementAttributes.getOwner())) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            return contingencyListService.replaceFilterContingencyListWithScript(id);
+            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
+                return Mono.error(new ExploreException(NOT_ALLOWED));
+            }
+            return contingencyListService.replaceFilterContingencyListWithScript(id).doOnSuccess(unused ->
+                directoryService.notifyDirectoryChanged(id, userId).subscribe());
         });
     }
 
@@ -145,10 +158,8 @@ class ExploreService {
             if (!elementAttributes.getType().equals(FILTER)) {
                 return Mono.error(new ExploreException(NOT_ALLOWED));
             }
-            return filterService.replaceFilterWithScript(id)
-                    .doOnSuccess(unused ->
-                        directoryService.updateElementType(id, FILTER, userId)
-                    );
+            return filterService.replaceFilterWithScript(id).doOnSuccess(unused ->
+                directoryService.notifyDirectoryChanged(id, userId).subscribe());
         });
     }
 
@@ -165,12 +176,31 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> setAccessRights(UUID elementUuid, boolean isPrivate, String userId) {
-        return directoryService.getElementInfos(elementUuid).flatMap(elementAttributes -> {
-            if (elementAttributes.getType().equals(STUDY)) {
-                studyService.setStudyAccessRight(elementUuid, userId, isPrivate);
-            }
-            return directoryService.setAccessRights(elementUuid, isPrivate, userId);
+    public Mono<List<ElementAttributes>> getElementsMetadata(List<UUID> ids) {
+        Mono<Map<UUID, ElementAttributes>> elementsAttributesMono = directoryService.getElementsAttribute(ids).collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
+
+        return elementsAttributesMono.flatMap(elementsAttributes -> {
+            List<UUID> filtersUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(FILTER)).map(ElementAttributes::getElementUuid).collect(Collectors.toList());
+            List<UUID> contingencyListsUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(CONTINGENCY_LIST)).map(ElementAttributes::getElementUuid).collect(Collectors.toList());
+
+            Mono<List<Map<String, Object>>> filtersMetadataMono = filterService.getFilterMetadata(filtersUuids).collectList();
+            Mono<List<Map<String, Object>>> contingencyListMetadataMono = contingencyListService.getContingencyListMetadata(contingencyListsUuids).collectList();
+
+            Mono<Tuple2<List<Map<String, Object>>, List<Map<String, Object>>>> metadata = Mono.zip(filtersMetadataMono, contingencyListMetadataMono);
+
+            return metadata.map(data -> {
+                Map<String, Map<String, Object>> filtersMetadataMap = data.getT1().stream().collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
+                Map<String, Map<String, Object>> contingenciesMetadataMap = data.getT2().stream().collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
+
+                elementsAttributes.values().forEach(e -> {
+                    if (e.getType().equals(FILTER)) {
+                        e.setSpecificMetadata(filtersMetadataMap.get(e.getElementUuid().toString()));
+                    } else if (e.getType().equals(CONTINGENCY_LIST)) {
+                        e.setSpecificMetadata(contingenciesMetadataMap.get(e.getElementUuid().toString()));
+                    }
+                });
+                return new ArrayList<>(elementsAttributes.values());
+            });
         });
     }
 }

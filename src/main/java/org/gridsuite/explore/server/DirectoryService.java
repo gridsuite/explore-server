@@ -9,10 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 @Service
@@ -82,31 +83,25 @@ public class DirectoryService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> updateElementType(UUID elementUuid, String newType, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/updateType/{newType}")
-                .buildAndExpand(elementUuid, newType)
-                .toUriString();
-
-        return webClient.put()
+    public Flux<ElementAttributes> getElementsAttribute(List<UUID> ids) {
+        var idsStr = new StringJoiner("&id=");
+        ids.forEach(id -> idsStr.add(id.toString()));
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/elements").toUriString() + "?id=" + idsStr;
+        return webClient.get()
                 .uri(directoryServerBaseUri + path)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(HEADER_USER_ID, userId)
                 .retrieve()
-                .bodyToMono(Void.class)
+                .bodyToFlux(ElementAttributes.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> setAccessRights(UUID elementUuid, boolean newIsPrivate, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/rights")
+    public Mono<Void> notifyDirectoryChanged(UUID elementUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/notify-parent")
                 .buildAndExpand(elementUuid)
                 .toUriString();
-
         return webClient.put()
                 .uri(directoryServerBaseUri + path)
-                .contentType(MediaType.APPLICATION_JSON)
                 .header(HEADER_USER_ID, userId)
-                .body(BodyInserters.fromValue(newIsPrivate))
                 .retrieve()
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())

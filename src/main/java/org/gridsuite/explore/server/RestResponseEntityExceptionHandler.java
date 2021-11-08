@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import static org.gridsuite.explore.server.ExploreException.Type.CONTINGENCY_LIST_NOT_FOUND;
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 import static org.gridsuite.explore.server.ExploreException.Type.STUDY_NOT_FOUND;
+import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -27,6 +28,8 @@ public class RestResponseEntityExceptionHandler {
         switch (exploreException.getType()) {
             case STUDY_NOT_FOUND:
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(STUDY_NOT_FOUND);
+            case FILTER_NOT_FOUND:
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(FILTER_NOT_FOUND);
             case CONTINGENCY_LIST_NOT_FOUND:
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CONTINGENCY_LIST_NOT_FOUND);
             case NOT_ALLOWED:
