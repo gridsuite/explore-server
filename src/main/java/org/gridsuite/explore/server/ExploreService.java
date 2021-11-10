@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 
 /**
- * @author Etienne Homer <etienne.homre at rte-france.com>
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
 class ExploreService {

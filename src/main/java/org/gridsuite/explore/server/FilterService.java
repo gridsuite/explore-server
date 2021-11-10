@@ -28,7 +28,7 @@ import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUN
 import static org.gridsuite.explore.server.ExploreService.HEADER_USER_ID;
 
 /**
- * @author Etienne Homer <etienne.homre at rte-france.com>
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
 public class FilterService {

@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * @author Etienne Homer <etienne.homre at rte-france.com>
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
 public class StudyService {
