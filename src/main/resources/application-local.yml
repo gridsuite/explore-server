@@ -1,0 +1,16 @@
+server :
+  port : 5029
+
+spring:
+  rabbitmq:
+    addresses: localhost
+
+backing-services:
+  study-server:
+    base-uri: http://localhost:5001
+  directory-server:
+    base-uri: http://localhost:5026
+  actions-server:
+    base-uri: http://localhost:5022
+  filter-server:
+    base-uri: http://localhost:5027
