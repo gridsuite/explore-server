@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: explore-server
+
+  cloud:
+    stream:
+      function:
+        definition: consumeStudyUpdate
+      bindings:
+        publishExploreUpdate-out-0:
+          destination: explore.update
+      source: publishExploreUpdate
