@@ -12,6 +12,7 @@ import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
+import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.junit.Before;
@@ -73,10 +74,10 @@ public class ExploreTest {
     private MockWebServer server;
 
     private static final String TEST_FILE = "testCase.xiidm";
+    private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
-    private static final UUID PARENT_DIRECTORY_UUID_STUDY_ERROR = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
@@ -112,14 +113,18 @@ public class ExploreTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 String path = Objects.requireNonNull(request.getPath());
+                Buffer body = request.getBody();
 
                 if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(404);
-                } else if (path.matches("/v1/studies" + ".*" + PARENT_DIRECTORY_UUID_STUDY_ERROR + ".*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(409);
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1//studies/.*/private") && "POST".equals(request.getMethod())) {
+                    String bodyStr = body.readUtf8();
+                    if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
+                        return new MockResponse().setResponseCode(409);
+                    } else {
+                        return new MockResponse().setResponseCode(200);
+                    }
+                } else if (path.matches("/v1/studies/.*/private") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
@@ -212,16 +217,16 @@ public class ExploreTest {
 
     @Test
     public void testCreateStudyError() throws IOException {
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE)
+                    .filename(TEST_FILE_WITH_ERRORS)
                     .contentType(MediaType.TEXT_XML);
 
             webTestClient.post()
                     .uri("/v1/explore/studies/{studyName}?description={description}&isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY_ERROR_NAME, "description", true, PARENT_DIRECTORY_UUID_STUDY_ERROR)
+                            STUDY_ERROR_NAME, "description", true, PARENT_DIRECTORY_UUID)
                     .header("userId", USER1)
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
