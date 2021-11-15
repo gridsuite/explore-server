@@ -67,9 +67,9 @@ public class FilterService {
     }
 
     public Mono<Void> insertNewScriptFromFilter(UUID id, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script/{scriptId}")
-                .buildAndExpand(id, newId)
-                .toUriString();
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
+            .buildAndExpand(id, newId)
+            .toUriString();
 
         return webClient.post()
                 .uri(filterServerBaseUri + path)

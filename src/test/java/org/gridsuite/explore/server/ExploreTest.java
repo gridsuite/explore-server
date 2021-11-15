@@ -162,7 +162,7 @@ public class ExploreTest {
                 } else if (path.matches("/v1/filters/metadata") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/filters/.*/new-script/.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
