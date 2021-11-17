@@ -12,6 +12,7 @@ import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
+import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.junit.Before;
@@ -73,6 +74,7 @@ public class ExploreTest {
     private MockWebServer server;
 
     private static final String TEST_FILE = "testCase.xiidm";
+    private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
@@ -100,10 +102,10 @@ public class ExploreTest {
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
 
-        String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0));
-        String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0));
-        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0));
-        String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0));
+        String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
+        String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
+        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
+        String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
 
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + filterContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
@@ -111,14 +113,18 @@ public class ExploreTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 String path = Objects.requireNonNull(request.getPath());
+                Buffer body = request.getBody();
 
-                if (path.matches("/v1/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
+                if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(404);
-                } else if (path.matches("/v1/studies/" + STUDY_ERROR_NAME + ".*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(409);
-                } else if (path.matches("/v1/studies/.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1//studies/.*/private") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
+                    String bodyStr = body.readUtf8();
+                    if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
+                        return new MockResponse().setResponseCode(409);
+                    } else {
+                        return new MockResponse().setResponseCode(200);
+                    }
+                } else if (path.matches("/v1/studies/.*/private") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
@@ -156,7 +162,7 @@ public class ExploreTest {
                 } else if (path.matches("/v1/filters/metadata") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/filters/.*/new-script/.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
@@ -211,11 +217,11 @@ public class ExploreTest {
 
     @Test
     public void testCreateStudyError() throws IOException {
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE)
+                    .filename(TEST_FILE_WITH_ERRORS)
                     .contentType(MediaType.TEXT_XML);
 
             webTestClient.post()
@@ -232,8 +238,8 @@ public class ExploreTest {
     @Test
     public void testCreateScriptContingencyList() {
         webTestClient.post()
-                .uri("/v1/explore/script-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}",
-                        "contingencyListScriptName", true, PARENT_DIRECTORY_UUID)
+                .uri("/v1/explore/script-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
+                        "contingencyListScriptName", true, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Contingency list content"))
@@ -244,8 +250,8 @@ public class ExploreTest {
     @Test
     public void testCreateFiltersContingencyList() {
         webTestClient.post()
-                .uri("/v1/explore/filters-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}",
-                        "contingencyListScriptName", true, PARENT_DIRECTORY_UUID)
+                .uri("/v1/explore/filters-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                        "contingencyListScriptName", true, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Contingency list content"))
@@ -276,8 +282,8 @@ public class ExploreTest {
     @Test
     public void testCreateFilter() {
         webTestClient.post()
-                .uri("/v1/explore/filters?name={name}&type={type}&isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}",
-                        "contingencyListScriptName", "", true, PARENT_DIRECTORY_UUID)
+                .uri("/v1/explore/filters?name={name}&type={type}&isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                        "contingencyListScriptName", "", true, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Filter content"))

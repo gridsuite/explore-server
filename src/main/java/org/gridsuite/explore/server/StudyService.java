@@ -50,10 +50,10 @@ public class StudyService {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String studyName, String description, String userId, Boolean isPrivate, UUID caseUuid) {
+    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, Boolean isPrivate, UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                        "/studies/{studyName}/cases/{caseUuid}?description={description}&isPrivate={isPrivate}&studyUuid={studyUuid}")
-                .buildAndExpand(studyName, caseUuid, description, isPrivate, studyUuid)
+                        "/studies/cases/{caseUuid}?isPrivate={isPrivate}&studyUuid={studyUuid}")
+                .buildAndExpand(caseUuid, isPrivate, studyUuid)
                 .toUriString();
 
         return webClient.post()
@@ -65,14 +65,14 @@ public class StudyService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertStudyWithCaseFile(UUID studyUuid, String studyName, String description, String userId, Boolean isPrivate, Mono<FilePart> caseFile) {
+    public Mono<Void> insertStudyWithCaseFile(UUID studyUuid, String userId, Boolean isPrivate, Mono<FilePart> caseFile) {
         return caseFile.flatMap(file -> {
             MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
             multipartBodyBuilder.part("caseFile", file);
 
             String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                            "/studies/{studyName}?description={description}&isPrivate={isPrivate}&studyUuid={studyUuid}")
-                    .buildAndExpand(studyName, description, isPrivate, studyUuid)
+                            "/studies?isPrivate={isPrivate}&studyUuid={studyUuid}")
+                    .buildAndExpand(isPrivate, studyUuid)
                     .toUriString();
 
             return webClient.post()
