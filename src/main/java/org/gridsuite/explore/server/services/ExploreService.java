@@ -181,7 +181,7 @@ public class ExploreService {
                     return e;
                 }
                 return null;
-            })).filter(Objects::nonNull);
+            }).filter(Objects::nonNull));
         });
     }
 }
