@@ -15,6 +15,10 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.ContingencyListService;
+import org.gridsuite.explore.server.services.DirectoryService;
+import org.gridsuite.explore.server.services.FilterService;
+import org.gridsuite.explore.server.services.StudyService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -168,6 +172,15 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if ("DELETE".equals(request.getMethod())) {
+                    if (path.matches("/v1/filters/" + FILTER_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/studies/" + PRIVATE_STUDY_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    }
+                    return new MockResponse().setResponseCode(404);
                 }
                 return  new MockResponse().setResponseCode(500);
             }

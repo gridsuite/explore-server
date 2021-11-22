@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -25,11 +26,13 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.services.ServicesConstants.HEADER_USER_ID;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class ContingencyListService {
+public class ContingencyListService implements IDirectoryElementsService {
     private static final String ROOT_CATEGORY_REACTOR = "reactor.";
 
     private static final String ACTIONS_API_VERSION = "v1";
@@ -49,15 +52,16 @@ public class ContingencyListService {
         this.actionsServerBaseUri = actionsServerBaseUri;
     }
 
-    public Mono<Void> deleteContingencyList(UUID id) {
+    public Mono<Void> delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
             .buildAndExpand(id)
             .toUriString();
 
         return webClient.delete()
             .uri(actionsServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
             .retrieve()
-            .onStatus(httpStatus -> httpStatus != HttpStatus.OK, r -> Mono.empty())
+            .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
             .bodyToMono(Void.class)
             .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
@@ -119,7 +123,8 @@ public class ContingencyListService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Flux<Map<String, Object>> getContingencyListMetadata(List<UUID> contingencyListsUuids) {
+    @Override
+    public Flux<Map<String, Object>> getMetadata(List<UUID> contingencyListsUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata")
                 .buildAndExpand()
                 .toUriString();

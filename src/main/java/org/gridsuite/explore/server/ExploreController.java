@@ -11,10 +11,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.ExploreService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -141,7 +143,7 @@ public class ExploreController {
     @GetMapping(value = "/explore/elements/metadata")
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
-    public ResponseEntity<Mono<List<ElementAttributes>>> getElementsMetadata(@RequestParam("id") List<UUID> ids) {
+    public ResponseEntity<Flux<ElementAttributes>> getElementsMetadata(@RequestParam("id") List<UUID> ids) {
         return ResponseEntity.ok().body(exploreService.getElementsMetadata(ids));
     }
 }

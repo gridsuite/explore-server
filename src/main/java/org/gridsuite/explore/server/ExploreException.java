@@ -11,23 +11,24 @@ import java.util.Objects;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-class ExploreException extends RuntimeException {
+public class ExploreException extends RuntimeException {
 
     public enum Type {
         STUDY_NOT_FOUND,
         CONTINGENCY_LIST_NOT_FOUND,
         FILTER_NOT_FOUND,
-        NOT_ALLOWED;
+        NOT_ALLOWED,
+        UNKNOWN_ELEMENT_TYPE;
     }
 
     private final Type type;
 
-    ExploreException(Type type) {
+    public ExploreException(Type type) {
         super(Objects.requireNonNull(type.name()));
         this.type = type;
     }
 
-    ExploreException(Type type, String message) {
+    public ExploreException(Type type, String message) {
         super(message);
         this.type = type;
     }

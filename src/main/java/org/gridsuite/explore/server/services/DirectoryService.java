@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,8 @@ import reactor.core.scheduler.Schedulers;
 import java.util.*;
 import java.util.logging.Level;
 
+import static org.gridsuite.explore.server.services.ServicesConstants.HEADER_USER_ID;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -32,8 +34,6 @@ public class DirectoryService {
     private static final String DIRECTORY_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
-
-    static final String HEADER_USER_ID = "userId";
 
     private final WebClient webClient;
     private String directoryServerBaseUri;
