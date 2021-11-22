@@ -165,7 +165,7 @@ public class ExploreService {
             Map<String, List<UUID>> uuidsByType = elementsAttributes.values().stream().collect(groupingBy(ElementAttributes::getType,
                 Collectors.mapping(ElementAttributes::getElementUuid, Collectors.toList())));
 
-            if (!uuidsByType.keySet().containsAll(genericServices.keySet())) {
+            if (!genericServices.keySet().containsAll(uuidsByType.keySet())) {
                 return Flux.error(() -> new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type "));
             }
 
