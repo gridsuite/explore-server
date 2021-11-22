@@ -12,13 +12,15 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 /**
  * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
  */
 
 public interface IDirectoryElementsService {
     default Flux<Map<String, Object>> getMetadata(List<UUID> uuidList) {
-        return Flux.empty();
+        return Flux.just(uuidList.stream().collect(Collectors.toMap(e -> "id", e -> e)));
     }
 
     Mono<Void> delete(UUID id, String userId);

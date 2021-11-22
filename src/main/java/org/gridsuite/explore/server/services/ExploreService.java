@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -155,7 +156,7 @@ public class ExploreService {
             if (service == null) {
                 return Mono.error(new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type :" + elementAttributes.getType()));
             }
-            return service.delete(id, userId).doOnSuccess(e -> directoryService.deleteElement(id, userId));
+            return service.delete(id, userId).doOnSuccess(e -> directoryService.deleteElement(id, userId).subscribe());
         });
     }
 
@@ -177,9 +178,10 @@ public class ExploreService {
                 var elementAttribute = metadatas.get(e.getElementUuid().toString());
                 if (elementAttribute != null) {
                     e.setSpecificMetadata(elementAttribute);
+                    return e;
                 }
-                return e;
-            }));
+                return null;
+            })).filter(Objects::nonNull);
         });
     }
 }
