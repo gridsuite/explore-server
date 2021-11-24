@@ -50,6 +50,7 @@ class ExploreService {
     }
 
     public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+        System.out.println("void");
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 new AccessRightsAttributes(isPrivate), userId, 0L);
 
