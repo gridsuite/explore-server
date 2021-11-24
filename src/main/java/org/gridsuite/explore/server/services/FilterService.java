@@ -27,7 +27,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
-import static org.gridsuite.explore.server.services.ServicesConstants.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>

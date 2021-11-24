@@ -16,12 +16,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.groupingBy;
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 
@@ -52,7 +49,7 @@ public class ExploreService {
         this.studyService = studyService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
-        genericServices = Map.of(
+        this.genericServices = Map.of(
             FILTER, filterService,
             CONTINGENCY_LIST, contingencyListService,
             STUDY, studyService);
@@ -160,28 +157,14 @@ public class ExploreService {
         });
     }
 
+    private Mono<IDirectoryElementsService> getGenericService(String type) {
+        return Mono.justOrEmpty(genericServices.get(type));
+    }
+
     public Flux<ElementAttributes> getElementsMetadata(List<UUID> ids) {
-        Mono<Map<UUID, ElementAttributes>> elementsAttributesMono = directoryService.getElementsAttribute(ids).collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
-        return elementsAttributesMono.flatMapMany(elementsAttributes -> {
-            Map<String, List<UUID>> uuidsByType = elementsAttributes.values().stream().collect(groupingBy(ElementAttributes::getType,
-                Collectors.mapping(ElementAttributes::getElementUuid, Collectors.toList())));
-
-            if (!genericServices.keySet().containsAll(uuidsByType.keySet())) {
-                return Flux.error(() -> new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type "));
-            }
-
-            Map<String, Map<String, Object>> metadatas = uuidsByType.entrySet().stream()
-                .flatMap(entry -> genericServices.get(entry.getKey()).getMetadata(entry.getValue()).toStream())
-                .collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
-
-            return Flux.fromStream(() -> elementsAttributes.values().stream().map(e -> {
-                var elementAttribute = metadatas.get(e.getElementUuid().toString());
-                if (elementAttribute != null) {
-                    e.setSpecificMetadata(elementAttribute);
-                    return e;
-                }
-                return null;
-            }).filter(Objects::nonNull));
-        });
+        return directoryService.getElementsAttribute(ids).groupBy(ElementAttributes::getType)
+            .flatMap(grpListIds -> getGenericService(grpListIds.key())
+                .flatMapMany(service -> grpListIds.collect(Collectors.toList())
+                    .flatMapMany(service::completeElementAttribute)));
     }
 }

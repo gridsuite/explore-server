@@ -24,8 +24,6 @@ import reactor.core.scheduler.Schedulers;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import static org.gridsuite.explore.server.services.ServicesConstants.HEADER_USER_ID;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
