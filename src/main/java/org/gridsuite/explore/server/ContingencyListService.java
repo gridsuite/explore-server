@@ -93,9 +93,9 @@ public class ContingencyListService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> newScriptFromFiltersContingencyList(UUID id, String scriptName, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{id}/new-script/{scriptName}?newId={newId}")
-            .buildAndExpand(id, scriptName, newId)
+    public Mono<Void> newScriptFromFiltersContingencyList(UUID id, UUID newId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{id}/new-script?newId={newId}")
+            .buildAndExpand(id, newId)
             .toUriString();
 
         return webClient.post()

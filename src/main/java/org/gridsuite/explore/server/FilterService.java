@@ -66,10 +66,10 @@ public class FilterService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertNewScriptFromFilter(UUID id, String scriptName, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script/{scriptId}/{scriptName}")
-                .buildAndExpand(id, newId, scriptName)
-                .toUriString();
+    public Mono<Void> insertNewScriptFromFilter(UUID id, UUID newId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
+            .buildAndExpand(id, newId)
+            .toUriString();
 
         return webClient.post()
                 .uri(filterServerBaseUri + path)
