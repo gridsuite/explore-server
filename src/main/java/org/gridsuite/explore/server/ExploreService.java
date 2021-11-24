@@ -57,12 +57,17 @@ class ExploreService {
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
-    public Mono<Void> createStudy(String studyName, Mono<FilePart> caseFile, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
-                new AccessRightsAttributes(isPrivate), userId, 0L);
-
-        return studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), studyName, description, userId, isPrivate, caseFile)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    public Mono<Void> deleteElement(UUID id, String userId) {
+        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
+            if (elementAttributes.getType().equals(STUDY)) {
+                studyService.deleteFromStudyServer(elementAttributes.getElementUuid(), userId).subscribe();
+            } else if (elementAttributes.getType().equals(CONTINGENCY_LIST)) {
+                contingencyListService.deleteContingencyList(elementAttributes.getElementUuid()).subscribe();
+            } else if (elementAttributes.getType().equals(FILTER)) {
+                filterService.deleteFilter(elementAttributes.getElementUuid()).subscribe();
+            }
+            return directoryService.deleteElement(id, userId);
+        });
     }
 
     public Mono<Void> createScriptContingencyList(String listName, String content, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
@@ -81,6 +86,14 @@ class ExploreService {
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
+    public Mono<Void> createFilter(String filter, String filterName, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
+                new AccessRightsAttributes(isPrivate), userId, 0);
+
+        return filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId)
+                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    }
+
     public Mono<Void> newScriptFromFiltersContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
             if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
@@ -94,24 +107,11 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> replaceFilterContingencyListWithScript(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (!userId.equals(elementAttributes.getOwner())) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            return contingencyListService.replaceFilterContingencyListWithScript(id).doOnSuccess(unused ->
-                directoryService.notifyDirectoryChanged(id, userId).subscribe());
-        });
-    }
+    public Mono<Void> createStudy(String studyName, Mono<FilePart> caseFile, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
+                new AccessRightsAttributes(isPrivate), userId, 0L);
 
-    public Mono<Void> createFilter(String filter, String filterName, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
-                new AccessRightsAttributes(isPrivate), userId, 0);
-
-        return filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId)
+        return studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), studyName, description, userId, isPrivate, caseFile)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
@@ -141,19 +141,6 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (elementAttributes.getType().equals(STUDY)) {
-                studyService.deleteFromStudyServer(elementAttributes.getElementUuid(), userId).subscribe();
-            } else if (elementAttributes.getType().equals(CONTINGENCY_LIST)) {
-                contingencyListService.deleteContingencyList(elementAttributes.getElementUuid()).subscribe();
-            } else if (elementAttributes.getType().equals(FILTER)) {
-                filterService.deleteFilter(elementAttributes.getElementUuid()).subscribe();
-            }
-            return directoryService.deleteElement(id, userId);
-        });
-    }
-
     public Mono<List<ElementAttributes>> getElementsMetadata(List<UUID> ids) {
         Mono<Map<UUID, ElementAttributes>> elementsAttributesMono = directoryService.getElementsAttribute(ids).collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
 
@@ -179,6 +166,19 @@ class ExploreService {
                 });
                 return new ArrayList<>(elementsAttributes.values());
             });
+        });
+    }
+
+    public Mono<Void> replaceFilterContingencyListWithScript(UUID id, String userId) {
+        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
+            if (!userId.equals(elementAttributes.getOwner())) {
+                return Mono.error(new ExploreException(NOT_ALLOWED));
+            }
+            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
+                return Mono.error(new ExploreException(NOT_ALLOWED));
+            }
+            return contingencyListService.replaceFilterContingencyListWithScript(id).doOnSuccess(unused ->
+                    directoryService.notifyDirectoryChanged(id, userId).subscribe());
         });
     }
 }
