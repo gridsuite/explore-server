@@ -148,13 +148,12 @@ public class ExploreService {
     }
 
     public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            IDirectoryElementsService service = genericServices.get(elementAttributes.getType());
-            if (service == null) {
-                return Mono.error(new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type :" + elementAttributes.getType()));
-            }
-            return service.delete(id, userId).doOnSuccess(e -> directoryService.deleteElement(id, userId).subscribe());
-        });
+        return directoryService.getElementInfos(id).flatMap(elementAttributes ->
+            getGenericService(elementAttributes.getType())
+                .switchIfEmpty(Mono.error(() -> new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type " + elementAttributes.getType())))
+                .flatMap(s -> s.delete(id, userId))
+                .doOnSuccess(e -> directoryService.deleteElement(id, userId).subscribe())
+        );
     }
 
     private Mono<IDirectoryElementsService> getGenericService(String type) {

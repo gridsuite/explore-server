@@ -45,6 +45,8 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.springframework.http.HttpStatus.*;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -86,6 +88,7 @@ public class ExploreTest {
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
+    private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
@@ -108,6 +111,7 @@ public class ExploreTest {
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
+        String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", new AccessRightsAttributes(false), USER1, 0, null));
         String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
 
@@ -145,15 +149,9 @@ public class ExploreTest {
                 } else if (path.matches("/v1/directories/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + PRIVATE_STUDY_UUID) && "DELETE".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/elements\\?id=.*" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + FILTER_UUID) && "DELETE".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "DELETE".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/contingency-lists/metadata") && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -172,12 +170,24 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if ("GET".equals(request.getMethod())) {
+                    if (path.matches("/v1/directories/" + INVALID_ELEMENT_UUID)) {
+                        return new MockResponse().setBody(invalidElementAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
+                    }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/studies/" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/directories/" + INVALID_ELEMENT_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/directories/" + PRIVATE_STUDY_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/directories/" + FILTER_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
@@ -324,20 +334,21 @@ public class ExploreTest {
                 .expectStatus().isOk();
     }
 
-    public void deleteElement(UUID elementUUid) {
+    public void deleteElement(UUID elementUUid, HttpStatus expextedStatus) {
         webTestClient.delete()
                 .uri("/v1/explore/elements/{elementUuid}",
                         elementUUid)
                 .header("userId", USER1)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isEqualTo(expextedStatus);
     }
 
     @Test
     public void testDeleteElement() {
-        deleteElement(FILTER_UUID);
-        deleteElement(PRIVATE_STUDY_UUID);
-        deleteElement(CONTINGENCY_LIST_UUID);
+        deleteElement(FILTER_UUID, OK);
+        deleteElement(PRIVATE_STUDY_UUID, OK);
+        deleteElement(CONTINGENCY_LIST_UUID, OK);
+        deleteElement(INVALID_ELEMENT_UUID, INTERNAL_SERVER_ERROR);
     }
 
     @Test
