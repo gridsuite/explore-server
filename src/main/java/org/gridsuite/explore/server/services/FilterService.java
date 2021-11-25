@@ -90,7 +90,7 @@ public class FilterService implements IDirectoryElementsService {
                 .uri(filterServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, r -> Mono.error(() -> new ExploreException(ExploreException.Type.NOT_ALLOWED)))
+                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
