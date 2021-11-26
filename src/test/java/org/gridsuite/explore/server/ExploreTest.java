@@ -45,7 +45,8 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -334,21 +335,32 @@ public class ExploreTest {
                 .expectStatus().isOk();
     }
 
-    public void deleteElement(UUID elementUUid, HttpStatus expectedStatus) {
+    public void deleteElement(UUID elementUUid) {
         webTestClient.delete()
                 .uri("/v1/explore/elements/{elementUuid}",
                         elementUUid)
                 .header("userId", USER1)
                 .exchange()
-                .expectStatus().isEqualTo(expectedStatus);
+                .expectStatus().isOk();
+    }
+
+    public void deleteElementInvalidType(UUID elementUUid) {
+        var res = webTestClient.delete()
+            .uri("/v1/explore/elements/{elementUuid}",
+                elementUUid)
+            .header("userId", USER1)
+            .exchange()
+            .expectStatus().is5xxServerError().returnResult(Object.class).getResponseBody().blockFirst();
+        assertNotNull(res);
+        assertEquals(ExploreException.Type.UNKNOWN_ELEMENT_TYPE.name(), res);
     }
 
     @Test
     public void testDeleteElement() {
-        deleteElement(FILTER_UUID, OK);
-        deleteElement(PRIVATE_STUDY_UUID, OK);
-        deleteElement(CONTINGENCY_LIST_UUID, OK);
-        deleteElement(INVALID_ELEMENT_UUID, INTERNAL_SERVER_ERROR);
+        deleteElement(FILTER_UUID);
+        deleteElement(PRIVATE_STUDY_UUID);
+        deleteElement(CONTINGENCY_LIST_UUID);
+        deleteElementInvalidType(INVALID_ELEMENT_UUID);
     }
 
     @Test
