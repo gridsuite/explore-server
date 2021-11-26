@@ -46,7 +46,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -350,8 +349,7 @@ public class ExploreTest {
                 elementUUid)
             .header("userId", USER1)
             .exchange()
-            .expectStatus().is5xxServerError().returnResult(Object.class).getResponseBody().blockFirst();
-        assertNotNull(res);
+            .expectStatus().is5xxServerError().expectBody(Object.class).returnResult().getResponseBody();
         assertEquals(ExploreException.Type.UNKNOWN_ELEMENT_TYPE.name(), res);
     }
 
