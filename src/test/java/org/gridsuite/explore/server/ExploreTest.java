@@ -334,13 +334,13 @@ public class ExploreTest {
                 .expectStatus().isOk();
     }
 
-    public void deleteElement(UUID elementUUid, HttpStatus expextedStatus) {
+    public void deleteElement(UUID elementUUid, HttpStatus expectedStatus) {
         webTestClient.delete()
                 .uri("/v1/explore/elements/{elementUuid}",
                         elementUUid)
                 .header("userId", USER1)
                 .exchange()
-                .expectStatus().isEqualTo(expextedStatus);
+                .expectStatus().isEqualTo(expectedStatus);
     }
 
     @Test
