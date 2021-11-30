@@ -31,7 +31,6 @@ public class ExploreService {
     static final String STUDY = "STUDY";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
-    static final String DIRECTORY = "DIRECTORY";
 
     private DirectoryService directoryService;
     private StudyService studyService;
@@ -149,15 +148,10 @@ public class ExploreService {
     }
 
     public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-                if (elementAttributes.getType().equals(DIRECTORY)) {
-                    return directoryService.deleteElement(id, userId);
-                } else {
-                    return getGenericService(elementAttributes.getType())
-                        .flatMap(s -> s.delete(id, userId))
-                        .doOnSuccess(e -> directoryService.deleteElement(id, userId).subscribe());
-                }
-            }
+        return directoryService.getElementInfos(id).flatMap(elementAttributes ->
+            getGenericService(elementAttributes.getType())
+                .flatMap(s -> s.delete(id, userId))
+                .doOnSuccess(e -> directoryService.deleteElement(id, userId).subscribe())
         );
     }
 
