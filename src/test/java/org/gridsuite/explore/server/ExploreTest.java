@@ -114,6 +114,7 @@ public class ExploreTest {
         String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", new AccessRightsAttributes(false), USER1, 0, null));
         String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
+        String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
 
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + filterContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
@@ -174,6 +175,9 @@ public class ExploreTest {
                     if (path.matches("/v1/directories/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
+                    if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID)) {
+                        return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
+                    }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
                         return new MockResponse().setResponseCode(200);
@@ -188,6 +192,8 @@ public class ExploreTest {
                     } else if (path.matches("/v1/directories/" + FILTER_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
@@ -359,6 +365,7 @@ public class ExploreTest {
         deleteElement(PRIVATE_STUDY_UUID);
         deleteElement(CONTINGENCY_LIST_UUID);
         deleteElementInvalidType(INVALID_ELEMENT_UUID);
+        deleteElement(PARENT_DIRECTORY_UUID);
     }
 
     @Test
