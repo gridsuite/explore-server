@@ -104,10 +104,10 @@ public class ExploreTest {
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
-        String filterContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
+        String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
 
-        String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + filterContingencyListAttributesAsString + "]";
+        String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
@@ -130,7 +130,7 @@ public class ExploreTest {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(filterContingencyListAttributesAsString).setResponseCode(200)
+                    return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/directories/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
@@ -151,13 +151,13 @@ public class ExploreTest {
                 } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "DELETE".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/contingency-lists/metadata") && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(filterContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                    return new MockResponse().setBody(formContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters-contingency-lists.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/metadata") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
@@ -248,10 +248,10 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateFiltersContingencyList() {
+    public void testCreateFormContingencyList() {
         webTestClient.post()
-                .uri("/v1/explore/filters-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                        "contingencyListScriptName", true, PARENT_DIRECTORY_UUID, null)
+                .uri("/v1/explore/form-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                        "filterContingencyList", true, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Contingency list content"))
@@ -260,9 +260,9 @@ public class ExploreTest {
     }
 
     @Test
-    public void testNewScriptFromFiltersContingencyList() {
+    public void testNewScriptFromFormContingencyList() {
         webTestClient.post()
-            .uri("/v1/explore/filters-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
+            .uri("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                     CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
             .header("userId", USER1)
             .exchange()
@@ -270,9 +270,9 @@ public class ExploreTest {
     }
 
     @Test
-    public void testReplaceFilterContingencyListWithScript() {
+    public void testReplaceFormContingencyListWithScript() {
         webTestClient.post()
-            .uri("/v1/explore/filters-contingency-lists/{id}/replace-with-script",
+            .uri("/v1/explore/form-contingency-lists/{id}/replace-with-script",
                     CONTINGENCY_LIST_UUID)
             .header("userId", USER1)
             .exchange()

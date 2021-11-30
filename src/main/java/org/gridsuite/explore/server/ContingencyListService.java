@@ -78,8 +78,8 @@ public class ContingencyListService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertFiltersContingencyList(UUID id, String content) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists?id={id}")
+    public Mono<Void> insertFormContingencyList(UUID id, String content) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists?id={id}")
             .buildAndExpand(id)
             .toUriString();
 
@@ -93,8 +93,8 @@ public class ContingencyListService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> newScriptFromFiltersContingencyList(UUID id, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{id}/new-script?newId={newId}")
+    public Mono<Void> newScriptFromFormContingencyList(UUID id, UUID newId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/new-script?newId={newId}")
             .buildAndExpand(id, newId)
             .toUriString();
 
@@ -106,8 +106,8 @@ public class ContingencyListService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> replaceFilterContingencyListWithScript(UUID id) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{id}/replace-with-script")
+    public Mono<Void> replaceFormContingencyListWithScript(UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/replace-with-script")
             .buildAndExpand(id)
             .toUriString();
 

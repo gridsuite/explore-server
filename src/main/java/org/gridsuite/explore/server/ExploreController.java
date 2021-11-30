@@ -70,34 +70,34 @@ public class ExploreController {
         return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
     }
 
-    @PostMapping(value = "/explore/filters-contingency-lists/{listName}")
-    @Operation(summary = "create a filters contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filters contingency list has been created")})
-    public ResponseEntity<Mono<Void>> createFiltersContingencyList(@PathVariable("listName") String listName,
+    @PostMapping(value = "/explore/form-contingency-lists/{listName}")
+    @Operation(summary = "create a form contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
+    public ResponseEntity<Mono<Void>> createFormContingencyList(@PathVariable("listName") String listName,
                                                                    @RequestBody(required = false) String content,
                                                                    @RequestParam("description") String description,
                                                                    @RequestParam("isPrivate") Boolean isPrivate,
                                                                    @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFiltersContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createFormContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
     }
 
-    @PostMapping(value = "/explore/filters-contingency-lists/{id}/new-script/{scriptName}")
-    @Operation(summary = "Create a new script contingency list from a filters contingency list")
+    @PostMapping(value = "/explore/form-contingency-lists/{id}/new-script/{scriptName}")
+    @Operation(summary = "Create a new script contingency list from a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list have been created successfully")})
-    public ResponseEntity<Mono<Void>> newScriptFromFiltersContingencyList(@PathVariable("id") UUID id,
+    public ResponseEntity<Mono<Void>> newScriptFromFormContingencyList(@PathVariable("id") UUID id,
                                                                           @PathVariable("scriptName") String scriptName,
                                                                           @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
                                                                           @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.newScriptFromFiltersContingencyList(id, scriptName, userId, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.newScriptFromFormContingencyList(id, scriptName, userId, parentDirectoryUuid));
     }
 
-    @PostMapping(value = "/explore/filters-contingency-lists/{id}/replace-with-script")
-    @Operation(summary = "Replace a filters contingency list with a script contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filters contingency list has been replaced successfully")})
+    @PostMapping(value = "/explore/form-contingency-lists/{id}/replace-with-script")
+    @Operation(summary = "Replace a form contingency list with a script contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The form contingency list has been replaced successfully")})
     public ResponseEntity<Mono<Void>> replaceFilterContingencyListWithScript(@PathVariable("id") UUID id,
                                                                              @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.replaceFilterContingencyListWithScript(id, userId));
+        return ResponseEntity.ok().body(exploreService.replaceFormContingencyListWithScript(id, userId));
     }
 
     @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
