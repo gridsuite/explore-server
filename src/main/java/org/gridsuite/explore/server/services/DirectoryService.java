@@ -117,4 +117,18 @@ public class DirectoryService {
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
+
+    public Flux<ElementAttributes> listDirectoryContent(UUID directoryUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{directoryUuid}/content")
+            .buildAndExpand(directoryUuid)
+            .toUriString();
+        return webClient.get()
+            .uri(directoryServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .retrieve()
+            .bodyToFlux(ElementAttributes.class)
+            .publishOn(Schedulers.boundedElastic())
+            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+
+    }
 }

@@ -27,10 +27,11 @@ import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
 @Service
-public class ExploreService {
+public class ExploreService implements IDirectoryElementsService {
     static final String STUDY = "STUDY";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
+    static final String DIRECTORY = "DIRECTORY";
 
     private DirectoryService directoryService;
     private StudyService studyService;
@@ -52,7 +53,8 @@ public class ExploreService {
         this.genericServices = Map.of(
             FILTER, filterService,
             CONTINGENCY_LIST, contingencyListService,
-            STUDY, studyService);
+            STUDY, studyService,
+            DIRECTORY, this);
     }
 
     public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
@@ -165,5 +167,12 @@ public class ExploreService {
             .flatMap(grpListIds -> getGenericService(grpListIds.key())
                 .flatMapMany(service -> grpListIds.collect(Collectors.toList())
                     .flatMapMany(service::completeElementAttribute)));
+    }
+
+    // TODO get id/type recursively then do batch delete
+    @Override
+    public Mono<Void> delete(UUID id, String userId) {
+        return directoryService.listDirectoryContent(id, userId).flatMap(e -> deleteElement(e.getElementUuid(), userId))
+            .then();
     }
 }
