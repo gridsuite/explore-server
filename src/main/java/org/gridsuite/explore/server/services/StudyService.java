@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +15,7 @@ import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -27,14 +28,12 @@ import java.util.logging.Level;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class StudyService {
+public class StudyService implements IDirectoryElementsService {
     private static final String ROOT_CATEGORY_REACTOR = "reactor.";
 
     private static final String STUDY_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
-
-    static final String HEADER_USER_ID = "userId";
 
     private final WebClient webClient;
     private String studyServerBaseUri;
@@ -87,7 +86,8 @@ public class StudyService {
         });
     }
 
-    public Mono<Void> deleteFromStudyServer(UUID studyUuid, String userId) {
+    @Override
+    public Mono<Void> delete(UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
@@ -96,7 +96,7 @@ public class StudyService {
                 .uri(studyServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, r -> Mono.empty())
+                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);

@@ -11,10 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import static org.gridsuite.explore.server.ExploreException.Type.CONTINGENCY_LIST_NOT_FOUND;
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
-import static org.gridsuite.explore.server.ExploreException.Type.STUDY_NOT_FOUND;
-import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -34,6 +31,8 @@ public class RestResponseEntityExceptionHandler {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CONTINGENCY_LIST_NOT_FOUND);
             case NOT_ALLOWED:
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
+            case UNKNOWN_ELEMENT_TYPE:
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UNKNOWN_ELEMENT_TYPE);
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
