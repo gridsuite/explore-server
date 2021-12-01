@@ -104,7 +104,7 @@ public class ExploreTest {
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
 
-        directoryService.setDirectyServerBaseUri(baseUrl);
+        directoryService.setDirectoryServerBaseUri(baseUrl);
         studyService.setStudyServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);

@@ -56,7 +56,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     }
 
-    public void setDirectyServerBaseUri(String directoryServerBaseUri) {
+    public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
         this.directoryServerBaseUri = directoryServerBaseUri;
     }
 
