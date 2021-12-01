@@ -61,7 +61,7 @@ public class FilterService implements IDirectoryElementsService {
         return webClient.put()
                 .uri(filterServerBaseUri + path)
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, ClientResponse::createException)
+                .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, clientResponse -> Mono.error(new ExploreException(FILTER_NOT_FOUND)))
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
