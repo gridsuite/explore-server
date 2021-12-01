@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,9 +19,13 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -100,5 +105,21 @@ public class StudyService implements IDirectoryElementsService {
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    @Override
+    public Flux<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
+        var ids = new StringJoiner("&id=", "?id=", "");
+        studiesUuids.forEach(id -> ids.add(id.toString()));
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + ids)
+            .buildAndExpand()
+            .toUriString();
+        return webClient.get()
+            .uri(studyServerBaseUri + path)
+            .retrieve()
+            .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
+            })
+            .publishOn(Schedulers.boundedElastic())
+            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 }

@@ -178,6 +178,9 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/studies/metadata[?]id=" + PRIVATE_STUDY_UUID)) {
+                        return new MockResponse().setBody(privateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
