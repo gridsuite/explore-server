@@ -11,23 +11,18 @@ import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
-import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
 @Service
-public class ExploreService implements IDirectoryElementsService {
+public class ExploreService {
     static final String STUDY = "STUDY";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
@@ -37,8 +32,6 @@ public class ExploreService implements IDirectoryElementsService {
     private StudyService studyService;
     private ContingencyListService contingencyListService;
     private FilterService filterService;
-
-    private Map<String, IDirectoryElementsService> genericServices;
 
     public ExploreService(
         DirectoryService directoryService,
@@ -50,11 +43,6 @@ public class ExploreService implements IDirectoryElementsService {
         this.studyService = studyService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
-        this.genericServices = Map.of(
-            FILTER, filterService,
-            CONTINGENCY_LIST, contingencyListService,
-            STUDY, studyService,
-            DIRECTORY, this);
     }
 
     public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
@@ -149,30 +137,4 @@ public class ExploreService implements IDirectoryElementsService {
         });
     }
 
-    public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes ->
-            getGenericService(elementAttributes.getType())
-                .flatMap(s -> s.delete(id, userId))
-                .doOnSuccess(e -> directoryService.deleteElement(id, userId).subscribe())
-        );
-    }
-
-    private Mono<IDirectoryElementsService> getGenericService(String type) {
-        return Mono.justOrEmpty(genericServices.get(type))
-            .switchIfEmpty(Mono.error(() -> new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type " + type)));
-    }
-
-    public Flux<ElementAttributes> getElementsMetadata(List<UUID> ids) {
-        return directoryService.getElementsAttribute(ids).groupBy(ElementAttributes::getType)
-            .flatMap(grpListIds -> getGenericService(grpListIds.key())
-                .flatMapMany(service -> grpListIds.collect(Collectors.toList())
-                    .flatMapMany(service::completeElementAttribute)));
-    }
-
-    // TODO get id/type recursively then do batch delete
-    @Override
-    public Mono<Void> delete(UUID id, String userId) {
-        return directoryService.listDirectoryContent(id, userId).flatMap(e -> deleteElement(e.getElementUuid(), userId))
-            .then();
-    }
 }

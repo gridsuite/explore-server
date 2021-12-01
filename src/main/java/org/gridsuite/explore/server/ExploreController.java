@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +32,11 @@ import java.util.UUID;
 public class ExploreController {
 
     private final ExploreService exploreService;
+    private final DirectoryService directoryService;
 
-    public ExploreController(ExploreService exploreService) {
+    public ExploreController(ExploreService exploreService, DirectoryService directoryService) {
         this.exploreService = exploreService;
+        this.directoryService = directoryService;
     }
 
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
@@ -137,13 +140,13 @@ public class ExploreController {
     @ApiResponses(@ApiResponse(responseCode = "200", description = "Directory/element was successfully removed"))
     public ResponseEntity<Mono<Void>> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
                                                     @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.deleteElement(elementUuid, userId));
+        return ResponseEntity.ok().body(directoryService.deleteElement(elementUuid, userId));
     }
 
     @GetMapping(value = "/explore/elements/metadata")
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<Flux<ElementAttributes>> getElementsMetadata(@RequestParam("id") List<UUID> ids) {
-        return ResponseEntity.ok().body(exploreService.getElementsMetadata(ids));
+        return ResponseEntity.ok().body(directoryService.getElementsMetadata(ids));
     }
 }

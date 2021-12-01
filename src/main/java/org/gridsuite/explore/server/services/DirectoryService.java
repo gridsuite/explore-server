@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,14 +23,16 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.services.IDirectoryElementsService.HEADER_USER_ID;
+import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
+import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class DirectoryService {
+public class DirectoryService implements IDirectoryElementsService {
     private static final String ROOT_CATEGORY_REACTOR = "reactor.";
 
     private static final String DIRECTORY_SERVER_API_VERSION = "v1";
@@ -37,13 +40,20 @@ public class DirectoryService {
     private static final String DELIMITER = "/";
 
     private final WebClient webClient;
+    private final Map<String, IDirectoryElementsService> genericServices;
     private String directoryServerBaseUri;
 
     @Autowired
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
-                            WebClient.Builder webClientBuilder) {
+                            WebClient.Builder webClientBuilder, FilterService filterService, ContingencyListService contingencyListService, StudyService studyService) {
         this.directoryServerBaseUri = directoryServerBaseUri;
         this.webClient = webClientBuilder.build();
+        this.genericServices = Map.of(
+            FILTER, filterService,
+            CONTINGENCY_LIST, contingencyListService,
+            STUDY, studyService,
+            DIRECTORY, this);
+
     }
 
     public void setDirectyServerBaseUri(String directoryServerBaseUri) {
@@ -66,7 +76,7 @@ public class DirectoryService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> deleteElement(UUID elementUuid, String userId) {
+    public Mono<Void> deleteDirectoryElement(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
@@ -131,4 +141,32 @@ public class DirectoryService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
 
     }
+
+    public Mono<Void> deleteElement(UUID id, String userId) {
+        return getElementInfos(id).flatMap(elementAttributes ->
+            getGenericService(elementAttributes.getType())
+                .flatMap(s -> s.delete(id, userId))
+                .doOnSuccess(e -> deleteDirectoryElement(id, userId).subscribe())
+        );
+    }
+
+    private Mono<IDirectoryElementsService> getGenericService(String type) {
+        return Mono.justOrEmpty(genericServices.get(type))
+            .switchIfEmpty(Mono.error(() -> new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type " + type)));
+    }
+
+    public Flux<ElementAttributes> getElementsMetadata(List<UUID> ids) {
+        return getElementsAttribute(ids).groupBy(ElementAttributes::getType)
+            .flatMap(grpListIds -> getGenericService(grpListIds.key())
+                .flatMapMany(service -> grpListIds.collect(Collectors.toList())
+                    .flatMapMany(service::completeElementAttribute)));
+    }
+
+    // TODO get id/type recursively then do batch delete
+    @Override
+    public Mono<Void> delete(UUID id, String userId) {
+        return listDirectoryContent(id, userId).flatMap(e -> deleteElement(e.getElementUuid(), userId))
+            .then();
+    }
+
 }
