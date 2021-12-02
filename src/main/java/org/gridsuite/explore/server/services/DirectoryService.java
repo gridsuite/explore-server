@@ -76,7 +76,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> deleteDirectoryElement(UUID elementUuid, String userId) {
+    private Mono<Void> deleteDirectoryElement(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
