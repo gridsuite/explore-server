@@ -4,33 +4,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
 @Service
-class ExploreService {
-    static final String HEADER_USER_ID = "userId";
+public class ExploreService {
     static final String STUDY = "STUDY";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
+    static final String DIRECTORY = "DIRECTORY";
 
     private DirectoryService directoryService;
     private StudyService studyService;
@@ -38,10 +34,10 @@ class ExploreService {
     private FilterService filterService;
 
     public ExploreService(
-            DirectoryService directoryService,
-            StudyService studyService,
-            ContingencyListService contingencyListService,
-            FilterService filterService) {
+        DirectoryService directoryService,
+        StudyService studyService,
+        ContingencyListService contingencyListService,
+        FilterService filterService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -141,44 +137,4 @@ class ExploreService {
         });
     }
 
-    public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (elementAttributes.getType().equals(STUDY)) {
-                studyService.deleteFromStudyServer(elementAttributes.getElementUuid(), userId).subscribe();
-            } else if (elementAttributes.getType().equals(CONTINGENCY_LIST)) {
-                contingencyListService.deleteContingencyList(elementAttributes.getElementUuid()).subscribe();
-            } else if (elementAttributes.getType().equals(FILTER)) {
-                filterService.deleteFilter(elementAttributes.getElementUuid()).subscribe();
-            }
-            return directoryService.deleteElement(id, userId);
-        });
-    }
-
-    public Mono<List<ElementAttributes>> getElementsMetadata(List<UUID> ids) {
-        Mono<Map<UUID, ElementAttributes>> elementsAttributesMono = directoryService.getElementsAttribute(ids).collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
-
-        return elementsAttributesMono.flatMap(elementsAttributes -> {
-            List<UUID> filtersUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(FILTER)).map(ElementAttributes::getElementUuid).collect(Collectors.toList());
-            List<UUID> contingencyListsUuids = elementsAttributes.values().stream().filter(elementAttributes -> elementAttributes.getType().equals(CONTINGENCY_LIST)).map(ElementAttributes::getElementUuid).collect(Collectors.toList());
-
-            Mono<List<Map<String, Object>>> filtersMetadataMono = filterService.getFilterMetadata(filtersUuids).collectList();
-            Mono<List<Map<String, Object>>> contingencyListMetadataMono = contingencyListService.getContingencyListMetadata(contingencyListsUuids).collectList();
-
-            Mono<Tuple2<List<Map<String, Object>>, List<Map<String, Object>>>> metadata = Mono.zip(filtersMetadataMono, contingencyListMetadataMono);
-
-            return metadata.map(data -> {
-                Map<String, Map<String, Object>> filtersMetadataMap = data.getT1().stream().collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
-                Map<String, Map<String, Object>> contingenciesMetadataMap = data.getT2().stream().collect(Collectors.toMap(e -> e.get("id").toString(), Function.identity()));
-
-                elementsAttributes.values().forEach(e -> {
-                    if (e.getType().equals(FILTER)) {
-                        e.setSpecificMetadata(filtersMetadataMap.get(e.getElementUuid().toString()));
-                    } else if (e.getType().equals(CONTINGENCY_LIST)) {
-                        e.setSpecificMetadata(contingenciesMetadataMap.get(e.getElementUuid().toString()));
-                    }
-                });
-                return new ArrayList<>(elementsAttributes.values());
-            });
-        });
-    }
 }

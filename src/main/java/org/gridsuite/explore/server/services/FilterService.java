@@ -4,8 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -25,13 +27,12 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
-import static org.gridsuite.explore.server.ExploreService.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class FilterService {
+public class FilterService implements IDirectoryElementsService {
     private static final String ROOT_CATEGORY_REACTOR = "reactor.";
 
     private static final String FILTER_SERVER_API_VERSION = "v1";
@@ -80,15 +81,16 @@ public class FilterService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> deleteFilter(UUID id) {
+    public Mono<Void> delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
 
         return webClient.delete()
                 .uri(filterServerBaseUri + path)
+                .header(HEADER_USER_ID, userId)
                 .retrieve()
-                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, r -> Mono.empty())
+                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
@@ -110,7 +112,8 @@ public class FilterService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Flux<Map<String, Object>> getFilterMetadata(List<UUID> filtersUuids) {
+    @Override
+    public Flux<Map<String, Object>> getMetadata(List<UUID> filtersUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata")
                 .buildAndExpand()
                 .toUriString();
@@ -118,7 +121,8 @@ public class FilterService {
                 .uri(filterServerBaseUri + path)
                 .body(BodyInserters.fromValue(filtersUuids))
                 .retrieve()
-                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() { })
+                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
+                })
                 .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
