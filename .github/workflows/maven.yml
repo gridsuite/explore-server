@@ -31,13 +31,13 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Build Docker image
-        if: github.ref == 'refs/heads/main'
         run: >
           mvn --batch-mode deploy -DskipTests -Dmaven.install.skip -Dmaven.deploy.skip -Dpowsybl.docker.deploy
           -Djib.httpTimeout=60000
           -Djib.to.image=docker.io/gridsuite/explore-server
           -Djib.to.auth.username=gridsuiteci
           -Djib.to.auth.password=${{ secrets.DOCKERHUB_TOKEN }}
+          -Djib.to.tags=dev
 
       - name: Broadcast update event
         if: github.ref == 'refs/heads/main'

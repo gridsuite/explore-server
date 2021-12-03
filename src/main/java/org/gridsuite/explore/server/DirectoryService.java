@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,6 +19,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.tcp.TcpClient;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -39,10 +42,9 @@ public class DirectoryService {
     private String directoryServerBaseUri;
 
     @Autowired
-    public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
-                            WebClient.Builder webClientBuilder) {
+    public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri) {
         this.directoryServerBaseUri = directoryServerBaseUri;
-        this.webClient = webClientBuilder.build();
+        this.webClient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(HttpClient.from(TcpClient.newConnection()))).build();
     }
 
     public void setDirectyServerBaseUri(String directoryServerBaseUri) {

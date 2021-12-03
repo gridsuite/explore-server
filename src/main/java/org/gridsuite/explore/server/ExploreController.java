@@ -142,6 +142,7 @@ public class ExploreController {
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<Mono<List<ElementAttributes>>> getElementsMetadata(@RequestParam("id") List<UUID> ids) {
+        System.out.println("NEW VERSION ................................................................");
         return ResponseEntity.ok().body(exploreService.getElementsMetadata(ids));
     }
 }
