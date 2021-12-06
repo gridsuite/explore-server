@@ -20,8 +20,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.tcp.TcpClient;
+import reactor.netty.resources.ConnectionProvider;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -44,7 +45,16 @@ public class DirectoryService {
     @Autowired
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri) {
         this.directoryServerBaseUri = directoryServerBaseUri;
-        this.webClient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(HttpClient.from(TcpClient.newConnection()))).build();
+        ConnectionProvider provider = ConnectionProvider.builder("fixed")
+                .maxConnections(500)
+                .maxIdleTime(Duration.ofSeconds(20))
+                .maxLifeTime(Duration.ofSeconds(60))
+                .pendingAcquireTimeout(Duration.ofSeconds(60))
+                .evictInBackground(Duration.ofSeconds(120)).build();
+
+        this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create(provider)))
+                .build();
     }
 
     public void setDirectyServerBaseUri(String directoryServerBaseUri) {
