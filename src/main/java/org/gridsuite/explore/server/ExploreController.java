@@ -147,6 +147,7 @@ public class ExploreController {
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<Flux<ElementAttributes>> getElementsMetadata(@RequestParam("id") List<UUID> ids) {
+        System.out.println("--------------------------- ABDEL TESTS -------------------------");
         return ResponseEntity.ok().body(directoryService.getElementsMetadata(ids));
     }
 }

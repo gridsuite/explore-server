@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -20,7 +21,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -47,7 +51,16 @@ public class DirectoryService implements IDirectoryElementsService {
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
                             WebClient.Builder webClientBuilder, FilterService filterService, ContingencyListService contingencyListService, StudyService studyService) {
         this.directoryServerBaseUri = directoryServerBaseUri;
-        this.webClient = webClientBuilder.build();
+        ConnectionProvider provider = ConnectionProvider.builder("fixed")
+                .maxConnections(500)
+                .maxIdleTime(Duration.ofSeconds(20))
+                .maxLifeTime(Duration.ofSeconds(60))
+                .pendingAcquireTimeout(Duration.ofSeconds(60))
+                .evictInBackground(Duration.ofSeconds(120)).build();
+
+        this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create(provider)))
+                .build();
         this.genericServices = Map.of(
             FILTER, filterService,
             CONTINGENCY_LIST, contingencyListService,
