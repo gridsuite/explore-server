@@ -6,10 +6,7 @@
  */
 package org.gridsuite.explore.server.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +20,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ElementAttributes {
+
+    public enum Notification {
+        UPDATE_DIRECTORY
+    }
+
     private UUID elementUuid;
 
     private String elementName;

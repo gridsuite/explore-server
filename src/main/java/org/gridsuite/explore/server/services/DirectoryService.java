@@ -39,6 +39,10 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
+    private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER +  DIRECTORY_SERVER_API_VERSION + DELIMITER + "directories";
+
+    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER +  DIRECTORY_SERVER_API_VERSION + DELIMITER + "elements";
+
     private final WebClient webClient;
     private final Map<String, IDirectoryElementsService> genericServices;
     private String directoryServerBaseUri;
@@ -61,9 +65,10 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public Mono<ElementAttributes> createElement(ElementAttributes elementAttributes, UUID directoryUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{directoryUuid}")
-                .buildAndExpand(directoryUuid)
-                .toUriString();
+        String path = UriComponentsBuilder
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
+            .buildAndExpand(directoryUuid)
+            .toUriString();
 
         return webClient.post()
                 .uri(directoryServerBaseUri + path)
@@ -77,9 +82,11 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     private Mono<Void> deleteDirectoryElement(UUID elementUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}")
-                .buildAndExpand(elementUuid)
-                .toUriString();
+        String path = UriComponentsBuilder
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+            .buildAndExpand(elementUuid)
+            .toUriString();
+
         return webClient.delete()
                 .uri(directoryServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
@@ -91,9 +98,10 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public Mono<ElementAttributes> getElementInfos(UUID directoryUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{directoryUuid}")
-                .buildAndExpand(directoryUuid)
-                .toUriString();
+        String path = UriComponentsBuilder
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
+            .buildAndExpand(directoryUuid)
+            .toUriString();
 
         return webClient.get()
                 .uri(directoryServerBaseUri + path)
@@ -103,10 +111,10 @@ public class DirectoryService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Flux<ElementAttributes> getElementsAttribute(List<UUID> ids) {
+    private Flux<ElementAttributes> getElementsInfos(List<UUID> ids) {
         var idsStr = new StringJoiner("&id=");
         ids.forEach(id -> idsStr.add(id.toString()));
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/elements").toUriString() + "?id=" + idsStr;
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?id=" + idsStr;
         return webClient.get()
                 .uri(directoryServerBaseUri + path)
                 .retrieve()
@@ -116,9 +124,11 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public Mono<Void> notifyDirectoryChanged(UUID elementUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{elementUuid}/notify-parent")
-                .buildAndExpand(elementUuid)
-                .toUriString();
+        String path = UriComponentsBuilder
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
+            .buildAndExpand(elementUuid, ElementAttributes.Notification.UPDATE_DIRECTORY.name())
+            .toUriString();
+
         return webClient.put()
                 .uri(directoryServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
@@ -129,7 +139,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public Flux<ElementAttributes> listDirectoryContent(UUID directoryUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{directoryUuid}/content")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{directoryUuid}/elements")
             .buildAndExpand(directoryUuid)
             .toUriString();
         return webClient.get()
@@ -156,7 +166,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public Flux<ElementAttributes> getElementsMetadata(List<UUID> ids) {
-        return getElementsAttribute(ids).groupBy(ElementAttributes::getType)
+        return getElementsInfos(ids).groupBy(ElementAttributes::getType)
             .flatMap(grpListIds -> getGenericService(grpListIds.key())
                 .flatMapMany(service -> grpListIds.collect(Collectors.toList())
                     .flatMapMany(service::completeElementAttribute)));
