@@ -53,9 +53,7 @@ public class DirectoryService implements IDirectoryElementsService {
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
                 .maxConnections(500)
                 .maxIdleTime(Duration.ofSeconds(20))
-                .maxLifeTime(Duration.ofSeconds(60))
-                .pendingAcquireTimeout(Duration.ofSeconds(60))
-                .evictInBackground(Duration.ofSeconds(120)).build();
+                .build();
 
         this.webClient = WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(HttpClient.create(provider)))
