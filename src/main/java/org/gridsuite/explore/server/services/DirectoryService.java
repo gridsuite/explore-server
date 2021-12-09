@@ -20,7 +20,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
@@ -49,7 +48,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     @Autowired
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
-                            WebClient.Builder webClientBuilder, FilterService filterService, ContingencyListService contingencyListService, StudyService studyService) {
+                            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService) {
         this.directoryServerBaseUri = directoryServerBaseUri;
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
                 .maxConnections(500)
@@ -85,7 +84,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 .body(BodyInserters.fromValue(elementAttributes))
                 .retrieve()
                 .bodyToMono(ElementAttributes.class)
-                .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -99,7 +97,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 .retrieve()
                 .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
                 .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -112,7 +109,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 .uri(directoryServerBaseUri + path)
                 .retrieve()
                 .bodyToMono(ElementAttributes.class)
-                .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -124,7 +120,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 .uri(directoryServerBaseUri + path)
                 .retrieve()
                 .bodyToFlux(ElementAttributes.class)
-                .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -137,7 +132,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 .header(HEADER_USER_ID, userId)
                 .retrieve()
                 .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -150,7 +144,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .header(HEADER_USER_ID, userId)
             .retrieve()
             .bodyToFlux(ElementAttributes.class)
-            .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
 
     }

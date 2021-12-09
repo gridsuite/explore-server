@@ -18,7 +18,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +60,6 @@ public class ContingencyListService implements IDirectoryElementsService {
             .retrieve()
             .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
             .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -76,7 +74,6 @@ public class ContingencyListService implements IDirectoryElementsService {
             .body(BodyInserters.fromValue(content))
             .retrieve()
             .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -91,7 +88,6 @@ public class ContingencyListService implements IDirectoryElementsService {
             .body(BodyInserters.fromValue(content))
             .retrieve()
             .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -104,7 +100,6 @@ public class ContingencyListService implements IDirectoryElementsService {
             .uri(actionsServerBaseUri + path)
             .retrieve()
             .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -117,7 +112,6 @@ public class ContingencyListService implements IDirectoryElementsService {
             .uri(actionsServerBaseUri + path)
             .retrieve()
             .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
@@ -131,7 +125,6 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .header("ids", contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() { })
-                .publishOn(Schedulers.boundedElastic())
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 }
