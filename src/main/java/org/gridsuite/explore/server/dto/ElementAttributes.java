@@ -20,11 +20,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ElementAttributes {
-
-    public enum Notification {
-        UPDATE_DIRECTORY
-    }
-
     private UUID elementUuid;
 
     private String elementName;

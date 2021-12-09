@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 import static org.gridsuite.explore.server.services.ExploreService.*;
+import static org.gridsuite.explore.server.services.NotificationType.UPDATE_DIRECTORY;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -97,10 +98,10 @@ public class DirectoryService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<ElementAttributes> getElementInfos(UUID directoryUuid) {
+    public Mono<ElementAttributes> getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
-            .buildAndExpand(directoryUuid)
+            .buildAndExpand(elementUuid)
             .toUriString();
 
         return webClient.get()
@@ -125,8 +126,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public Mono<Void> notifyDirectoryChanged(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
-            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
-            .buildAndExpand(elementUuid, ElementAttributes.Notification.UPDATE_DIRECTORY.name())
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
+            .buildAndExpand(elementUuid, UPDATE_DIRECTORY.name())
             .toUriString();
 
         return webClient.put()
@@ -138,8 +139,8 @@ public class DirectoryService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Flux<ElementAttributes> listDirectoryContent(UUID directoryUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + "/directories/{directoryUuid}/elements")
+    private Flux<ElementAttributes> getDirectoryElements(UUID directoryUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
             .buildAndExpand(directoryUuid)
             .toUriString();
         return webClient.get()
@@ -175,7 +176,7 @@ public class DirectoryService implements IDirectoryElementsService {
     // TODO get id/type recursively then do batch delete
     @Override
     public Mono<Void> delete(UUID id, String userId) {
-        return listDirectoryContent(id, userId).flatMap(e -> deleteElement(e.getElementUuid(), userId))
+        return getDirectoryElements(id, userId).flatMap(e -> deleteElement(e.getElementUuid(), userId))
             .then();
     }
 
