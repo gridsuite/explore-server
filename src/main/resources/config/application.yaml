@@ -8,5 +8,5 @@ spring:
         definition: consumeStudyUpdate
       bindings:
         publishExploreUpdate-out-0:
-          destination: explore.update
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}explore.update
       source: publishExploreUpdate
