@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 import static org.gridsuite.explore.server.services.ExploreService.*;
-import static org.gridsuite.explore.server.services.NotificationType.UPDATE_DIRECTORY;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -40,9 +39,9 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER +  DIRECTORY_SERVER_API_VERSION + DELIMITER + "directories";
+    private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "directories";
 
-    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER +  DIRECTORY_SERVER_API_VERSION + DELIMITER + "elements";
+    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "elements";
 
     private final WebClient webClient;
     private final Map<String, IDirectoryElementsService> genericServices;
@@ -127,7 +126,7 @@ public class DirectoryService implements IDirectoryElementsService {
     public Mono<Void> notifyDirectoryChanged(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
-            .buildAndExpand(elementUuid, UPDATE_DIRECTORY.name())
+            .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
             .toUriString();
 
         return webClient.put()
