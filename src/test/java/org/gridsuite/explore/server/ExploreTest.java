@@ -120,7 +120,7 @@ public class ExploreTest {
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
-            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+            public MockResponse dispatch(RecordedRequest request) {
                 String path = Objects.requireNonNull(request.getPath());
                 Buffer body = request.getBody();
 
@@ -135,22 +135,22 @@ public class ExploreTest {
                     }
                 } else if (path.matches("/v1/studies/.*/private") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/elements\\?id=.*" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements\\?id=.*" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/contingency-lists/metadata") && "GET".equals(request.getMethod())) {
@@ -172,11 +172,11 @@ public class ExploreTest {
                 } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if ("GET".equals(request.getMethod())) {
-                    if (path.matches("/v1/directories/" + INVALID_ELEMENT_UUID)) {
+                    if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/content")) {
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
                         return new MockResponse().setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID)) {
+                    } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]id=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(privateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
@@ -189,15 +189,15 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/directories/" + INVALID_ELEMENT_UUID)) {
+                    } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/directories/" + PRIVATE_STUDY_UUID)) {
+                    } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/directories/" + FILTER_UUID)) {
+                    } else if (path.matches("/v1/elements/" + FILTER_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/directories/" + CONTINGENCY_LIST_UUID)) {
+                    } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID)) {
+                    } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
