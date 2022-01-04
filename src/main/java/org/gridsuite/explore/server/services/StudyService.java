@@ -25,9 +25,9 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -109,9 +109,8 @@ public class StudyService implements IDirectoryElementsService {
 
     @Override
     public Flux<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
-        var ids = new StringJoiner("&id=", "?id=", "");
-        studiesUuids.forEach(id -> ids.add(id.toString()));
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + ids)
+        var ids = studiesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
             .buildAndExpand()
             .toUriString();
         return webClient.get()

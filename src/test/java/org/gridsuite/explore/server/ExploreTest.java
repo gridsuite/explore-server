@@ -150,10 +150,10 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements\\?id=.*" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/contingency-lists/metadata") && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
@@ -162,9 +162,6 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters/metadata") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
@@ -178,7 +175,9 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/studies/metadata[?]id=" + PRIVATE_STUDY_UUID)) {
+                    } else if (path.matches("/v1/filters/metadata[?]ids=" + FILTER_UUID)) {
+                        return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(privateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
@@ -375,7 +374,7 @@ public class ExploreTest {
     @Test
     public void testGetElementsMetadata() {
         webTestClient.get()
-                .uri("/v1/explore/elements/metadata?id=" + FILTER_UUID + "&id=" + PRIVATE_STUDY_UUID + "&id=" + CONTINGENCY_LIST_UUID)
+                .uri("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
                 .header("userId", USER1)
                 .exchange()
                 .expectStatus().isOk();

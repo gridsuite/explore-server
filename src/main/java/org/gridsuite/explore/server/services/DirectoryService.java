@@ -111,10 +111,9 @@ public class DirectoryService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    private Flux<ElementAttributes> getElementsInfos(List<UUID> ids) {
-        var idsStr = new StringJoiner("&id=");
-        ids.forEach(id -> idsStr.add(id.toString()));
-        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?id=" + idsStr;
+    private Flux<ElementAttributes> getElementsInfos(List<UUID> elementsUuids) {
+        var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
         return webClient.get()
                 .uri(directoryServerBaseUri + path)
                 .retrieve()
@@ -129,7 +128,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
             .toUriString();
 
-        return webClient.put()
+        return webClient.post()
                 .uri(directoryServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
                 .retrieve()

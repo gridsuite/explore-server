@@ -123,12 +123,12 @@ public class ContingencyListService implements IDirectoryElementsService {
 
     @Override
     public Flux<Map<String, Object>> getMetadata(List<UUID> contingencyListsUuids) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata")
+        var ids = contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
         return webClient.get()
                 .uri(actionsServerBaseUri + path)
-                .header("ids", contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(",")))
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() { })
                 .publishOn(Schedulers.boundedElastic())
