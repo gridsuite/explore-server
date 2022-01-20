@@ -13,7 +13,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
 
@@ -114,16 +114,16 @@ public class FilterService implements IDirectoryElementsService {
 
     @Override
     public Flux<Map<String, Object>> getMetadata(List<UUID> filtersUuids) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata")
-                .buildAndExpand()
-                .toUriString();
-        return webClient.post()
-                .uri(filterServerBaseUri + path)
-                .body(BodyInserters.fromValue(filtersUuids))
-                .retrieve()
-                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
-                })
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        var ids = filtersUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
+            .buildAndExpand()
+            .toUriString();
+        return webClient.get()
+            .uri(filterServerBaseUri + path)
+            .retrieve()
+            .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
+            })
+            .publishOn(Schedulers.boundedElastic())
+            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 }

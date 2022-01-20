@@ -31,6 +31,9 @@ import java.util.UUID;
 @Tag(name = "explore-server")
 public class ExploreController {
 
+    // /!\ This query parameter is used by the gateway to control access
+    private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
+
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
 
@@ -46,7 +49,7 @@ public class ExploreController {
                                                                   @PathVariable("caseUuid") UUID caseUuid,
                                                                   @RequestParam("description") String description,
                                                                   @RequestParam("isPrivate") Boolean isPrivate,
-                                                                  @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                   @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, isPrivate, parentDirectoryUuid));
     }
@@ -58,7 +61,7 @@ public class ExploreController {
                                                   @RequestPart("caseFile") FilePart caseFile,
                                                   @RequestParam("description") String description,
                                                   @RequestParam("isPrivate") Boolean isPrivate,
-                                                  @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                   @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.createStudy(studyName, Mono.just(caseFile), description, userId, isPrivate, parentDirectoryUuid));
     }
@@ -70,7 +73,7 @@ public class ExploreController {
                                                                   @RequestBody(required = false) String content,
                                                                   @RequestParam("description") String description,
                                                                   @RequestParam("isPrivate") Boolean isPrivate,
-                                                                  @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                   @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
     }
@@ -82,7 +85,7 @@ public class ExploreController {
                                                                    @RequestBody(required = false) String content,
                                                                    @RequestParam("description") String description,
                                                                    @RequestParam("isPrivate") Boolean isPrivate,
-                                                                   @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                    @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.createFormContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
     }
@@ -92,7 +95,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list have been created successfully")})
     public ResponseEntity<Mono<Void>> newScriptFromFormContingencyList(@PathVariable("id") UUID id,
                                                                           @PathVariable("scriptName") String scriptName,
-                                                                          @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                           @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.newScriptFromFormContingencyList(id, scriptName, userId, parentDirectoryUuid));
     }
@@ -112,7 +115,7 @@ public class ExploreController {
                                                    @RequestParam("name") String filterName,
                                                    @RequestParam("description") String description,
                                                    @RequestParam("isPrivate") Boolean isPrivate,
-                                                   @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                    @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, description, isPrivate, parentDirectoryUuid, userId));
     }
@@ -122,7 +125,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
     public ResponseEntity<Mono<Void>> newScriptFromFilter(@PathVariable("id") UUID filterId,
                                                           @PathVariable("scriptName") String scriptName,
-                                                          @RequestParam("parentDirectoryUuid") UUID parentDirectoryUuid,
+                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                           @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.newScriptFromFilter(filterId, scriptName, userId, parentDirectoryUuid));
     }
@@ -146,7 +149,7 @@ public class ExploreController {
     @GetMapping(value = "/explore/elements/metadata")
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
-    public ResponseEntity<Flux<ElementAttributes>> getElementsMetadata(@RequestParam("id") List<UUID> ids) {
+    public ResponseEntity<Flux<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids) {
         return ResponseEntity.ok().body(directoryService.getElementsMetadata(ids));
     }
 }
