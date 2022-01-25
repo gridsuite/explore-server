@@ -81,7 +81,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    private Mono<Void> deleteDirectoryElement(UUID elementUuid, String userId) {
+    public Mono<Void> deleteDirectoryElement(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
             .buildAndExpand(elementUuid)
@@ -152,11 +152,10 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public Mono<Void> deleteElement(UUID id, String userId) {
-        return getElementInfos(id).flatMap(elementAttributes ->
-            getGenericService(elementAttributes.getType())
-                .flatMap(s -> s.delete(id, userId))
-                .doOnSuccess(e -> deleteDirectoryElement(id, userId).subscribe())
-        );
+        return getElementInfos(id)
+            .flatMap(elementAttributes ->
+                getGenericService(elementAttributes.getType()).flatMap(s -> s.delete(id, userId))
+            );
     }
 
     private Mono<IDirectoryElementsService> getGenericService(String type) {

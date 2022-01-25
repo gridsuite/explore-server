@@ -143,7 +143,7 @@ public class ExploreController {
     @ApiResponses(@ApiResponse(responseCode = "200", description = "Directory/element was successfully removed"))
     public ResponseEntity<Mono<Void>> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
                                                     @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(directoryService.deleteElement(elementUuid, userId));
+        return ResponseEntity.ok().body(exploreService.deleteElement(elementUuid, userId));
     }
 
     @GetMapping(value = "/explore/elements/metadata")
