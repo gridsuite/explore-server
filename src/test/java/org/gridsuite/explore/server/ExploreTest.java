@@ -133,8 +133,6 @@ public class ExploreTest {
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
-                } else if (path.matches("/v1/studies/.*/private") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -210,7 +208,7 @@ public class ExploreTest {
     @Test
     public void testCreateStudyFromExistingCase() {
         webTestClient.post()
-                .uri("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&isPrivate=true&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                .uri("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -220,7 +218,7 @@ public class ExploreTest {
     @Test
     public void testCreateStudyFromExistingCaseError() {
         webTestClient.post()
-                .uri("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&isPrivate=true&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                .uri("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -237,8 +235,8 @@ public class ExploreTest {
                     .contentType(MediaType.TEXT_XML);
 
             webTestClient.post()
-                    .uri("/v1/explore/studies/{studyName}?description={description}&isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY1, "description", true, PARENT_DIRECTORY_UUID)
+                    .uri("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY1, "description", PARENT_DIRECTORY_UUID)
                     .header("userId", USER1)
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
@@ -257,8 +255,8 @@ public class ExploreTest {
                     .contentType(MediaType.TEXT_XML);
 
             webTestClient.post()
-                    .uri("/v1/explore/studies/{studyName}?description={description}&isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY_ERROR_NAME, "description", true, PARENT_DIRECTORY_UUID)
+                    .uri("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
                     .header("userId", USER1)
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
@@ -270,8 +268,8 @@ public class ExploreTest {
     @Test
     public void testCreateScriptContingencyList() {
         webTestClient.post()
-                .uri("/v1/explore/script-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                        "contingencyListScriptName", true, PARENT_DIRECTORY_UUID, null)
+                .uri("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
+                        "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Contingency list content"))
@@ -282,8 +280,8 @@ public class ExploreTest {
     @Test
     public void testCreateFormContingencyList() {
         webTestClient.post()
-                .uri("/v1/explore/form-contingency-lists/{listName}?isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                        "filterContingencyList", true, PARENT_DIRECTORY_UUID, null)
+                .uri("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                        "filterContingencyList", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Contingency list content"))
@@ -314,8 +312,8 @@ public class ExploreTest {
     @Test
     public void testCreateFilter() {
         webTestClient.post()
-                .uri("/v1/explore/filters?name={name}&type={type}&isPrivate={isPrivate}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                        "contingencyListScriptName", "", true, PARENT_DIRECTORY_UUID, null)
+                .uri("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                        "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue("Filter content"))

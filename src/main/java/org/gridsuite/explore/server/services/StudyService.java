@@ -54,10 +54,10 @@ public class StudyService implements IDirectoryElementsService {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, Boolean isPrivate, UUID caseUuid) {
+    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                        "/studies/cases/{caseUuid}?isPrivate={isPrivate}&studyUuid={studyUuid}")
-                .buildAndExpand(caseUuid, isPrivate, studyUuid)
+                        "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
+                .buildAndExpand(caseUuid, studyUuid)
                 .toUriString();
 
         return webClient.post()
@@ -69,14 +69,14 @@ public class StudyService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertStudyWithCaseFile(UUID studyUuid, String userId, Boolean isPrivate, Mono<FilePart> caseFile) {
+    public Mono<Void> insertStudyWithCaseFile(UUID studyUuid, String userId, Mono<FilePart> caseFile) {
         return caseFile.flatMap(file -> {
             MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
             multipartBodyBuilder.part("caseFile", file);
 
             String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                            "/studies?isPrivate={isPrivate}&studyUuid={studyUuid}")
-                    .buildAndExpand(isPrivate, studyUuid)
+                            "/studies?studyUuid={studyUuid}")
+                    .buildAndExpand(studyUuid)
                     .toUriString();
 
             return webClient.post()
