@@ -48,10 +48,9 @@ public class ExploreController {
     public ResponseEntity<Mono<Void>> createStudyFromExistingCase(@PathVariable("studyName") String studyName,
                                                                   @PathVariable("caseUuid") UUID caseUuid,
                                                                   @RequestParam("description") String description,
-                                                                  @RequestParam("isPrivate") Boolean isPrivate,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/studies/{studyName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -60,10 +59,9 @@ public class ExploreController {
     public ResponseEntity<Mono<Void>> createStudy(@PathVariable("studyName") String studyName,
                                                   @RequestPart("caseFile") FilePart caseFile,
                                                   @RequestParam("description") String description,
-                                                  @RequestParam("isPrivate") Boolean isPrivate,
                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(studyName, Mono.just(caseFile), description, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createStudy(studyName, Mono.just(caseFile), description, userId, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/script-contingency-lists/{listName}")
@@ -72,10 +70,9 @@ public class ExploreController {
     public ResponseEntity<Mono<Void>> createScriptContingencyList(@PathVariable("listName") String listName,
                                                                   @RequestBody(required = false) String content,
                                                                   @RequestParam("description") String description,
-                                                                  @RequestParam("isPrivate") Boolean isPrivate,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, description, userId, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/form-contingency-lists/{listName}")
@@ -84,10 +81,9 @@ public class ExploreController {
     public ResponseEntity<Mono<Void>> createFormContingencyList(@PathVariable("listName") String listName,
                                                                    @RequestBody(required = false) String content,
                                                                    @RequestParam("description") String description,
-                                                                   @RequestParam("isPrivate") Boolean isPrivate,
                                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFormContingencyList(listName, content, description, userId, isPrivate, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createFormContingencyList(listName, content, description, userId, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/form-contingency-lists/{id}/new-script/{scriptName}")
@@ -114,10 +110,9 @@ public class ExploreController {
     public ResponseEntity<Mono<Void>> createFilter(@RequestBody String filter,
                                                    @RequestParam("name") String filterName,
                                                    @RequestParam("description") String description,
-                                                   @RequestParam("isPrivate") Boolean isPrivate,
                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, description, isPrivate, parentDirectoryUuid, userId));
+        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, description, parentDirectoryUuid, userId));
     }
 
     @PostMapping(value = "/explore/filters/{id}/new-script/{scriptName}")

@@ -45,33 +45,32 @@ public class ExploreService {
         this.filterService = filterService;
     }
 
-    public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
-                new AccessRightsAttributes(isPrivate), userId, 0L, description);
+    public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
 
-        return studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, isPrivate, caseUuid)
+        return studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
-    public Mono<Void> createStudy(String studyName, Mono<FilePart> caseFile, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+    public Mono<Void> createStudy(String studyName, Mono<FilePart> caseFile, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
-                new AccessRightsAttributes(isPrivate), userId, 0L, description);
+                null, userId, 0L, description);
 
-        return studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, isPrivate, caseFile)
+        return studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
-    public Mono<Void> createScriptContingencyList(String listName, String content, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+    public Mono<Void> createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                new AccessRightsAttributes(isPrivate), userId, 0L, description);
+                null, userId, 0L, description);
 
         return contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
-    public Mono<Void> createFormContingencyList(String listName, String content, String description, String userId, Boolean isPrivate, UUID parentDirectoryUuid) {
+    public Mono<Void> createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                new AccessRightsAttributes(isPrivate), userId, 0L, description);
+                null, userId, 0L, description);
 
         return contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
@@ -103,9 +102,9 @@ public class ExploreService {
         });
     }
 
-    public Mono<Void> createFilter(String filter, String filterName, String description, Boolean isPrivate, UUID parentDirectoryUuid, String userId) {
+    public Mono<Void> createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
-                new AccessRightsAttributes(isPrivate), userId, 0, description);
+                null, userId, 0, description);
 
         return filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
