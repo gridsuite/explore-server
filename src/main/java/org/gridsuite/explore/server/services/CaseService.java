@@ -31,10 +31,6 @@ public class CaseService implements IDirectoryElementsService {
 
     private String caseServerBaseUri;
 
-    private static Mono<? extends Throwable> wrapRemoteError(ClientResponse response) {
-        return response.bodyToMono(String.class).map(e -> new ExploreException(ExploreException.Type.REMOTE_ERROR, e));
-    }
-
     public void setBaseUri(String actionsServerBaseUri) {
         this.caseServerBaseUri = actionsServerBaseUri;
     }
@@ -44,6 +40,12 @@ public class CaseService implements IDirectoryElementsService {
                         WebClient.Builder webClientBuilder) {
         this.caseServerBaseUri = studyServerBaseUri;
         this.webClient = webClientBuilder.build();
+    }
+
+    private static Mono<? extends Throwable> wrapRemoteError(ClientResponse response) {
+        return response.bodyToMono(String.class)
+            .switchIfEmpty(Mono.error(new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + response.statusCode() + "\"}")))
+            .flatMap(e -> Mono.error(new ExploreException(ExploreException.Type.REMOTE_ERROR, e)));
     }
 
     Mono<UUID> importCase(Mono<FilePart> multipartFile) {

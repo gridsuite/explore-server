@@ -142,7 +142,7 @@ public class ExploreTest {
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
-                        return new MockResponse().setResponseCode(409);
+                        return new MockResponse().setResponseCode(409).setBody("invalid file");
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
