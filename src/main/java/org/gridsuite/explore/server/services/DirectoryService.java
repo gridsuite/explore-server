@@ -49,15 +49,15 @@ public class DirectoryService implements IDirectoryElementsService {
 
     @Autowired
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
-                            WebClient.Builder webClientBuilder, FilterService filterService, ContingencyListService contingencyListService, StudyService studyService) {
+                            WebClient.Builder webClientBuilder, FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, CaseService caseService) {
         this.directoryServerBaseUri = directoryServerBaseUri;
         this.webClient = webClientBuilder.build();
         this.genericServices = Map.of(
             FILTER, filterService,
             CONTINGENCY_LIST, contingencyListService,
             STUDY, studyService,
-            DIRECTORY, this);
-
+            DIRECTORY, this,
+            CASE, caseService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {

@@ -24,6 +24,7 @@ import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 @Service
 public class ExploreService {
     static final String STUDY = "STUDY";
+    static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
     static final String DIRECTORY = "DIRECTORY";
@@ -32,17 +33,20 @@ public class ExploreService {
     private StudyService studyService;
     private ContingencyListService contingencyListService;
     private FilterService filterService;
+    private CaseService caseService;
 
     public ExploreService(
         DirectoryService directoryService,
         StudyService studyService,
         ContingencyListService contingencyListService,
-        FilterService filterService) {
+        FilterService filterService,
+        CaseService caseService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
+        this.caseService = caseService;
     }
 
     public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid) {
@@ -58,6 +62,12 @@ public class ExploreService {
 
         return studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    }
+
+    public Mono<Void> createCase(String caseName, Mono<FilePart> caseFile, String description, String userId, UUID parentDirectoryUuid) {
+        return caseService.importCase(caseFile).doOnSuccess(uuid ->
+            directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
+                parentDirectoryUuid, userId).subscribe()).then();
     }
 
     public Mono<Void> createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {

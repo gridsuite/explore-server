@@ -64,6 +64,17 @@ public class ExploreController {
         return ResponseEntity.ok().body(exploreService.createStudy(studyName, Mono.just(caseFile), description, userId, parentDirectoryUuid));
     }
 
+    @PostMapping(value = "/explore/cases/{caseName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "create a case")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case creation request delegated to case server")})
+    public ResponseEntity<Mono<Void>> createCase(@PathVariable("caseName") String caseName,
+                                                 @RequestPart("caseFile") FilePart caseFile,
+                                                 @RequestParam("description") String description,
+                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                 @RequestHeader("userId") String userId) {
+        return ResponseEntity.ok().body(exploreService.createCase(caseName, Mono.just(caseFile), description, userId, parentDirectoryUuid));
+    }
+
     @PostMapping(value = "/explore/script-contingency-lists/{listName}")
     @Operation(summary = "create a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
