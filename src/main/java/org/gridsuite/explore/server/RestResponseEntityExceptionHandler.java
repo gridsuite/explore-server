@@ -31,6 +31,8 @@ public class RestResponseEntityExceptionHandler {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CONTINGENCY_LIST_NOT_FOUND);
             case NOT_ALLOWED:
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
+            case REMOTE_ERROR:
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UNKNOWN_ELEMENT_TYPE);
             default:

@@ -1,5 +1,6 @@
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,10 @@ public class CaseService implements IDirectoryElementsService {
 
     private String caseServerBaseUri;
 
+    private static Mono<? extends Throwable> wrapRemoteError(ClientResponse response) {
+        return response.bodyToMono(String.class).map(e -> new ExploreException(ExploreException.Type.REMOTE_ERROR, e));
+    }
+
     public void setBaseUri(String actionsServerBaseUri) {
         this.caseServerBaseUri = actionsServerBaseUri;
     }
@@ -52,7 +57,7 @@ public class CaseService implements IDirectoryElementsService {
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA.toString())
                     .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()))
                     .retrieve()
-                    .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
+                    .onStatus(httpStatus -> httpStatus != HttpStatus.OK, CaseService::wrapRemoteError)
                     .bodyToMono(UUID.class)
                     .publishOn(Schedulers.boundedElastic())
                     .log(ROOT_CATEGORY_REACTOR, Level.FINE);

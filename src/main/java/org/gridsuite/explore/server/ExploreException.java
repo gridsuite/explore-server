@@ -18,7 +18,8 @@ public class ExploreException extends RuntimeException {
         CONTINGENCY_LIST_NOT_FOUND,
         FILTER_NOT_FOUND,
         NOT_ALLOWED,
-        UNKNOWN_ELEMENT_TYPE;
+        UNKNOWN_ELEMENT_TYPE,
+        REMOTE_ERROR;
     }
 
     private final Type type;

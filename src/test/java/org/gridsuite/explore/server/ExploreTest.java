@@ -140,7 +140,12 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     }
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
+                    String bodyStr = body.readUtf8();
+                    if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
+                        return new MockResponse().setResponseCode(409);
+                    } else {
                         return new MockResponse().setResponseCode(200);
+                    }
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -275,6 +280,26 @@ public class ExploreTest {
                 .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                 .exchange()
                 .expectStatus().isOk();
+        }
+    }
+
+    @Test
+    public void testCaseCreationError() throws IOException {
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
+            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+            bodyBuilder.part("caseFile", mockFile.getBytes())
+                .filename(TEST_FILE_WITH_ERRORS)
+                .contentType(MediaType.TEXT_XML);
+
+            webTestClient.post()
+                .uri("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                    STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST);
         }
     }
 
