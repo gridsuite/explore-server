@@ -14,3 +14,5 @@ backing-services:
     base-uri: http://localhost:5022
   filter-server:
     base-uri: http://localhost:5027
+  case-server:
+    base-uri: http://localhost:5000
