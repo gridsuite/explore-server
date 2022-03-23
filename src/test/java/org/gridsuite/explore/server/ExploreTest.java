@@ -15,6 +15,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.ContingencyListService;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.FilterService;
@@ -75,6 +76,9 @@ public class ExploreTest {
     private StudyService studyService;
 
     @Autowired
+    private CaseService caseService;
+
+    @Autowired
     private ObjectMapper mapper;
 
     private MockWebServer server;
@@ -108,6 +112,7 @@ public class ExploreTest {
         studyService.setStudyServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
+        caseService.setBaseUri(baseUrl);
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
@@ -115,6 +120,7 @@ public class ExploreTest {
         String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
+        String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0, null));
 
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
@@ -133,6 +139,13 @@ public class ExploreTest {
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
+                } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
+                    String bodyStr = body.readUtf8();
+                    if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
+                        return new MockResponse().setResponseCode(409).setBody("invalid file");
+                    } else {
+                        return new MockResponse().setResponseCode(200);
+                    }
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -141,6 +154,9 @@ public class ExploreTest {
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(caseAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
@@ -196,10 +212,12 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
+                        return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
                 }
-                return  new MockResponse().setResponseCode(500);
+                return  new MockResponse().setResponseCode(418);
             }
         };
         server.setDispatcher(dispatcher);
@@ -242,6 +260,46 @@ public class ExploreTest {
                     .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                     .exchange()
                     .expectStatus().isOk();
+        }
+    }
+
+    @Test
+    public void testCreateCase() throws IOException {
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
+            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+            bodyBuilder.part("caseFile", mockFile.getBytes())
+                .filename(TEST_FILE)
+                .contentType(MediaType.TEXT_XML);
+
+            webTestClient.post()
+                .uri("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                    STUDY1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                .exchange()
+                .expectStatus().isOk();
+        }
+    }
+
+    @Test
+    public void testCaseCreationError() throws IOException {
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
+            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+            bodyBuilder.part("caseFile", mockFile.getBytes())
+                .filename(TEST_FILE_WITH_ERRORS)
+                .contentType(MediaType.TEXT_XML);
+
+            webTestClient.post()
+                .uri("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                    STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -367,6 +425,7 @@ public class ExploreTest {
         deleteElement(CONTINGENCY_LIST_UUID);
         deleteElementInvalidType(INVALID_ELEMENT_UUID);
         deleteElement(PARENT_DIRECTORY_UUID);
+        deleteElement(CASE_UUID);
     }
 
     @Test
