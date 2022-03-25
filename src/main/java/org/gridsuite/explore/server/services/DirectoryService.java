@@ -174,7 +174,7 @@ public class DirectoryService implements IDirectoryElementsService {
     @Override
     public Mono<Void> delete(UUID id, String userId) {
         return getDirectoryElements(id, userId).flatMap(e -> deleteElement(e.getElementUuid(), userId))
-            .then();
+            .then(deleteDirectoryElement(id, userId));
     }
 
 }
