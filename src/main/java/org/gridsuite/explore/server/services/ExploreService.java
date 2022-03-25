@@ -147,6 +147,7 @@ public class ExploreService {
     }
 
     public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.deleteElement(id, userId);
+        return directoryService.deleteElement(id, userId)
+            .doOnSuccess(e -> directoryService.deleteDirectoryElement(id, userId).subscribe());
     }
 }
