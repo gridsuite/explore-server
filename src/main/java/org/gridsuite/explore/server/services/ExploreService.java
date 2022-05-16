@@ -64,10 +64,24 @@ public class ExploreService {
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
+    public Mono<Void> createStudy(UUID parentStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
+                null, userId, 0L, description);
+
+        return studyService.insertStudy(parentStudyUuid, elementAttributes.getElementUuid(), userId)
+                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    }
+
     public Mono<Void> createCase(String caseName, Mono<FilePart> caseFile, String description, String userId, UUID parentDirectoryUuid) {
         return caseService.importCase(caseFile).doOnSuccess(uuid ->
             directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
                 parentDirectoryUuid, userId).subscribe()).then();
+    }
+
+    public Mono<Void> createCase(String caseName, String description, String userId, UUID parentCaseUuid, UUID parentDirectoryUuid) {
+        return caseService.createCase(parentCaseUuid).doOnSuccess(uuid ->
+                directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
+                        null, userId, 0L, description), parentDirectoryUuid, userId).subscribe()).then();
     }
 
     public Mono<Void> createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
@@ -78,11 +92,27 @@ public class ExploreService {
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
+    public Mono<Void> createScriptContingencyList(UUID parentListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
+                null, userId, 0L, description);
+
+        return contingencyListService.insertScriptContingencyList(parentListId, elementAttributes.getElementUuid())
+                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    }
+
     public Mono<Void> createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
 
         return contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content)
+                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    }
+
+    public Mono<Void> createFormContingencyList(UUID parentListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
+                null, userId, 0L, description);
+
+        return contingencyListService.insertFormContingencyList(parentListId, elementAttributes.getElementUuid())
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
@@ -117,6 +147,14 @@ public class ExploreService {
                 null, userId, 0, description);
 
         return filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId)
+                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+    }
+
+    public Mono<Void> createFilter(String filterName, String description, UUID parentFilterUuid, UUID parentDirectoryUuid, String userId) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
+                null, userId, 0, description);
+
+        return filterService.insertFilter(parentFilterUuid, elementAttributes.getElementUuid(), userId)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 

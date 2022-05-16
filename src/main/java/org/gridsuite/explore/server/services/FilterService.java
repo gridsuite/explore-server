@@ -112,6 +112,22 @@ public class FilterService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
+    public Mono<Void> insertFilter(UUID parentFilterId, UUID filterId, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters")
+                .queryParam("duplicateFrom", parentFilterId)
+                .queryParam("id", filterId)
+                .buildAndExpand(parentFilterId)
+                .toUriString();
+
+        return webClient.post()
+                .uri(filterServerBaseUri + path)
+                .header(HEADER_USER_ID, userId)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
     @Override
     public Flux<Map<String, Object>> getMetadata(List<UUID> filtersUuids) {
         var ids = filtersUuids.stream().map(UUID::toString).collect(Collectors.joining(","));

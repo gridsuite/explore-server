@@ -91,6 +91,23 @@ public class StudyService implements IDirectoryElementsService {
         });
     }
 
+    public Mono<Void> insertStudy(UUID parentStudyUuid, UUID studyUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                        "/studies")
+                .queryParam("duplicateFrom", parentStudyUuid)
+                .queryParam("studyUuid", studyUuid)
+                .toUriString();
+
+        return webClient.post()
+                .uri(studyServerBaseUri + path)
+                .header(HEADER_USER_ID, userId)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+
+    }
+
     @Override
     public Mono<Void> delete(UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")

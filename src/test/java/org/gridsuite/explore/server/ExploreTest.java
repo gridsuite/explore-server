@@ -95,6 +95,8 @@ public class ExploreTest {
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
+    private static final String CASE1 = "case1";
+    private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
 
     @Before
@@ -177,6 +179,8 @@ public class ExploreTest {
                 } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/filters.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
@@ -432,6 +436,56 @@ public class ExploreTest {
     public void testGetElementsMetadata() {
         webTestClient.get()
                 .uri("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
+                .header("userId", USER1)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void testDuplicateCase() {
+        webTestClient.post()
+                .uri("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void testDuplicateFilter() {
+        webTestClient.post()
+                .uri("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void testDuplicateScriptContingencyList() {
+        webTestClient.post()
+                .uri("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void testDuplicateFormContingencyList() {
+        webTestClient.post()
+                .uri("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    public void testDuplicateStudy() {
+        webTestClient.post()
+                .uri("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .exchange()
                 .expectStatus().isOk();
