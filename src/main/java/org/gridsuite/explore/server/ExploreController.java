@@ -65,7 +65,7 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/studies")
-    @Operation(summary = "create a study from an existing one")
+    @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
     public ResponseEntity<Mono<Void>> createStudy(@RequestParam("duplicateFrom") UUID parentStudyUuid,
                                                   @RequestParam("studyName") String studyName,
@@ -87,9 +87,9 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/cases")
-    @Operation(summary = "duplicate a case")
+    @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
-    public ResponseEntity<Mono<Void>> duplicateCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
+    public ResponseEntity<Mono<Void>> createCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
                                                     @RequestParam("caseName") String caseName,
                                                     @RequestParam("description") String description,
                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
@@ -109,9 +109,9 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/script-contingency-lists")
-    @Operation(summary = "create a script contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been duplicated")})
-    public ResponseEntity<Mono<Void>> duplicateScriptContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+    @Operation(summary = "Duplicate a script contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
+    public ResponseEntity<Mono<Void>> createScriptContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
                                                                      @RequestParam("listName") String listName,
                                                                      @RequestParam("description") String description,
                                                                      @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
@@ -131,9 +131,9 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/form-contingency-lists")
-    @Operation(summary = "create a form contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been duplicated")})
-    public ResponseEntity<Mono<Void>> duplicateFormContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+    @Operation(summary = "Duplicate a form contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
+    public ResponseEntity<Mono<Void>> createFormContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
                                                                    @RequestParam("listName") String listName,
                                                                    @RequestParam("description") String description,
                                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
@@ -171,9 +171,9 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/filters")
-    @Operation(summary = "Create a new script from a filter")
+    @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
-    public ResponseEntity<Mono<Void>> duplicateFilter(@RequestParam("duplicateFrom") UUID parentFilterId,
+    public ResponseEntity<Mono<Void>> createFilter(@RequestParam("duplicateFrom") UUID parentFilterId,
                                                           @RequestParam("name") String filterName,
                                                           @RequestParam("description") String description,
                                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
