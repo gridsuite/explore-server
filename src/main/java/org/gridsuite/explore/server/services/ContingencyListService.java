@@ -80,9 +80,9 @@ public class ContingencyListService implements IDirectoryElementsService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertScriptContingencyList(UUID parentListId, UUID id) {
+    public Mono<Void> insertScriptContingencyList(UUID sourceListId, UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists")
-                .queryParam("duplicateFrom", parentListId)
+                .queryParam("duplicateFrom", sourceListId)
                 .queryParam("id", id)
                 .toUriString();
 
@@ -109,9 +109,9 @@ public class ContingencyListService implements IDirectoryElementsService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertFormContingencyList(UUID parentListId, UUID id) {
+    public Mono<Void> insertFormContingencyList(UUID sourceListId, UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
-                .queryParam("duplicateFrom", parentListId)
+                .queryParam("duplicateFrom", sourceListId)
                 .queryParam("id", id)
                 .toUriString();
 

@@ -112,11 +112,10 @@ public class FilterService implements IDirectoryElementsService {
                 .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertFilter(UUID parentFilterId, UUID filterId, String userId) {
+    public Mono<Void> insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters")
-                .queryParam("duplicateFrom", parentFilterId)
+                .queryParam("duplicateFrom", sourceFilterId)
                 .queryParam("id", filterId)
-                .buildAndExpand(parentFilterId)
                 .toUriString();
 
         return webClient.post()

@@ -91,10 +91,10 @@ public class StudyService implements IDirectoryElementsService {
         });
     }
 
-    public Mono<Void> insertStudy(UUID parentStudyUuid, UUID studyUuid, String userId) {
+    public Mono<Void> insertStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies")
-                .queryParam("duplicateFrom", parentStudyUuid)
+                .queryParam("duplicateFrom", sourceStudyUuid)
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
 
