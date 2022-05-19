@@ -67,12 +67,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Mono<Void>> createStudy(@RequestParam("duplicateFrom") UUID parentStudyUuid,
+    public ResponseEntity<Mono<Void>> createStudy(@RequestParam("duplicateFrom") UUID sourceStudyUuid,
                                                   @RequestParam("studyName") String studyName,
                                                   @RequestParam("description") String description,
                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(parentStudyUuid, studyName, description, userId, parentDirectoryUuid));
+        return ResponseEntity.ok().body(exploreService.createStudy(sourceStudyUuid, studyName, description, userId, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/cases/{caseName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
