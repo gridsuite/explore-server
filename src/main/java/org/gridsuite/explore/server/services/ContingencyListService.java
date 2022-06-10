@@ -80,6 +80,20 @@ public class ContingencyListService implements IDirectoryElementsService {
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
+    public Mono<Void> insertScriptContingencyList(UUID sourceListId, UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists")
+                .queryParam("duplicateFrom", sourceListId)
+                .queryParam("id", id)
+                .toUriString();
+
+        return webClient.post()
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
     public Mono<Void> insertFormContingencyList(UUID id, String content) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists?id={id}")
             .buildAndExpand(id)
@@ -93,6 +107,20 @@ public class ContingencyListService implements IDirectoryElementsService {
             .bodyToMono(Void.class)
             .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    public Mono<Void> insertFormContingencyList(UUID sourceListId, UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
+                .queryParam("duplicateFrom", sourceListId)
+                .queryParam("id", id)
+                .toUriString();
+
+        return webClient.post()
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .publishOn(Schedulers.boundedElastic())
+                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
     public Mono<Void> newScriptFromFormContingencyList(UUID id, UUID newId) {

@@ -66,6 +66,17 @@ public class CaseService implements IDirectoryElementsService {
             });
     }
 
+    Mono<UUID> createCase(UUID sourceCaseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
+                .queryParam("duplicateFrom", sourceCaseUuid)
+                .toUriString();
+        return  webClient.post()
+                            .uri(caseServerBaseUri + path)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .retrieve()
+                            .bodyToMono(UUID.class);
+    }
+
     @Override
     public Mono<Void> delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{id}")
