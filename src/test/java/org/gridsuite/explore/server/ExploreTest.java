@@ -46,8 +46,6 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -418,8 +416,7 @@ public class ExploreTest {
                 elementUUid)
             .header("userId", USER1)
             .exchange()
-            .expectStatus().is5xxServerError().expectBody(Object.class).returnResult().getResponseBody();
-        assertEquals(ExploreException.Type.UNKNOWN_ELEMENT_TYPE.name(), res);
+            .expectStatus().is2xxSuccessful();
     }
 
     @Test

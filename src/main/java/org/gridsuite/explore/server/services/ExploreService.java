@@ -9,6 +9,8 @@ package org.gridsuite.explore.server.services;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -34,6 +36,8 @@ public class ExploreService {
     private ContingencyListService contingencyListService;
     private FilterService filterService;
     private CaseService caseService;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
 
     public ExploreService(
         DirectoryService directoryService,
@@ -186,6 +190,12 @@ public class ExploreService {
 
     public Mono<Void> deleteElement(UUID id, String userId) {
         return directoryService.deleteElement(id, userId)
-            .doOnSuccess(e -> directoryService.deleteDirectoryElement(id, userId).subscribe());
+                .doOnSuccess(e -> directoryService.deleteDirectoryElement(id, userId).subscribe())
+                // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
+                .onErrorResume(e -> {
+                    directoryService.deleteDirectoryElement(id, userId).subscribe();
+                    LOGGER.error(e.toString(), e);
+                    return Mono.empty();
+                });
     }
 }
