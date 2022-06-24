@@ -193,9 +193,8 @@ public class ExploreService {
                 .doOnSuccess(e -> directoryService.deleteDirectoryElement(id, userId).subscribe())
                 // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
                 .onErrorResume(e -> {
-                    directoryService.deleteDirectoryElement(id, userId).subscribe();
                     LOGGER.error(e.toString(), e);
-                    return Mono.empty();
+                    return directoryService.deleteDirectoryElement(id, userId);
                 });
     }
 }
