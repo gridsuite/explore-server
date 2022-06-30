@@ -6,6 +6,8 @@
  */
 package org.gridsuite.explore.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,8 +21,13 @@ import static org.gridsuite.explore.server.ExploreException.Type.*;
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestResponseEntityExceptionHandler.class);
+
     @ExceptionHandler(value = {ExploreException.class})
     protected ResponseEntity<Object> handleException(RuntimeException exception) {
+        if (LOGGER.isErrorEnabled()) {
+            LOGGER.error(exception.getMessage(), exception);
+        }
         ExploreException exploreException = (ExploreException) exception;
         switch (exploreException.getType()) {
             case STUDY_NOT_FOUND:
