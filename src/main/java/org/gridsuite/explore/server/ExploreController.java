@@ -49,8 +49,9 @@ public class ExploreController {
                                                                   @PathVariable("caseUuid") UUID caseUuid,
                                                                   @RequestParam("description") String description,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                  @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid));
+                                                                  @RequestHeader("userId") String userId,
+                                                                  @RequestBody(required = false) String importParams) {
+        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams));
     }
 
     @PostMapping(value = "/explore/studies/{studyName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -95,6 +96,13 @@ public class ExploreController {
                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                  @RequestHeader("userId") String userId) {
         return ResponseEntity.ok().body(exploreService.createCase(caseName, description, userId, parentCaseUuid, parentDirectoryUuid));
+    }
+
+    @GetMapping(value = "/explore/cases/{caseUuid}/import-parameters")
+    @Operation(summary = "get import parameters for specific case")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Import parameters for specific case")})
+    public ResponseEntity<Mono<String>> getCaseImportParameters(@PathVariable("caseUuid") UUID caseUuid) {
+        return ResponseEntity.ok().body(exploreService.getCaseImportParameters(caseUuid));
     }
 
     @PostMapping(value = "/explore/script-contingency-lists/{listName}")

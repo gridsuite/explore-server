@@ -53,10 +53,10 @@ public class ExploreService {
         this.caseService = caseService;
     }
 
-    public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid) {
+    public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, String importParams) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
 
-        return studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid)
+        return studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams)
                 .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
     }
 
@@ -196,5 +196,9 @@ public class ExploreService {
                     LOGGER.error(e.toString(), e);
                     return directoryService.deleteDirectoryElement(id, userId);
                 });
+    }
+
+    public Mono<String> getCaseImportParameters(UUID caseUuid) {
+        return studyService.getCaseImportParameters(caseUuid);
     }
 }

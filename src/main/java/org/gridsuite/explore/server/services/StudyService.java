@@ -54,7 +54,7 @@ public class StudyService implements IDirectoryElementsService {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid) {
+    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, String importParams) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
                 .buildAndExpand(caseUuid, studyUuid)
@@ -63,6 +63,7 @@ public class StudyService implements IDirectoryElementsService {
         return webClient.post()
                 .uri(studyServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
+                .body(BodyInserters.fromValue(importParams))
                 .retrieve()
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
@@ -137,5 +138,16 @@ public class StudyService implements IDirectoryElementsService {
             })
             .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+    }
+
+    public Mono<String> getCaseImportParameters(UUID caseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/cases/{caseUuid}/import-parameters")
+                .buildAndExpand(caseUuid)
+                .toUriString();
+
+        return webClient.get()
+                .uri(studyServerBaseUri + path)
+                .retrieve()
+                .bodyToMono(String.class);
     }
 }
