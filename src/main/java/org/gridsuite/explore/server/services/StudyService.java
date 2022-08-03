@@ -64,7 +64,7 @@ public class StudyService implements IDirectoryElementsService {
                 .uri(studyServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
-                .body(importParams != null ? BodyInserters.fromValue(importParams) : null)
+                .body(importParams != null ? BodyInserters.fromValue(importParams) : BodyInserters.empty())
                 .retrieve()
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())
