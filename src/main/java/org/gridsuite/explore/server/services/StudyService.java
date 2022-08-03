@@ -23,7 +23,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,7 +54,7 @@ public class StudyService implements IDirectoryElementsService {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, HashMap<String, Object> importParams) {
+    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, Map<String, Object> importParams) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
                 .buildAndExpand(caseUuid, studyUuid)
@@ -65,7 +64,7 @@ public class StudyService implements IDirectoryElementsService {
                 .uri(studyServerBaseUri + path)
                 .header(HEADER_USER_ID, userId)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
-                .body(BodyInserters.fromValue(importParams))
+                .body(importParams != null ? BodyInserters.fromValue(importParams) : null)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .publishOn(Schedulers.boundedElastic())

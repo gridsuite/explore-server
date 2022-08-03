@@ -21,7 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -51,7 +51,7 @@ public class ExploreController {
                                                                   @RequestParam("description") String description,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                   @RequestHeader("userId") String userId,
-                                                                  @RequestBody(required = false) HashMap<String, Object> importParams) {
+                                                                  @RequestBody(required = false) Map<String, Object> importParams) {
         return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams));
     }
 
