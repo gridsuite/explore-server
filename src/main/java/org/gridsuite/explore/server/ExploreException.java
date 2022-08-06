@@ -19,7 +19,21 @@ public class ExploreException extends RuntimeException {
         FILTER_NOT_FOUND,
         NOT_ALLOWED,
         UNKNOWN_ELEMENT_TYPE,
-        REMOTE_ERROR;
+        REMOTE_ERROR,
+        DELETE_CASE_FAILED,
+
+        IMPORT_CASE_FAILED,
+
+        DELETE_STUDY_FAILED,
+
+        DELETE_FILTER_FAILED,
+        DELETE_ACTION_SERVER_FAILED,
+
+        INSERT_STUDY_FAILED,
+        CREATE_ELEMENT_FAILED,
+        REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED,
+
+        NOTIFICATION_DIRECTORY_CHANGED;
     }
 
     private final Type type;

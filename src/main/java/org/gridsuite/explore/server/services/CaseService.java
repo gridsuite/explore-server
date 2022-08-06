@@ -10,21 +10,22 @@ package org.gridsuite.explore.server.services;
 import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
-import java.util.logging.Level;
+
+import static org.gridsuite.explore.server.ExploreException.Type.DELETE_CASE_FAILED;
+import static org.gridsuite.explore.server.ExploreException.Type.IMPORT_CASE_FAILED;
 
 @Service
 public class CaseService implements IDirectoryElementsService {
@@ -34,69 +35,80 @@ public class CaseService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private final WebClient webClient;
-
     private String caseServerBaseUri;
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public void setBaseUri(String actionsServerBaseUri) {
         this.caseServerBaseUri = actionsServerBaseUri;
     }
 
     @Autowired
-    public CaseService(@Value("${backing-services.case-server.base-uri:http://case-server/}") String studyServerBaseUri,
-                        WebClient.Builder webClientBuilder) {
+    public CaseService(@Value("${backing-services.case-server.base-uri:http://case-server/}") String studyServerBaseUri) {
         this.caseServerBaseUri = studyServerBaseUri;
-        this.webClient = webClientBuilder.build();
     }
 
-    private static Mono<? extends Throwable> wrapRemoteError(ClientResponse response) {
-        return response.bodyToMono(String.class)
-            .switchIfEmpty(Mono.error(new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + response.statusCode() + "\"}")))
-            .flatMap(e -> Mono.error(new ExploreException(ExploreException.Type.REMOTE_ERROR, e)));
+    private static ExploreException wrapRemoteError(String response, HttpStatus statusCode) {
+        if (!"".equals(response)) {
+            throw new ExploreException(ExploreException.Type.REMOTE_ERROR, response);
+        } else {
+            throw new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + statusCode + "\"}");
+        }
     }
 
-    Mono<UUID> importCase(Mono<FilePart> multipartFile) {
-        return multipartFile
-            .flatMap(file -> {
-                MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-                multipartBodyBuilder.part("file", file);
-
-                return webClient.post()
-                    .uri(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases/private")
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA.toString())
-                    .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()))
-                    .retrieve()
-                    .onStatus(httpStatus -> httpStatus != HttpStatus.OK, CaseService::wrapRemoteError)
-                    .bodyToMono(UUID.class)
-                    .publishOn(Schedulers.boundedElastic())
-                    .log(ROOT_CATEGORY_REACTOR, Level.FINE);
-            });
+    public void multipartFileToFile(
+            MultipartFile multipart,
+            Path dir
+    ) throws IOException {
+        Path filepath = Paths.get(dir.toString(), multipart.getOriginalFilename());
+        multipart.transferTo(filepath);
     }
 
-    Mono<UUID> createCase(UUID sourceCaseUuid) {
+    UUID importCase(MultipartFile multipartFile) {
+
+        MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
+        UUID caseUuid = null;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        try {
+            multipartBodyBuilder.part("file", multipartFile.getBytes()).filename(multipartFile.getOriginalFilename());
+        } catch (IOException e) {
+            throw new ExploreException(IMPORT_CASE_FAILED);
+        }
+        HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
+                multipartBodyBuilder.build(), headers);
+        try {
+            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases/private", request, UUID.class);
+        } catch (HttpStatusCodeException e) {
+            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
+        }
+        return caseUuid;
+    }
+
+    UUID createCase(UUID sourceCaseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
                 .queryParam("duplicateFrom", sourceCaseUuid)
                 .toUriString();
-        return  webClient.post()
-                            .uri(caseServerBaseUri + path)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .retrieve()
-                            .bodyToMono(UUID.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
     }
 
     @Override
-    public Mono<Void> delete(UUID id, String userId) {
+    public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{id}")
-            .buildAndExpand(id)
-            .toUriString();
-
-        return webClient.delete()
-            .uri(caseServerBaseUri + path)
-            .header(HEADER_USER_ID, userId)
-            .retrieve()
-            .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        try {
+            restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        } catch (HttpStatusCodeException e) {
+            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+                throw new ExploreException(DELETE_CASE_FAILED, e.getMessage());
+            } else {
+                throw e;
+            }
+        }
     }
 }

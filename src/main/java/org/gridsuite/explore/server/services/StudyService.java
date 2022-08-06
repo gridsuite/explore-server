@@ -6,28 +6,27 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -40,37 +39,70 @@ public class StudyService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private final WebClient webClient;
+    private final WebClient webClient = null;
     private String studyServerBaseUri;
 
+    private final RestTemplate restTemplate = new RestTemplate();
+
     @Autowired
-    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri,
-                            WebClient.Builder webClientBuilder) {
+    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri
+            /*WebClient.Builder webClientBuilder*/) {
         this.studyServerBaseUri = studyServerBaseUri;
-        this.webClient = webClientBuilder.build();
+        // this.webClient = webClientBuilder.build();
     }
 
     public void setStudyServerBaseUri(String studyServerBaseUri) {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public Mono<Void> insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid) {
+    public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
                 .buildAndExpand(caseUuid, studyUuid)
                 .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        try {
+            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(INSERT_STUDY_FAILED);
+        }
 
-        return webClient.post()
-                .uri(studyServerBaseUri + path)
-                .header(HEADER_USER_ID, userId)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertStudyWithCaseFile(UUID studyUuid, String userId, Mono<FilePart> caseFile) {
-        return caseFile.flatMap(file -> {
+    private HttpHeaders getHeaders(String userId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HEADER_USER_ID, userId);
+        return headers;
+    }
+
+    public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
+        MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
+        // multipartBodyBuilder.part("caseFile", caseFile);
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                        "/studies?studyUuid={studyUuid}")
+                .buildAndExpand(studyUuid)
+                .toUriString();
+
+        try {
+            multipartBodyBuilder.part("file", caseFile.getBytes()).filename(caseFile.getOriginalFilename());
+        } catch (IOException e) {
+            throw new ExploreException(IMPORT_CASE_FAILED);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.add(HEADER_USER_ID, userId);
+        HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
+                multipartBodyBuilder.build(), headers);
+        try {
+            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(INSERT_STUDY_FAILED);
+        }
+
+        /*return caseFile.flatMap(file -> {
             MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
             multipartBodyBuilder.part("caseFile", file);
 
@@ -88,54 +120,45 @@ public class StudyService implements IDirectoryElementsService {
                     .bodyToMono(Void.class)
                     .publishOn(Schedulers.boundedElastic())
                     .log(ROOT_CATEGORY_REACTOR, Level.FINE);
-        });
+        });*/
     }
 
-    public Mono<Void> insertStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
+    public void insertStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies")
                 .queryParam("duplicateFrom", sourceStudyUuid)
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
-
-        return webClient.post()
-                .uri(studyServerBaseUri + path)
-                .header(HEADER_USER_ID, userId)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
 
     }
 
     @Override
-    public Mono<Void> delete(UUID studyUuid, String userId) {
+    public void delete(UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
 
-        return webClient.delete()
-                .uri(studyServerBaseUri + path)
-                .header(HEADER_USER_ID, userId)
-                .retrieve()
-                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        try {
+            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        } catch (HttpStatusCodeException e) {
+            if (HttpStatus.OK != e.getStatusCode()) {
+                throw new ExploreException(DELETE_STUDY_FAILED);
+            } else {
+                throw e;
+            }
+        }
     }
 
     @Override
-    public Flux<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
+    public List<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
         var ids = studiesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
-            .buildAndExpand()
-            .toUriString();
-        return webClient.get()
-            .uri(studyServerBaseUri + path)
-            .retrieve()
-            .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
-            })
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand()
+                .toUriString();
+
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+        }).getBody();
+
     }
 }

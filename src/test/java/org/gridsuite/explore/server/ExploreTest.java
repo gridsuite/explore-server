@@ -11,34 +11,26 @@ import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.CaseService;
-import org.gridsuite.explore.server.services.ContingencyListService;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.FilterService;
-import org.gridsuite.explore.server.services.StudyService;
+import org.gridsuite.explore.server.services.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.reactive.config.EnableWebFlux;
-
-import okhttp3.mockwebserver.MockWebServer;
-import org.springframework.web.reactive.function.BodyInserters;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -46,17 +38,19 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @RunWith(SpringRunner.class)
-@AutoConfigureWebTestClient(timeout = "20000")
-@EnableWebFlux
+@AutoConfigureMockMvc
 @SpringBootTest
 @ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 public class ExploreTest {
     @Autowired
-    private WebTestClient webTestClient;
+    private MockMvc mockMvc;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -152,7 +146,13 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.contains("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY")) {
+                    return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.equals("/v1/elements/" + FILTER_UUID + "/notification?type=UPDATE_DIRECTORY")) {
                     return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
@@ -186,16 +186,16 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
-                        return new MockResponse().setBody(invalidElementAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
-                        return new MockResponse().setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
-                        return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200) .addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/filters/metadata[?]ids=" + FILTER_UUID)) {
-                        return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse().setBody(filterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(privateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -219,34 +219,31 @@ public class ExploreTest {
                     }
                     return new MockResponse().setResponseCode(404);
                 }
-                return  new MockResponse().setResponseCode(418);
+                return new MockResponse().setResponseCode(418);
             }
         };
         server.setDispatcher(dispatcher);
     }
 
     @Test
-    public void testCreateStudyFromExistingCase() {
-        webTestClient.post()
-                .uri("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
+    public void testCreateStudyFromExistingCase() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                .header("userId", "userId")
                 .contentType(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpect(status().isOk());
+
     }
 
     @Test
-    public void testCreateStudyFromExistingCaseError() {
-        webTestClient.post()
-                .uri("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    public void testCreateStudyFromExistingCaseError() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
-    public void testCreateStudy() throws IOException {
+    public void testCreateStudy() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
@@ -254,59 +251,34 @@ public class ExploreTest {
                     .filename(TEST_FILE)
                     .contentType(MediaType.TEXT_XML);
 
-            webTestClient.post()
-                    .uri("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY1, "description", PARENT_DIRECTORY_UUID)
-                    .header("userId", USER1)
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                    .exchange()
-                    .expectStatus().isOk();
+            mockMvc.perform(multipart("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER1)
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
+                    .andExpect(status().isOk());
         }
     }
 
     @Test
-    public void testCreateCase() throws IOException {
+    public void testCreateCase() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                .filename(TEST_FILE)
-                .contentType(MediaType.TEXT_XML);
+                    .filename(TEST_FILE)
+                    .contentType(MediaType.TEXT_XML);
 
-            webTestClient.post()
-                .uri("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                    STUDY1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                .exchange()
-                .expectStatus().isOk();
+            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER1)
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                    )
+                    .andExpect(status().isOk());
         }
     }
 
     @Test
-    public void testCaseCreationError() throws IOException {
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
-            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
-            bodyBuilder.part("caseFile", mockFile.getBytes())
-                .filename(TEST_FILE_WITH_ERRORS)
-                .contentType(MediaType.TEXT_XML);
-
-            webTestClient.post()
-                .uri("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                    STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                .exchange()
-                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @Test
-    public void testCreateStudyError() throws IOException {
+    public void testCaseCreationError() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
@@ -314,113 +286,119 @@ public class ExploreTest {
                     .filename(TEST_FILE_WITH_ERRORS)
                     .contentType(MediaType.TEXT_XML);
 
-            webTestClient.post()
-                    .uri("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
-                    .header("userId", USER1)
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
-                    .exchange()
-                    .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER1)
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
+                    .andExpect(status().isBadRequest());
+
         }
     }
 
     @Test
-    public void testCreateScriptContingencyList() {
-        webTestClient.post()
-                .uri("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                        "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
+    public void testCreateStudyError() throws Exception {
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
+            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+            bodyBuilder.part("caseFile", mockFile.getBytes())
+                    .filename(TEST_FILE_WITH_ERRORS)
+                    .contentType(MediaType.TEXT_XML);
+
+            mockMvc.perform(multipart("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER1)
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
+                    .andExpect(status().isInternalServerError());
+
+        }
+    }
+
+    @Test
+    public void testCreateScriptContingencyList() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
+                "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue("Contingency list content"))
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpect(status().isOk());
     }
 
     @Test
-    public void testCreateFormContingencyList() {
-        webTestClient.post()
-                .uri("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                        "filterContingencyList", PARENT_DIRECTORY_UUID, null)
+    public void testCreateFormContingencyList() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                "filterContingencyList", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue("Contingency list content"))
-                .exchange()
-                .expectStatus().isOk();
+                .content("Contingency list content")
+        ).andExpect(status().isOk());
+
     }
 
     @Test
-    public void testNewScriptFromFormContingencyList() {
-        webTestClient.post()
-            .uri("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                    CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
-            .header("userId", USER1)
-            .exchange()
-            .expectStatus().isOk();
+    public void testNewScriptFromFormContingencyList() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
+                CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
     }
 
     @Test
-    public void testReplaceFormContingencyListWithScript() {
-        webTestClient.post()
-            .uri("/v1/explore/form-contingency-lists/{id}/replace-with-script",
-                    CONTINGENCY_LIST_UUID)
-            .header("userId", USER1)
-            .exchange()
-            .expectStatus().isOk();
+    public void testReplaceFormContingencyListWithScript() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script",
+                CONTINGENCY_LIST_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
     }
 
     @Test
-    public void testCreateFilter() {
-        webTestClient.post()
-                .uri("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                        "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
+    public void testCreateFilter() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue("Filter content"))
-                .exchange()
-                .expectStatus().isOk();
+                .content("Filter content")
+        ).andExpect(status().isOk());
     }
 
     @Test
-    public void testNewScriptFromFilter() {
-        webTestClient.post()
-                .uri("/v1/explore/filters/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                        FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
+    public void testNewScriptFromFilter() throws Exception {
+        mockMvc.perform(post("/v1/explore/filters/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
+                FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpect(status().isOk());
     }
 
     @Test
-    public void testReplaceFilterWithScript() {
-        webTestClient.post()
-                .uri("/v1/explore/filters/{id}/replace-with-script",
-                        FILTER_UUID)
+    public void testReplaceFilterWithScript() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/filters/{id}/replace-with-script",
+                FILTER_UUID)
                 .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpect(status().isOk());
+
     }
 
-    public void deleteElement(UUID elementUUid) {
-        webTestClient.delete()
-                .uri("/v1/explore/elements/{elementUuid}",
-                        elementUUid)
-                .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+    public void deleteElement(UUID elementUUid) throws Exception {
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
+                        elementUUid).header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
-    public void deleteElementInvalidType(UUID elementUUid) {
-        var res = webTestClient.delete()
-            .uri("/v1/explore/elements/{elementUuid}",
-                elementUUid)
-            .header("userId", USER1)
-            .exchange()
-            .expectStatus().is2xxSuccessful();
+    public void deleteElementInvalidType(UUID elementUUid) throws Exception {
+
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid)
+                        .header("userId", USER1))
+                .andExpect(status().is2xxSuccessful());
     }
 
     @Test
-    public void testDeleteElement() {
+    public void testDeleteElement() throws Exception {
         deleteElement(FILTER_UUID);
         deleteElement(PRIVATE_STUDY_UUID);
         deleteElement(CONTINGENCY_LIST_UUID);
@@ -430,61 +408,48 @@ public class ExploreTest {
     }
 
     @Test
-    public void testGetElementsMetadata() {
-        webTestClient.get()
-                .uri("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
+    public void testGetElementsMetadata() throws Exception {
+
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
                 .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpectAll(status().isOk());
     }
 
     @Test
-    public void testDuplicateCase() {
-        webTestClient.post()
-                .uri("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+    public void testDuplicateCase() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1)).andExpect(status().isOk());
+
     }
 
     @Test
-    public void testDuplicateFilter() {
-        webTestClient.post()
-                .uri("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+    public void testDuplicateFilter() throws Exception {
+        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)).andExpect(status().isOk());
     }
 
     @Test
-    public void testDuplicateScriptContingencyList() {
-        webTestClient.post()
-                .uri("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+    public void testDuplicateScriptContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1)).andExpect(status().isOk());
     }
 
     @Test
-    public void testDuplicateFormContingencyList() {
-        webTestClient.post()
-                .uri("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+    public void testDuplicateFormContingencyList() throws Exception {
+
+        mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpect(status().isOk());
     }
 
     @Test
-    public void testDuplicateStudy() {
-        webTestClient.post()
-                .uri("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+    public void testDuplicateStudy() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
-                .exchange()
-                .expectStatus().isOk();
+        ).andExpect(status().isOk());
     }
 }

@@ -41,7 +41,11 @@ public class RestResponseEntityExceptionHandler {
             case REMOTE_ERROR:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UNKNOWN_ELEMENT_TYPE);
+            case INSERT_STUDY_FAILED :
+            case CREATE_ELEMENT_FAILED:
+            case REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED:
+            case NOTIFICATION_DIRECTORY_CHANGED:
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exploreException.getType());
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

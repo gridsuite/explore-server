@@ -10,22 +10,19 @@ import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.ExploreException.Type.DELETE_FILTER_FAILED;
 import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
 
 /**
@@ -39,106 +36,104 @@ public class FilterService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private final WebClient webClient;
+    private final WebClient webClient = null;
     private String filterServerBaseUri;
 
+    private RestTemplate restTemplate = new RestTemplate();
+
     @Autowired
-    public FilterService(@Value("${backing-services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
-                         WebClient.Builder webClientBuilder) {
+    public FilterService(@Value("${backing-services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri
+            /*WebClient.Builder webClientBuilder*/) {
         this.filterServerBaseUri = filterServerBaseUri;
-        this.webClient = webClientBuilder.build();
+        //this.webClient = webClientBuilder.build();
     }
 
     public void setFilterServerBaseUri(String filterServerBaseUri) {
         this.filterServerBaseUri = filterServerBaseUri;
     }
 
-    public Mono<Void> replaceFilterWithScript(UUID id) {
+    public void replaceFilterWithScript(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
+        try {
+            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, null, Void.class);
+        } catch (HttpStatusCodeException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new ExploreException(FILTER_NOT_FOUND);
+            } else {
+                throw e;
+            }
+        }
 
-        return webClient.put()
-                .uri(filterServerBaseUri + path)
-                .retrieve()
-                .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, clientResponse -> Mono.error(new ExploreException(FILTER_NOT_FOUND)))
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
-    public Mono<Void> insertNewScriptFromFilter(UUID id, UUID newId) {
+    public void insertNewScriptFromFilter(UUID id, UUID newId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
-            .buildAndExpand(id, newId)
-            .toUriString();
-
-        return webClient.post()
-                .uri(filterServerBaseUri + path)
-                .retrieve()
-                .onStatus(httpStatus -> httpStatus == HttpStatus.NOT_FOUND, clientResponse -> Mono.error(new ExploreException(FILTER_NOT_FOUND)))
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id, newId)
+                .toUriString();
+        try {
+            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        } catch (HttpStatusCodeException e) {
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
+                throw new ExploreException(FILTER_NOT_FOUND);
+            } else {
+                throw e;
+            }
+        }
     }
 
-    public Mono<Void> delete(UUID id, String userId) {
+    public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
 
-        return webClient.delete()
-                .uri(filterServerBaseUri + path)
-                .header(HEADER_USER_ID, userId)
-                .retrieve()
-                .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        try {
+            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        } catch (HttpStatusCodeException e) {
+            if (HttpStatus.OK != e.getStatusCode()) {
+                throw new ExploreException(DELETE_FILTER_FAILED);
+            } else {
+                throw e;
+            }
+        }
     }
 
-    public Mono<Void> insertFilter(String filter, UUID filterId, String userId) {
+    public void insertFilter(String filter, UUID filterId, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters?id={id}")
                 .buildAndExpand(filterId)
                 .toUriString();
 
-        return webClient.post()
-                .uri(filterServerBaseUri + path)
-                .header(HEADER_USER_ID, userId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(filter)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        HttpHeaders headers = getHeaders(userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> httpEntity = new HttpEntity<>(filter, headers);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, void.class);
+
     }
 
-    public Mono<Void> insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
+    private HttpHeaders getHeaders(String userId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        return headers;
+    }
+
+    public void insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters")
                 .queryParam("duplicateFrom", sourceFilterId)
                 .queryParam("id", filterId)
                 .toUriString();
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
 
-        return webClient.post()
-                .uri(filterServerBaseUri + path)
-                .header(HEADER_USER_ID, userId)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
 
     @Override
-    public Flux<Map<String, Object>> getMetadata(List<UUID> filtersUuids) {
+    public List<Map<String, Object>> getMetadata(List<UUID> filtersUuids) {
         var ids = filtersUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
-            .buildAndExpand()
-            .toUriString();
-        return webClient.get()
-            .uri(filterServerBaseUri + path)
-            .retrieve()
-            .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {
-            })
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand()
+                .toUriString();
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+        }).getBody();
+
     }
 }
