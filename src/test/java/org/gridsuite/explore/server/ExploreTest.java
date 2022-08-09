@@ -96,7 +96,6 @@ public class ExploreTest {
     private static final String CASE1 = "case1";
     private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
-    private static final String CASE_IMPORT_PARAMETERS = "{\"formatName\":\"UCTE\",\"parameters\":[{\"name\":\"randomListParam\",\"type\":\"STRING_LIST\",\"description\":\"Random list description\",\"defaultValue\":[],\"possibleValues\":[\"paramValue1\",\"paramValue2\"]},{\"name\":\"randomParam2\",\"type\":\"String\",\"description\":\"Random param description\",\"defaultValue\":\"\",\"possibleValues\":null}]}";
 
     @Before
     public void setup() throws IOException {
@@ -197,8 +196,6 @@ public class ExploreTest {
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(privateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/studies/cases/" + CASE_UUID + "/import-parameters")) {
-                        return new MockResponse().setBody(CASE_IMPORT_PARAMETERS).setResponseCode(200);
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -489,15 +486,5 @@ public class ExploreTest {
                 .header("userId", USER1)
                 .exchange()
                 .expectStatus().isOk();
-    }
-
-    @Test
-    public void testGetCaseImportParameters() {
-        webTestClient.get()
-            .uri("/v1/explore/cases/{caseUuid}/import-parameters", CASE_UUID)
-            .exchange()
-            .expectStatus().isOk()
-            .expectBody(String.class)
-            .isEqualTo(CASE_IMPORT_PARAMETERS);
     }
 }

@@ -140,15 +140,4 @@ public class StudyService implements IDirectoryElementsService {
             .publishOn(Schedulers.boundedElastic())
             .log(ROOT_CATEGORY_REACTOR, Level.FINE);
     }
-
-    public Mono<String> getCaseImportParameters(UUID caseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/cases/{caseUuid}/import-parameters")
-                .buildAndExpand(caseUuid)
-                .toUriString();
-
-        return webClient.get()
-                .uri(studyServerBaseUri + path)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
 }

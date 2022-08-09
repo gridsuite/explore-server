@@ -198,8 +198,4 @@ public class ExploreService {
                     return directoryService.deleteDirectoryElement(id, userId);
                 });
     }
-
-    public Mono<String> getCaseImportParameters(UUID caseUuid) {
-        return studyService.getCaseImportParameters(caseUuid);
-    }
 }

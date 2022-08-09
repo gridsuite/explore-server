@@ -99,13 +99,6 @@ public class ExploreController {
         return ResponseEntity.ok().body(exploreService.createCase(caseName, description, userId, parentCaseUuid, parentDirectoryUuid));
     }
 
-    @GetMapping(value = "/explore/cases/{caseUuid}/import-parameters")
-    @Operation(summary = "get import parameters for specific case")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Import parameters for specific case")})
-    public ResponseEntity<Mono<String>> getCaseImportParameters(@PathVariable("caseUuid") UUID caseUuid) {
-        return ResponseEntity.ok().body(exploreService.getCaseImportParameters(caseUuid));
-    }
-
     @PostMapping(value = "/explore/script-contingency-lists/{listName}")
     @Operation(summary = "create a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
