@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -49,8 +50,9 @@ public class ExploreController {
                                                                   @PathVariable("caseUuid") UUID caseUuid,
                                                                   @RequestParam("description") String description,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                  @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid));
+                                                                  @RequestHeader("userId") String userId,
+                                                                  @RequestBody(required = false) Map<String, Object> importParams) {
+        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams));
     }
 
     @PostMapping(value = "/explore/studies/{studyName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
