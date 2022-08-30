@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.INSERT_STUDY_FAILED;
@@ -54,10 +55,10 @@ public class ExploreService {
         this.caseService = caseService;
     }
 
-    public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid) {
+    public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
         try {
-            studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid);
+            studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams);
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (HttpStatusCodeException e) {
             throw new ExploreException(INSERT_STUDY_FAILED);
@@ -116,8 +117,6 @@ public class ExploreService {
         } catch (Exception e) {
             throw e;
         }
-       /* return contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());*/
     }
 
     public void createScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
@@ -129,8 +128,6 @@ public class ExploreService {
         } catch (Exception e) {
             throw e;
         }
-        /*return contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid())
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());*/
     }
 
     public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {

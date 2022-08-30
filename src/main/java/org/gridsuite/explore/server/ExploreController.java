@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -48,8 +49,9 @@ public class ExploreController {
                                                             @PathVariable("caseUuid") UUID caseUuid,
                                                             @RequestParam("description") String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                            @RequestHeader("userId") String userId) {
-        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid);
+                                                            @RequestHeader("userId") String userId,
+                                                            @RequestBody(required = false) Map<String, Object> importParams) {
+        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams);
         return ResponseEntity.ok().build();
     }
 

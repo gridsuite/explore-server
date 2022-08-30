@@ -52,7 +52,8 @@ public class StudyService implements IDirectoryElementsService {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid) {
+    public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, Map<String, Object> importParams) {
+
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
                 .buildAndExpand(caseUuid, studyUuid)
