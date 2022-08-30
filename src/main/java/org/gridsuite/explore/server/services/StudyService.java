@@ -19,12 +19,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.*;
@@ -65,7 +61,7 @@ public class StudyService implements IDirectoryElementsService {
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
-    public void insertStudyWithCaseFile(UUID studyUuid, String userId, @Nullable MultipartFile caseFile) {
+    public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies?studyUuid={studyUuid}")
@@ -74,8 +70,7 @@ public class StudyService implements IDirectoryElementsService {
 
         try {
             if (caseFile != null) {
-                String filename = caseFile.getOriginalFilename();
-                multipartBodyBuilder.part("file", caseFile.getBytes()).filename(filename);
+                multipartBodyBuilder.part("file", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
             }
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);

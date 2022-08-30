@@ -19,8 +19,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.DELETE_CASE_FAILED;
@@ -53,15 +53,15 @@ public class CaseService implements IDirectoryElementsService {
         }
     }
 
-    UUID importCase(@Nullable MultipartFile multipartFile) {
+    UUID importCase(MultipartFile multipartFile) {
 
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-        UUID caseUuid = null;
+        UUID caseUuid;
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         try {
             if (multipartFile != null) {
-                multipartBodyBuilder.part("file", multipartFile.getBytes()).filename(multipartFile.getOriginalFilename());
+                multipartBodyBuilder.part("file", multipartFile.getBytes()).filename(Objects.requireNonNull(multipartFile.getOriginalFilename()));
             }
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
