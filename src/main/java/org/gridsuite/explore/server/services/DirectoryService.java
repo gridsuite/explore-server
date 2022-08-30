@@ -107,7 +107,7 @@ public class DirectoryService implements IDirectoryElementsService {
         if (elementAttributesList != null) {
             return elementAttributesList;
         } else {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
     }
@@ -138,7 +138,7 @@ public class DirectoryService implements IDirectoryElementsService {
         if (elementAttributesList != null) {
             return elementAttributesList;
         } else {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
     }
 

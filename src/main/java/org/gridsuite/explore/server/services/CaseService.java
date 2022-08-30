@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -52,7 +53,7 @@ public class CaseService implements IDirectoryElementsService {
         }
     }
 
-    UUID importCase(MultipartFile multipartFile) {
+    UUID importCase(@Nullable MultipartFile multipartFile) {
 
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
         UUID caseUuid = null;

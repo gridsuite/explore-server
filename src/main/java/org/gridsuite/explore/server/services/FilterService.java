@@ -14,7 +14,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
@@ -35,7 +34,6 @@ public class FilterService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private final WebClient webClient = null;
     private String filterServerBaseUri;
 
     private RestTemplate restTemplate = new RestTemplate();

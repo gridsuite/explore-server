@@ -74,7 +74,8 @@ public class StudyService implements IDirectoryElementsService {
 
         try {
             if (caseFile != null) {
-                multipartBodyBuilder.part("file", caseFile.getBytes()).filename(caseFile.getOriginalFilename());
+                String filename = caseFile.getOriginalFilename();
+                multipartBodyBuilder.part("file", caseFile.getBytes()).filename(filename);
             }
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
