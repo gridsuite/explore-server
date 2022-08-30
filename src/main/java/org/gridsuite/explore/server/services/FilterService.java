@@ -31,8 +31,6 @@ import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUN
  */
 @Service
 public class FilterService implements IDirectoryElementsService {
-    private static final String ROOT_CATEGORY_REACTOR = "reactor.";
-
     private static final String FILTER_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";

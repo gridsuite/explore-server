@@ -231,6 +231,5 @@ public class ExploreController {
         directoryService.getElementsMetadata(ids);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .build();
-
     }
 }

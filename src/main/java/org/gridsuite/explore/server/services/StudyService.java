@@ -33,8 +33,6 @@ import static org.gridsuite.explore.server.ExploreException.Type.*;
  */
 @Service
 public class StudyService implements IDirectoryElementsService {
-    private static final String ROOT_CATEGORY_REACTOR = "reactor.";
-
     private static final String STUDY_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
@@ -64,13 +62,6 @@ public class StudyService implements IDirectoryElementsService {
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
-    private HttpHeaders getHeaders(String userId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HEADER_USER_ID, userId);
-        return headers;
-    }
-
     public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
@@ -79,10 +70,9 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         try {
-            if(caseFile != null){
+            if (caseFile != null) {
                 multipartBodyBuilder.part("file", caseFile.getBytes()).filename(caseFile.getOriginalFilename());
             }
-
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
@@ -133,5 +123,12 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
         return Collections.singletonList(restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {
         }).getBody());
+    }
+
+    private HttpHeaders getHeaders(String userId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HEADER_USER_ID, userId);
+        return headers;
     }
 }

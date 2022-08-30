@@ -29,8 +29,6 @@ import static org.gridsuite.explore.server.ExploreException.Type.IMPORT_CASE_FAI
 
 @Service
 public class CaseService implements IDirectoryElementsService {
-    private static final String ROOT_CATEGORY_REACTOR = "reactor.";
-
     private static final String CASE_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";

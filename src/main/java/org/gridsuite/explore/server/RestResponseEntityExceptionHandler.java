@@ -20,7 +20,6 @@ import static org.gridsuite.explore.server.ExploreException.Type.*;
  */
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(RestResponseEntityExceptionHandler.class);
 
     @ExceptionHandler(value = {ExploreException.class})
@@ -41,7 +40,7 @@ public class RestResponseEntityExceptionHandler {
             case REMOTE_ERROR:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
-            case INSERT_STUDY_FAILED :
+            case INSERT_STUDY_FAILED:
             case CREATE_ELEMENT_FAILED:
             case REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED:
             case NOTIFICATION_DIRECTORY_CHANGED:

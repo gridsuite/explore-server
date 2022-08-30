@@ -30,8 +30,6 @@ import static org.gridsuite.explore.server.ExploreException.Type.REPLACE_FORM_CO
  */
 @Service
 public class ContingencyListService implements IDirectoryElementsService {
-    private static final String ROOT_CATEGORY_REACTOR = "reactor.";
-
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
 

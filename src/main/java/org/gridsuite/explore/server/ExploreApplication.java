@@ -16,9 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
-//@EnableWebFlux
 public class ExploreApplication {
-
     public static void main(String[] args) {
         Utils.initProperties();
         SpringApplication.run(ExploreApplication.class, args);
