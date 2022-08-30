@@ -20,8 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.DELETE_CASE_FAILED;
@@ -52,14 +50,6 @@ public class CaseService implements IDirectoryElementsService {
         } else {
             throw new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + statusCode + "\"}");
         }
-    }
-
-    public void multipartFileToFile(
-            MultipartFile multipart,
-            Path dir
-    ) throws IOException {
-        Path filepath = Paths.get(dir.toString(), multipart.getOriginalFilename());
-        multipart.transferTo(filepath);
     }
 
     UUID importCase(MultipartFile multipartFile) {
