@@ -17,10 +17,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,16 +39,13 @@ public class StudyService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private final WebClient webClient = null;
     private String studyServerBaseUri;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
-    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri
-            /*WebClient.Builder webClientBuilder*/) {
+    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri) {
         this.studyServerBaseUri = studyServerBaseUri;
-        // this.webClient = webClientBuilder.build();
     }
 
     public void setStudyServerBaseUri(String studyServerBaseUri) {
@@ -61,13 +58,9 @@ public class StudyService implements IDirectoryElementsService {
                 .buildAndExpand(caseUuid, studyUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         headers.add(HEADER_USER_ID, userId);
-        try {
-            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
-
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
     private HttpHeaders getHeaders(String userId) {
@@ -79,14 +72,16 @@ public class StudyService implements IDirectoryElementsService {
 
     public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-        // multipartBodyBuilder.part("caseFile", caseFile);
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies?studyUuid={studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
 
         try {
-            multipartBodyBuilder.part("file", caseFile.getBytes()).filename(caseFile.getOriginalFilename());
+            if(caseFile != null){
+                multipartBodyBuilder.part("file", caseFile.getBytes()).filename(caseFile.getOriginalFilename());
+            }
+
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
@@ -101,26 +96,6 @@ public class StudyService implements IDirectoryElementsService {
         } catch (HttpStatusCodeException e) {
             throw new ExploreException(INSERT_STUDY_FAILED);
         }
-
-        /*return caseFile.flatMap(file -> {
-            MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-            multipartBodyBuilder.part("caseFile", file);
-
-            String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                            "/studies?studyUuid={studyUuid}")
-                    .buildAndExpand(studyUuid)
-                    .toUriString();
-
-            return webClient.post()
-                    .uri(studyServerBaseUri + path)
-                    .header(HEADER_USER_ID, userId)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA.toString())
-                    .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()))
-                    .retrieve()
-                    .bodyToMono(Void.class)
-                    .publishOn(Schedulers.boundedElastic())
-                    .log(ROOT_CATEGORY_REACTOR, Level.FINE);
-        });*/
     }
 
     public void insertStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
@@ -130,7 +105,6 @@ public class StudyService implements IDirectoryElementsService {
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
-
     }
 
     @Override
@@ -156,9 +130,7 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-        }).getBody();
-
+        return Collections.singletonList(restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {
+        }).getBody());
     }
 }

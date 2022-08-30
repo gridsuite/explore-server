@@ -95,10 +95,6 @@ public class ExploreService {
         } catch (HttpStatusCodeException e) {
             throw new ExploreException(INSERT_STUDY_FAILED);
         }
-
-        /*return caseService.importCase(caseFile).doOnSuccess(uuid ->
-            directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
-                parentDirectoryUuid, userId).subscribe()).then();*/
     }
 
     public void createCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {

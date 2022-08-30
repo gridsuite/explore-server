@@ -14,9 +14,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,16 +35,13 @@ public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
 
-    private final WebClient webClient = null;
     private String actionsServerBaseUri;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
-    public ContingencyListService(@Value("${backing-services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri
-            /*WebClient.Builder webClientBuilder*/) {
+    public ContingencyListService(@Value("${backing-services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri) {
         this.actionsServerBaseUri = actionsServerBaseUri;
-        // this.webClient = webClientBuilder.build();
     }
 
     public void setActionsServerBaseUri(String actionsServerBaseUri) {
@@ -136,7 +133,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
 
-        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-        }).getBody();
+        return Collections.singletonList(restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {
+        }).getBody());
     }
 }
