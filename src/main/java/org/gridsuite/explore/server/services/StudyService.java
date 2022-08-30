@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -57,12 +58,14 @@ public class StudyService implements IDirectoryElementsService {
                 .buildAndExpand(caseUuid, studyUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(
+                importParams, headers);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
-    public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
+    public void insertStudyWithCaseFile(UUID studyUuid, String userId, @Nullable MultipartFile caseFile) {
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies?studyUuid={studyUuid}")

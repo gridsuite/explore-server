@@ -18,8 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.INSERT_STUDY_FAILED;
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -115,7 +114,7 @@ public class ExploreService {
             contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (Exception e) {
-            throw e;
+            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
         }
     }
 
@@ -126,7 +125,7 @@ public class ExploreService {
             contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid());
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (Exception e) {
-            throw e;
+            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
         }
     }
 
@@ -137,7 +136,7 @@ public class ExploreService {
             contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (Exception e) {
-            throw e;
+            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
         }
     }
 
@@ -148,7 +147,7 @@ public class ExploreService {
             contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid());
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (Exception e) {
-            throw e;
+            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
         }
     }
 
@@ -166,7 +165,6 @@ public class ExploreService {
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-
         if (!userId.equals(elementAttribute.getOwner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -175,7 +173,6 @@ public class ExploreService {
         }
         contingencyListService.replaceFormContingencyListWithScript(id);
         directoryService.notifyDirectoryChanged(id, userId);
-
     }
 
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
@@ -185,7 +182,7 @@ public class ExploreService {
             filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (Exception e) {
-            throw e;
+            throw new ExploreException(CREATE_FILTER_FAILED);
         }
     }
 
@@ -196,7 +193,7 @@ public class ExploreService {
             filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId);
             directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
         } catch (Exception e) {
-            throw e;
+            throw new ExploreException(CREATE_FILTER_FAILED);
         }
     }
 
@@ -225,17 +222,15 @@ public class ExploreService {
         }
         filterService.replaceFilterWithScript(id);
         directoryService.notifyDirectoryChanged(id, userId);
-
     }
 
     public void deleteElement(UUID id, String userId) {
-
         try {
             directoryService.deleteElement(id, userId);
             directoryService.deleteDirectoryElement(id, userId);
         } catch (Exception e) {
+            LOGGER.error(e.toString(), e);
             directoryService.deleteDirectoryElement(id, userId);
         }
-
     }
 }

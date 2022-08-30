@@ -102,8 +102,13 @@ public class DirectoryService implements IDirectoryElementsService {
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
+        List<ElementAttributes> elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
         }).getBody();
+        if (elementAttributesList != null) {
+            return elementAttributesList;
+        } else {
+            return Collections.EMPTY_LIST;
+        }
 
     }
 
@@ -128,8 +133,13 @@ public class DirectoryService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
+        List<ElementAttributes> elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
         }).getBody();
+        if (elementAttributesList != null) {
+            return elementAttributesList;
+        } else {
+            return Collections.EMPTY_LIST;
+        }
     }
 
     public void deleteElement(UUID id, String userId) {
@@ -139,7 +149,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private IDirectoryElementsService getGenericService(String type) {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
-        if (iDirectoryElementsService.equals("")) {
+        if (iDirectoryElementsService == null) {
             throw new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type " + type);
         }
         return iDirectoryElementsService;
@@ -162,9 +172,11 @@ public class DirectoryService implements IDirectoryElementsService {
     @Override
     public void delete(UUID id, String userId) {
         List<ElementAttributes> elementAttributesList = getDirectoryElements(id, userId);
-        elementAttributesList.forEach(elementAttributes -> {
-            deleteElement(elementAttributes.getElementUuid(), userId);
-        });
+        if (elementAttributesList != null) {
+            elementAttributesList.forEach(elementAttributes ->
+                deleteElement(elementAttributes.getElementUuid(), userId)
+            );
+        }
     }
 
 }

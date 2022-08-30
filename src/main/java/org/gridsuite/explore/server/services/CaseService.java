@@ -59,7 +59,9 @@ public class CaseService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         try {
-            multipartBodyBuilder.part("file", multipartFile.getBytes()).filename(multipartFile.getOriginalFilename());
+            if (multipartFile != null) {
+                multipartBodyBuilder.part("file", multipartFile.getBytes()).filename(multipartFile.getOriginalFilename());
+            }
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
