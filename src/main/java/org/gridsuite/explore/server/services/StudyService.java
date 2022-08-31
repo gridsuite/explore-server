@@ -120,8 +120,8 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return Collections.singletonList(restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {
-        }).getBody());
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+        }).getBody();
     }
 
     private HttpHeaders getHeaders(String userId) {

@@ -16,7 +16,6 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -131,7 +130,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
 
-        return Collections.singletonList(restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {
-        }).getBody());
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+        }).getBody();
     }
 }

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +17,6 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -127,8 +127,12 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return Collections.singletonList(restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {
-        }).getBody());
 
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Map<String, Object>> list = restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+        }).getBody();
+
+        return list;
     }
 }

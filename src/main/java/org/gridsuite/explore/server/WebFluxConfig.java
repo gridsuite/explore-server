@@ -8,30 +8,49 @@ package org.gridsuite.explore.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.springframework.boot.jackson.JsonComponentModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Configuration
-public class WebFluxConfig implements WebFluxConfigurer {
+public class WebFluxConfig{
 
-    @Override
-    public void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
-        var objectMapper = objectMapper();
-        configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper));
-        configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper));
+    @Bean
+    public RestTemplate restTemplate() {
+        final RestTemplate restTemplate = new RestTemplate();
+
+        //find and replace Jackson message converter with our own
+        for (int i = 0; i < restTemplate.getMessageConverters().size(); i++) {
+            final HttpMessageConverter<?> httpMessageConverter = restTemplate.getMessageConverters().get(i);
+            if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
+                restTemplate.getMessageConverters().set(i, mappingJackson2HttpMessageConverter());
+            }
+        }
+
+        return restTemplate;
     }
 
-    public static ObjectMapper createObjectMapper() {
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setObjectMapper(objectMapper());
+        return converter;
+    }
+
+    private ObjectMapper createObjectMapper() {
         var objectMapper = Jackson2ObjectMapperBuilder.json().build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.registerModule(new JsonComponentModule());
         return objectMapper;
     }
 
