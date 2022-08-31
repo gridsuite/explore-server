@@ -82,10 +82,9 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
+
         try {
-            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {
             if (HttpStatus.OK != e.getStatusCode()) {
                 throw new ExploreException(DELETE_FILTER_FAILED);
@@ -100,8 +99,7 @@ public class FilterService implements IDirectoryElementsService {
                 .buildAndExpand(filterId)
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
+        HttpHeaders headers = getHeaders(userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(filter, headers);
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
@@ -113,9 +111,7 @@ public class FilterService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceFilterId)
                 .queryParam("id", filterId)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
 
     }
 
@@ -127,5 +123,11 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
         return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
         }).getBody();
+    }
+
+    private HttpHeaders getHeaders(String userId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        return headers;
     }
 }

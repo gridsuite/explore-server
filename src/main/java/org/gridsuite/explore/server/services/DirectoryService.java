@@ -145,7 +145,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void deleteElement(UUID id, String userId) {
         ElementAttributes elementAttribute = getElementInfos(id);
-        delete(elementAttribute.getElementUuid(), userId);
+        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
+        service.delete(elementAttribute.getElementUuid(), userId);
     }
 
     private IDirectoryElementsService getGenericService(String type) {
