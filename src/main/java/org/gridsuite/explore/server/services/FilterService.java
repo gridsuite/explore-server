@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -107,12 +106,6 @@ public class FilterService implements IDirectoryElementsService {
 
     }
 
-    private HttpHeaders getHeaders(String userId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        return headers;
-    }
-
     public void insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters")
                 .queryParam("duplicateFrom", sourceFilterId)
@@ -128,12 +121,13 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        List<Map<String, Object>> list = restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
         }).getBody();
+    }
 
-        return list;
+    private HttpHeaders getHeaders(String userId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        return headers;
     }
 }
