@@ -228,8 +228,6 @@ public class ExploreController {
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids) {
-        directoryService.getElementsMetadata(ids);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .build();
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids));
     }
 }

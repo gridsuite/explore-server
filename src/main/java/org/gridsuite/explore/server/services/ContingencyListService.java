@@ -34,11 +34,12 @@ public class ContingencyListService implements IDirectoryElementsService {
 
     private String actionsServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Autowired
-    public ContingencyListService(@Value("${backing-services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri) {
+    public ContingencyListService(@Value("${backing-services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri, RestTemplate restTemplate) {
         this.actionsServerBaseUri = actionsServerBaseUri;
+        this.restTemplate = restTemplate;
     }
 
     public void setActionsServerBaseUri(String actionsServerBaseUri) {

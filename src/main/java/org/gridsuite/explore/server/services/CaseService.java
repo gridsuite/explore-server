@@ -34,15 +34,16 @@ public class CaseService implements IDirectoryElementsService {
 
     private String caseServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     public void setBaseUri(String actionsServerBaseUri) {
         this.caseServerBaseUri = actionsServerBaseUri;
     }
 
     @Autowired
-    public CaseService(@Value("${backing-services.case-server.base-uri:http://case-server/}") String studyServerBaseUri) {
+    public CaseService(@Value("${backing-services.case-server.base-uri:http://case-server/}") String studyServerBaseUri, RestTemplate restTemplate) {
         this.caseServerBaseUri = studyServerBaseUri;
+        this.restTemplate = restTemplate;
     }
 
     private static ExploreException wrapRemoteError(String response, HttpStatus statusCode) {

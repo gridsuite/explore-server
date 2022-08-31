@@ -11,20 +11,16 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.boot.jackson.JsonComponentModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.codec.ServerCodecConfigurer;
-import org.springframework.http.codec.json.Jackson2JsonDecoder;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Configuration
-public class WebFluxConfig{
+public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate() {

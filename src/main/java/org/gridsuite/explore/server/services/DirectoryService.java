@@ -43,12 +43,13 @@ public class DirectoryService implements IDirectoryElementsService {
     private final Map<String, IDirectoryElementsService> genericServices;
     private String directoryServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Autowired
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
-                            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, CaseService caseService) {
+                            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, CaseService caseService, RestTemplate restTemplate) {
         this.directoryServerBaseUri = directoryServerBaseUri;
+        this.restTemplate = restTemplate;
         this.genericServices = Map.of(
                 FILTER, filterService,
                 CONTINGENCY_LIST, contingencyListService,

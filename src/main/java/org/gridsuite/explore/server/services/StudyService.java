@@ -36,11 +36,12 @@ public class StudyService implements IDirectoryElementsService {
 
     private String studyServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Autowired
-    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri) {
+    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri, RestTemplate restTemplate) {
         this.studyServerBaseUri = studyServerBaseUri;
+        this.restTemplate = restTemplate;
     }
 
     public void setStudyServerBaseUri(String studyServerBaseUri) {
@@ -70,7 +71,7 @@ public class StudyService implements IDirectoryElementsService {
 
         try {
             if (caseFile != null) {
-                multipartBodyBuilder.part("file", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
+                multipartBodyBuilder.part("caseFile", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
             }
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);

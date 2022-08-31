@@ -36,11 +36,12 @@ public class FilterService implements IDirectoryElementsService {
 
     private String filterServerBaseUri;
 
-    private RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Autowired
-    public FilterService(@Value("${backing-services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri) {
+    public FilterService(@Value("${backing-services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri, RestTemplate restTemplate) {
         this.filterServerBaseUri = filterServerBaseUri;
+        this.restTemplate = restTemplate;
     }
 
     public void setFilterServerBaseUri(String filterServerBaseUri) {
