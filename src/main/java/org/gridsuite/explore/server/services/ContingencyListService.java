@@ -22,8 +22,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.DELETE_ACTION_SERVER_FAILED;
-import static org.gridsuite.explore.server.ExploreException.Type.REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -116,12 +114,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
-        try {
-            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED);
-        }
-
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
     @Override
@@ -130,7 +123,6 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
         }).getBody();
     }

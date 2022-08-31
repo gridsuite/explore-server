@@ -22,7 +22,6 @@ interface IDirectoryElementsService {
     String HEADER_USER_ID = "userId";
 
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
-
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
     }
 

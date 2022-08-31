@@ -70,9 +70,7 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         try {
-            if (caseFile != null) {
-                multipartBodyBuilder.part("caseFile", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
-            }
+            multipartBodyBuilder.part("caseFile", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
