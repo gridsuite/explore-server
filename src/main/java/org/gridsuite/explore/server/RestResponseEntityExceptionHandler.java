@@ -29,9 +29,7 @@ public class RestResponseEntityExceptionHandler {
         }
         ExploreException exploreException = (ExploreException) exception;
         switch (exploreException.getType()) {
-            case STUDY_NOT_FOUND:
             case FILTER_NOT_FOUND:
-            case CONTINGENCY_LIST_NOT_FOUND:
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exploreException.getType());
             case NOT_ALLOWED:
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
@@ -39,9 +37,6 @@ public class RestResponseEntityExceptionHandler {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
             case INSERT_STUDY_FAILED:
-            case CREATE_ELEMENT_FAILED:
-            case REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED:
-            case CREATE_CONTINGENCY_LIST_FAILED:
             case NOTIFICATION_DIRECTORY_CHANGED:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exploreException.getType());
             default:

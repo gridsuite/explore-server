@@ -18,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreException.Type.INSERT_STUDY_FAILED;
+import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
+
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -31,14 +33,12 @@ public class ExploreService {
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
     static final String DIRECTORY = "DIRECTORY";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private DirectoryService directoryService;
     private StudyService studyService;
     private ContingencyListService contingencyListService;
     private FilterService filterService;
     private CaseService caseService;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
 
     public ExploreService(
             DirectoryService directoryService,
@@ -67,22 +67,18 @@ public class ExploreService {
     public void createStudy(String studyName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-
         studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-
     }
 
     public void createStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-
         studyService.insertStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
-
         UUID uuid = caseService.importCase(caseFile);
         directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
                 parentDirectoryUuid, userId);
@@ -124,7 +120,6 @@ public class ExploreService {
 
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -161,9 +156,7 @@ public class ExploreService {
     }
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
-
         ElementAttributes elementAttribute = directoryService.getElementInfos(filterId);
-
         if (!elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -174,9 +167,7 @@ public class ExploreService {
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
-
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-
         if (!userId.equals(elementAttribute.getOwner())) {
             throw new ExploreException(NOT_ALLOWED);
         }

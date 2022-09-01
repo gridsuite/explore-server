@@ -56,7 +56,6 @@ public class FilterService implements IDirectoryElementsService {
         } catch (HttpStatusCodeException e) {
             handleException(HttpStatus.NOT_FOUND == e.getStatusCode(), FILTER_NOT_FOUND, e);
         }
-
     }
 
     public void insertNewScriptFromFilter(UUID id, UUID newId) {
@@ -74,7 +73,6 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {
@@ -86,12 +84,10 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters?id={id}")
                 .buildAndExpand(filterId)
                 .toUriString();
-
         HttpHeaders headers = getHeaders(userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(filter, headers);
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
-
     }
 
     public void insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
@@ -100,7 +96,6 @@ public class FilterService implements IDirectoryElementsService {
                 .queryParam("id", filterId)
                 .toUriString();
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
-
     }
 
     @Override

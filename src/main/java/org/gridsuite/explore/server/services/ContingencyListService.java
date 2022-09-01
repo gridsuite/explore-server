@@ -59,7 +59,6 @@ public class ContingencyListService implements IDirectoryElementsService {
                 throw e;
             }
         }
-
     }
 
     public void insertScriptContingencyList(UUID id, String content) {
@@ -84,7 +83,6 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists?id={id}")
                 .buildAndExpand(id)
                 .toUriString();
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
@@ -103,7 +101,6 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/new-script?newId={newId}")
                 .buildAndExpand(id, newId)
                 .toUriString();
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);

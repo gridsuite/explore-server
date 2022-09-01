@@ -23,7 +23,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+
+import static org.gridsuite.explore.server.ExploreException.Type.NOTIFICATION_DIRECTORY_CHANGED;
+import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
@@ -41,9 +43,8 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "elements";
 
     private final Map<String, IDirectoryElementsService> genericServices;
-    private String directoryServerBaseUri;
-
     private final RestTemplate restTemplate;
+    private String directoryServerBaseUri;
 
     @Autowired
     public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
@@ -71,7 +72,6 @@ public class DirectoryService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
         return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
     }

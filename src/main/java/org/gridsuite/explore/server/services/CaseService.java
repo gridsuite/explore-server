@@ -55,7 +55,6 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     UUID importCase(MultipartFile multipartFile) {
-
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
         UUID caseUuid;
         HttpHeaders headers = new HttpHeaders();

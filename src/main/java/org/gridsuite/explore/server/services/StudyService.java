@@ -49,7 +49,6 @@ public class StudyService implements IDirectoryElementsService {
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, Map<String, Object> importParams) {
-
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
                 .buildAndExpand(caseUuid, studyUuid)
@@ -68,13 +67,11 @@ public class StudyService implements IDirectoryElementsService {
                         "/studies?studyUuid={studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
-
         try {
             multipartBodyBuilder.part("caseFile", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         headers.add(HEADER_USER_ID, userId);
@@ -101,7 +98,6 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
-
         try {
             restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {

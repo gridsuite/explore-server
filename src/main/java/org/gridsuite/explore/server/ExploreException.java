@@ -14,8 +14,6 @@ import java.util.Objects;
 public class ExploreException extends RuntimeException {
 
     public enum Type {
-        STUDY_NOT_FOUND,
-        CONTINGENCY_LIST_NOT_FOUND,
         FILTER_NOT_FOUND,
         NOT_ALLOWED,
         UNKNOWN_ELEMENT_TYPE,
@@ -26,10 +24,6 @@ public class ExploreException extends RuntimeException {
         DELETE_FILTER_FAILED,
         DELETE_ACTION_SERVER_FAILED,
         INSERT_STUDY_FAILED,
-        CREATE_ELEMENT_FAILED,
-        REPLACE_FORM_CONTINGENCY_LIST_WITH_SCRIPT_FAILED,
-        CREATE_CONTINGENCY_LIST_FAILED,
-        CREATE_FILTER_FAILED,
         NOTIFICATION_DIRECTORY_CHANGED;
     }
 
