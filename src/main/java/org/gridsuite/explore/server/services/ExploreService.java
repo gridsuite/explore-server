@@ -67,34 +67,25 @@ public class ExploreService {
     public void createStudy(String studyName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-        try {
-            studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+
+        studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+
     }
 
     public void createStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-        try {
-            studyService.insertStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+
+        studyService.insertStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
 
-        try {
-            UUID uuid = caseService.importCase(caseFile);
-            directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
-                    parentDirectoryUuid, userId);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+        UUID uuid = caseService.importCase(caseFile);
+        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
+                parentDirectoryUuid, userId);
     }
 
     public void createCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
