@@ -89,13 +89,9 @@ public class ExploreService {
     }
 
     public void createCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
-        try {
-            UUID uuid = caseService.createCase(sourceCaseUuid);
-            directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
-                    null, userId, 0L, description), parentDirectoryUuid, userId);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+        UUID uuid = caseService.createCase(sourceCaseUuid);
+        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
+                null, userId, 0L, description), parentDirectoryUuid, userId);
     }
 
     public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
@@ -112,34 +108,22 @@ public class ExploreService {
     public void createScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        try {
-            contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid());
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (Exception e) {
-            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
-        }
+        contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid());
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        try {
-            contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (Exception e) {
-            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
-        }
+        contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createFormContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        try {
-            contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid());
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (Exception e) {
-            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
-        }
+        contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid());
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
