@@ -97,12 +97,8 @@ public class ExploreService {
     public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        try {
-            contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (Exception e) {
-            throw new ExploreException(CREATE_CONTINGENCY_LIST_FAILED);
-        }
+        contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {

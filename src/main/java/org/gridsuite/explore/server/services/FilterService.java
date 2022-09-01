@@ -54,11 +54,7 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, null, Void.class);
         } catch (HttpStatusCodeException e) {
-            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
-                throw new ExploreException(FILTER_NOT_FOUND);
-            } else {
-                throw e;
-            }
+            handleException(HttpStatus.NOT_FOUND == e.getStatusCode(), FILTER_NOT_FOUND, e);
         }
 
     }
@@ -70,11 +66,7 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
         } catch (HttpStatusCodeException e) {
-            if (HttpStatus.NOT_FOUND == e.getStatusCode()) {
-                throw new ExploreException(FILTER_NOT_FOUND);
-            } else {
-                throw e;
-            }
+            handleException(HttpStatus.NOT_FOUND == e.getStatusCode(), FILTER_NOT_FOUND, e);
         }
     }
 
@@ -86,11 +78,7 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {
-            if (HttpStatus.OK != e.getStatusCode()) {
-                throw new ExploreException(DELETE_FILTER_FAILED);
-            } else {
-                throw e;
-            }
+            handleException(HttpStatus.OK != e.getStatusCode(), DELETE_FILTER_FAILED, e);
         }
     }
 
@@ -129,5 +117,13 @@ public class FilterService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         return headers;
+    }
+
+    private void handleException(boolean exceptionExist, ExploreException.Type exceptionName, HttpStatusCodeException e) {
+        if (exceptionExist) {
+            throw new ExploreException(exceptionName);
+        } else {
+            throw e;
+        }
     }
 }
