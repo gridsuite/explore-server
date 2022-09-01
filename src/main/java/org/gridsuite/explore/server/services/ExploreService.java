@@ -153,23 +153,15 @@ public class ExploreService {
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
                 null, userId, 0, description);
-        try {
-            filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (Exception e) {
-            throw new ExploreException(CREATE_FILTER_FAILED);
-        }
+        filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createFilter(String filterName, String description, UUID sourceFilterUuid, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
                 null, userId, 0, description);
-        try {
-            filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (Exception e) {
-            throw new ExploreException(CREATE_FILTER_FAILED);
-        }
+        filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {

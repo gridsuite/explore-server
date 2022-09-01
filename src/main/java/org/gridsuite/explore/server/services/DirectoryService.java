@@ -73,12 +73,7 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
-        try {
-            return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(CREATE_ELEMENT_FAILED);
-        }
-
+        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
     }
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
@@ -176,7 +171,7 @@ public class DirectoryService implements IDirectoryElementsService {
         List<ElementAttributes> elementAttributesList = getDirectoryElements(id, userId);
         if (elementAttributesList != null) {
             elementAttributesList.forEach(elementAttributes ->
-                deleteElement(elementAttributes.getElementUuid(), userId)
+                    deleteElement(elementAttributes.getElementUuid(), userId)
             );
         }
     }
