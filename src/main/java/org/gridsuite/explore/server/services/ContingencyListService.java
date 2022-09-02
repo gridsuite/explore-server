@@ -21,7 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.DELETE_ACTION_SERVER_FAILED;
+import static org.gridsuite.explore.server.ExploreException.Type.REMOTE_ERROR;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -54,7 +55,7 @@ public class ContingencyListService implements IDirectoryElementsService {
             restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
             if (HttpStatus.OK != e.getStatusCode()) {
-                throw new ExploreException(DELETE_ACTION_SERVER_FAILED);
+                throw new ExploreException(REMOTE_ERROR);
             } else {
                 throw e;
             }

@@ -20,9 +20,7 @@ public class ExploreException extends RuntimeException {
         REMOTE_ERROR,
         DELETE_CASE_FAILED,
         IMPORT_CASE_FAILED,
-        DELETE_STUDY_FAILED,
         DELETE_FILTER_FAILED,
-        DELETE_ACTION_SERVER_FAILED,
         INSERT_STUDY_FAILED,
         NOTIFICATION_DIRECTORY_CHANGED;
     }

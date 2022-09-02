@@ -12,13 +12,11 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.INSERT_STUDY_FAILED;
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 
 
@@ -41,11 +39,11 @@ public class ExploreService {
     private CaseService caseService;
 
     public ExploreService(
-            DirectoryService directoryService,
-            StudyService studyService,
-            ContingencyListService contingencyListService,
-            FilterService filterService,
-            CaseService caseService) {
+        DirectoryService directoryService,
+        StudyService studyService,
+        ContingencyListService contingencyListService,
+        FilterService filterService,
+        CaseService caseService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -56,12 +54,8 @@ public class ExploreService {
 
     public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
-        try {
-            studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams);
-            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createStudy(String studyName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
@@ -182,6 +176,7 @@ public class ExploreService {
         try {
             directoryService.deleteElement(id, userId);
             directoryService.deleteDirectoryElement(id, userId);
+            // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
             directoryService.deleteDirectoryElement(id, userId);

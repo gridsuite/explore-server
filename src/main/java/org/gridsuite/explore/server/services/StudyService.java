@@ -33,10 +33,8 @@ public class StudyService implements IDirectoryElementsService {
     private static final String STUDY_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
-
-    private String studyServerBaseUri;
-
     private final RestTemplate restTemplate;
+    private String studyServerBaseUri;
 
     @Autowired
     public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri, RestTemplate restTemplate) {
@@ -58,7 +56,11 @@ public class StudyService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(
                 importParams, headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+        try {
+            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(INSERT_STUDY_FAILED);
+        }
     }
 
     public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
@@ -99,10 +101,10 @@ public class StudyService implements IDirectoryElementsService {
                 .buildAndExpand(studyUuid)
                 .toUriString();
         try {
-            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {
             if (HttpStatus.OK != e.getStatusCode()) {
-                throw new ExploreException(DELETE_STUDY_FAILED);
+                throw new ExploreException(REMOTE_ERROR);
             } else {
                 throw e;
             }

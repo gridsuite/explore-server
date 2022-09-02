@@ -269,8 +269,8 @@ public class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE)
-                    .contentType(MediaType.TEXT_XML);
+                .filename(TEST_FILE)
+                .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
@@ -287,8 +287,8 @@ public class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE_WITH_ERRORS)
-                    .contentType(MediaType.TEXT_XML);
+                .filename(TEST_FILE_WITH_ERRORS)
+                .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
@@ -324,6 +324,7 @@ public class ExploreTest {
                 "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
+                .content("Contingency list content")
         ).andExpect(status().isOk());
     }
 

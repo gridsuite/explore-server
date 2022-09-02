@@ -224,7 +224,7 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/explore/elements/metadata")
+    @GetMapping(value = "/explore/elements/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids) {

@@ -31,14 +31,8 @@ public class CaseService implements IDirectoryElementsService {
     private static final String CASE_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
-
-    private String caseServerBaseUri;
-
     private final RestTemplate restTemplate;
-
-    public void setBaseUri(String actionsServerBaseUri) {
-        this.caseServerBaseUri = actionsServerBaseUri;
-    }
+    private String caseServerBaseUri;
 
     @Autowired
     public CaseService(@Value("${backing-services.case-server.base-uri:http://case-server/}") String studyServerBaseUri, RestTemplate restTemplate) {
@@ -52,6 +46,10 @@ public class CaseService implements IDirectoryElementsService {
         } else {
             throw new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + statusCode + "\"}");
         }
+    }
+
+    public void setBaseUri(String actionsServerBaseUri) {
+        this.caseServerBaseUri = actionsServerBaseUri;
     }
 
     UUID importCase(MultipartFile multipartFile) {
@@ -95,7 +93,7 @@ public class CaseService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+            if (!HttpStatus.OK.equals(e.getStatusCode())) {
                 throw new ExploreException(DELETE_CASE_FAILED, e.getMessage());
             } else {
                 throw e;

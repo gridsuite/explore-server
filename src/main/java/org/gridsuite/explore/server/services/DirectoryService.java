@@ -24,8 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOTIFICATION_DIRECTORY_CHANGED;
-import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
@@ -52,11 +51,11 @@ public class DirectoryService implements IDirectoryElementsService {
         this.directoryServerBaseUri = directoryServerBaseUri;
         this.restTemplate = restTemplate;
         this.genericServices = Map.of(
-                FILTER, filterService,
-                CONTINGENCY_LIST, contingencyListService,
-                STUDY, studyService,
-                DIRECTORY, this,
-                CASE, caseService);
+            FILTER, filterService,
+            CONTINGENCY_LIST, contingencyListService,
+            STUDY, studyService,
+            DIRECTORY, this,
+            CASE, caseService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
@@ -119,7 +118,7 @@ public class DirectoryService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            throw new ExploreException(NOTIFICATION_DIRECTORY_CHANGED);
+            throw new ExploreException(REMOTE_ERROR);
         }
     }
 
@@ -153,10 +152,8 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids) {
-
         Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids).stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType));
-
         List<List<ElementAttributes>> listOfListElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
@@ -169,11 +166,9 @@ public class DirectoryService implements IDirectoryElementsService {
     @Override
     public void delete(UUID id, String userId) {
         List<ElementAttributes> elementAttributesList = getDirectoryElements(id, userId);
-        if (elementAttributesList != null) {
-            elementAttributesList.forEach(elementAttributes ->
-                    deleteElement(elementAttributes.getElementUuid(), userId)
-            );
-        }
+        elementAttributesList.forEach(elementAttributes ->
+                deleteElement(elementAttributes.getElementUuid(), userId)
+        );
     }
 
 }

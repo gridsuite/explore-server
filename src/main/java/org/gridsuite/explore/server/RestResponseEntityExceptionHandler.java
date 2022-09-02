@@ -1,3 +1,4 @@
+
 /**
  * Copyright (c) 2021, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -20,6 +21,7 @@ import static org.gridsuite.explore.server.ExploreException.Type.*;
  */
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RestResponseEntityExceptionHandler.class);
 
     @ExceptionHandler(value = {ExploreException.class})
@@ -30,15 +32,13 @@ public class RestResponseEntityExceptionHandler {
         ExploreException exploreException = (ExploreException) exception;
         switch (exploreException.getType()) {
             case FILTER_NOT_FOUND:
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exploreException.getType());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(FILTER_NOT_FOUND);
             case NOT_ALLOWED:
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
             case REMOTE_ERROR:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
-            case INSERT_STUDY_FAILED:
-            case NOTIFICATION_DIRECTORY_CHANGED:
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exploreException.getType());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UNKNOWN_ELEMENT_TYPE);
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
