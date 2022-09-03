@@ -72,7 +72,11 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
+        try {
+            return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
@@ -82,7 +86,11 @@ public class DirectoryService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        try {
+            restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public ElementAttributes getElementInfos(UUID elementUuid) {
@@ -90,15 +98,25 @@ public class DirectoryService implements IDirectoryElementsService {
                 .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody();
+        try {
+            return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
 
     }
 
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
-        List<ElementAttributes> elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
-        }).getBody();
+        List<ElementAttributes> elementAttributesList;
+        try {
+            elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
+            }).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
+
         if (elementAttributesList != null) {
             return elementAttributesList;
         } else {
@@ -118,7 +136,7 @@ public class DirectoryService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            throw new ExploreException(REMOTE_ERROR);
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
         }
     }
 
@@ -128,8 +146,13 @@ public class DirectoryService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        List<ElementAttributes> elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
-        }).getBody();
+        List<ElementAttributes> elementAttributesList;
+        try {
+            elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
+            }).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
         if (elementAttributesList != null) {
             return elementAttributesList;
         } else {

@@ -18,11 +18,8 @@ public class ExploreException extends RuntimeException {
         NOT_ALLOWED,
         UNKNOWN_ELEMENT_TYPE,
         REMOTE_ERROR,
-        DELETE_CASE_FAILED,
         IMPORT_CASE_FAILED,
-        DELETE_FILTER_FAILED,
-        INSERT_STUDY_FAILED,
-        NOTIFICATION_DIRECTORY_CHANGED;
+        INSERT_STUDY_FAILED;
     }
 
     private final Type type;

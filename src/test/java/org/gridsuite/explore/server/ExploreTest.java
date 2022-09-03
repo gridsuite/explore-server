@@ -150,7 +150,7 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.contains("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY")) {
+                } else if (path.equals("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY")) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {

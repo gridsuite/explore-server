@@ -92,7 +92,11 @@ public class StudyService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceStudyUuid)
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        try {
+            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     @Override
@@ -103,11 +107,7 @@ public class StudyService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {
-            if (HttpStatus.OK != e.getStatusCode()) {
-                throw new ExploreException(REMOTE_ERROR);
-            } else {
-                throw e;
-            }
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
         }
     }
 
@@ -117,8 +117,13 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-        }).getBody();
+        try {
+            return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            }).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
+
     }
 
     private HttpHeaders getHeaders(String userId) {

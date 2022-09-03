@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.DELETE_FILTER_FAILED;
-import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -47,6 +46,7 @@ public class FilterService implements IDirectoryElementsService {
         this.filterServerBaseUri = filterServerBaseUri;
     }
 
+    @SuppressWarnings("checkstyle:WhitespaceAround")
     public void replaceFilterWithScript(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
                 .buildAndExpand(id)
@@ -54,10 +54,15 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, null, Void.class);
         } catch (HttpStatusCodeException e) {
-            handleException(HttpStatus.NOT_FOUND == e.getStatusCode(), FILTER_NOT_FOUND, e);
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()){
+                throw new ExploreException(FILTER_NOT_FOUND);
+            }else {
+                throw new ExploreException(REMOTE_ERROR, e.getMessage());
+            }
         }
     }
 
+    @SuppressWarnings("checkstyle:WhitespaceAround")
     public void insertNewScriptFromFilter(UUID id, UUID newId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
                 .buildAndExpand(id, newId)
@@ -65,7 +70,11 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
         } catch (HttpStatusCodeException e) {
-            handleException(HttpStatus.NOT_FOUND == e.getStatusCode(), FILTER_NOT_FOUND, e);
+            if (HttpStatus.NOT_FOUND == e.getStatusCode()){
+                throw new ExploreException(FILTER_NOT_FOUND);
+            }else {
+                throw new ExploreException(REMOTE_ERROR, e.getMessage());
+            }
         }
     }
 
@@ -76,7 +85,7 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
         } catch (HttpStatusCodeException e) {
-            handleException(HttpStatus.OK != e.getStatusCode(), DELETE_FILTER_FAILED, e);
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
         }
     }
 
@@ -87,7 +96,11 @@ public class FilterService implements IDirectoryElementsService {
         HttpHeaders headers = getHeaders(userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(filter, headers);
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        try {
+            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
@@ -95,7 +108,11 @@ public class FilterService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceFilterId)
                 .queryParam("id", filterId)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        try {
+            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     @Override
@@ -104,21 +121,17 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-        }).getBody();
+        try {
+            return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            }).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     private HttpHeaders getHeaders(String userId) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         return headers;
-    }
-
-    private void handleException(boolean exceptionExist, ExploreException.Type exceptionName, HttpStatusCodeException e) {
-        if (exceptionExist) {
-            throw new ExploreException(exceptionName);
-        } else {
-            throw e;
-        }
     }
 }

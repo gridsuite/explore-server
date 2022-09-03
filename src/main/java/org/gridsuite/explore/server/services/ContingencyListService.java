@@ -54,11 +54,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            if (HttpStatus.OK != e.getStatusCode()) {
-                throw new ExploreException(REMOTE_ERROR);
-            } else {
-                throw e;
-            }
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
         }
     }
 
@@ -69,7 +65,11 @@ public class ContingencyListService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        try {
+            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void insertScriptContingencyList(UUID sourceListId, UUID id) {
@@ -77,7 +77,11 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceListId)
                 .queryParam("id", id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        try {
+            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void insertFormContingencyList(UUID id, String content) {
@@ -87,7 +91,11 @@ public class ContingencyListService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        try {
+            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void insertFormContingencyList(UUID sourceListId, UUID id) {
@@ -95,7 +103,11 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceListId)
                 .queryParam("id", id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        try {
+            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void newScriptFromFormContingencyList(UUID id, UUID newId) {
@@ -105,14 +117,22 @@ public class ContingencyListService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        try {
+            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     public void replaceFormContingencyListWithScript(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        try {
+            restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     @Override
@@ -121,7 +141,11 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-        }).getBody();
+        try {
+            return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            }).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 }

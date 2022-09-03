@@ -23,8 +23,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.DELETE_CASE_FAILED;
-import static org.gridsuite.explore.server.ExploreException.Type.IMPORT_CASE_FAILED;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 @Service
 public class CaseService implements IDirectoryElementsService {
@@ -80,7 +79,11 @@ public class CaseService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
+        try {
+            return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+        }
     }
 
     @Override
@@ -93,11 +96,7 @@ public class CaseService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            if (!HttpStatus.OK.equals(e.getStatusCode())) {
-                throw new ExploreException(DELETE_CASE_FAILED, e.getMessage());
-            } else {
-                throw e;
-            }
+            throw new ExploreException(REMOTE_ERROR, e.getMessage());
         }
     }
 }
