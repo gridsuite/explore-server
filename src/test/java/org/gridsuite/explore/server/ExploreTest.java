@@ -50,32 +50,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 public class ExploreTest {
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @Autowired
-    private DirectoryService directoryService;
-
-    @Autowired
-    private ContingencyListService contingencyListService;
-
-    @Autowired
-    private FilterService filterService;
-
-    @Autowired
-    private StudyService studyService;
-
-    @Autowired
-    private CaseService caseService;
-
-    @Autowired
-    private ObjectMapper mapper;
-
-    private MockWebServer server;
-
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
     private static final UUID CASE_UUID = UUID.randomUUID();
@@ -85,7 +59,6 @@ public class ExploreTest {
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
-
     private static final UUID FILTER_UUID_WITH_ERROR = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
@@ -94,8 +67,24 @@ public class ExploreTest {
     private static final String CASE1 = "case1";
     private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
-
     private static final UUID CONTINGENCY_LIST_UUID_WITH_ERROR = UUID.randomUUID();
+    @Autowired
+    ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private DirectoryService directoryService;
+    @Autowired
+    private ContingencyListService contingencyListService;
+    @Autowired
+    private FilterService filterService;
+    @Autowired
+    private StudyService studyService;
+    @Autowired
+    private CaseService caseService;
+    @Autowired
+    private ObjectMapper mapper;
+    private MockWebServer server;
 
     @Before
     public void setup() throws IOException {
@@ -181,16 +170,15 @@ public class ExploreTest {
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/script-contingency-lists\\?id="+ PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/script-contingency-lists\\?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(500);
                 } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/form-contingency-lists/"+CONTINGENCY_LIST_UUID_WITH_ERROR+"/new-script/.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/form-contingency-lists/" + CONTINGENCY_LIST_UUID_WITH_ERROR + "/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(404);
-                }
-                else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
@@ -280,8 +268,8 @@ public class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                .filename(TEST_FILE)
-                .contentType(MediaType.TEXT_XML);
+                    .filename(TEST_FILE)
+                    .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
@@ -298,8 +286,8 @@ public class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
             MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
             bodyBuilder.part("caseFile", mockFile.getBytes())
-                .filename(TEST_FILE_WITH_ERRORS)
-                .contentType(MediaType.TEXT_XML);
+                    .filename(TEST_FILE_WITH_ERRORS)
+                    .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
@@ -438,7 +426,7 @@ public class ExploreTest {
     @Test
     public void testDuplicateCase() throws Exception {
         mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1))
+                        CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1))
                 .andExpect(status().isOk());
     }
 
@@ -452,8 +440,8 @@ public class ExploreTest {
     @Test
     public void testDuplicateScriptContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1))
+                        CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
                 .andExpect(status().isOk());
     }
 
