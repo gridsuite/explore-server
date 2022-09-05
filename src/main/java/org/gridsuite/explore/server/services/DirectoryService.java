@@ -133,11 +133,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        try {
-            restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(REMOTE_ERROR, e.getMessage());
-        }
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid, String userId) {

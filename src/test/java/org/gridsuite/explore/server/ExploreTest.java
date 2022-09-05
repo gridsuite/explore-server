@@ -81,9 +81,12 @@ public class ExploreTest {
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
+    private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
+
+    private static final UUID FILTER_UUID_WITH_ERROR = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
@@ -91,6 +94,8 @@ public class ExploreTest {
     private static final String CASE1 = "case1";
     private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
+
+    private static final UUID CONTINGENCY_LIST_UUID_WITH_ERROR = UUID.randomUUID();
 
     @Before
     public void setup() throws IOException {
@@ -147,6 +152,8 @@ public class ExploreTest {
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(500);
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -174,11 +181,16 @@ public class ExploreTest {
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/script-contingency-lists\\?id="+ PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(500);
                 } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/form-contingency-lists/"+CONTINGENCY_LIST_UUID_WITH_ERROR+"/new-script/.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(404);
+                }
+                else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
@@ -235,7 +247,6 @@ public class ExploreTest {
                 .header("userId", "userId")
                 .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk());
-
     }
 
     @Test
@@ -295,7 +306,6 @@ public class ExploreTest {
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isBadRequest());
-
         }
     }
 
@@ -313,13 +323,11 @@ public class ExploreTest {
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isInternalServerError());
-
         }
     }
 
     @Test
     public void testCreateScriptContingencyList() throws Exception {
-
         mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
                 "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
@@ -329,40 +337,51 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateFormContingencyList() throws Exception {
+    public void testCreateScriptContingencyListError() throws Exception {
+        mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
+                "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("Contingency list content")
+        ).andExpect(status().isBadRequest());
+    }
 
+    @Test
+    public void testCreateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "filterContingencyList", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("Contingency list content")
         ).andExpect(status().isOk());
-
     }
 
     @Test
     public void testNewScriptFromFormContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
+                CONTINGENCY_LIST_UUID_WITH_ERROR, "scriptName", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isBadRequest());
+    }
 
+    @Test
+    public void testNewScriptFromFormContingencyListError() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
-
     }
 
     @Test
     public void testReplaceFormContingencyListWithScript() throws Exception {
-
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script",
                 CONTINGENCY_LIST_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
-
     }
 
     @Test
     public void testCreateFilter() throws Exception {
-
         mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
@@ -381,12 +400,10 @@ public class ExploreTest {
 
     @Test
     public void testReplaceFilterWithScript() throws Exception {
-
         mockMvc.perform(post("/v1/explore/filters/{id}/replace-with-script",
                 FILTER_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
-
     }
 
     public void deleteElement(UUID elementUUid) throws Exception {
@@ -396,7 +413,6 @@ public class ExploreTest {
     }
 
     public void deleteElementInvalidType(UUID elementUUid) throws Exception {
-
         mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid)
                         .header("userId", USER1))
                 .andExpect(status().is2xxSuccessful());
@@ -414,7 +430,6 @@ public class ExploreTest {
 
     @Test
     public void testGetElementsMetadata() throws Exception {
-
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
@@ -422,10 +437,9 @@ public class ExploreTest {
 
     @Test
     public void testDuplicateCase() throws Exception {
-
         mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1)).andExpect(status().isOk());
-
+                CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -438,12 +452,13 @@ public class ExploreTest {
     @Test
     public void testDuplicateScriptContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1)).andExpect(status().isOk());
+                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testDuplicateFormContingencyList() throws Exception {
-
         mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)

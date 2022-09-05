@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.ExploreException.Type.IMPORT_CASE_FAILED;
 import static org.gridsuite.explore.server.ExploreException.Type.REMOTE_ERROR;
 
 /**
@@ -68,7 +69,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
         } catch (HttpStatusCodeException e) {
-            throw new ExploreException(REMOTE_ERROR, e.getMessage());
+            throw new ExploreException(IMPORT_CASE_FAILED, e.getMessage());
         }
     }
 
