@@ -42,7 +42,6 @@ public class FilterService implements IDirectoryElementsService {
         this.filterServerBaseUri = filterServerBaseUri;
     }
 
-    @SuppressWarnings("checkstyle:WhitespaceAround")
     public void replaceFilterWithScript(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
                 .buildAndExpand(id)
@@ -61,7 +60,7 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)), Void.class);
     }
 
     public void insertFilter(String filter, UUID filterId, String userId) {
@@ -90,7 +89,6 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
         return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
             }).getBody();
-
     }
 
     private HttpHeaders getHeaders(String userId) {

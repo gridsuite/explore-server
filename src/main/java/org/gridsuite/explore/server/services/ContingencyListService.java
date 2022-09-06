@@ -26,9 +26,7 @@ import java.util.stream.Collectors;
 public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-
     private String actionsServerBaseUri;
-
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -111,6 +109,5 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
             }).getBody();
-
     }
 }

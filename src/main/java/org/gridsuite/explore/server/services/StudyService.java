@@ -93,7 +93,6 @@ public class StudyService implements IDirectoryElementsService {
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
-
     }
 
     @Override

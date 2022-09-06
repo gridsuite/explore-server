@@ -66,7 +66,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
                 .buildAndExpand(directoryUuid)
                 .toUriString();
-
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -103,7 +102,6 @@ public class DirectoryService implements IDirectoryElementsService {
         } else {
             return Collections.emptyList();
         }
-
     }
 
     public void notifyDirectoryChanged(UUID elementUuid, String userId) {
