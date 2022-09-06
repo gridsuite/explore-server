@@ -19,8 +19,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
