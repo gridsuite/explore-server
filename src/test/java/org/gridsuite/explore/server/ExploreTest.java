@@ -59,7 +59,6 @@ public class ExploreTest {
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
-    private static final UUID FILTER_UUID_WITH_ERROR = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
@@ -67,7 +66,6 @@ public class ExploreTest {
     private static final String CASE1 = "case1";
     private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
-    private static final UUID CONTINGENCY_LIST_UUID_WITH_ERROR = UUID.randomUUID();
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
@@ -176,8 +174,6 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/form-contingency-lists/" + CONTINGENCY_LIST_UUID_WITH_ERROR + "/new-script/.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(404);
                 } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
@@ -331,7 +327,7 @@ public class ExploreTest {
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("Contingency list content")
-        ).andExpect(status().isBadRequest());
+        ).andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -346,14 +342,6 @@ public class ExploreTest {
 
     @Test
     public void testNewScriptFromFormContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID_WITH_ERROR, "scriptName", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isBadRequest());
-    }
-
-    @Test
-    public void testNewScriptFromFormContingencyListError() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)

@@ -25,11 +25,11 @@ public class RestResponseEntityExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestResponseEntityExceptionHandler.class);
 
     @ExceptionHandler(value = {ExploreException.class})
-    protected ResponseEntity<Object> handleException(RuntimeException exception) {
+    protected ResponseEntity<Object> handleExploreException(ExploreException exception) {
         if (LOGGER.isErrorEnabled()) {
             LOGGER.error(exception.getMessage(), exception);
         }
-        ExploreException exploreException = (ExploreException) exception;
+        ExploreException exploreException = exception;
         switch (exploreException.getType()) {
             case FILTER_NOT_FOUND:
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(FILTER_NOT_FOUND);
@@ -42,5 +42,10 @@ public class RestResponseEntityExceptionHandler {
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @ExceptionHandler(value = {Exception.class})
+    protected ResponseEntity<Object> handleAllException(Exception exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
     }
 }

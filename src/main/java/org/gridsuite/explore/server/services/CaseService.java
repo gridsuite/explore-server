@@ -79,11 +79,7 @@ public class CaseService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        try {
-            return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(REMOTE_ERROR, e.getMessage());
-        }
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
     }
 
     @Override
@@ -93,10 +89,6 @@ public class CaseService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        try {
-            restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(REMOTE_ERROR, e.getMessage());
-        }
+        restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 }
