@@ -149,12 +149,12 @@ public class DirectoryService implements IDirectoryElementsService {
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids) {
         Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids).stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType));
-        List<List<ElementAttributes>> listOfListElements = new ArrayList<>();
+        List<ElementAttributes> listOfElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
-            listOfListElements.add(service.completeElementAttribute(elementAttribute.getValue()));
+            listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
-        return listOfListElements.stream().flatMap(Collection::stream).collect(Collectors.toList());
+        return listOfElements;
     }
 
     // TODO get id/type recursively then do batch delete
