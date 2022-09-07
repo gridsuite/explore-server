@@ -31,12 +31,14 @@ public class ExploreService {
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
     static final String DIRECTORY = "DIRECTORY";
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
+
     private DirectoryService directoryService;
     private StudyService studyService;
     private ContingencyListService contingencyListService;
     private FilterService filterService;
     private CaseService caseService;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
 
     public ExploreService(
         DirectoryService directoryService,

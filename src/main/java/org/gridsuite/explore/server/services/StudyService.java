@@ -14,7 +14,6 @@ import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -56,11 +55,7 @@ public class StudyService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(
                 importParams, headers);
-        try {
-            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
     public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
@@ -79,11 +74,7 @@ public class StudyService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
                 multipartBodyBuilder.build(), headers);
-        try {
-            restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
-        } catch (HttpStatusCodeException e) {
-            throw new ExploreException(INSERT_STUDY_FAILED);
-        }
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
     public void insertStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {

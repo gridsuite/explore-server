@@ -88,10 +88,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/new-script?newId={newId}")
                 .buildAndExpand(id, newId)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
     public void replaceFormContingencyListWithScript(UUID id) {
