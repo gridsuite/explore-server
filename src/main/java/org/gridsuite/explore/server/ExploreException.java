@@ -14,7 +14,6 @@ import java.util.Objects;
 public class ExploreException extends RuntimeException {
 
     public enum Type {
-        FILTER_NOT_FOUND,
         NOT_ALLOWED,
         UNKNOWN_ELEMENT_TYPE,
         REMOTE_ERROR,

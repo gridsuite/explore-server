@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -94,7 +93,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
-    public ResponseEntity<Mono<Void>> createCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
+    public ResponseEntity<Void> createCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
                                                  @RequestParam("caseName") String caseName,
                                                  @RequestParam("description") String description,
                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,

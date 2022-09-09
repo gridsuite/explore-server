@@ -238,7 +238,7 @@ public class ExploreTest {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                         .header("userId", USER1)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -306,7 +306,7 @@ public class ExploreTest {
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isConflict());
         }
     }
 

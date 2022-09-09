@@ -6,13 +6,11 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -21,7 +19,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.FILTER_NOT_FOUND;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -50,30 +47,14 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
-        try {
-            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, null, Void.class);
-        } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new ExploreException(FILTER_NOT_FOUND);
-            } else {
-                throw e;
-            }
-        }
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, null, Void.class);
     }
 
     public void insertNewScriptFromFilter(UUID id, UUID newId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
                 .buildAndExpand(id, newId)
                 .toUriString();
-        try {
-            restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
-        } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new ExploreException(FILTER_NOT_FOUND);
-            } else {
-                throw e;
-            }
-        }
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
     public void delete(UUID id, String userId) {
