@@ -53,7 +53,11 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, null, Void.class);
         } catch (HttpStatusCodeException e) {
-            throw new ExploreException(FILTER_NOT_FOUND);
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new ExploreException(FILTER_NOT_FOUND);
+            } else {
+                throw e;
+            }
         }
     }
 
@@ -64,7 +68,11 @@ public class FilterService implements IDirectoryElementsService {
         try {
             restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
         } catch (HttpStatusCodeException e) {
-            throw new ExploreException(FILTER_NOT_FOUND);
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new ExploreException(FILTER_NOT_FOUND);
+            } else {
+                throw e;
+            }
         }
     }
 
