@@ -9,4 +9,4 @@ spring:
       bindings:
         publishExploreUpdate-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}explore.update
-      source: publishExploreUpdate
+      output-bindings: publishExploreUpdate
