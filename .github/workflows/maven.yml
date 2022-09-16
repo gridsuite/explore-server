@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'main'
+    tags:
+      - 'v[0-9]*'
   pull_request:
 
 jobs:
@@ -39,6 +41,15 @@ jobs:
           mvn --batch-mode deploy -DskipTests -Dmaven.install.skip -Dmaven.deploy.skip -Dpowsybl.docker.deploy
           -Djib.httpTimeout=60000
           -Djib.to.image=docker.io/gridsuite/explore-server
+          -Djib.to.auth.username=gridsuiteci
+          -Djib.to.auth.password=${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image - Tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: >
+          mvn --batch-mode deploy -DskipTests -Dmaven.install.skip -Dmaven.deploy.skip -Dpowsybl.docker.deploy
+          -Djib.httpTimeout=60000
+          -Djib.to.image=docker.io/gridsuite/explore-server:${GITHUB_REF_NAME#v}
           -Djib.to.auth.username=gridsuiteci
           -Djib.to.auth.password=${{ secrets.DOCKERHUB_TOKEN }}
 
