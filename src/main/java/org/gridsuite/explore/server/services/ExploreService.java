@@ -11,14 +11,14 @@ import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
+
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -54,148 +54,134 @@ public class ExploreService {
         this.caseService = caseService;
     }
 
-    public Mono<Void> createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams) {
+    public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
-
-        return studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createStudy(String studyName, Mono<FilePart> caseFile, String description, String userId, UUID parentDirectoryUuid) {
+    public void createStudy(String studyName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-
-        return studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+    public void createStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-
-        return studyService.insertStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        studyService.insertStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createCase(String caseName, Mono<FilePart> caseFile, String description, String userId, UUID parentDirectoryUuid) {
-        return caseService.importCase(caseFile).doOnSuccess(uuid ->
-            directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
-                parentDirectoryUuid, userId).subscribe()).then();
+    public void createCase(String caseName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
+        UUID uuid = caseService.importCase(caseFile);
+        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
+                parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
-        return caseService.createCase(sourceCaseUuid).doOnSuccess(uuid ->
-                directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
-                        null, userId, 0L, description), parentDirectoryUuid, userId).subscribe()).then();
+    public void createCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
+        UUID uuid = caseService.createCase(sourceCaseUuid);
+        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
+                null, userId, 0L, description), parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
+    public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-
-        return contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
+    public void createScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-
-        return contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid())
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid());
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
+    public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-
-        return contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createFormContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
+    public void createFormContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-
-        return contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid())
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid());
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                    CONTINGENCY_LIST, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0L, null);
-
-            return contingencyListService.newScriptFromFormContingencyList(id, newElementAttributes.getElementUuid())
-                    .doOnSuccess(unused -> directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId).subscribe());
-        });
+    public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+        ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
+                CONTINGENCY_LIST, new AccessRightsAttributes(elementAttribute.getAccessRights().isPrivate()), userId, 0L, null);
+        contingencyListService.newScriptFromFormContingencyList(id, newElementAttributes.getElementUuid());
+        directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> replaceFormContingencyListWithScript(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (!userId.equals(elementAttributes.getOwner())) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            if (!elementAttributes.getType().equals(CONTINGENCY_LIST)) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            return contingencyListService.replaceFormContingencyListWithScript(id).doOnSuccess(unused ->
-                directoryService.notifyDirectoryChanged(id, userId).subscribe());
-        });
+    public void replaceFormContingencyListWithScript(UUID id, String userId) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        if (!userId.equals(elementAttribute.getOwner())) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+        contingencyListService.replaceFormContingencyListWithScript(id);
+        directoryService.notifyDirectoryChanged(id, userId);
     }
 
-    public Mono<Void> createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
+    public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
                 null, userId, 0, description);
-
-        return filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> createFilter(String filterName, String description, UUID sourceFilterUuid, UUID parentDirectoryUuid, String userId) {
+    public void createFilter(String filterName, String description, UUID sourceFilterUuid, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
                 null, userId, 0, description);
-
-        return filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId)
-                .doOnSuccess(unused -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId).subscribe());
+        filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
-        return directoryService.getElementInfos(filterId).flatMap(elementAttributes -> {
-            if (!elementAttributes.getType().equals(FILTER)) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                    FILTER, new AccessRightsAttributes(elementAttributes.getAccessRights().isPrivate()), userId, 0, null);
-
-            return filterService.insertNewScriptFromFilter(filterId, newElementAttributes.getElementUuid())
-                    .doOnSuccess(unused -> directoryService.createElement(newElementAttributes, parentDirectoryUuid,  userId).subscribe());
-        });
+    public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(filterId);
+        if (!elementAttribute.getType().equals(FILTER)) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+        ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
+                FILTER, new AccessRightsAttributes(elementAttribute.getAccessRights().isPrivate()), userId, 0, null);
+        filterService.insertNewScriptFromFilter(filterId, newElementAttributes.getElementUuid());
+        directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
     }
 
-    public Mono<Void> replaceFilterWithScript(UUID id, String userId) {
-        return directoryService.getElementInfos(id).flatMap(elementAttributes -> {
-            if (!userId.equals(elementAttributes.getOwner())) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            if (!elementAttributes.getType().equals(FILTER)) {
-                return Mono.error(new ExploreException(NOT_ALLOWED));
-            }
-            return filterService.replaceFilterWithScript(id).doOnSuccess(unused ->
-                directoryService.notifyDirectoryChanged(id, userId).subscribe());
-        });
+    public void replaceFilterWithScript(UUID id, String userId) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        if (!userId.equals(elementAttribute.getOwner())) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+        if (!elementAttribute.getType().equals(FILTER)) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+        filterService.replaceFilterWithScript(id);
+        directoryService.notifyDirectoryChanged(id, userId);
     }
 
-    public Mono<Void> deleteElement(UUID id, String userId) {
-        return directoryService.deleteElement(id, userId)
-                .doOnSuccess(e -> directoryService.deleteDirectoryElement(id, userId).subscribe())
-                // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
-                .onErrorResume(e -> {
-                    LOGGER.error(e.toString(), e);
-                    return directoryService.deleteDirectoryElement(id, userId);
-                });
+    public void deleteElement(UUID id, String userId) {
+        try {
+            directoryService.deleteElement(id, userId);
+            directoryService.deleteDirectoryElement(id, userId);
+            // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
+        } catch (Exception e) {
+            LOGGER.error(e.toString(), e);
+            directoryService.deleteDirectoryElement(id, userId);
+        }
     }
 }
