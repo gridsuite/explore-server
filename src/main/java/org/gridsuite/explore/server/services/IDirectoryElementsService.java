@@ -7,8 +7,6 @@
 package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -23,23 +21,25 @@ import java.util.stream.Collectors;
 interface IDirectoryElementsService {
     String HEADER_USER_ID = "userId";
 
-    default Flux<Map<String, Object>> getMetadata(List<UUID> uuidList) {
-        return Flux.fromStream(() -> uuidList.stream().map(e -> Map.of("id", e)));
+    default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
+        return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
     }
 
-    Mono<Void> delete(UUID id, String userId);
+    void delete(UUID id, String userId);
 
-    default Flux<ElementAttributes> completeElementAttribute(List<ElementAttributes> lstElementAttribute) {
+    default List<ElementAttributes> completeElementAttribute(List<ElementAttributes> lstElementAttribute) {
         /* generating id -> elementAttribute map */
         Map<String, ElementAttributes> mapElementAttribute = lstElementAttribute.stream()
-            .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
-
+                .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
         /* getting metadata from services */
-        return getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()))
-            .flatMap(metadataItem -> Mono.justOrEmpty(mapElementAttribute.get(metadataItem.getOrDefault("id", "").toString()))
-                .map(elementAttribute -> {
-                    elementAttribute.setSpecificMetadata(metadataItem);
-                    return elementAttribute;
-                }));
+        List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()));
+        return metadata.stream().map(metadataItem ->
+                populateMedataItem(mapElementAttribute.get(metadataItem.getOrDefault("id", "").toString()), metadataItem)
+        ).collect(Collectors.toList());
+    }
+
+    private ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        elementAttributes.setSpecificMetadata(metadataItem);
+        return elementAttributes;
     }
 }

@@ -9,16 +9,13 @@ package org.gridsuite.explore.server;
 import com.powsybl.ws.commons.Utils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.web.reactive.config.EnableWebFlux;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
-@EnableWebFlux
 public class ExploreApplication {
-
     public static void main(String[] args) {
         Utils.initProperties();
         SpringApplication.run(ExploreApplication.class, args);

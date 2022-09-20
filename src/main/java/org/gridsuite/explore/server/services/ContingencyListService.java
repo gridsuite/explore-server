@@ -9,21 +9,14 @@ package org.gridsuite.explore.server.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -31,135 +24,87 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ContingencyListService implements IDirectoryElementsService {
-    private static final String ROOT_CATEGORY_REACTOR = "reactor.";
-
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-
-    private final WebClient webClient;
     private String actionsServerBaseUri;
+    private final RestTemplate restTemplate;
 
     @Autowired
-    public ContingencyListService(@Value("${backing-services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri,
-                                  WebClient.Builder webClientBuilder) {
+    public ContingencyListService(@Value("${backing-services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri, RestTemplate restTemplate) {
         this.actionsServerBaseUri = actionsServerBaseUri;
-        this.webClient = webClientBuilder.build();
+        this.restTemplate = restTemplate;
     }
 
     public void setActionsServerBaseUri(String actionsServerBaseUri) {
         this.actionsServerBaseUri = actionsServerBaseUri;
     }
 
-    public Mono<Void> delete(UUID id, String userId) {
+    public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
-            .buildAndExpand(id)
-            .toUriString();
-
-        return webClient.delete()
-            .uri(actionsServerBaseUri + path)
-            .header(HEADER_USER_ID, userId)
-            .retrieve()
-            .onStatus(httpStatus -> httpStatus != HttpStatus.OK, ClientResponse::createException)
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
-    public Mono<Void> insertScriptContingencyList(UUID id, String content) {
+    public void insertScriptContingencyList(UUID id, String content) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists?id={id}")
-            .buildAndExpand(id)
-            .toUriString();
-
-        return webClient.post()
-            .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(content))
-            .retrieve()
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
-    public Mono<Void> insertScriptContingencyList(UUID sourceListId, UUID id) {
+    public void insertScriptContingencyList(UUID sourceListId, UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists")
                 .queryParam("duplicateFrom", sourceListId)
                 .queryParam("id", id)
                 .toUriString();
-
-        return webClient.post()
-                .uri(actionsServerBaseUri + path)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
-    public Mono<Void> insertFormContingencyList(UUID id, String content) {
+    public void insertFormContingencyList(UUID id, String content) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists?id={id}")
-            .buildAndExpand(id)
-            .toUriString();
-
-        return webClient.post()
-            .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(content))
-            .retrieve()
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
-    public Mono<Void> insertFormContingencyList(UUID sourceListId, UUID id) {
+    public void insertFormContingencyList(UUID sourceListId, UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
                 .queryParam("duplicateFrom", sourceListId)
                 .queryParam("id", id)
                 .toUriString();
-
-        return webClient.post()
-                .uri(actionsServerBaseUri + path)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
-    public Mono<Void> newScriptFromFormContingencyList(UUID id, UUID newId) {
+    public void newScriptFromFormContingencyList(UUID id, UUID newId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/new-script?newId={newId}")
-            .buildAndExpand(id, newId)
-            .toUriString();
-
-        return webClient.post()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id, newId)
+                .toUriString();
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
-    public Mono<Void> replaceFormContingencyListWithScript(UUID id) {
+    public void replaceFormContingencyListWithScript(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/replace-with-script")
-            .buildAndExpand(id)
-            .toUriString();
-
-        return webClient.post()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .bodyToMono(Void.class)
-            .publishOn(Schedulers.boundedElastic())
-            .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+                .buildAndExpand(id)
+                .toUriString();
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
     @Override
-    public Flux<Map<String, Object>> getMetadata(List<UUID> contingencyListsUuids) {
+    public List<Map<String, Object>> getMetadata(List<UUID> contingencyListsUuids) {
         var ids = contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return webClient.get()
-                .uri(actionsServerBaseUri + path)
-                .retrieve()
-                .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() { })
-                .publishOn(Schedulers.boundedElastic())
-                .log(ROOT_CATEGORY_REACTOR, Level.FINE);
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            }).getBody();
     }
 }
