@@ -15,10 +15,8 @@ import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -46,173 +44,189 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
     @Operation(summary = "create a study from an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Mono<Void>> createStudyFromExistingCase(@PathVariable("studyName") String studyName,
-                                                                  @PathVariable("caseUuid") UUID caseUuid,
-                                                                  @RequestParam("description") String description,
-                                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                  @RequestHeader("userId") String userId,
-                                                                  @RequestBody(required = false) Map<String, Object> importParams) {
-        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams));
+    public ResponseEntity<Void> createStudyFromExistingCase(@PathVariable("studyName") String studyName,
+                                                            @PathVariable("caseUuid") UUID caseUuid,
+                                                            @RequestParam("description") String description,
+                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                            @RequestHeader("userId") String userId,
+                                                            @RequestBody(required = false) Map<String, Object> importParams) {
+        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/studies/{studyName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "create a study and import the case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Mono<Void>> createStudy(@PathVariable("studyName") String studyName,
-                                                  @RequestPart("caseFile") FilePart caseFile,
-                                                  @RequestParam("description") String description,
-                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                  @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(studyName, Mono.just(caseFile), description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
+                                            @RequestPart("caseFile") MultipartFile caseFile,
+                                            @RequestParam("description") String description,
+                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                            @RequestHeader("userId") String userId) {
+        exploreService.createStudy(studyName, caseFile, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/studies")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Mono<Void>> createStudy(@RequestParam("duplicateFrom") UUID sourceStudyUuid,
-                                                  @RequestParam("studyName") String studyName,
-                                                  @RequestParam("description") String description,
-                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                  @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createStudy(sourceStudyUuid, studyName, description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createStudy(@RequestParam("duplicateFrom") UUID sourceStudyUuid,
+                                            @RequestParam("studyName") String studyName,
+                                            @RequestParam("description") String description,
+                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                            @RequestHeader("userId") String userId) {
+        exploreService.createStudy(sourceStudyUuid, studyName, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/cases/{caseName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "create a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case creation request delegated to case server")})
-    public ResponseEntity<Mono<Void>> createCase(@PathVariable("caseName") String caseName,
-                                                 @RequestPart("caseFile") FilePart caseFile,
-                                                 @RequestParam("description") String description,
-                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                 @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createCase(caseName, Mono.just(caseFile), description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createCase(@PathVariable("caseName") String caseName,
+                                           @RequestPart("caseFile") MultipartFile caseFile,
+                                           @RequestParam("description") String description,
+                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                           @RequestHeader("userId") String userId) {
+        exploreService.createCase(caseName, caseFile, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/cases")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
-    public ResponseEntity<Mono<Void>> createCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
-                                                    @RequestParam("caseName") String caseName,
-                                                    @RequestParam("description") String description,
+    public ResponseEntity<Void> createCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
+                                                 @RequestParam("caseName") String caseName,
+                                                 @RequestParam("description") String description,
                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                  @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createCase(caseName, description, userId, parentCaseUuid, parentDirectoryUuid));
+        exploreService.createCase(caseName, description, userId, parentCaseUuid, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/script-contingency-lists/{listName}")
     @Operation(summary = "create a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
-    public ResponseEntity<Mono<Void>> createScriptContingencyList(@PathVariable("listName") String listName,
-                                                                  @RequestBody(required = false) String content,
-                                                                  @RequestParam("description") String description,
-                                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                  @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createScriptContingencyList(listName, content, description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createScriptContingencyList(@PathVariable("listName") String listName,
+                                                            @RequestBody(required = false) String content,
+                                                            @RequestParam("description") String description,
+                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                            @RequestHeader("userId") String userId) {
+        exploreService.createScriptContingencyList(listName, content, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/script-contingency-lists")
     @Operation(summary = "Duplicate a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
-    public ResponseEntity<Mono<Void>> createScriptContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
-                                                                     @RequestParam("listName") String listName,
-                                                                     @RequestParam("description") String description,
-                                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                     @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createScriptContingencyList(parentListId, listName, description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createScriptContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+                                                            @RequestParam("listName") String listName,
+                                                            @RequestParam("description") String description,
+                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                            @RequestHeader("userId") String userId) {
+        exploreService.createScriptContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/form-contingency-lists/{listName}")
     @Operation(summary = "create a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
-    public ResponseEntity<Mono<Void>> createFormContingencyList(@PathVariable("listName") String listName,
-                                                                   @RequestBody(required = false) String content,
-                                                                   @RequestParam("description") String description,
-                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFormContingencyList(listName, content, description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createFormContingencyList(@PathVariable("listName") String listName,
+                                                          @RequestBody(required = false) String content,
+                                                          @RequestParam("description") String description,
+                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                          @RequestHeader("userId") String userId) {
+        exploreService.createFormContingencyList(listName, content, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/form-contingency-lists")
     @Operation(summary = "Duplicate a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
-    public ResponseEntity<Mono<Void>> createFormContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
-                                                                   @RequestParam("listName") String listName,
-                                                                   @RequestParam("description") String description,
-                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFormContingencyList(parentListId, listName, description, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> createFormContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+                                                          @RequestParam("listName") String listName,
+                                                          @RequestParam("description") String description,
+                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                          @RequestHeader("userId") String userId) {
+        exploreService.createFormContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/form-contingency-lists/{id}/new-script/{scriptName}")
     @Operation(summary = "Create a new script contingency list from a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list have been created successfully")})
-    public ResponseEntity<Mono<Void>> newScriptFromFormContingencyList(@PathVariable("id") UUID id,
-                                                                          @PathVariable("scriptName") String scriptName,
-                                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                          @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.newScriptFromFormContingencyList(id, scriptName, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> newScriptFromFormContingencyList(@PathVariable("id") UUID id,
+                                                                 @PathVariable("scriptName") String scriptName,
+                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                                 @RequestHeader("userId") String userId) {
+        exploreService.newScriptFromFormContingencyList(id, scriptName, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/form-contingency-lists/{id}/replace-with-script")
     @Operation(summary = "Replace a form contingency list with a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The form contingency list has been replaced successfully")})
-    public ResponseEntity<Mono<Void>> replaceFilterContingencyListWithScript(@PathVariable("id") UUID id,
-                                                                             @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.replaceFormContingencyListWithScript(id, userId));
+    public ResponseEntity<Void> replaceFilterContingencyListWithScript(@PathVariable("id") UUID id,
+                                                                       @RequestHeader("userId") String userId) {
+        exploreService.replaceFormContingencyListWithScript(id, userId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
-    public ResponseEntity<Mono<Void>> createFilter(@RequestBody String filter,
-                                                   @RequestParam("name") String filterName,
-                                                   @RequestParam("description") String description,
-                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                   @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, description, parentDirectoryUuid, userId));
+    public ResponseEntity<Void> createFilter(@RequestBody String filter,
+                                             @RequestParam("name") String filterName,
+                                             @RequestParam("description") String description,
+                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                             @RequestHeader("userId") String userId) {
+        exploreService.createFilter(filter, filterName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/filters")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
-    public ResponseEntity<Mono<Void>> createFilter(@RequestParam("duplicateFrom") UUID parentFilterId,
-                                                          @RequestParam("name") String filterName,
-                                                          @RequestParam("description") String description,
-                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                          @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.createFilter(filterName, description, parentFilterId, parentDirectoryUuid, userId));
+    public ResponseEntity<Void> createFilter(@RequestParam("duplicateFrom") UUID parentFilterId,
+                                             @RequestParam("name") String filterName,
+                                             @RequestParam("description") String description,
+                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                             @RequestHeader("userId") String userId) {
+        exploreService.createFilter(filterName, description, parentFilterId, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/filters/{id}/new-script/{scriptName}")
     @Operation(summary = "Create a new script from a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
-    public ResponseEntity<Mono<Void>> newScriptFromFilter(@PathVariable("id") UUID filterId,
-                                                          @PathVariable("scriptName") String scriptName,
-                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                          @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.newScriptFromFilter(filterId, scriptName, userId, parentDirectoryUuid));
+    public ResponseEntity<Void> newScriptFromFilter(@PathVariable("id") UUID filterId,
+                                                    @PathVariable("scriptName") String scriptName,
+                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                    @RequestHeader("userId") String userId) {
+        exploreService.newScriptFromFilter(filterId, scriptName, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/filters/{id}/replace-with-script")
     @Operation(summary = "Replace a filter with a script")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been replaced successfully")})
-    public ResponseEntity<Mono<Void>> replaceFilterWithScript(@PathVariable("id") UUID id,
-                                                              @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.replaceFilterWithScript(id, userId));
+    public ResponseEntity<Void> replaceFilterWithScript(@PathVariable("id") UUID id,
+                                                        @RequestHeader("userId") String userId) {
+        exploreService.replaceFilterWithScript(id, userId);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping(value = "/explore/elements/{elementUuid}")
     @Operation(summary = "Remove directory/element")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "Directory/element was successfully removed"))
-    public ResponseEntity<Mono<Void>> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
-                                                    @RequestHeader("userId") String userId) {
-        return ResponseEntity.ok().body(exploreService.deleteElement(elementUuid, userId));
+    public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
+                                              @RequestHeader("userId") String userId) {
+        exploreService.deleteElement(elementUuid, userId);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/explore/elements/metadata")
+    @GetMapping(value = "/explore/elements/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
-    public ResponseEntity<Flux<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids) {
-        return ResponseEntity.ok().body(directoryService.getElementsMetadata(ids));
+    public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids));
     }
 }
