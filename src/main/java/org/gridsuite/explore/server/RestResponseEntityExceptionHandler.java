@@ -36,7 +36,7 @@ public class RestResponseEntityExceptionHandler {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
             case REMOTE_ERROR:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
-            case BAD_EXTENSION:
+            case INCORRECT_CASE_FILE:
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UNKNOWN_ELEMENT_TYPE);
