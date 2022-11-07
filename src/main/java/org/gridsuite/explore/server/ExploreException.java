@@ -18,6 +18,7 @@ public class ExploreException extends RuntimeException {
         UNKNOWN_ELEMENT_TYPE,
         REMOTE_ERROR,
         IMPORT_CASE_FAILED,
+        BAD_EXTENSION
     }
 
     private final Type type;

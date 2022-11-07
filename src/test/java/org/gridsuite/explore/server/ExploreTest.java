@@ -52,6 +52,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
+
+    private static final String TEST_FILE_WITH_BAD_EXTENSION = "application-default.yml";
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
@@ -133,6 +135,8 @@ public class ExploreTest {
                     String bodyStr = body.readUtf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
                         return new MockResponse().setResponseCode(409).setBody("invalid file");
+                    } else if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_BAD_EXTENSION + "\"")) {  // import file with errors
+                        return new MockResponse().setResponseCode(422).setBody("file with bad extension");
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
@@ -447,5 +451,22 @@ public class ExploreTest {
                 PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testCaseCreationErrorWithBadExtension() throws Exception {
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_BAD_EXTENSION))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_BAD_EXTENSION, "text/xml", is);
+            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+            bodyBuilder.part("caseFile", mockFile.getBytes())
+                    .filename(TEST_FILE_WITH_BAD_EXTENSION)
+                    .contentType(MediaType.TEXT_XML);
+
+            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER1)
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
+                    .andExpect(status().isUnprocessableEntity());
+        }
     }
 }
