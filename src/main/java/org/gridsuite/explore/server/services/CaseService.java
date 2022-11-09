@@ -69,7 +69,7 @@ public class CaseService implements IDirectoryElementsService {
             caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases/private", request, UUID.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
-                throw new ExploreException(BAD_EXTENSION, e.getMessage());
+                throw new ExploreException(INCORRECT_CASE_FILE, e.getMessage());
             }
             throw wrapRemoteError(e.getMessage(), e.getStatusCode());
         }
