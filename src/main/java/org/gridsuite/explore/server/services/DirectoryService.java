@@ -93,7 +93,6 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        var types = elementTypes == null ? "" : elementTypes.stream().collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
 
         if (elementTypes != null) {
