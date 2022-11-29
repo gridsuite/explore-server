@@ -100,6 +100,8 @@ public class DirectoryService implements IDirectoryElementsService {
         }
 
         List<ElementAttributes> elementAttributesList;
+        System.out.println("=========================================================");
+        System.out.println(directoryServerBaseUri + path);
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
             }).getBody();
         if (elementAttributesList != null) {
