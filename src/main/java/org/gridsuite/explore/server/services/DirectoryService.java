@@ -93,8 +93,13 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        var types = elementTypes.stream().collect(Collectors.joining(","));
-        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids + "&elementTypes=" + types;
+        var types = elementTypes == null ? "" : elementTypes.stream().collect(Collectors.joining(","));
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
+
+        if (elementTypes != null) {
+            path += "&elementTypes=" + elementTypes.stream().collect(Collectors.joining(","));
+        }
+
         List<ElementAttributes> elementAttributesList;
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
             }).getBody();
