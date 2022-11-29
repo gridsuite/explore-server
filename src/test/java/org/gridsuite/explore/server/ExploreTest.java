@@ -166,7 +166,7 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID + "\\?&equipmentTypes=&elementTypes=FILTER,CONTINGENCY_LIST") && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
@@ -410,7 +410,7 @@ public class ExploreTest {
 
     @Test
     public void testGetElementsMetadata() throws Exception {
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID + "&equipmentTypes=&elementTypes=FILTER,CONTINGENCY_LIST")
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
     }
