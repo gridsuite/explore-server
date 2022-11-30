@@ -161,7 +161,7 @@ public class DirectoryService implements IDirectoryElementsService {
             listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
 
-        if (equipmentTypes != null && equipmentTypes.size() > 0 && listOfElements.size() > 0) {
+        if (equipmentTypes != null && !equipmentTypes.isEmpty() && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
                     .filter(element -> "DIRECTORY".equals(element.getType()) || elementTypes.contains(element.getSpecificMetadata().get("equipmentType")))
                     .collect(Collectors.toList());
