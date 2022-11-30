@@ -100,8 +100,6 @@ public class DirectoryService implements IDirectoryElementsService {
         }
 
         List<ElementAttributes> elementAttributesList;
-        System.out.println("=========================================================");
-        System.out.println(directoryServerBaseUri + path);
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
             }).getBody();
         if (elementAttributesList != null) {
@@ -165,7 +163,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
         if (equipmentTypes != null && equipmentTypes.size() > 0 && listOfElements.size() > 0) {
             listOfElements = listOfElements.stream()
-                    .filter(element -> "DIRECTORY".equals(element.getType()) || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
+                    .filter(element -> "DIRECTORY".equals(element.getType()) || elementTypes.contains(element.getSpecificMetadata().get("equipmentType")))
                     .collect(Collectors.toList());
         }
 

@@ -65,7 +65,6 @@ public class ExploreTest {
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
-    private static final UUID FILTER_UUID_3 = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
@@ -111,9 +110,6 @@ public class ExploreTest {
         Map<String, Object> specificMetadata2 = new HashMap<>();
         specificMetadata2.put("equipmentType", "LINE");
 
-        Map<String, Object> specificMetadata3 = new HashMap<>();
-        specificMetadata2.put("equipmentType", "LOAD");
-
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
@@ -121,8 +117,7 @@ public class ExploreTest {
         String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
         String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null)));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
-        String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null, specificMetadata2));
-        String filter3AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_3, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null, specificMetadata3));
+        String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, "filterContingencyList2", "FILTER", new AccessRightsAttributes(true), USER1, 0, null, specificMetadata2));
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0, null));
@@ -179,8 +174,8 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + FILTER_UUID_3 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "," + filter3AttributesAsString + "]")
+                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]")
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
@@ -431,9 +426,13 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + FILTER_UUID_3 + "&equipmentTypes=LINE&elementTypes=FILTER")
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER")
                 .header("userId", USER1)
-        ).andExpectAll(status().isOk(), content().string(""));
+        ).andExpectAll(status().isOk(), content().string("[{\"elementUuid\":\"" + FILTER_UUID + "\",\"elementName\":\"filterContingencyList\",\"type\":\"FILTER\",\"accessRights\":{\"private\":true},\"owner\":\"user1\",\"subdirectoriesCount\":0,\"description\":null,\"specificMetadata\":{\"id\":\"" + FILTER_UUID + "\"}},{\"elementUuid\":\"" + FILTER_UUID_2 + "\",\"elementName\":\"filterContingencyList2\",\"type\":\"FILTER\",\"accessRights\":{\"private\":true},\"owner\":\"user1\",\"subdirectoriesCount\":0,\"description\":null,\"specificMetadata\":{\"id\":\"" + FILTER_UUID_2 + "\"}}]"));
+
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER")
+                .header("userId", USER1)
+        ).andExpectAll(status().isOk(), content().string("[]"));
     }
 
     @Test

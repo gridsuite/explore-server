@@ -32,7 +32,8 @@ interface IDirectoryElementsService {
         Map<String, ElementAttributes> mapElementAttribute = lstElementAttribute.stream()
                 .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
         /* getting metadata from services */
-        List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()));
+        List<UUID> collect = lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList());
+        List<Map<String, Object>> metadata = collect.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
         return metadata.stream().map(metadataItem ->
                 populateMedataItem(mapElementAttribute.get(metadataItem.getOrDefault("id", "").toString()), metadataItem)
         ).collect(Collectors.toList());
