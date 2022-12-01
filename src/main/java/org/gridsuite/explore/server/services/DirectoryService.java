@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -95,7 +96,7 @@ public class DirectoryService implements IDirectoryElementsService {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
 
-        if (elementTypes != null) {
+        if (!CollectionUtils.isEmpty(elementTypes)) {
             path += "&elementTypes=" + elementTypes.stream().collect(Collectors.joining(","));
         }
 
@@ -161,9 +162,9 @@ public class DirectoryService implements IDirectoryElementsService {
             listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
 
-        if (equipmentTypes != null && !equipmentTypes.isEmpty() && !listOfElements.isEmpty()) {
+        if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
-                    .filter(element -> "DIRECTORY".equals(element.getType()) || elementTypes.contains(element.getSpecificMetadata().get("equipmentType")))
+                    .filter(element -> "DIRECTORY".equals(element.getType()) || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
                     .collect(Collectors.toList());
         }
 
