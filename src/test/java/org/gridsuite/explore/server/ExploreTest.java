@@ -72,6 +72,11 @@ public class ExploreTest {
     private static final String CASE1 = "case1";
     private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
+    public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
+    public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
+    public static final String FILTER = "FILTER";
+    private Map<String, Object> specificMetadata = new HashMap<>();
+    private Map<String, Object> specificMetadata2 = new HashMap<>();
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
@@ -107,10 +112,8 @@ public class ExploreTest {
         contingencyListService.setActionsServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
 
-        Map<String, Object> specificMetadata = new HashMap<>();
         specificMetadata.put("id", FILTER_UUID);
 
-        Map<String, Object> specificMetadata2 = new HashMap<>();
         specificMetadata2.put("equipmentType", "LINE");
         specificMetadata2.put("id", FILTER_UUID_2);
 
@@ -118,11 +121,11 @@ public class ExploreTest {
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
         String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", new AccessRightsAttributes(false), USER1, 0, null));
-        String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
-        String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, "filterContingencyList", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null)));
-        String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
-        String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, "filterContingencyList2", "FILTER", new AccessRightsAttributes(true), USER1, 0, null));
-        String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, "filterContingencyList", "FILTER", new AccessRightsAttributes(true), USER1, 0, null)));
+        String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
+        String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null)));
+        String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null));
+        String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0, null));
+        String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0, null));
 
@@ -357,7 +360,7 @@ public class ExploreTest {
     @Test
     public void testCreateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                "filterContingencyList", PARENT_DIRECTORY_UUID, null)
+                FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("Contingency list content")
@@ -434,17 +437,29 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
 
+        ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, specificMetadata);
+        ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, specificMetadata2);
+
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
-                .header("userId", USER1)
-        ).andExpectAll(status().isOk(), content().string("[{\"elementUuid\":\"" + FILTER_UUID + "\",\"elementName\":\"filterContingencyList\",\"type\":\"FILTER\",\"accessRights\":{\"private\":true},\"owner\":\"user1\",\"subdirectoriesCount\":0,\"description\":null,\"specificMetadata\":{\"id\":\"" + FILTER_UUID + "\"}},{\"elementUuid\":\"" + FILTER_UUID_2 + "\",\"elementName\":\"filterContingencyList2\",\"type\":\"FILTER\",\"accessRights\":{\"private\":true},\"owner\":\"user1\",\"subdirectoriesCount\":0,\"description\":null,\"specificMetadata\":{\"id\":\"" + FILTER_UUID_2 + "\",\"equipmentType\":\"LINE\"}}]"));
+            .header("userId", USER1))
+            .andExpectAll(
+                status().isOk(),
+                content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
+            );
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER")
-                .header("userId", USER1)
-        ).andExpectAll(status().isOk(), content().string("[]"));
+            .header("userId", USER1))
+            .andExpectAll(
+                status().isOk(),
+                content().string(mapper.writeValueAsString(List.of()))
+            );
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER")
-                .header("userId", USER1)
-        ).andExpectAll(status().isOk(), content().string("[{\"elementUuid\":\"" + FILTER_UUID_2 + "\",\"elementName\":\"filterContingencyList2\",\"type\":\"FILTER\",\"accessRights\":{\"private\":true},\"owner\":\"user1\",\"subdirectoriesCount\":0,\"description\":null,\"specificMetadata\":{\"id\":\"" + FILTER_UUID_2 + "\",\"equipmentType\":\"LINE\"}}]"));
+            .header("userId", USER1))
+            .andExpectAll(
+                status().isOk(),
+                content().string(mapper.writeValueAsString(List.of(filter2)))
+            );
     }
 
     @Test
