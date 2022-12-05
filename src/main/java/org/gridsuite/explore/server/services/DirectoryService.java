@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -91,9 +92,14 @@ public class DirectoryService implements IDirectoryElementsService {
         return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody();
     }
 
-    private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids) {
+    private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
+
+        if (!CollectionUtils.isEmpty(elementTypes)) {
+            path += "&elementTypes=" + elementTypes.stream().collect(Collectors.joining(","));
+        }
+
         List<ElementAttributes> elementAttributesList;
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
             }).getBody();
@@ -146,14 +152,22 @@ public class DirectoryService implements IDirectoryElementsService {
         return iDirectoryElementsService;
     }
 
-    public List<ElementAttributes> getElementsMetadata(List<UUID> ids) {
-        Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids).stream()
+    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
+        Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
+                .stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType));
         List<ElementAttributes> listOfElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
             listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
+
+        if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
+            listOfElements = listOfElements.stream()
+                    .filter(element -> "DIRECTORY".equals(element.getType()) || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
+                    .collect(Collectors.toList());
+        }
+
         return listOfElements;
     }
 
