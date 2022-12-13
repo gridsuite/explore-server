@@ -66,7 +66,7 @@ public class CaseService implements IDirectoryElementsService {
         HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
                 multipartBodyBuilder.build(), headers);
         try {
-            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases/private", request, UUID.class);
+            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request, UUID.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
                 throw new ExploreException(INCORRECT_CASE_FILE, e.getMessage());
