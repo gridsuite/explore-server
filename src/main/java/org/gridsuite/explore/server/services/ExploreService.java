@@ -133,7 +133,7 @@ public class ExploreService {
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
-        contingencyListService.replaceFormContingencyListWithScript(id);
+        contingencyListService.replaceFormContingencyListWithScript(id, userId);
         directoryService.notifyDirectoryChanged(id, userId);
     }
 
@@ -170,7 +170,7 @@ public class ExploreService {
         if (!elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
-        filterService.replaceFilterWithScript(id);
+        filterService.replaceFilterWithScript(id, userId);
         directoryService.notifyDirectoryChanged(id, userId);
     }
 
