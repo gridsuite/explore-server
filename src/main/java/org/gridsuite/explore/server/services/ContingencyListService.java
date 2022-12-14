@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
+    private static final String HEADER_USER_ID = "userId";
     private String actionsServerBaseUri;
     private final RestTemplate restTemplate;
 
@@ -39,6 +40,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         this.actionsServerBaseUri = actionsServerBaseUri;
     }
 
+    @Override
     public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
                 .buildAndExpand(id)
@@ -91,11 +93,13 @@ public class ContingencyListService implements IDirectoryElementsService {
         restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
-    public void replaceFormContingencyListWithScript(UUID id) {
+    public void replaceFormContingencyListWithScript(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
     @Override
