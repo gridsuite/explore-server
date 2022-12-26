@@ -46,11 +46,12 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
     public ResponseEntity<Void> createStudyFromExistingCase(@PathVariable("studyName") String studyName,
                                                             @PathVariable("caseUuid") UUID caseUuid,
+                                                            @RequestParam(name = "duplicateCase", required = false, defaultValue = "false") Boolean duplicateCase,
                                                             @RequestParam("description") String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader("userId") String userId,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
-        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams);
+        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams, duplicateCase);
         return ResponseEntity.ok().build();
     }
 
@@ -69,12 +70,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Void> createStudy(@RequestParam("duplicateFrom") UUID sourceStudyUuid,
-                                            @RequestParam("studyName") String studyName,
-                                            @RequestParam("description") String description,
-                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                            @RequestHeader("userId") String userId) {
-        exploreService.createStudy(sourceStudyUuid, studyName, description, userId, parentDirectoryUuid);
+    public ResponseEntity<Void> duplicateStudy(@RequestParam("duplicateFrom") UUID sourceStudyUuid,
+                                               @RequestParam("studyName") String studyName,
+                                               @RequestParam("description") String description,
+                                               @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                               @RequestHeader("userId") String userId) {
+        exploreService.duplicateStudy(sourceStudyUuid, studyName, description, userId, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -93,12 +94,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
-    public ResponseEntity<Void> createCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
-                                                 @RequestParam("caseName") String caseName,
-                                                 @RequestParam("description") String description,
-                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                 @RequestHeader("userId") String userId) {
-        exploreService.createCase(caseName, description, userId, parentCaseUuid, parentDirectoryUuid);
+    public ResponseEntity<Void> duplicateCase(@RequestParam("duplicateFrom") UUID parentCaseUuid,
+                                              @RequestParam("caseName") String caseName,
+                                              @RequestParam("description") String description,
+                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                              @RequestHeader("userId") String userId) {
+        exploreService.duplicateCase(caseName, description, userId, parentCaseUuid, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 

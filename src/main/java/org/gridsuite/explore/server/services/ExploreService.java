@@ -54,9 +54,9 @@ public class ExploreService {
         this.caseService = caseService;
     }
 
-    public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams) {
+    public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
-        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams);
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams, duplicateCase);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -67,10 +67,10 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void createStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+    public void duplicateStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-        studyService.insertStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
+        studyService.duplicateStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -80,8 +80,8 @@ public class ExploreService {
                 parentDirectoryUuid, userId);
     }
 
-    public void createCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
-        UUID uuid = caseService.createCase(sourceCaseUuid);
+    public void duplicateCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
+        UUID uuid = caseService.duplicateCase(sourceCaseUuid);
         directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
                 null, userId, 0L, description), parentDirectoryUuid, userId);
     }

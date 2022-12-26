@@ -255,6 +255,7 @@ public class ExploreTest {
     @Test
     public void testCreateStudyFromExistingCase() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                .param("duplicateCase", "false")
                 .header("userId", "userId")
                 .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk());
