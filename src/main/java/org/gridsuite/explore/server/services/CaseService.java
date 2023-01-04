@@ -34,7 +34,8 @@ public class CaseService implements IDirectoryElementsService {
     private String caseServerBaseUri;
 
     @Autowired
-    public CaseService(@Value("${backing-services.case-server.base-uri:http://case-server/}") String studyServerBaseUri, RestTemplate restTemplate) {
+    public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String studyServerBaseUri,
+            RestTemplate restTemplate) {
         this.caseServerBaseUri = studyServerBaseUri;
         this.restTemplate = restTemplate;
     }
@@ -58,7 +59,8 @@ public class CaseService implements IDirectoryElementsService {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         try {
             if (multipartFile != null) {
-                multipartBodyBuilder.part("file", multipartFile.getBytes()).filename(Objects.requireNonNull(multipartFile.getOriginalFilename()));
+                multipartBodyBuilder.part("file", multipartFile.getBytes())
+                        .filename(Objects.requireNonNull(multipartFile.getOriginalFilename()));
             }
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
@@ -66,7 +68,8 @@ public class CaseService implements IDirectoryElementsService {
         HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
                 multipartBodyBuilder.build(), headers);
         try {
-            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request, UUID.class);
+            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
+                    UUID.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
                 throw new ExploreException(INCORRECT_CASE_FILE, e.getMessage());
@@ -82,7 +85,8 @@ public class CaseService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
+                .getBody();
     }
 
     @Override

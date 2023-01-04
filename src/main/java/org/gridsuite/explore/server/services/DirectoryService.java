@@ -23,7 +23,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 import static org.gridsuite.explore.server.ExploreException.Type.*;
 import static org.gridsuite.explore.server.services.ExploreService.*;
 
@@ -37,25 +36,29 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
 
-    private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "directories";
+    private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
+            + "directories";
 
-    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "elements";
+    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
+            + "elements";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
     private String directoryServerBaseUri;
 
     @Autowired
-    public DirectoryService(@Value("${backing-services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
-                            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, CaseService caseService, RestTemplate restTemplate) {
+    public DirectoryService(
+            @Value("${gridsuite.services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
+            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService,
+            CaseService caseService, RestTemplate restTemplate) {
         this.directoryServerBaseUri = directoryServerBaseUri;
         this.restTemplate = restTemplate;
         this.genericServices = Map.of(
-            FILTER, filterService,
-            CONTINGENCY_LIST, contingencyListService,
-            STUDY, studyService,
-            DIRECTORY, this,
-            CASE, caseService);
+                FILTER, filterService,
+                CONTINGENCY_LIST, contingencyListService,
+                STUDY, studyService,
+                DIRECTORY, this,
+                CASE, caseService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
@@ -71,7 +74,9 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
+        return restTemplate
+                .exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class)
+                .getBody();
     }
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
@@ -89,7 +94,8 @@ public class DirectoryService implements IDirectoryElementsService {
                 .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody();
+        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class)
+                .getBody();
     }
 
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
@@ -101,8 +107,9 @@ public class DirectoryService implements IDirectoryElementsService {
         }
 
         List<ElementAttributes> elementAttributesList;
-        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
-            }).getBody();
+        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<ElementAttributes>>() {
+                }).getBody();
         if (elementAttributesList != null) {
             return elementAttributesList;
         } else {
@@ -128,8 +135,9 @@ public class DirectoryService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         List<ElementAttributes> elementAttributesList;
-        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
-            }).getBody();
+        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET,
+                new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
+                }).getBody();
 
         if (elementAttributesList != null) {
             return elementAttributesList;
@@ -152,7 +160,8 @@ public class DirectoryService implements IDirectoryElementsService {
         return iDirectoryElementsService;
     }
 
-    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
+    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
+            List<String> equipmentTypes) {
         Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
                 .stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType));
@@ -164,7 +173,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
-                    .filter(element -> "DIRECTORY".equals(element.getType()) || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
+                    .filter(element -> "DIRECTORY".equals(element.getType())
+                            || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
                     .collect(Collectors.toList());
         }
 
@@ -175,8 +185,6 @@ public class DirectoryService implements IDirectoryElementsService {
     @Override
     public void delete(UUID id, String userId) {
         List<ElementAttributes> elementAttributesList = getDirectoryElements(id, userId);
-        elementAttributesList.forEach(elementAttributes ->
-                deleteElement(elementAttributes.getElementUuid(), userId)
-        );
+        elementAttributesList.forEach(elementAttributes -> deleteElement(elementAttributes.getElementUuid(), userId));
     }
 }
