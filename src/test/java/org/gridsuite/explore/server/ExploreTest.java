@@ -270,23 +270,6 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateStudy() throws Exception {
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
-            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
-            bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE)
-                    .contentType(MediaType.TEXT_XML);
-
-            mockMvc.perform(multipart("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER1)
-                            .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isOk());
-        }
-    }
-
-    @Test
     public void testCreateCase() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
@@ -318,23 +301,6 @@ public class ExploreTest {
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isBadRequest());
-        }
-    }
-
-    @Test
-    public void testCreateStudyError() throws Exception {
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
-            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
-            bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE_WITH_ERRORS)
-                    .contentType(MediaType.TEXT_XML);
-
-            mockMvc.perform(multipart("/v1/explore/studies/{studyName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER1)
-                            .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isConflict());
         }
     }
 

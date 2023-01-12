@@ -60,13 +60,6 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void createStudy(String studyName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
-                null, userId, 0L, description);
-        studyService.insertStudyWithCaseFile(elementAttributes.getElementUuid(), userId, caseFile);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-    }
-
     public void duplicateStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);

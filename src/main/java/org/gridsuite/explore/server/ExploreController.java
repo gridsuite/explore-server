@@ -44,7 +44,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
     @Operation(summary = "create a study from an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Void> createStudyFromExistingCase(@PathVariable("studyName") String studyName,
+    public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
                                                             @PathVariable("caseUuid") UUID caseUuid,
                                                             @RequestParam(name = "duplicateCase", required = false, defaultValue = "false") Boolean duplicateCase,
                                                             @RequestParam("description") String description,
@@ -52,18 +52,6 @@ public class ExploreController {
                                                             @RequestHeader("userId") String userId,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
         exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams, duplicateCase);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/studies/{studyName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "create a study and import the case")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
-                                            @RequestPart("caseFile") MultipartFile caseFile,
-                                            @RequestParam("description") String description,
-                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                            @RequestHeader("userId") String userId) {
-        exploreService.createStudy(studyName, caseFile, description, userId, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
