@@ -36,7 +36,9 @@ public class StudyService implements IDirectoryElementsService {
     private String studyServerBaseUri;
 
     @Autowired
-    public StudyService(@Value("${backing-services.study-server.base-uri:http://study-server/}") String studyServerBaseUri, RestTemplate restTemplate) {
+    public StudyService(
+            @Value("${gridsuite.services.study-server.base-uri:http://study-server/}") String studyServerBaseUri,
+            RestTemplate restTemplate) {
         this.studyServerBaseUri = studyServerBaseUri;
         this.restTemplate = restTemplate;
     }
@@ -45,9 +47,10 @@ public class StudyService implements IDirectoryElementsService {
         this.studyServerBaseUri = studyServerBaseUri;
     }
 
-    public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, Map<String, Object> importParams, Boolean duplicateCase) {
+    public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid,
+            Map<String, Object> importParams, Boolean duplicateCase) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                        "/studies/cases/{caseUuid}")
+                "/studies/cases/{caseUuid}")
                 .queryParam("studyUuid", studyUuid)
                 .queryParam("duplicateCase", duplicateCase)
                 .buildAndExpand(caseUuid)
@@ -63,11 +66,12 @@ public class StudyService implements IDirectoryElementsService {
     public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                        "/studies?studyUuid={studyUuid}")
+                "/studies?studyUuid={studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
         try {
-            multipartBodyBuilder.part("caseFile", caseFile.getBytes()).filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
+            multipartBodyBuilder.part("caseFile", caseFile.getBytes())
+                    .filename(Objects.requireNonNull(caseFile.getOriginalFilename()));
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
@@ -81,11 +85,12 @@ public class StudyService implements IDirectoryElementsService {
 
     public void duplicateStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                        "/studies")
+                "/studies")
                 .queryParam("duplicateFrom", sourceStudyUuid)
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)),
+                Void.class);
     }
 
     @Override
@@ -93,17 +98,20 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)), Void.class);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)),
+                Void.class);
     }
 
     @Override
     public List<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
         var ids = studiesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
+        String path = UriComponentsBuilder
+                .fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-            }).getBody();
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }).getBody();
     }
 
     private HttpHeaders getHeaders(String userId) {

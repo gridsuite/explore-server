@@ -5,14 +5,19 @@ spring:
   rabbitmq:
     addresses: localhost
 
-backing-services:
-  study-server:
-    base-uri: http://localhost:5001
-  directory-server:
-    base-uri: http://localhost:5026
-  actions-server:
-    base-uri: http://localhost:5022
-  filter-server:
-    base-uri: http://localhost:5027
-  case-server:
-    base-uri: http://localhost:5000
+powsybl:
+  services:
+    case-server:
+      base-uri: http://localhost:5000
+      
+gridsuite:
+  services:
+    study-server:
+      base-uri: http://localhost:5001
+    directory-server:
+      base-uri: http://localhost:5026
+    actions-server:
+      base-uri: http://localhost:5022
+    filter-server:
+      base-uri: http://localhost:5027
+  

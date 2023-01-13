@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -35,7 +34,9 @@ public class FilterService implements IDirectoryElementsService {
     private final RestTemplate restTemplate;
 
     @Autowired
-    public FilterService(@Value("${backing-services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri, RestTemplate restTemplate) {
+    public FilterService(
+            @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
+            RestTemplate restTemplate) {
         this.filterServerBaseUri = filterServerBaseUri;
         this.restTemplate = restTemplate;
     }
@@ -45,7 +46,8 @@ public class FilterService implements IDirectoryElementsService {
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
+        String path = UriComponentsBuilder
+                .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -54,7 +56,8 @@ public class FilterService implements IDirectoryElementsService {
     }
 
     public void insertNewScriptFromFilter(UUID id, UUID newId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
+        String path = UriComponentsBuilder
+                .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
                 .buildAndExpand(id, newId)
                 .toUriString();
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
@@ -65,7 +68,8 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)), Void.class);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)),
+                Void.class);
     }
 
     public void insertFilter(String filter, UUID filterId, String userId) {
@@ -83,17 +87,20 @@ public class FilterService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceFilterId)
                 .queryParam("id", filterId)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)), Void.class);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)),
+                Void.class);
     }
 
     @Override
     public List<Map<String, Object>> getMetadata(List<UUID> filtersUuids) {
         var ids = filtersUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
+        String path = UriComponentsBuilder
+                .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {
-            }).getBody();
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }).getBody();
     }
 
     private HttpHeaders getHeaders(String userId) {
