@@ -48,10 +48,12 @@ public class StudyService implements IDirectoryElementsService {
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid,
-            Map<String, Object> importParams) {
+            Map<String, Object> importParams, Boolean duplicateCase) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/cases/{caseUuid}?studyUuid={studyUuid}")
-                .buildAndExpand(caseUuid, studyUuid)
+                "/studies/cases/{caseUuid}")
+                .queryParam("studyUuid", studyUuid)
+                .queryParam("duplicateCase", duplicateCase)
+                .buildAndExpand(caseUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -81,7 +83,7 @@ public class StudyService implements IDirectoryElementsService {
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
-    public void insertStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
+    public void duplicateStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                 "/studies")
                 .queryParam("duplicateFrom", sourceStudyUuid)
