@@ -130,6 +130,13 @@ public class ExploreService {
         directoryService.notifyDirectoryChanged(id, userId);
     }
 
+    public void createIdentifierContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
+                null, userId, 0L, description);
+        contingencyListService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
                 null, userId, 0, description);
