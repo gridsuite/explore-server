@@ -107,6 +107,13 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
+    public void createIdentifierContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
+                null, userId, 0L, description);
+        contingencyListService.insertIdentifierContingencyList(sourceListId, elementAttributes.getElementUuid());
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {

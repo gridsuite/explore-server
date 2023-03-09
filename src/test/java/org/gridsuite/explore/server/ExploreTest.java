@@ -472,6 +472,14 @@ public class ExploreTest {
     }
 
     @Test
+    public void testDuplicateIdentifierContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/identifier-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     public void testDuplicateStudy() throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)

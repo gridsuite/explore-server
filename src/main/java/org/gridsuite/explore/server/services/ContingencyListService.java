@@ -99,6 +99,14 @@ public class ContingencyListService implements IDirectoryElementsService {
         restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
+    public void insertIdentifierContingencyList(UUID sourceListId, UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists")
+                .queryParam("duplicateFrom", sourceListId)
+                .queryParam("id", id)
+                .toUriString();
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+    }
+
     public void newScriptFromFormContingencyList(UUID id, UUID newId) {
         String path = UriComponentsBuilder
                 .fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}/new-script?newId={newId}")
