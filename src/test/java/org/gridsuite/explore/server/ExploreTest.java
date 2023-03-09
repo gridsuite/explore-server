@@ -201,6 +201,8 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
@@ -328,6 +330,16 @@ public class ExploreTest {
     public void testCreateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("Contingency list content")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testCreateIdentifierContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("Contingency list content")
