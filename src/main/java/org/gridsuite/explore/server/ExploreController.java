@@ -106,12 +106,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/script-contingency-lists")
     @Operation(summary = "Duplicate a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
-    public ResponseEntity<Void> createScriptContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+    public ResponseEntity<Void> duplicateScriptContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
                                                             @RequestParam("listName") String listName,
                                                             @RequestParam("description") String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader("userId") String userId) {
-        exploreService.createScriptContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
+        exploreService.duplicateScriptContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -130,12 +130,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/form-contingency-lists")
     @Operation(summary = "Duplicate a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
-    public ResponseEntity<Void> createFormContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+    public ResponseEntity<Void> duplicateFormContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
                                                           @RequestParam("listName") String listName,
                                                           @RequestParam("description") String description,
                                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                           @RequestHeader("userId") String userId) {
-        exploreService.createFormContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
+        exploreService.duplicateFormContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -159,6 +159,30 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/identifier-contingency-lists/{listName}")
+    @Operation(summary = "create an identifier contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
+    public ResponseEntity<Void> createIdentifierContingencyList(@PathVariable("listName") String listName,
+                                                          @RequestBody(required = false) String content,
+                                                          @RequestParam("description") String description,
+                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                          @RequestHeader("userId") String userId) {
+        exploreService.createIdentifierContingencyList(listName, content, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/identifier-contingency-lists")
+    @Operation(summary = "Duplicate a identifier contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
+    public ResponseEntity<Void> duplicateIdentifierContingencyList(@RequestParam("duplicateFrom") UUID parentListId,
+                                                          @RequestParam("listName") String listName,
+                                                          @RequestParam("description") String description,
+                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                          @RequestHeader("userId") String userId) {
+        exploreService.duplicateIdentifierContingencyList(parentListId, listName, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
@@ -174,12 +198,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
-    public ResponseEntity<Void> createFilter(@RequestParam("duplicateFrom") UUID parentFilterId,
+    public ResponseEntity<Void> duplicateFilter(@RequestParam("duplicateFrom") UUID parentFilterId,
                                              @RequestParam("name") String filterName,
                                              @RequestParam("description") String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                              @RequestHeader("userId") String userId) {
-        exploreService.createFilter(filterName, description, parentFilterId, parentDirectoryUuid, userId);
+        exploreService.duplicateFilter(filterName, description, parentFilterId, parentDirectoryUuid, userId);
         return ResponseEntity.ok().build();
     }
 

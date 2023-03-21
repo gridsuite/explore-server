@@ -201,6 +201,8 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
@@ -335,6 +337,16 @@ public class ExploreTest {
     }
 
     @Test
+    public void testCreateIdentifierContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("Contingency list content")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     public void testNewScriptFromFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
@@ -454,6 +466,14 @@ public class ExploreTest {
     @Test
     public void testDuplicateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDuplicateIdentifierContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/identifier-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
