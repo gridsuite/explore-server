@@ -8,8 +8,9 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.ContingencyDto;
 import org.gridsuite.explore.server.dto.IdBasedContingencyList;
-import org.gridsuite.explore.server.dto.PersistentContingencyList;
 import org.gridsuite.explore.server.dto.ScriptContingencyList;
+import org.gridsuite.explore.server.dto.contingency.FormContingencyList;
+import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -157,11 +158,8 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-         restTemplate.getForObject(actionsServerBaseUri + path, String.class);
-return null;
-/* return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<IdBasedContingencyList>() {
-                }).getBody(); */
+        return  restTemplate.getForObject(actionsServerBaseUri + path, IdBasedContingencyList.class);
+
     }
 
     public ScriptContingencyList getScriptContingencyList(UUID id) {
@@ -175,4 +173,47 @@ return null;
     }
 
 
+    public void modifyScriptContingencyList(UUID id, ScriptContingencyList script, String userId) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION  + "/script-contingency-lists/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ScriptContingencyList> httpEntity = new HttpEntity<>(script, headers);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
+    public void modifyFormContingencyList(UUID id, FormContingencyList formContingencyList , String userId) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION  + "/form-contingency-lists/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<FormContingencyList> httpEntity = new HttpEntity<>(formContingencyList, headers);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+
+    }
+
+    public void modifyIdBasedContingencyList(UUID id, IdBasedContingencyList idBasedContingencyList, String userId) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION  + "/identifier-contingency-lists/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<IdBasedContingencyList> httpEntity = new HttpEntity<>(idBasedContingencyList, headers);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+
+    }
 }

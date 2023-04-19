@@ -8,6 +8,7 @@ package org.gridsuite.explore.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.powsybl.contingency.json.ContingencyJsonModule;
 import org.springframework.boot.jackson.JsonComponentModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,6 +48,7 @@ public class RestTemplateConfig {
         var objectMapper = Jackson2ObjectMapperBuilder.json().build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.registerModule(new JsonComponentModule());
+        objectMapper.registerModule(new ContingencyJsonModule());
         return objectMapper;
     }
 

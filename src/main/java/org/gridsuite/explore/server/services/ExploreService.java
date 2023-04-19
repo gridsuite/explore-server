@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.services;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.contingency.FormContingencyList;
 import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -238,9 +239,19 @@ public class ExploreService {
     }
 
     public void changeFilter(UUID id, AbstractFilter filter, String userId) {
-
         filterService.changeFilter(id,filter,userId);
-
     }
+    public void modifyScriptContingencyList(UUID id, ScriptContingencyList script, String userId) {
+        contingencyListService.modifyScriptContingencyList(id,script,userId);
+    }
+
+    public void modifyFormContingencyList(UUID id, FormContingencyList formContingencyList, String userId) {
+        contingencyListService.modifyFormContingencyList(id,formContingencyList,userId);
+    }
+
+    public void modifyIdBasedContingencyList(UUID id, IdBasedContingencyList idBasedContingencyList, String userId) {
+        contingencyListService.modifyIdBasedContingencyList(id,idBasedContingencyList,userId);
+    }
+
 
 }

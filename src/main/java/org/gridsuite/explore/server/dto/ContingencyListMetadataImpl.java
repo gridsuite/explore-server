@@ -16,8 +16,7 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * @author Chamseddine benhamed <chamseddine.benhamed at rte-france.com>
- * @author Etienne Homer <etienne.homer@rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 @Getter
 @NoArgsConstructor

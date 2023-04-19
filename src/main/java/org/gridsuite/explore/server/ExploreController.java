@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.contingency.FormContingencyList;
 import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
@@ -299,6 +300,52 @@ public class ExploreController {
     public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody AbstractFilter filter, @RequestHeader("userId") String userId) {
         try {
             exploreService.changeFilter(id, filter, userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception ignored) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping(value = "/explore/script-contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a script contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list have been modified successfully")})
+    public ResponseEntity<Void> modifyScriptContingencyList(
+            @PathVariable UUID id,
+            @RequestBody(required = false) ScriptContingencyList script,
+            @RequestHeader("userId") String userId) {
+        try {
+            exploreService.modifyScriptContingencyList(id, script, userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception ignored) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
+    @PutMapping(value = "/explore/form-contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a form contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The form contingency list have been modified successfully")})
+    public ResponseEntity<Void> modifyFormContingencyList(
+            @PathVariable UUID id,
+            @RequestBody FormContingencyList formContingencyList,
+            @RequestHeader("userId") String userId) {
+        try {
+            exploreService.modifyFormContingencyList(id, formContingencyList, userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception ignored) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping(value = "/explore/identifier-contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a identifier contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The identifier contingency list have been modified successfully")})
+    public ResponseEntity<Void> modifyIdentifierContingencyList(
+            @PathVariable UUID id,
+            @RequestBody IdBasedContingencyList idBasedContingencyList,
+            @RequestHeader("userId") String userId) {
+        try {
+            exploreService.modifyIdBasedContingencyList(id, idBasedContingencyList, userId);
             return ResponseEntity.ok().build();
         } catch (Exception ignored) {
             return ResponseEntity.notFound().build();

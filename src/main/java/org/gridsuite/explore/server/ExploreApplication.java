@@ -6,12 +6,9 @@
  */
 package org.gridsuite.explore.server;
 
-import com.fasterxml.jackson.databind.Module;
-import com.powsybl.contingency.json.ContingencyJsonModule;
 import com.powsybl.ws.commons.Utils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
