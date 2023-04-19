@@ -6,6 +6,10 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.dto.ContingencyDto;
+import org.gridsuite.explore.server.dto.IdBasedContingencyList;
+import org.gridsuite.explore.server.dto.PersistentContingencyList;
+import org.gridsuite.explore.server.dto.ScriptContingencyList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -137,4 +141,38 @@ public class ContingencyListService implements IDirectoryElementsService {
                 new ParameterizedTypeReference<List<Map<String, Object>>>() {
                 }).getBody();
     }
+
+
+    public ContingencyDto getFormContingencyList(UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<ContingencyDto>() {
+                }).getBody();
+    }
+    public IdBasedContingencyList getIdBaseContingency(UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+         restTemplate.getForObject(actionsServerBaseUri + path, String.class);
+return null;
+/* return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<IdBasedContingencyList>() {
+                }).getBody(); */
+    }
+
+    public ScriptContingencyList getScriptContingencyList(UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<ScriptContingencyList>() {
+                }).getBody();
+    }
+
+
 }

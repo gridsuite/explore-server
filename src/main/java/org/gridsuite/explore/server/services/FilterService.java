@@ -6,6 +6,9 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.explore.server.dto.ScriptContingencyList;
+import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -108,4 +111,32 @@ public class FilterService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         return headers;
     }
+
+    public AbstractFilter getFilter(UUID id) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<AbstractFilter>() {
+                }).getBody();
+
+    }
+
+    public void changeFilter(UUID id, AbstractFilter filter, String userId) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<AbstractFilter> httpEntity = new HttpEntity<>(filter, headers);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+
+    }
+
 }

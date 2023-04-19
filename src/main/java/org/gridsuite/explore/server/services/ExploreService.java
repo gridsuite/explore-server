@@ -6,15 +6,23 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
-import org.gridsuite.explore.server.dto.AccessRightsAttributes;
-import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
@@ -191,4 +199,48 @@ public class ExploreService {
             directoryService.deleteDirectoryElement(id, userId);
         }
     }
+
+    public Optional<ContingencyDto> getFormContingency(UUID id) {
+
+        Optional<ContingencyDto> contingencyDto=  Optional.ofNullable(contingencyListService.getFormContingencyList(id));
+        // call directory
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+
+        contingencyDto.get().setName(elementAttribute.getElementName());
+
+        return contingencyDto;
+    }
+
+    public Optional<IdBasedContingencyList> getIdBaseContingency(UUID id) {
+
+        Optional<IdBasedContingencyList> idBasedContingencyList=  Optional.ofNullable(contingencyListService.getIdBaseContingency(id));
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        idBasedContingencyList.get().setName(elementAttribute.getElementName());
+        return idBasedContingencyList;
+    }
+
+    public Optional<ScriptContingencyList> getScriptContingencyList(UUID id) {
+
+        Optional<ScriptContingencyList> contingencyDto=  Optional.ofNullable(contingencyListService.getScriptContingencyList(id));
+        // call directory
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+
+        contingencyDto.get().setName(elementAttribute.getElementName());
+
+        return contingencyDto;
+    }
+
+    public Optional<AbstractFilter> getFilter(UUID id) {
+        Optional<AbstractFilter> filter=  Optional.ofNullable(filterService.getFilter(id));
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        filter.get().setName(elementAttribute.getElementName());
+        return filter;
+    }
+
+    public void changeFilter(UUID id, AbstractFilter filter, String userId) {
+
+        filterService.changeFilter(id,filter,userId);
+
+    }
+
 }
