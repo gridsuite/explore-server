@@ -560,10 +560,10 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
+
     @Test
     public void testChangeFilter() throws Exception {
-        AbstractFilter generatorFormFilter = CriteriaFilter.builder().name("teswt").equipmentFilterForm( new GeneratorFilter("eqId1", "gen1", "s1", new TreeSet<>(Set.of("FR", "BE")), null, new NumericalFilter(RangeType.RANGE, 50., null), null)
-        ).build();
+        AbstractFilter generatorFormFilter = CriteriaFilter.builder().name("teswt").equipmentFilterForm(new GeneratorFilter("eqId1", "gen1", "s1", new TreeSet<>(Set.of("FR", "BE")), null, new NumericalFilter(RangeType.RANGE, 50., null), null)).build();
         mockMvc.perform(put("/v1/explore/filters/{id}",
                 FILTER_UUID)
                 .contentType(APPLICATION_JSON)
