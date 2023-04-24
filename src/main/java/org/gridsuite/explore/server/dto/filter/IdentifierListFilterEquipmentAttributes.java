@@ -12,7 +12,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

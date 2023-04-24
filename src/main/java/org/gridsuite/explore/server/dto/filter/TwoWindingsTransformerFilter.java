@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
-import org.gridsuite.explore.server.utils.filter.FilterType;
 import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedHashMap;
@@ -23,8 +22,9 @@ import java.util.Map;
 import java.util.SortedSet;
 
 /**
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -58,11 +58,11 @@ public class TwoWindingsTransformerFilter extends AbstractEquipmentFilterForm {
         SortedSet<String> countries, Map<String, List<String>> freeProperties,
         NumericalFilter nominalVoltage1, NumericalFilter nominalVoltage2) {
         super(equipmentID, equipmentName);
-        this.substationName =  substationName;
+        this.substationName = substationName;
         this.countries = countries;
         this.freeProperties = freeProperties;
-        this.nominalVoltage1 =  nominalVoltage1;
-        this.nominalVoltage2 =  nominalVoltage2;
+        this.nominalVoltage1 = nominalVoltage1;
+        this.nominalVoltage2 = nominalVoltage2;
     }
 
     @Override

@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
-import org.gridsuite.explore.server.utils.filter.FilterType;
 import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedHashMap;
@@ -23,7 +22,7 @@ import java.util.Map;
 import java.util.SortedSet;
 
 /**
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 @Getter
 @NoArgsConstructor
@@ -66,10 +65,10 @@ public class HvdcLineFilter extends AbstractEquipmentFilterForm {
         SortedSet<String> countries1, SortedSet<String> countries2,
         NumericalFilter nominalVoltage) {
         super(equipmentID, equipmentName);
-        this.substationName1 =  substationName1;
-        this.substationName2 =  substationName2;
-        this.countries1 =  countries1;
-        this.countries2 =  countries2;
+        this.substationName1 = substationName1;
+        this.substationName2 = substationName2;
+        this.countries1 = countries1;
+        this.countries2 = countries2;
         this.nominalVoltage = nominalVoltage;
     }
 

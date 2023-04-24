@@ -22,6 +22,9 @@ import java.util.Set;
 @Schema(description = "Form contingency list")
 public class FormContingencyList {
 
+    @Schema(description = "Name")
+    private String name;
+
     @Schema(description = "Equipment type")
     private String equipmentType;
 

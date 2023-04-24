@@ -8,7 +8,7 @@
 package org.gridsuite.explore.server.dto.filter;
 
 /**
- * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 public interface FilterMetadata {
     java.util.UUID getId();

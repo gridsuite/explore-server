@@ -11,7 +11,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.contingency.ContingencyDto;
 import org.gridsuite.explore.server.dto.contingency.FormContingencyList;
+import org.gridsuite.explore.server.dto.contingency.IdBasedContingencyList;
+import org.gridsuite.explore.server.dto.contingency.ScriptContingencyList;
 import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
@@ -250,9 +253,9 @@ public class ExploreController {
     @GetMapping(value = "/explore/form-contingency-lists/{id}")
     @Operation(summary = "Get form contingency list by id")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The form contingency list"),
-            @ApiResponse(responseCode = "404", description = "The form contingency list does not exists")})
+                           @ApiResponse(responseCode = "404", description = "The form contingency list does not exists")})
     public ResponseEntity<ContingencyDto> getFormContingencyList(@PathVariable("id") UUID id) {
-       return  exploreService.getFormContingency(id).map(contingencyList -> ResponseEntity.ok()
+        return exploreService.getFormContingency(id).map(contingencyList -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(contingencyList))
                 .orElse(ResponseEntity.notFound().build());
@@ -262,9 +265,9 @@ public class ExploreController {
     @Operation(summary = "Get identifier contingency list by id")
 
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The identifier contingency list"),
-            @ApiResponse(responseCode = "404", description = "The identifier contingency list does not exists")})
+                           @ApiResponse(responseCode = "404", description = "The identifier contingency list does not exists")})
     public ResponseEntity<IdBasedContingencyList> getIdentifierContingencyList(@PathVariable("id") UUID id) {
-        return  exploreService.getIdBaseContingency(id).map(contingencyList -> ResponseEntity.ok()
+        return exploreService.getIdBaseContingency(id).map(contingencyList -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(contingencyList))
                 .orElse(ResponseEntity.notFound().build());
@@ -273,7 +276,7 @@ public class ExploreController {
     @GetMapping(value = "/explore/script-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get script contingency list by id")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list"),
-            @ApiResponse(responseCode = "404", description = "The script contingency list does not exists")})
+                           @ApiResponse(responseCode = "404", description = "The script contingency list does not exists")})
     public ResponseEntity<ScriptContingencyList> getScriptContingencyList(@PathVariable("id") UUID id) {
         return exploreService.getScriptContingencyList(id).map(contingencyList -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -281,18 +284,16 @@ public class ExploreController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
     @GetMapping(value = "/explore/filters/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get filter by id")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter"),
-            @ApiResponse(responseCode = "404", description = "The filter does not exists")})
+                           @ApiResponse(responseCode = "404", description = "The filter does not exists")})
     public ResponseEntity<AbstractFilter> getFilter(@PathVariable("id") UUID id) {
         return exploreService.getFilter(id).map(filter -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(filter))
                 .orElse(ResponseEntity.notFound().build());
     }
-
 
     @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a filter")
@@ -320,7 +321,6 @@ public class ExploreController {
             return ResponseEntity.notFound().build();
         }
     }
-
 
     @PutMapping(value = "/explore/form-contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a form contingency list")

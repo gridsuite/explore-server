@@ -10,7 +10,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.gridsuite.explore.server.dto.ContingencyListMetadataImpl;
 
 /**
  * @author AJELLAL Ali <ali.ajellal@rte-france.com>
@@ -18,7 +17,7 @@ import org.gridsuite.explore.server.dto.ContingencyListMetadataImpl;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-public class AbstractContingencyList {
+public abstract class AbstractContingencyList {
 
     private ContingencyListMetadataImpl metadata;
 }

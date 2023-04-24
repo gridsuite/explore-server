@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @Setter
 @NoArgsConstructor

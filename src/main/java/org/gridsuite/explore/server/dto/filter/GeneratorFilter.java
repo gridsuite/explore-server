@@ -14,11 +14,10 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,8 +28,6 @@ public class GeneratorFilter extends AbstractInjectionFilter {
 
     @Schema(description = "Energy source")
     EnergySource energySource;
-
-
 
     @Override
     public boolean isEmpty() {

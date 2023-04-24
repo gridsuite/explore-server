@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
-import org.gridsuite.explore.server.utils.filter.FilterType;
 import org.springframework.util.CollectionUtils;
 
 import java.util.LinkedHashMap;
@@ -19,7 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @Setter
 @NoArgsConstructor

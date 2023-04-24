@@ -14,13 +14,10 @@ import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
 import org.gridsuite.explore.server.utils.filter.FilterType;
 
-
-import java.util.Date;
-import java.util.UUID;
-
 /**
- * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
+
 @Getter
 @Schema(description = "Script Filters", allOf = AbstractFilter.class)
 @SuperBuilder
@@ -29,8 +26,6 @@ public class ScriptFilter extends AbstractFilter {
 
     @Schema(description = "Script")
     private String script;
-
-
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Override

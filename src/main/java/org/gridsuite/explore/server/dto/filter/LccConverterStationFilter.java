@@ -12,10 +12,10 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
-import org.gridsuite.explore.server.utils.filter.FilterType;
 /**
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
+
 @Getter
 @AllArgsConstructor
 @SuperBuilder

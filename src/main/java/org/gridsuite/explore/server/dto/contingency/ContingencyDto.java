@@ -1,4 +1,4 @@
-package org.gridsuite.explore.server.dto;
+package org.gridsuite.explore.server.dto.contingency;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,10 +25,7 @@ public class ContingencyDto {
     private NumericalFilter nominalVoltage2;
 
     private Set<String> countries1;
-
-
     private Set<String> countries2;
-
 
     private ContingencyListMetadataImpl metadata;
 

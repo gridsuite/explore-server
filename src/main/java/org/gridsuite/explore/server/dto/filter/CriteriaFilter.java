@@ -12,7 +12,9 @@ import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
 import org.gridsuite.explore.server.utils.filter.FilterType;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @Setter
 @ToString(callSuper = true)

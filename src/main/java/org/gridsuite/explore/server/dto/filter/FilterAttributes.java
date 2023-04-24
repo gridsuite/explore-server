@@ -16,7 +16,9 @@ import org.gridsuite.explore.server.utils.filter.FilterType;
 import java.util.Date;
 import java.util.UUID;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @Setter
 @NoArgsConstructor

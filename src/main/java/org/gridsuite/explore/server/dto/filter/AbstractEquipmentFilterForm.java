@@ -18,7 +18,7 @@ import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
 
 /**
- * @author Etienne Homer <homer.etienne at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

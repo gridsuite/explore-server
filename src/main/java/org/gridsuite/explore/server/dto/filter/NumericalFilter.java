@@ -10,7 +10,7 @@ import lombok.*;
 import org.gridsuite.explore.server.utils.filter.RangeType;
 
 /**
- * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 
 @Getter

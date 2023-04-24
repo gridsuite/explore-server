@@ -6,6 +6,9 @@ import lombok.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @Setter
 @NoArgsConstructor

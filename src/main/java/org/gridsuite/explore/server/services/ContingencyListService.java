@@ -6,11 +6,10 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.dto.ContingencyDto;
-import org.gridsuite.explore.server.dto.IdBasedContingencyList;
-import org.gridsuite.explore.server.dto.ScriptContingencyList;
+import org.gridsuite.explore.server.dto.contingency.ContingencyDto;
+import org.gridsuite.explore.server.dto.contingency.IdBasedContingencyList;
+import org.gridsuite.explore.server.dto.contingency.ScriptContingencyList;
 import org.gridsuite.explore.server.dto.contingency.FormContingencyList;
-import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -143,7 +142,6 @@ public class ContingencyListService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-
     public ContingencyDto getFormContingencyList(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}")
                 .buildAndExpand(id)
@@ -154,11 +152,12 @@ public class ContingencyListService implements IDirectoryElementsService {
                 new ParameterizedTypeReference<ContingencyDto>() {
                 }).getBody();
     }
+
     public IdBasedContingencyList getIdBaseContingency(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        return  restTemplate.getForObject(actionsServerBaseUri + path, IdBasedContingencyList.class);
+        return restTemplate.getForObject(actionsServerBaseUri + path, IdBasedContingencyList.class);
 
     }
 
@@ -172,10 +171,9 @@ public class ContingencyListService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-
     public void modifyScriptContingencyList(UUID id, ScriptContingencyList script, String userId) {
 
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION  + "/script-contingency-lists/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
 
@@ -187,9 +185,9 @@ public class ContingencyListService implements IDirectoryElementsService {
         restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    public void modifyFormContingencyList(UUID id, FormContingencyList formContingencyList , String userId) {
+    public void modifyFormContingencyList(UUID id, FormContingencyList formContingencyList, String userId) {
 
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION  + "/form-contingency-lists/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
 
@@ -204,7 +202,7 @@ public class ContingencyListService implements IDirectoryElementsService {
 
     public void modifyIdBasedContingencyList(UUID id, IdBasedContingencyList idBasedContingencyList, String userId) {
 
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION  + "/identifier-contingency-lists/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
 

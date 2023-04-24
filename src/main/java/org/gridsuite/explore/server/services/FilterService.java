@@ -6,8 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.dto.ScriptContingencyList;
 import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

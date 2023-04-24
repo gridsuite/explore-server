@@ -12,15 +12,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.gridsuite.explore.server.utils.filter.EquipmentType;
 import org.gridsuite.explore.server.utils.filter.FilterType;
-
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @Getter
 @Schema(description = "Identifier list Filters", allOf = AbstractFilter.class)
 @SuperBuilder
@@ -29,14 +27,10 @@ public class IdentifierListFilter extends AbstractFilter {
 
     private List<IdentifierListFilterEquipmentAttributes> filterEquipmentsAttributes = new ArrayList<>();
 
-
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Override
     public FilterType getType() {
         return FilterType.IDENTIFIER_LIST;
     }
-
-
-
 
 }

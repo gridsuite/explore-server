@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
-import org.gridsuite.explore.server.utils.filter.FilterType;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
@@ -21,8 +20,9 @@ import java.util.Map;
 import java.util.SortedSet;
 
 /**
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -50,7 +50,7 @@ public class VoltageLevelFilter extends AbstractEquipmentFilterForm {
         super(equipmentID, equipmentName);
         this.countries = countries;
         this.freeProperties = freeProperties;
-        this.nominalVoltage =  nominalVoltage;
+        this.nominalVoltage = nominalVoltage;
     }
 
     @Override

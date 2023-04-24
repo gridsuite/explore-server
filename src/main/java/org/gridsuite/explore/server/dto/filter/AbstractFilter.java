@@ -14,10 +14,11 @@ import org.gridsuite.explore.server.utils.filter.EquipmentType;
 import org.gridsuite.explore.server.utils.filter.FilterType;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
-
+/**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
+ */
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     property = "type",
@@ -35,7 +36,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-public abstract class AbstractFilter implements IFilterAttributes{
+public abstract class AbstractFilter implements IFilterAttributes {
 
     String name;
     UUID id;

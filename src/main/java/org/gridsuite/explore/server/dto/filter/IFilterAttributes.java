@@ -9,11 +9,10 @@ package org.gridsuite.explore.server.dto.filter;
 
 import org.gridsuite.explore.server.utils.filter.EquipmentType;
 import org.gridsuite.explore.server.utils.filter.FilterType;
-
-
-/**
- * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
+ /**
+ * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
+
 public interface IFilterAttributes {
     java.util.UUID getId();
 
