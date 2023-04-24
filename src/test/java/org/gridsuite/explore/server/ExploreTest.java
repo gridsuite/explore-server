@@ -16,7 +16,14 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.contingency.*;
+import org.gridsuite.explore.server.dto.filter.AbstractFilter;
+import org.gridsuite.explore.server.dto.filter.CriteriaFilter;
+import org.gridsuite.explore.server.dto.filter.GeneratorFilter;
+import org.gridsuite.explore.server.dto.filter.NumericalFilter;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.utils.ContingencyListType;
+import org.gridsuite.explore.server.utils.filter.RangeType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,12 +42,9 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -77,6 +81,9 @@ public class ExploreTest {
     public static final String FILTER = "FILTER";
     private Map<String, Object> specificMetadata = new HashMap<>();
     private Map<String, Object> specificMetadata2 = new HashMap<>();
+
+    private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
+
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
@@ -128,7 +135,10 @@ public class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0, null));
-
+        String contingencyDtoAttributesAsString = mapper.writeValueAsString(new ContingencyDto());
+        String elementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
+        String idBasedContingencyListAttributesAsString = mapper.writeValueAsString(new IdBasedContingencyList("ID_BASE_CONTINGENCY_LIST", new ContingencyListMetadataImpl(), null, null, null, null));
+        String scriptContingencyListAttributesAsString = mapper.writeValueAsString(new ScriptContingencyList("SCRIPT_CONTINGENCY_LIST", "script", null, null, null, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -185,12 +195,18 @@ public class ExploreTest {
                     return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]")
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(elementAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody("[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]")
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
@@ -213,6 +229,14 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/filters/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/script-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/form-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
@@ -224,6 +248,15 @@ public class ExploreTest {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/form-contingency-lists/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setBody(contingencyDtoAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/identifier-contingency-lists/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setBody(idBasedContingencyListAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/script-contingency-lists/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setBody(scriptContingencyListAttributesAsString).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
@@ -503,4 +536,73 @@ public class ExploreTest {
                     .andExpect(status().isUnprocessableEntity());
         }
     }
+
+    @Test
+    public void testGetFormContingencyList() throws Exception {
+        mockMvc.perform(get("/v1/explore/form-contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetIdentifierContingencyList() throws Exception {
+        mockMvc.perform(get("/v1/explore/identifier-contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetScriptContingencyList() throws Exception {
+        mockMvc.perform(get("/v1/explore/script-contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+    @Test
+    public void testChangeFilter() throws Exception {
+        AbstractFilter generatorFormFilter = CriteriaFilter.builder().name("teswt").equipmentFilterForm( new GeneratorFilter("eqId1", "gen1", "s1", new TreeSet<>(Set.of("FR", "BE")), null, new NumericalFilter(RangeType.RANGE, 50., null), null)
+        ).build();
+        mockMvc.perform(put("/v1/explore/filters/{id}",
+                FILTER_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(generatorFormFilter))
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testModifyScriptContingencyList() throws Exception {
+        ScriptContingencyList script = new ScriptContingencyList("scriptName", "script content", new ContingencyListMetadataImpl(), SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT, new Date());
+        mockMvc.perform(put("/v1/explore/script-contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(script))
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testModifyFormContingencyList() throws Exception {
+        FormContingencyList formContingencyList = new FormContingencyList("formContingencyListName", "Type", null, null, null, null);
+        mockMvc.perform(put("/v1/explore/form-contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(formContingencyList))
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testModifyIdentifierContingencyList() throws Exception {
+        IdBasedContingencyList idBasedContingencyList = new IdBasedContingencyList("idBasedContingencyListName", new ContingencyListMetadataImpl(), SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, new Date(), null);
+        mockMvc.perform(put("/v1/explore/identifier-contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(idBasedContingencyList))
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
 }

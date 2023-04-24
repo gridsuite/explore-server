@@ -231,11 +231,7 @@ public class ExploreService {
 
     public void changeFilter(UUID id, AbstractFilter filter, String userId) {
         filterService.changeFilter(id, filter, userId);
-        if (StringUtils.isNotBlank(filter.getName())) {
-            ElementAttributes elementAttributes = new ElementAttributes();
-            elementAttributes.setElementName(filter.getName());
-            directoryService.updateElement(id, elementAttributes, userId);
-        }
+        updateElementName(id, filter.getName(), userId);
     }
 
     public void modifyScriptContingencyList(UUID id, ScriptContingencyList script, String userId) {
