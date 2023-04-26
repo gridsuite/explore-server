@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -104,37 +103,24 @@ public class FilterService implements IDirectoryElementsService {
                 }).getBody();
     }
 
+    public void changeFilter(UUID id, String filter, String userId) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, getHttpEntity(userId, filter), Void.class);
+
+    }
+
     private HttpHeaders getHeaders(String userId) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         return headers;
     }
 
-    public AbstractFilter getFilter(UUID id) {
-
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
-                .buildAndExpand(id)
-                .toUriString();
-
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<AbstractFilter>() {
-                }).getBody();
-
-    }
-
-    public void changeFilter(UUID id, AbstractFilter filter, String userId) {
-
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
-                .buildAndExpand(id)
-                .toUriString();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HEADER_USER_ID, userId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<AbstractFilter> httpEntity = new HttpEntity<>(filter, headers);
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
-
+    private HttpEntity<String> getHttpEntity(String userId, String content) {
+        return new HttpEntity<>(content, getHeaders(userId));
     }
 
 }

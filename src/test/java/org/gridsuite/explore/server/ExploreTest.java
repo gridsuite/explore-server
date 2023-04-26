@@ -16,14 +16,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.contingency.*;
-import org.gridsuite.explore.server.dto.filter.AbstractFilter;
-import org.gridsuite.explore.server.dto.filter.CriteriaFilter;
-import org.gridsuite.explore.server.dto.filter.GeneratorFilter;
-import org.gridsuite.explore.server.dto.filter.NumericalFilter;
 import org.gridsuite.explore.server.services.*;
-import org.gridsuite.explore.server.utils.ContingencyListType;
-import org.gridsuite.explore.server.utils.filter.RangeType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -135,10 +128,6 @@ public class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0, null));
-        String contingencyDtoAttributesAsString = mapper.writeValueAsString(new ContingencyDto());
-        String elementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
-        String idBasedContingencyListAttributesAsString = mapper.writeValueAsString(new IdBasedContingencyList("ID_BASE_CONTINGENCY_LIST", new ContingencyListMetadataImpl(), null, null, null, null));
-        String scriptContingencyListAttributesAsString = mapper.writeValueAsString(new ScriptContingencyList("SCRIPT_CONTINGENCY_LIST", "script", null, null, null, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -195,9 +184,6 @@ public class ExploreTest {
                     return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]")
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(elementAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody("[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]")
                             .setResponseCode(200)
@@ -248,15 +234,6 @@ public class ExploreTest {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/form-contingency-lists/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)) {
-                        return new MockResponse().setBody(contingencyDtoAttributesAsString).setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/identifier-contingency-lists/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)) {
-                        return new MockResponse().setBody(idBasedContingencyListAttributesAsString).setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/script-contingency-lists/" + SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)) {
-                        return new MockResponse().setBody(scriptContingencyListAttributesAsString).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
@@ -538,71 +515,54 @@ public class ExploreTest {
     }
 
     @Test
-    public void testGetFormContingencyList() throws Exception {
-        mockMvc.perform(get("/v1/explore/form-contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-    }
-
-    @Test
-    public void testGetIdentifierContingencyList() throws Exception {
-        mockMvc.perform(get("/v1/explore/identifier-contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-    }
-
-    @Test
-    public void testGetScriptContingencyList() throws Exception {
-        mockMvc.perform(get("/v1/explore/script-contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-    }
-
-    @Test
     public void testChangeFilter() throws Exception {
-        AbstractFilter generatorFormFilter = CriteriaFilter.builder().name("teswt").equipmentFilterForm(new GeneratorFilter("eqId1", "gen1", "s1", new TreeSet<>(Set.of("FR", "BE")), null, new NumericalFilter(RangeType.RANGE, 50., null), null)).build();
+        final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"],\"tso\":[\"ceps\"]}}}";
+        final String name = "filter name";
         mockMvc.perform(put("/v1/explore/filters/{id}",
                 FILTER_UUID)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(generatorFormFilter))
+                .content(filter)
+                .param("name", name)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
 
     @Test
     public void testModifyScriptContingencyList() throws Exception {
-        ScriptContingencyList script = new ScriptContingencyList("scriptName", "script content", new ContingencyListMetadataImpl(), SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT, new Date());
+        final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
+        final String name = "script name";
         mockMvc.perform(put("/v1/explore/script-contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(script))
+                .content(scriptContingency)
+                .param("name", name)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
 
     @Test
     public void testModifyFormContingencyList() throws Exception {
-        FormContingencyList formContingencyList = new FormContingencyList("formContingencyListName", "Type", null, null, null, null);
+        final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
+        final String name = "form contingency name";
         mockMvc.perform(put("/v1/explore/form-contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(formContingencyList))
+                .content(formContingency)
+                .param("name", name)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
 
     @Test
     public void testModifyIdentifierContingencyList() throws Exception {
-        IdBasedContingencyList idBasedContingencyList = new IdBasedContingencyList("idBasedContingencyListName", new ContingencyListMetadataImpl(), SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, new Date(), null);
+        final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
+        final String name = "identifier contingencyList name";
         mockMvc.perform(put("/v1/explore/identifier-contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(idBasedContingencyList))
+                .content(identifierContingencyList)
+                .param("name", name)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
-
 }

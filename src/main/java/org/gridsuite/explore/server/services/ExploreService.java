@@ -9,17 +9,11 @@ package org.gridsuite.explore.server.services;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.*;
-import org.gridsuite.explore.server.dto.contingency.ContingencyDto;
-import org.gridsuite.explore.server.dto.contingency.FormContingencyList;
-import org.gridsuite.explore.server.dto.contingency.IdBasedContingencyList;
-import org.gridsuite.explore.server.dto.contingency.ScriptContingencyList;
-import org.gridsuite.explore.server.dto.filter.AbstractFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
@@ -198,59 +192,24 @@ public class ExploreService {
         }
     }
 
-    public Optional<ContingencyDto> getFormContingency(UUID id) {
-
-        Optional<ContingencyDto> contingencyDto = Optional.ofNullable(contingencyListService.getFormContingencyList(id));
-        contingencyDto.ifPresent(dto -> dto.setName(getElementName(id).getElementName()));
-
-        return contingencyDto;
-    }
-
-    public Optional<IdBasedContingencyList> getIdBaseContingency(UUID id) {
-
-        Optional<IdBasedContingencyList> idBasedContingencyList = Optional.ofNullable(contingencyListService.getIdBaseContingency(id));
-        idBasedContingencyList.ifPresent(idBasedContingency -> idBasedContingency.setName(getElementName(id).getElementName()));
-
-        return idBasedContingencyList;
-    }
-
-    public Optional<ScriptContingencyList> getScriptContingencyList(UUID id) {
-
-        Optional<ScriptContingencyList> scriptContingency = Optional.ofNullable(contingencyListService.getScriptContingencyList(id));
-        scriptContingency.ifPresent(script -> script.setName(getElementName(id).getElementName()));
-
-        return scriptContingency;
-    }
-
-    public Optional<AbstractFilter> getFilter(UUID id) {
-        Optional<AbstractFilter> filter = Optional.ofNullable(filterService.getFilter(id));
-        filter.ifPresent(item -> item.setName(getElementName(id).getElementName()));
-
-        return filter;
-    }
-
-    public void changeFilter(UUID id, AbstractFilter filter, String userId) {
+    public void changeFilter(UUID id, String filter, String userId, String name) {
         filterService.changeFilter(id, filter, userId);
-        updateElementName(id, filter.getName(), userId);
+        updateElementName(id, name, userId);
     }
 
-    public void modifyScriptContingencyList(UUID id, ScriptContingencyList script, String userId) {
+    public void modifyScriptContingencyList(UUID id, String script, String userId, String name) {
         contingencyListService.modifyScriptContingencyList(id, script, userId);
-        updateElementName(id, script.getName(), userId);
+        updateElementName(id, name, userId);
     }
 
-    public void modifyFormContingencyList(UUID id, FormContingencyList formContingencyList, String userId) {
+    public void modifyFormContingencyList(UUID id, String formContingencyList, String userId, String name) {
         contingencyListService.modifyFormContingencyList(id, formContingencyList, userId);
-        updateElementName(id, formContingencyList.getName(), userId);
+        updateElementName(id, name, userId);
     }
 
-    public void modifyIdBasedContingencyList(UUID id, IdBasedContingencyList idBasedContingencyList, String userId) {
+    public void modifyIdBasedContingencyList(UUID id, String idBasedContingencyList, String userId, String name) {
         contingencyListService.modifyIdBasedContingencyList(id, idBasedContingencyList, userId);
-        updateElementName(id, idBasedContingencyList.getName(), userId);
-    }
-
-    private ElementAttributes getElementName(UUID id) {
-        return directoryService.getElementInfos(id);
+        updateElementName(id, name, userId);
     }
 
     private void updateElementName(UUID id, String name, String userId) {
