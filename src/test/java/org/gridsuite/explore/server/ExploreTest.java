@@ -17,6 +17,7 @@ import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -531,11 +532,12 @@ public class ExploreTest {
     public void testModifyScriptContingencyList() throws Exception {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
-        mockMvc.perform(put("/v1/explore/script-contingency-lists/{id}",
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(scriptContingency)
                 .param("name", name)
+                .param("contingencyListType", ContingencyListType.SCRIPT.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
@@ -544,11 +546,12 @@ public class ExploreTest {
     public void testModifyFormContingencyList() throws Exception {
         final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
         final String name = "form contingency name";
-        mockMvc.perform(put("/v1/explore/form-contingency-lists/{id}",
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(formContingency)
                 .param("name", name)
+                .param("contingencyListType", ContingencyListType.FORM.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
@@ -557,11 +560,12 @@ public class ExploreTest {
     public void testModifyIdentifierContingencyList() throws Exception {
         final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
-        mockMvc.perform(put("/v1/explore/identifier-contingency-lists/{id}",
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(identifierContingencyList)
                 .param("name", name)
+                .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
     }
