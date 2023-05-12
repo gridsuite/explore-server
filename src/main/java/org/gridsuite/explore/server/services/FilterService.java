@@ -103,7 +103,7 @@ public class FilterService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-    public void changeFilter(UUID id, String filter, String userId) {
+    public void updateFilter(UUID id, String filter, String userId) {
 
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)

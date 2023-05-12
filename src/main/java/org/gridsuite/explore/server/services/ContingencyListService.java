@@ -138,31 +138,12 @@ public class ContingencyListService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-    public void modifyScriptContingencyList(UUID id, String script, String userId) {
+    public void updateContingencyList(UUID id, String content, String userId, String element) {
 
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + element)
                 .buildAndExpand(id)
                 .toUriString();
-
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, getHttpEntity(userId, script), Void.class);
-    }
-
-    public void modifyFormContingencyList(UUID id, String formContingencyList, String userId) {
-
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{id}")
-                .buildAndExpand(id)
-                .toUriString();
-
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, getHttpEntity(userId, formContingencyList), Void.class);
-
-    }
-
-    public void modifyIdBasedContingencyList(UUID id, String idBasedContingencyList, String userId) {
-
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{id}")
-                .buildAndExpand(id)
-                .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, getHttpEntity(userId, idBasedContingencyList), Void.class);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, getHttpEntity(userId, content), Void.class);
 
     }
 

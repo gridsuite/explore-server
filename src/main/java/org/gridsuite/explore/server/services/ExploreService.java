@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.services;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
+import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 
 
 /**
@@ -192,23 +194,13 @@ public class ExploreService {
         }
     }
 
-    public void changeFilter(UUID id, String filter, String userId, String name) {
-        filterService.changeFilter(id, filter, userId);
+    public void updateFilter(UUID id, String filter, String userId, String name) {
+        filterService.updateFilter(id, filter, userId);
         updateElementName(id, name, userId);
     }
 
-    public void modifyScriptContingencyList(UUID id, String script, String userId, String name) {
-        contingencyListService.modifyScriptContingencyList(id, script, userId);
-        updateElementName(id, name, userId);
-    }
-
-    public void modifyFormContingencyList(UUID id, String formContingencyList, String userId, String name) {
-        contingencyListService.modifyFormContingencyList(id, formContingencyList, userId);
-        updateElementName(id, name, userId);
-    }
-
-    public void modifyIdBasedContingencyList(UUID id, String idBasedContingencyList, String userId, String name) {
-        contingencyListService.modifyIdBasedContingencyList(id, idBasedContingencyList, userId);
+    public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {
+        contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
         updateElementName(id, name, userId);
     }
 
@@ -218,6 +210,19 @@ public class ExploreService {
             ElementAttributes elementAttributes = new ElementAttributes();
             elementAttributes.setElementName(name);
             directoryService.updateElement(id, elementAttributes, userId);
+        }
+    }
+
+    private String getProperPath(ContingencyListType contingencyListType) {
+        switch (contingencyListType) {
+            case SCRIPT:
+                return "/script-contingency-lists/{id}";
+            case FORM:
+                return "/form-contingency-lists/{id}";
+            case IDENTIFIERS:
+                return "/identifier-contingency-lists/{id}";
+            default:
+                throw new ExploreException(UNKNOWN_ELEMENT_TYPE);
         }
     }
 }
