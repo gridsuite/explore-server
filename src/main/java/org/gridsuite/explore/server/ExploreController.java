@@ -259,7 +259,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The contingency list have been modified successfully")})
     public ResponseEntity<Void> updateContingencyList(
             @PathVariable UUID id,
-            @RequestParam("name") String name,
+            @RequestParam(name = "name") String name,
             @RequestParam(name = "contingencyListType") ContingencyListType contingencyListType,
             @RequestBody String content,
             @RequestHeader("userId") String userId) {
