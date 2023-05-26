@@ -529,7 +529,7 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyAssertionsAreTrue("/v1/filters/");
+        verifyFilterOrContingencyUpdateRequests("/v1/filters/");
     }
 
     @Test
@@ -545,7 +545,7 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyAssertionsAreTrue("/v1/script-contingency-lists");
+        verifyFilterOrContingencyUpdateRequests("/v1/script-contingency-lists");
     }
 
     @Test
@@ -561,7 +561,7 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyAssertionsAreTrue("/v1/form-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests("/v1/form-contingency-lists/");
     }
 
     @Test
@@ -577,12 +577,12 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyAssertionsAreTrue("/v1/identifier-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
     }
 
-    private void verifyAssertionsAreTrue(String contingencyOrFilterPath) {
+    private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
+        assertTrue("elementAttributes updated", requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)));
+        assertTrue("name updated",requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
     }
 }

@@ -109,7 +109,7 @@ public class FilterService implements IDirectoryElementsService {
                 .buildAndExpand(id)
                 .toUriString();
 
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, getHttpEntity(userId, filter), Void.class);
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, getHttpEntityWithUserHeaderAndJsonMediaType(userId, filter), Void.class);
 
     }
 
@@ -120,7 +120,7 @@ public class FilterService implements IDirectoryElementsService {
         return headers;
     }
 
-    private HttpEntity<String> getHttpEntity(String userId, String content) {
+    private HttpEntity<String> getHttpEntityWithUserHeaderAndJsonMediaType(String userId, String content) {
         return new HttpEntity<>(content, getHeaders(userId));
     }
 
