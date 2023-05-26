@@ -18,6 +18,7 @@ import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import static org.junit.Assert.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -526,6 +528,8 @@ public class ExploreTest {
                 .param("name", name)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        verifyAssertionsAreTrue("/v1/filters/");
     }
 
     @Test
@@ -540,6 +544,8 @@ public class ExploreTest {
                 .param("contingencyListType", ContingencyListType.SCRIPT.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        verifyAssertionsAreTrue("/v1/script-contingency-lists");
     }
 
     @Test
@@ -554,6 +560,8 @@ public class ExploreTest {
                 .param("contingencyListType", ContingencyListType.FORM.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        verifyAssertionsAreTrue("/v1/form-contingency-lists/");
     }
 
     @Test
@@ -568,5 +576,13 @@ public class ExploreTest {
                 .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        verifyAssertionsAreTrue("/v1/identifier-contingency-lists/");
+    }
+
+    private void verifyAssertionsAreTrue(String contingencyOrFilterPath) {
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
     }
 }
