@@ -583,6 +583,6 @@ public class ExploreTest {
     private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue("elementAttributes updated", requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)));
-        assertTrue("name updated",requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
+        assertTrue("name updated", requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
     }
 }
