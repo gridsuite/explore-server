@@ -116,12 +116,13 @@ public class FilterService implements IDirectoryElementsService {
     private HttpHeaders getHeaders(String userId) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
 
     private HttpEntity<String> getHttpEntityWithUserHeaderAndJsonMediaType(String userId, String content) {
-        return new HttpEntity<>(content, getHeaders(userId));
+        HttpHeaders headers = getHeaders(userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new HttpEntity<>(content, headers);
     }
 
 }
