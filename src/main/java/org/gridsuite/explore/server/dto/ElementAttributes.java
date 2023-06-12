@@ -30,7 +30,7 @@ public class ElementAttributes {
 
     private String owner;
 
-    private long subdirectoriesCount;
+    private Long subdirectoriesCount;
 
     private String description;
 

@@ -17,6 +17,8 @@ import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.utils.ContingencyListType;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,12 +37,10 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
+import static org.junit.Assert.assertTrue;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -77,6 +77,9 @@ public class ExploreTest {
     public static final String FILTER = "FILTER";
     private Map<String, Object> specificMetadata = new HashMap<>();
     private Map<String, Object> specificMetadata2 = new HashMap<>();
+
+    private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
+
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
@@ -128,7 +131,6 @@ public class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0, null));
-
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -192,6 +194,9 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -212,6 +217,14 @@ public class ExploreTest {
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/filters/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/script-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/form-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
@@ -502,5 +515,74 @@ public class ExploreTest {
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isUnprocessableEntity());
         }
+    }
+
+    @Test
+    public void testChangeFilter() throws Exception {
+        final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"],\"tso\":[\"ceps\"]}}}";
+        final String name = "filter name";
+        mockMvc.perform(put("/v1/explore/filters/{id}",
+                FILTER_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(filter)
+                .param("name", name)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        verifyFilterOrContingencyUpdateRequests("/v1/filters/");
+    }
+
+    @Test
+    public void testModifyScriptContingencyList() throws Exception {
+        final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
+        final String name = "script name";
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(scriptContingency)
+                .param("name", name)
+                .param("contingencyListType", ContingencyListType.SCRIPT.name())
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        verifyFilterOrContingencyUpdateRequests("/v1/script-contingency-lists");
+    }
+
+    @Test
+    public void testModifyFormContingencyList() throws Exception {
+        final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
+        final String name = "form contingency name";
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(formContingency)
+                .param("name", name)
+                .param("contingencyListType", ContingencyListType.FORM.name())
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        verifyFilterOrContingencyUpdateRequests("/v1/form-contingency-lists/");
+    }
+
+    @Test
+    public void testModifyIdentifierContingencyList() throws Exception {
+        final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
+        final String name = "identifier contingencyList name";
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
+                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                .contentType(APPLICATION_JSON)
+                .content(identifierContingencyList)
+                .param("name", name)
+                .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
+    }
+
+    private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+        assertTrue("elementAttributes updated", requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)));
+        assertTrue("name updated", requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
     }
 }

@@ -6,24 +6,26 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
-import org.gridsuite.explore.server.dto.AccessRightsAttributes;
-import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
+import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
+
 @Service
 public class ExploreService {
     static final String STUDY = "STUDY";
@@ -189,6 +191,38 @@ public class ExploreService {
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
             directoryService.deleteDirectoryElement(id, userId);
+        }
+    }
+
+    public void updateFilter(UUID id, String filter, String userId, String name) {
+        filterService.updateFilter(id, filter, userId);
+        updateElementName(id, name, userId);
+    }
+
+    public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {
+        contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
+        updateElementName(id, name, userId);
+    }
+
+    private void updateElementName(UUID id, String name, String userId) {
+        /** if the name is empty, no need to call directory-server */
+        if (StringUtils.isNotBlank(name)) {
+            ElementAttributes elementAttributes = new ElementAttributes();
+            elementAttributes.setElementName(name);
+            directoryService.updateElement(id, elementAttributes, userId);
+        }
+    }
+
+    private String getProperPath(ContingencyListType contingencyListType) {
+        switch (contingencyListType) {
+            case SCRIPT:
+                return "/script-contingency-lists/{id}";
+            case FORM:
+                return "/form-contingency-lists/{id}";
+            case IDENTIFIERS:
+                return "/identifier-contingency-lists/{id}";
+            default:
+                throw new ExploreException(UNKNOWN_ELEMENT_TYPE);
         }
     }
 }

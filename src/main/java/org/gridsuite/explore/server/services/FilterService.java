@@ -103,9 +103,26 @@ public class FilterService implements IDirectoryElementsService {
                 }).getBody();
     }
 
+    public void updateFilter(UUID id, String filter, String userId) {
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+
+        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, getHttpEntityWithUserHeaderAndJsonMediaType(userId, filter), Void.class);
+
+    }
+
     private HttpHeaders getHeaders(String userId) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         return headers;
     }
+
+    private HttpEntity<String> getHttpEntityWithUserHeaderAndJsonMediaType(String userId, String content) {
+        HttpHeaders headers = getHeaders(userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new HttpEntity<>(content, headers);
+    }
+
 }

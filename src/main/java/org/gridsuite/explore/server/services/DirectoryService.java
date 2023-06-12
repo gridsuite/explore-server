@@ -181,6 +181,19 @@ public class DirectoryService implements IDirectoryElementsService {
         return listOfElements;
     }
 
+    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, String userId) {
+        String path = UriComponentsBuilder
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+                .buildAndExpand(elementUuid)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
     // TODO get id/type recursively then do batch delete
     @Override
     public void delete(UUID id, String userId) {

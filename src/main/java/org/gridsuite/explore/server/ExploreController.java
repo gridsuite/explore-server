@@ -10,9 +10,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
+import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -244,4 +245,27 @@ public class ExploreController {
                                                                        @RequestParam(value = "elementTypes", required = false) List<String> elementTypes) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
+
+    @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a filter")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been successfully modified")})
+    public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody String filter, @RequestHeader("userId") String userId, @RequestParam("name") String name) {
+        exploreService.updateFilter(id, filter, userId, name);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The contingency list have been modified successfully")})
+    public ResponseEntity<Void> updateContingencyList(
+            @PathVariable UUID id,
+            @RequestParam(name = "name") String name,
+            @RequestParam(name = "contingencyListType") ContingencyListType contingencyListType,
+            @RequestBody String content,
+            @RequestHeader("userId") String userId) {
+
+        exploreService.updateContingencyList(id, content, userId, name, contingencyListType);
+        return ResponseEntity.ok().build();
+    }
+
 }
