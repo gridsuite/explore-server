@@ -267,4 +267,5 @@ public class ExploreController {
         exploreService.updateContingencyList(id, content, userId, name, contingencyListType);
         return ResponseEntity.ok().build();
     }
+
 }
