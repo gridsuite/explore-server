@@ -32,6 +32,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.ResourceUtils;
 
 import java.io.FileInputStream;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -77,7 +79,7 @@ public class ExploreTest {
     public static final String FILTER = "FILTER";
     private Map<String, Object> specificMetadata = new HashMap<>();
     private Map<String, Object> specificMetadata2 = new HashMap<>();
-    private Map<String, Object> caseSpecificMetadata = new HashMap<>();
+    private Map<String, Object> caseSpecificMetadata = new LinkedHashMap<>();
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
 
@@ -137,7 +139,8 @@ public class ExploreTest {
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
-        String listOfCasesAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata)));
+        String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
+
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
@@ -246,7 +249,7 @@ public class ExploreTest {
                     } else if (path.matches("/v1/filters/metadata[?]ids=" + FILTER_UUID)) {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
-                        return new MockResponse().setBody(listOfCasesAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse().setBody(caseInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -600,8 +603,14 @@ public class ExploreTest {
 
     @Test
     public void testGetMetadata() throws Exception {
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
                 .header("userId", USER1))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String res = result.getResponse().getContentAsString();
+        String body = res.substring(1, res.length() - 1); // remove array brackets
+        ElementAttributes elem = new ObjectMapper().readValue(body, ElementAttributes.class);
+        assertEquals(elem.getSpecificMetadata().get("format"), caseSpecificMetadata.get("format"));
     }
 }
