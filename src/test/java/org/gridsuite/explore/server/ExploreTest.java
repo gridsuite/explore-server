@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
@@ -79,12 +80,10 @@ public class ExploreTest {
     public static final String FILTER = "FILTER";
     private Map<String, Object> specificMetadata = new HashMap<>();
     private Map<String, Object> specificMetadata2 = new HashMap<>();
-    private Map<String, Object> caseSpecificMetadata = new LinkedHashMap<>();
+    private Map<String, Object> caseSpecificMetadata = new HashMap<>();
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
 
-    @Autowired
-    ObjectMapper objectMapper;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -137,7 +136,7 @@ public class ExploreTest {
         String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0, null));
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
-        String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata));
+        String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
 
@@ -184,7 +183,7 @@ public class ExploreTest {
                     return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(caseAttributesAsString).setResponseCode(200)
+                    return new MockResponse().setBody(caseElementAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
@@ -197,7 +196,7 @@ public class ExploreTest {
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody("[" + caseAttributesAsString + "]")
+                    return new MockResponse().setBody("[" + caseElementAttributesAsString + "]")
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
@@ -607,10 +606,11 @@ public class ExploreTest {
                 .header("userId", USER1))
                 .andExpect(status().isOk())
                 .andReturn();
-
         String res = result.getResponse().getContentAsString();
-        String body = res.substring(1, res.length() - 1); // remove array brackets
-        ElementAttributes elem = new ObjectMapper().readValue(body, ElementAttributes.class);
-        assertEquals(elem.getSpecificMetadata().get("format"), caseSpecificMetadata.get("format"));
+        List<ElementAttributes> elementsMetadata = mapper.readValue(res, new TypeReference<>() {
+        });
+        String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata));
+        assertEquals(1, elementsMetadata.size());
+        assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), caseAttributesAsString);
     }
 }
