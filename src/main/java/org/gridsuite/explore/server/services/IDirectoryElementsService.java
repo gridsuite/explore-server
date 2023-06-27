@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 
 import java.util.List;
@@ -34,8 +35,11 @@ interface IDirectoryElementsService {
         /* getting metadata from services */
         List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()));
         return metadata.stream().map(metadataItem -> {
-            Object item = metadataItem.getOrDefault("id", metadataItem.getOrDefault("uuid", "")).toString();
-            ElementAttributes e = mapElementAttribute.get(item);
+            Object item = metadataItem.getOrDefault("id", "");
+            if (StringUtils.EMPTY.equals(item)) {
+                item = metadataItem.getOrDefault("uuid", "");
+            }
+            ElementAttributes e = mapElementAttribute.get(item.toString());
             return populateMedataItem(e, metadataItem);
         }).collect(Collectors.toList());
     }
