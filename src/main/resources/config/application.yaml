@@ -3,9 +3,9 @@ spring:
     name: explore-server
 
   cloud:
+    function:
+      definition: consumeStudyUpdate
     stream:
-      function:
-        definition: consumeStudyUpdate
       bindings:
         publishExploreUpdate-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}explore.update
