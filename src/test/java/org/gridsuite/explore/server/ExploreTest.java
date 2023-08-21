@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.exceptions.UncheckedInterruptedException;
 import lombok.SneakyThrows;
-import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -21,9 +20,8 @@ import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.RequestWithBody;
 import org.gridsuite.explore.server.utils.TestUtils;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,6 +30,7 @@ import org.springframework.cloud.stream.binder.test.TestChannelBinderConfigurati
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -41,7 +40,10 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -55,7 +57,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest
+@DirtiesContext
 @ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Explore Server tests")
 class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
@@ -79,9 +83,14 @@ class ExploreTest {
     public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
     public static final String FILTER = "FILTER";
-    private Map<String, Object> specificMetadata = new HashMap<>();
-    private Map<String, Object> specificMetadata2 = new HashMap<>();
-    private Map<String, Object> caseSpecificMetadata = new HashMap<>();
+
+    private static final Map<String, Object> SPECIFIC_METADATA = Map.of("id", FILTER_UUID);
+    private static final Map<String, Object> SPECIFIC_METADATA_2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
+    private static final Map<String, Object> CASE_SPECIFIC_METADATA = Map.of(
+            "uuid", CASE_UUID,
+            "name", TEST_FILE,
+            "format", "XIIDM"
+    );
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
 
@@ -109,23 +118,14 @@ class ExploreTest {
         server.start();
 
         // Ask the server for its URL. You'll need this to make HTTP requests.
-        HttpUrl baseHttpUrl = server.url("");
-        String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
+        String baseUrl = server.url("").toString();
+        baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
 
         directoryService.setDirectoryServerBaseUri(baseUrl);
         studyService.setStudyServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
-
-        specificMetadata.put("id", FILTER_UUID);
-
-        specificMetadata2.put("equipmentType", "LINE");
-        specificMetadata2.put("id", FILTER_UUID_2);
-
-        caseSpecificMetadata.put("uuid", CASE_UUID);
-        caseSpecificMetadata.put("name", TEST_FILE);
-        caseSpecificMetadata.put("format", "XIIDM");
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));
@@ -139,12 +139,13 @@ class ExploreTest {
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
-        String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
+        String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(CASE_SPECIFIC_METADATA));
 
-        final Dispatcher dispatcher = new Dispatcher() {
+        server.setDispatcher(new Dispatcher() {
+            @NotNull
             @SneakyThrows
             @Override
-            public MockResponse dispatch(RecordedRequest request) {
+            public MockResponse dispatch(@NotNull RecordedRequest request) {
                 final String path = Objects.requireNonNull(request.getPath());
                 final String bodyStr = request.getBody().readUtf8();
 
@@ -234,7 +235,7 @@ class ExploreTest {
                     } else if (path.equals("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
                         return new MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.equals("/v1/filters/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2)) {
-                        return new MockResponse().setBody("[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]")
+                        return new MockResponse().setBody("[" + mapper.writeValueAsString(SPECIFIC_METADATA) + "," + mapper.writeValueAsString(SPECIFIC_METADATA_2) + "]")
                                 .setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.equals("/v1/filters/metadata?ids=" + FILTER_UUID)) {
@@ -273,8 +274,12 @@ class ExploreTest {
                 }
                 return new MockResponse().setResponseCode(418);
             }
-        };
-        server.setDispatcher(dispatcher);
+        });
+    }
+
+    @AfterEach
+    void teardown() throws IOException {
+        server.shutdown();
     }
 
     @Test
@@ -335,7 +340,7 @@ class ExploreTest {
                 "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("Contingency list content")
+                .content("{\"content\": \"Contingency list content\"}")
         ).andExpect(status().isOk());
     }
 
@@ -345,7 +350,7 @@ class ExploreTest {
                 "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("Contingency list content")
+                .content("{\"content\": \"Contingency list content\"}")
         ).andExpect(status().isInternalServerError());
     }
 
@@ -355,7 +360,7 @@ class ExploreTest {
                 FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("Contingency list content")
+                .content("{\"content\": \"Contingency list content\"}")
         ).andExpect(status().isOk());
     }
 
@@ -365,7 +370,7 @@ class ExploreTest {
                 "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("Contingency list content")
+                .content("{\"content\": \"Contingency list content\"}")
         ).andExpect(status().isOk());
     }
 
@@ -388,7 +393,7 @@ class ExploreTest {
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("Filter content")
+                .content("{\"content\": \"Filter content\"}")
         ).andExpect(status().isOk());
     }
 
@@ -432,8 +437,8 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
 
-        ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, specificMetadata);
-        ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, specificMetadata2);
+        ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA);
+        ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA_2);
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
             .header("userId", USER1))
@@ -605,6 +610,6 @@ class ExploreTest {
                 .first()
                 .asString()
                 .as("caseAttributesAsString")
-                .isEqualTo(mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata)));
+                .isEqualTo(mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, CASE_SPECIFIC_METADATA)));
     }
 }
