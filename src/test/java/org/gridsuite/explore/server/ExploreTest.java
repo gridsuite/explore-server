@@ -121,11 +121,11 @@ class ExploreTest {
         String baseUrl = server.url("").toString();
         baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
 
-        directoryService.setDirectoryServerBaseUri(baseUrl);
-        studyService.setStudyServerBaseUri(baseUrl);
-        filterService.setFilterServerBaseUri(baseUrl);
-        contingencyListService.setActionsServerBaseUri(baseUrl);
-        caseService.setBaseUri(baseUrl);
+        directoryService.setServerBaseUri(baseUrl);
+        studyService.setServerBaseUri(baseUrl);
+        filterService.setServerBaseUri(baseUrl);
+        contingencyListService.setServerBaseUri(baseUrl);
+        caseService.setServerBaseUri(baseUrl);
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));

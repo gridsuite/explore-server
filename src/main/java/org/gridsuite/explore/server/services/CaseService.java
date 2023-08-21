@@ -27,21 +27,17 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreException.Type.IMPORT_CASE_FAILED;
+import static org.gridsuite.explore.server.ExploreException.Type.INCORRECT_CASE_FILE;
 
 @Service
-public class CaseService implements IDirectoryElementsService {
+public class CaseService extends AbstractDirectoryElementsService {
     private static final String CASE_SERVER_API_VERSION = "v1";
-
-    private static final String DELIMITER = "/";
-    private final RestTemplate restTemplate;
-    private String caseServerBaseUri;
 
     @Autowired
     public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String studyServerBaseUri,
             RestTemplate restTemplate) {
-        this.caseServerBaseUri = studyServerBaseUri;
-        this.restTemplate = restTemplate;
+        super(studyServerBaseUri, restTemplate);
     }
 
     private static ExploreException wrapRemoteError(String response, HttpStatus statusCode) {
@@ -50,10 +46,6 @@ public class CaseService implements IDirectoryElementsService {
         } else {
             throw new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + statusCode + "\"}");
         }
-    }
-
-    public void setBaseUri(String actionsServerBaseUri) {
-        this.caseServerBaseUri = actionsServerBaseUri;
     }
 
     UUID importCase(MultipartFile multipartFile) {
@@ -72,7 +64,7 @@ public class CaseService implements IDirectoryElementsService {
         HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
                 multipartBodyBuilder.build(), headers);
         try {
-            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
+            caseUuid = restTemplate.postForObject(serverBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
                     UUID.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
@@ -89,7 +81,7 @@ public class CaseService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
+        return restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
                 .getBody();
     }
 
@@ -100,7 +92,7 @@ public class CaseService implements IDirectoryElementsService {
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
     @Override
@@ -110,8 +102,7 @@ public class CaseService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+        return restTemplate.exchange(serverBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {}).getBody();
     }
 }

@@ -10,7 +10,10 @@ import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -22,29 +25,21 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreException.Type.IMPORT_CASE_FAILED;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class StudyService implements IDirectoryElementsService {
+public class StudyService extends AbstractDirectoryElementsService {
     private static final String STUDY_SERVER_API_VERSION = "v1";
-
     private static final String DELIMITER = "/";
-    private final RestTemplate restTemplate;
-    private String studyServerBaseUri;
 
     @Autowired
     public StudyService(
             @Value("${gridsuite.services.study-server.base-uri:http://study-server/}") String studyServerBaseUri,
             RestTemplate restTemplate) {
-        this.studyServerBaseUri = studyServerBaseUri;
-        this.restTemplate = restTemplate;
-    }
-
-    public void setStudyServerBaseUri(String studyServerBaseUri) {
-        this.studyServerBaseUri = studyServerBaseUri;
+        super(studyServerBaseUri, restTemplate);
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid,
@@ -55,12 +50,8 @@ public class StudyService implements IDirectoryElementsService {
                 .queryParam("duplicateCase", duplicateCase)
                 .buildAndExpand(caseUuid)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HEADER_USER_ID, userId);
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(
-                importParams, headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+        HttpEntity<Map<String, Object>> request = getHttpEntityWithHeaders(userId, importParams);
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
     public void insertStudyWithCaseFile(UUID studyUuid, String userId, MultipartFile caseFile) {
@@ -75,12 +66,11 @@ public class StudyService implements IDirectoryElementsService {
         } catch (IOException e) {
             throw new ExploreException(IMPORT_CASE_FAILED);
         }
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = getUserHeaders(userId);
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.add(HEADER_USER_ID, userId);
         HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
                 multipartBodyBuilder.build(), headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
     public void duplicateStudy(UUID sourceStudyUuid, UUID studyUuid, String userId) {
@@ -89,7 +79,7 @@ public class StudyService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceStudyUuid)
                 .queryParam("studyUuid", studyUuid)
                 .toUriString();
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)),
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, new HttpEntity<>(getUserHeaders(userId)),
                 Void.class);
     }
 
@@ -98,7 +88,7 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)),
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getUserHeaders(userId)),
                 Void.class);
     }
 
@@ -109,15 +99,7 @@ public class StudyService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
-    }
-
-    private HttpHeaders getHeaders(String userId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HEADER_USER_ID, userId);
-        return headers;
+        return restTemplate.exchange(serverBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {}).getBody();
     }
 }

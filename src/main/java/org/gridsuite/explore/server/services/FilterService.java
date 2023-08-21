@@ -9,7 +9,9 @@ package org.gridsuite.explore.server.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -23,26 +25,14 @@ import java.util.stream.Collectors;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-public class FilterService implements IDirectoryElementsService {
+public class FilterService extends AbstractDirectoryElementsService {
     private static final String FILTER_SERVER_API_VERSION = "v1";
-
-    private static final String DELIMITER = "/";
-    private static final String HEADER_USER_ID = "userId";
-
-    private String filterServerBaseUri;
-
-    private final RestTemplate restTemplate;
 
     @Autowired
     public FilterService(
             @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
             RestTemplate restTemplate) {
-        this.filterServerBaseUri = filterServerBaseUri;
-        this.restTemplate = restTemplate;
-    }
-
-    public void setFilterServerBaseUri(String filterServerBaseUri) {
-        this.filterServerBaseUri = filterServerBaseUri;
+        super(filterServerBaseUri, restTemplate);
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
@@ -50,9 +40,8 @@ public class FilterService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
                 .buildAndExpand(id)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HEADER_USER_ID, userId);
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
+        HttpHeaders headers = getUserHeaders(userId);
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
     }
 
     public void insertNewScriptFromFilter(UUID id, UUID newId) {
@@ -60,7 +49,7 @@ public class FilterService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
                 .buildAndExpand(id, newId)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, null, Void.class);
     }
 
     @Override
@@ -68,7 +57,7 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)),
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getUserHeaders(userId)),
                 Void.class);
     }
 
@@ -76,10 +65,8 @@ public class FilterService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters?id={id}")
                 .buildAndExpand(filterId)
                 .toUriString();
-        HttpHeaders headers = getHeaders(userId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(filter, headers);
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+        HttpEntity<String> httpEntity = getHttpEntityWithHeaders(userId, filter);
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
     public void insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
@@ -87,7 +74,7 @@ public class FilterService implements IDirectoryElementsService {
                 .queryParam("duplicateFrom", sourceFilterId)
                 .queryParam("id", filterId)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)),
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.POST, new HttpEntity<>(getUserHeaders(userId)),
                 Void.class);
     }
 
@@ -98,31 +85,14 @@ public class FilterService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+        return restTemplate.exchange(serverBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {}).getBody();
     }
 
     public void updateFilter(UUID id, String filter, String userId) {
-
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, getHttpEntityWithUserHeaderAndJsonMediaType(userId, filter), Void.class);
-
+        restTemplate.exchange(serverBaseUri + path, HttpMethod.PUT, getHttpEntityWithHeaders(userId, filter), Void.class);
     }
-
-    private HttpHeaders getHeaders(String userId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        return headers;
-    }
-
-    private HttpEntity<String> getHttpEntityWithUserHeaderAndJsonMediaType(String userId, String content) {
-        HttpHeaders headers = getHeaders(userId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return new HttpEntity<>(content, headers);
-    }
-
 }
