@@ -6,26 +6,29 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
-import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.AccessRightsAttributes;
+import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ContingencyListType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
-
+@RequiredArgsConstructor(onConstructor = @__({@Autowired}))
+@Slf4j
 @Service
 public class ExploreService {
     static final String STUDY = "STUDY";
@@ -34,27 +37,11 @@ public class ExploreService {
     static final String FILTER = "FILTER";
     static final String DIRECTORY = "DIRECTORY";
 
-    private DirectoryService directoryService;
-    private StudyService studyService;
-    private ContingencyListService contingencyListService;
-    private FilterService filterService;
-    private CaseService caseService;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
-
-    public ExploreService(
-        DirectoryService directoryService,
-        StudyService studyService,
-        ContingencyListService contingencyListService,
-        FilterService filterService,
-        CaseService caseService) {
-
-        this.directoryService = directoryService;
-        this.studyService = studyService;
-        this.contingencyListService = contingencyListService;
-        this.filterService = filterService;
-        this.caseService = caseService;
-    }
+    private final DirectoryService directoryService;
+    private final StudyService studyService;
+    private final ContingencyListService contingencyListService;
+    private final FilterService filterService;
+    private final CaseService caseService;
 
     public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
@@ -189,7 +176,7 @@ public class ExploreService {
             directoryService.deleteDirectoryElement(id, userId);
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
         } catch (Exception e) {
-            LOGGER.error(e.toString(), e);
+            log.error("Error while deleting an element", e);
             directoryService.deleteDirectoryElement(id, userId);
         }
     }

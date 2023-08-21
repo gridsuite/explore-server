@@ -6,11 +6,15 @@
  */
 package org.gridsuite.explore.server;
 
-import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@Data
+@AllArgsConstructor
 public class ExploreException extends RuntimeException {
 
     public enum Type {
@@ -21,19 +25,10 @@ public class ExploreException extends RuntimeException {
         INCORRECT_CASE_FILE
     }
 
-    private final Type type;
+    @NonNull private final Type type;
 
-    public ExploreException(Type type) {
-        super(Objects.requireNonNull(type.name()));
-        this.type = type;
-    }
-
-    public ExploreException(Type type, String message) {
+    public ExploreException(@NonNull Type type, String message) {
         super(message);
         this.type = type;
-    }
-
-    Type getType() {
-        return type;
     }
 }
