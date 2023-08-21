@@ -8,13 +8,13 @@ package org.gridsuite.explore.server;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.exceptions.UncheckedInterruptedException;
 import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okio.Buffer;
 import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
@@ -145,136 +145,131 @@ class ExploreTest {
             @SneakyThrows
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                String path = Objects.requireNonNull(request.getPath());
-                Buffer body = request.getBody();
+                final String path = Objects.requireNonNull(request.getPath());
+                final String bodyStr = request.getBody().readUtf8();
 
-                if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(404);
-                } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
-                    String bodyStr = body.readUtf8();
-                    if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
-                        return new MockResponse().setResponseCode(409);
-                    } else {
-                        return new MockResponse().setResponseCode(200);
-                    }
-                } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
-                    String bodyStr = body.readUtf8();
-                    if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
-                        return new MockResponse().setResponseCode(409).setBody("invalid file");
-                    } else if (bodyStr.contains("filename=\"" + TEST_INCORRECT_FILE + "\"")) {  // import file with errors
-                        return new MockResponse().setResponseCode(422).setBody("file with bad extension");
-                    } else {
-                        return new MockResponse().setResponseCode(200);
-                    }
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(500);
-                } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
+                if (path.equals("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY")) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.equals("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY")) {
-                    return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.equals("/v1/elements/" + FILTER_UUID + "/notification?type=UPDATE_DIRECTORY")) {
                     return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(caseElementAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]")
-                            .setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody("[" + caseElementAttributesAsString + "]")
-                            .setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody("[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]")
-                            .setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/script-contingency-lists\\?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(500);
-                } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/script-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/form-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200);
+                } else if ("POST".equals(request.getMethod())) {
+                    if (path.startsWith("/v1/studies/cases/" + NON_EXISTING_CASE_UUID)) {
+                        return new MockResponse().setResponseCode(404);
+                    } else if (path.startsWith("/v1/studies")) {
+                        if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
+                            return new MockResponse().setResponseCode(409);
+                        } else {
+                            return new MockResponse().setResponseCode(200);
+                        }
+                    } else if (path.startsWith("/v1/cases")) {
+                        if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
+                            return new MockResponse().setResponseCode(409).setBody("invalid file");
+                        } else if (bodyStr.contains("filename=\"" + TEST_INCORRECT_FILE + "\"")) {  // import file with errors
+                            return new MockResponse().setResponseCode(422).setBody("file with bad extension");
+                        } else {
+                            return new MockResponse().setResponseCode(200);
+                        }
+                    } else if (path.equals("/v1/script-contingency-lists?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID)) {
+                        return new MockResponse().setResponseCode(500); //TODO not encountered case?
+                    } else if (path.startsWith("/v1/script-contingency-lists")) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.startsWith("/v1/form-contingency-lists")) { //include `/v1/form-contingency-lists/.*/new-script/.*`
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.startsWith("/v1/identifier-contingency-lists")) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.startsWith("/v1/filters")) { //include `/v1/filters?id=` & `/v1/filters/.*/new-script.*`
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.equals("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
+                        return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements")) {
+                        return new MockResponse().setResponseCode(500);
+                    }
+                } else if ("PUT".equals(request.getMethod())) {
+                    if (path.startsWith("/v1/elements/")) {
+                        return new MockResponse().setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.startsWith("/v1/filters/")) { //include `/v1/filters/.*/replace-with-script`
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.startsWith("/v1/script-contingency-lists/")) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.startsWith("/v1/form-contingency-lists/")) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.startsWith("/v1/identifier-contingency-lists/")) {
+                        return new MockResponse().setResponseCode(200);
+                    }
                 } else if ("GET".equals(request.getMethod())) {
-                    if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
+                    if (path.equals("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
-                        return new MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
+                    } else if (path.equals("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/filters/metadata[?]ids=" + FILTER_UUID)) {
+                    } else if (path.equals("/v1/elements/" + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements/" + FILTER_UUID)) {
+                        return new MockResponse().setBody(filterAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements/" + CASE_UUID)) {
+                        return new MockResponse().setBody(caseElementAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements/" + PRIVATE_STUDY_UUID)) {
+                        return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements/" + PUBLIC_STUDY_UUID)) {
+                        return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER")) {
+                        return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]")
+                                .setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements?ids=" + CASE_UUID)) {
+                        return new MockResponse().setBody("[" + caseElementAttributesAsString + "]")
+                                .setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/elements?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
+                        return new MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/filters/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2)) {
+                        return new MockResponse().setBody("[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]")
+                                .setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/filters/metadata?ids=" + FILTER_UUID)) {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
+                    } else if (path.equals("/v1/cases/metadata?ids=" + CASE_UUID)) {
                         return new MockResponse().setBody(caseInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
+                    } else if (path.equals("/v1/studies/metadata?ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.equals("/v1/contingency-lists/metadata?ids=" + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
-                    if (path.matches("/v1/filters/" + FILTER_UUID)) {
+                    if (path.equals("/v1/filters/" + FILTER_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/studies/" + PRIVATE_STUDY_UUID)) {
+                    } else if (path.equals("/v1/studies/" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
+                    } else if (path.equals("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
+                    } else if (path.equals("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID)) {
+                    } else if (path.equals("/v1/elements/" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/elements/" + FILTER_UUID)) {
+                    } else if (path.equals("/v1/elements/" + FILTER_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID)) {
+                    } else if (path.equals("/v1/elements/" + CONTINGENCY_LIST_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
+                    } else if (path.equals("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
                         return new MockResponse().setResponseCode(200);
+                    } else {
+                        return new MockResponse().setResponseCode(404);
                     }
-                    return new MockResponse().setResponseCode(404);
                 }
                 return new MockResponse().setResponseCode(418);
             }
@@ -586,7 +581,7 @@ class ExploreTest {
         verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
     }
 
-    private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
+    private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) throws UncheckedInterruptedException, AssertionError {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertThat(requests).as("elementAttributes updated")
                 .extracting(RequestWithBody::getPath)
