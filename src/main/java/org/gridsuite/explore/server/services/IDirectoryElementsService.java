@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 /**
  * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
  */
-
 interface IDirectoryElementsService {
     String HEADER_USER_ID = "userId";
 
@@ -30,21 +29,16 @@ interface IDirectoryElementsService {
     default List<ElementAttributes> completeElementAttribute(List<ElementAttributes> lstElementAttribute) {
         /* generating id -> elementAttribute map */
         Map<String, ElementAttributes> mapElementAttribute = lstElementAttribute.stream()
-                .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
+                .collect(Collectors.toMap(e -> e.elementUuid().toString(), Function.identity()));
         /* getting metadata from services */
-        List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()));
+        List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::elementUuid).collect(Collectors.toList()));
         return metadata.stream().map(metadataItem -> {
             Object item = metadataItem.get("id");
             if (item == null) {
                 item = metadataItem.getOrDefault("uuid", "");
             }
             ElementAttributes e = mapElementAttribute.get(item.toString());
-            return populateMedataItem(e, metadataItem);
+            return e.toBuilder().specificMetadata(metadataItem).build();
         }).collect(Collectors.toList());
-    }
-
-    private ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        elementAttributes.setSpecificMetadata(metadataItem);
-        return elementAttributes;
     }
 }

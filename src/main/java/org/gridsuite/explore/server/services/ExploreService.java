@@ -58,14 +58,14 @@ public class ExploreService {
 
     public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
-        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseUuid, importParams, duplicateCase);
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.elementUuid(), userId, caseUuid, importParams, duplicateCase);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void duplicateStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
                 null, userId, 0L, description);
-        studyService.duplicateStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
+        studyService.duplicateStudy(sourceStudyUuid, elementAttributes.elementUuid(), userId);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -84,55 +84,55 @@ public class ExploreService {
     public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
+        contingencyListService.insertScriptContingencyList(elementAttributes.elementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void duplicateScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid());
+        contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.elementUuid());
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
+        contingencyListService.insertFormContingencyList(elementAttributes.elementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void duplicateFormContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid());
+        contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.elementUuid());
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void duplicateIdentifierContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        contingencyListService.insertIdentifierContingencyList(sourceListId, elementAttributes.getElementUuid());
+        contingencyListService.insertIdentifierContingencyList(sourceListId, elementAttributes.elementUuid());
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+        if (!elementAttribute.type().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                CONTINGENCY_LIST, new AccessRightsAttributes(elementAttribute.getAccessRights().isPrivate()), userId, 0L, null);
-        contingencyListService.newScriptFromFormContingencyList(id, newElementAttributes.getElementUuid());
+                CONTINGENCY_LIST, new AccessRightsAttributes(elementAttribute.accessRights().isPrivate()), userId, 0L, null);
+        contingencyListService.newScriptFromFormContingencyList(id, newElementAttributes.elementUuid());
         directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
     }
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!userId.equals(elementAttribute.getOwner())) {
+        if (!userId.equals(elementAttribute.owner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
-        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+        if (!elementAttribute.type().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         contingencyListService.replaceFormContingencyListWithScript(id, userId);
@@ -142,41 +142,41 @@ public class ExploreService {
     public void createIdentifierContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
-        contingencyListService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
+        contingencyListService.insertIdentifierContingencyList(elementAttributes.elementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
-                null, userId, 0, description);
-        filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
+                null, userId, 0L, description);
+        filterService.insertFilter(filter, elementAttributes.elementUuid(), userId);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void duplicateFilter(String filterName, String description, UUID sourceFilterUuid, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
-                null, userId, 0, description);
-        filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId);
+                null, userId, 0L, description);
+        filterService.insertFilter(sourceFilterUuid, elementAttributes.elementUuid(), userId);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(filterId);
-        if (!elementAttribute.getType().equals(FILTER)) {
+        if (!elementAttribute.type().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                FILTER, new AccessRightsAttributes(elementAttribute.getAccessRights().isPrivate()), userId, 0, null);
-        filterService.insertNewScriptFromFilter(filterId, newElementAttributes.getElementUuid());
+                FILTER, new AccessRightsAttributes(elementAttribute.accessRights().isPrivate()), userId, 0L, null);
+        filterService.insertNewScriptFromFilter(filterId, newElementAttributes.elementUuid());
         directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!userId.equals(elementAttribute.getOwner())) {
+        if (!userId.equals(elementAttribute.owner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
-        if (!elementAttribute.getType().equals(FILTER)) {
+        if (!elementAttribute.type().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         filterService.replaceFilterWithScript(id, userId);
@@ -207,9 +207,7 @@ public class ExploreService {
     private void updateElementName(UUID id, String name, String userId) {
         /** if the name is empty, no need to call directory-server */
         if (StringUtils.isNotBlank(name)) {
-            ElementAttributes elementAttributes = new ElementAttributes();
-            elementAttributes.setElementName(name);
-            directoryService.updateElement(id, elementAttributes, userId);
+            directoryService.updateElement(id, ElementAttributes.builder().elementName(name).build(), userId);
         }
     }
 

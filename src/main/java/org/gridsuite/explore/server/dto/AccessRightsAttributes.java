@@ -6,19 +6,8 @@
  */
 package org.gridsuite.explore.server.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class AccessRightsAttributes {
-    private boolean isPrivate;
+public record AccessRightsAttributes(boolean isPrivate) {
 }

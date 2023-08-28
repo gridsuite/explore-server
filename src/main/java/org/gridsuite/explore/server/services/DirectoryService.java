@@ -148,8 +148,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void deleteElement(UUID id, String userId) {
         ElementAttributes elementAttribute = getElementInfos(id);
-        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
-        service.delete(elementAttribute.getElementUuid(), userId);
+        IDirectoryElementsService service = getGenericService(elementAttribute.type());
+        service.delete(elementAttribute.elementUuid(), userId);
     }
 
     private IDirectoryElementsService getGenericService(String type) {
@@ -164,7 +164,7 @@ public class DirectoryService implements IDirectoryElementsService {
             List<String> equipmentTypes) {
         Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
                 .stream()
-                .collect(Collectors.groupingBy(ElementAttributes::getType));
+                .collect(Collectors.groupingBy(ElementAttributes::type));
         List<ElementAttributes> listOfElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
@@ -173,8 +173,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
-                    .filter(element -> "DIRECTORY".equals(element.getType())
-                            || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
+                    .filter(element -> "DIRECTORY".equals(element.type())
+                            || equipmentTypes.contains(element.specificMetadata().get("equipmentType")))
                     .collect(Collectors.toList());
         }
 
@@ -198,6 +198,6 @@ public class DirectoryService implements IDirectoryElementsService {
     @Override
     public void delete(UUID id, String userId) {
         List<ElementAttributes> elementAttributesList = getDirectoryElements(id, userId);
-        elementAttributesList.forEach(elementAttributes -> deleteElement(elementAttributes.getElementUuid(), userId));
+        elementAttributesList.forEach(elementAttributes -> deleteElement(elementAttributes.elementUuid(), userId));
     }
 }
