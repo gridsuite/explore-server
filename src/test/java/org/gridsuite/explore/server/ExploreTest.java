@@ -589,10 +589,10 @@ class ExploreTest {
     private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertThat(requests).as("elementAttributes updated")
-                .extracting(RequestWithBody::getPath)
+                .extracting(RequestWithBody::path)
                 .anyMatch(path -> path.startsWith(contingencyOrFilterPath));
         assertThat(requests).as("name updated")
-                .extracting(RequestWithBody::getPath)
+                .extracting(RequestWithBody::path)
                 .anyMatch(path -> path.startsWith("/v1/elements/"));
     }
 
