@@ -18,12 +18,11 @@ import java.util.stream.IntStream;
  * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 public final class TestUtils {
+    private TestUtils() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     private static final long TIMEOUT = 100;
-
-    private TestUtils() {
-
-    }
 
     public static Set<RequestWithBody> getRequestsWithBodyDone(int n, MockWebServer server) throws UncheckedInterruptedException {
         return IntStream.range(0, n).mapToObj(i -> {
