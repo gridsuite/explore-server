@@ -603,7 +603,7 @@ class ExploreTest {
                 .andExpect(status().isOk())
                 .andReturn();
         String res = result.getResponse().getContentAsString();
-        assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() {}))
+        assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() { }))
                 .as("elementsMetadata")
                 .hasSize(1)
                 .extracting(mapper::writeValueAsString)
