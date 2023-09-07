@@ -14,6 +14,7 @@ import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,8 @@ public class ExploreController {
 
     // /!\ This query parameter is used by the gateway to control access
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
+
+    private static final String QUERY_PARAM_PARAMETERS_TYPE = "type";
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
@@ -268,4 +271,27 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/parameters", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "create parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
+    public ResponseEntity<Void> createParameters(@RequestBody String parameters,
+                                             @RequestParam("name") String parametersName,
+                                             @RequestParam(QUERY_PARAM_PARAMETERS_TYPE) ParametersType parametersType,
+                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                             @RequestHeader("userId") String userId) {
+        exploreService.createParameters(parameters, parametersType, parametersName, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
+    public ResponseEntity<Void> updateParameters(@PathVariable UUID id,
+                                             @RequestBody String parameters,
+                                             @RequestParam(QUERY_PARAM_PARAMETERS_TYPE) ParametersType parametersType,
+                                             @RequestHeader("userId") String userId,
+                                             @RequestParam("name") String name) {
+        exploreService.updateParameters(id, parameters, parametersType, userId, name);
+        return ResponseEntity.ok().build();
+    }
 }

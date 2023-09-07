@@ -19,6 +19,7 @@ import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,6 +71,7 @@ public class ExploreTest {
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
+    private static final UUID PARAMETERS_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String CASE1 = "case1";
@@ -97,6 +99,8 @@ public class ExploreTest {
     @Autowired
     private CaseService caseService;
     @Autowired
+    private RemoteServicesProperties remoteServicesProperties;
+    @Autowired
     private ObjectMapper mapper;
     private MockWebServer server;
 
@@ -116,7 +120,7 @@ public class ExploreTest {
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
-
+        remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
         specificMetadata.put("id", FILTER_UUID);
 
         specificMetadata2.put("equipmentType", "LINE");
@@ -137,6 +141,7 @@ public class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null));
+        String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", "PARAMETERS", new AccessRightsAttributes(true), USER1, 0, ParametersType.VOLTAGE_INIT_PARAMETERS.name()));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
 
@@ -191,6 +196,9 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(publicStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/" + PARAMETERS_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(parametersElementAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]")
                             .setResponseCode(200)
@@ -238,6 +246,8 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/parameters.*")) {
+                    return new MockResponse().setResponseCode(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
@@ -270,7 +280,11 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/elements/" + PARAMETERS_UUID)) {
+                        return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
@@ -400,6 +414,26 @@ public class ExploreTest {
     }
 
     @Test
+    public void testCreateParameters() throws Exception {
+        mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+                "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("Parameters content")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testUpdateParameters() throws Exception {
+        mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+                PARAMETERS_UUID, "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("new Parameters content")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     public void testNewScriptFromFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
@@ -435,6 +469,7 @@ public class ExploreTest {
         deleteElementInvalidType(INVALID_ELEMENT_UUID);
         deleteElement(PARENT_DIRECTORY_UUID);
         deleteElement(CASE_UUID);
+        deleteElement(PARAMETERS_UUID);
     }
 
     @Test
