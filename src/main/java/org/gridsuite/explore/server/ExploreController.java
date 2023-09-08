@@ -276,7 +276,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
     public ResponseEntity<Void> createParameters(@RequestBody String parameters,
                                              @RequestParam("name") String parametersName,
-                                             @RequestParam(QUERY_PARAM_PARAMETERS_TYPE) ParametersType parametersType,
+                                             @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                              @RequestHeader("userId") String userId) {
         exploreService.createParameters(parameters, parametersType, parametersName, parentDirectoryUuid, userId);
@@ -288,7 +288,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
     public ResponseEntity<Void> updateParameters(@PathVariable UUID id,
                                              @RequestBody String parameters,
-                                             @RequestParam(QUERY_PARAM_PARAMETERS_TYPE) ParametersType parametersType,
+                                             @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestHeader("userId") String userId,
                                              @RequestParam("name") String name) {
         exploreService.updateParameters(id, parameters, parametersType, userId, name);
