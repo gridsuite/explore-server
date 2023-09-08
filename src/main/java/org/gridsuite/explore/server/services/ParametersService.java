@@ -85,7 +85,7 @@ public class ParametersService implements IDirectoryElementsService {
     @Override
     public void delete(UUID parametersUuid, String userId) {
         ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
-        ParametersType parametersType = ParametersType.valueOf(elementAttributes.getDescription());
+        ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
         String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + "/parameters/{parametersUuid}")
                 .buildAndExpand(parametersUuid)

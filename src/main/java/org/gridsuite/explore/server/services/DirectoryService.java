@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -57,7 +58,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 STUDY, studyService,
                 DIRECTORY, this,
                 CASE, caseService,
-                PARAMETERS, parametersService);
+                ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {

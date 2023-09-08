@@ -34,7 +34,6 @@ public class ExploreService {
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
     static final String DIRECTORY = "DIRECTORY";
-    static final String PARAMETERS = "PARAMETERS";
 
     private DirectoryService directoryService;
     private StudyService studyService;
@@ -233,8 +232,8 @@ public class ExploreService {
 
     public void createParameters(String parameters, ParametersType parametersType, String parametersName, UUID parentDirectoryUuid, String userId) {
         UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
-        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, PARAMETERS,
-                null, userId, 0, parametersType.name());
+        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
+                null, userId, 0, null);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
