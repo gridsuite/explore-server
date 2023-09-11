@@ -8,8 +8,8 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -48,17 +48,17 @@ public class DirectoryService implements IDirectoryElementsService {
 
     @Autowired
     public DirectoryService(
-            @Value("${gridsuite.services.directory-server.base-uri:http://directory-server/}") String directoryServerBaseUri,
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService,
-            CaseService caseService, RestTemplate restTemplate) {
-        this.directoryServerBaseUri = directoryServerBaseUri;
+            CaseService caseService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+        this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
         this.genericServices = Map.of(
                 FILTER, filterService,
                 CONTINGENCY_LIST, contingencyListService,
                 STUDY, studyService,
                 DIRECTORY, this,
-                CASE, caseService);
+                CASE, caseService,
+                ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {

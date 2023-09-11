@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -36,10 +35,8 @@ public class StudyService implements IDirectoryElementsService {
     private String studyServerBaseUri;
 
     @Autowired
-    public StudyService(
-            @Value("${gridsuite.services.study-server.base-uri:http://study-server/}") String studyServerBaseUri,
-            RestTemplate restTemplate) {
-        this.studyServerBaseUri = studyServerBaseUri;
+    public StudyService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+        this.studyServerBaseUri = remoteServicesProperties.getServiceUri("study-server");
         this.restTemplate = restTemplate;
     }
 

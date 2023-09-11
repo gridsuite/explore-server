@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class ExploreService {
     private ContingencyListService contingencyListService;
     private FilterService filterService;
     private CaseService caseService;
+    private ParametersService parametersService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
 
@@ -47,13 +49,15 @@ public class ExploreService {
         StudyService studyService,
         ContingencyListService contingencyListService,
         FilterService filterService,
-        CaseService caseService) {
+        CaseService caseService,
+        ParametersService parametersService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
         this.caseService = caseService;
+        this.parametersService = parametersService;
     }
 
     public void createStudy(String studyName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -224,5 +228,17 @@ public class ExploreService {
             default:
                 throw new ExploreException(UNKNOWN_ELEMENT_TYPE);
         }
+    }
+
+    public void createParameters(String parameters, ParametersType parametersType, String parametersName, UUID parentDirectoryUuid, String userId) {
+        UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
+        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
+                null, userId, 0, null);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name) {
+        parametersService.updateParameters(id, parameters, parametersType);
+        updateElementName(id, name, userId);
     }
 }

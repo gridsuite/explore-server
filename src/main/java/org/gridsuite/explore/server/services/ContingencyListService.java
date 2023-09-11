@@ -7,7 +7,6 @@
 package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -32,10 +31,8 @@ public class ContingencyListService implements IDirectoryElementsService {
     private final RestTemplate restTemplate;
 
     @Autowired
-    public ContingencyListService(
-            @Value("${gridsuite.services.actions-server.base-uri:http://actions-server/}") String actionsServerBaseUri,
-            RestTemplate restTemplate) {
-        this.actionsServerBaseUri = actionsServerBaseUri;
+    public ContingencyListService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+        this.actionsServerBaseUri = remoteServicesProperties.getServiceUri("actions-server");
         this.restTemplate = restTemplate;
     }
 

@@ -7,7 +7,6 @@
 package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -34,10 +33,8 @@ public class FilterService implements IDirectoryElementsService {
     private final RestTemplate restTemplate;
 
     @Autowired
-    public FilterService(
-            @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
-            RestTemplate restTemplate) {
-        this.filterServerBaseUri = filterServerBaseUri;
+    public FilterService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+        this.filterServerBaseUri = remoteServicesProperties.getServiceUri("filter-server");
         this.restTemplate = restTemplate;
     }
 
