@@ -37,13 +37,4 @@ public class RemoteServicesProperties {
                 .findFirst()
                 .orElse(defaultUri);
     }
-
-    public void setServiceUri(String serviceName, String newUri) {
-        if (!Objects.isNull(services)) {
-            services.stream()
-                .filter(s -> s.getName().equalsIgnoreCase(serviceName))
-                .findFirst()
-                .ifPresent(s -> s.setBaseUri(newUri));
-        }
-    }
 }
