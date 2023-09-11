@@ -28,6 +28,7 @@ public class ParametersService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
+    public static final String QUERY_PARAM_PARAMETERS_TYPE = "type";
 
     private final RestTemplate restTemplate;
 

@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.services.ParametersService.QUERY_PARAM_PARAMETERS_TYPE;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -34,8 +36,6 @@ public class ExploreController {
 
     // /!\ This query parameter is used by the gateway to control access
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
-
-    private static final String QUERY_PARAM_PARAMETERS_TYPE = "type";
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
