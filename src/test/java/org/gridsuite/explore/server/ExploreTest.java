@@ -28,7 +28,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -302,10 +301,6 @@ public class ExploreTest {
     public void testCreateCase() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
-            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
-            bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE)
-                    .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
@@ -320,10 +315,6 @@ public class ExploreTest {
     public void testCaseCreationError() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
-            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
-            bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_FILE_WITH_ERRORS)
-                    .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
@@ -518,10 +509,6 @@ public class ExploreTest {
     public void testCaseCreationErrorWithBadExtension() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_INCORRECT_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, "text/xml", is);
-            MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
-            bodyBuilder.part("caseFile", mockFile.getBytes())
-                    .filename(TEST_INCORRECT_FILE)
-                    .contentType(MediaType.TEXT_XML);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
