@@ -1,12 +1,3 @@
 spring:
   application:
     name: explore-server
-
-  cloud:
-    stream:
-      function:
-        definition: consumeStudyUpdate
-      bindings:
-        publishExploreUpdate-out-0:
-          destination: ${powsybl-ws.rabbitmq.destination.prefix:}explore.update
-      output-bindings: publishExploreUpdate

@@ -27,7 +27,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
@@ -54,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @AutoConfigureMockMvc
 @SpringBootTest
-@ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
+@ContextConfiguration(classes = {ExploreApplication.class})
 public class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
