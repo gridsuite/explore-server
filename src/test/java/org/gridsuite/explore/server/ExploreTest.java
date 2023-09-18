@@ -21,16 +21,15 @@ import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.ResourceUtils;
@@ -40,24 +39,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 @ContextConfiguration(classes = {ExploreApplication.class})
-public class ExploreTest {
+@DisplayName("Explore Server tests")
+class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
-
     private static final String TEST_INCORRECT_FILE = "application-default.yml";
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
@@ -102,8 +104,8 @@ public class ExploreTest {
     private ObjectMapper mapper;
     private MockWebServer server;
 
-    @Before
-    public void setup() throws IOException {
+    @BeforeEach
+    void setup() throws IOException {
         server = new MockWebServer();
 
         // Start the server.
@@ -294,7 +296,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateStudyFromExistingCase() throws Exception {
+    void testCreateStudyFromExistingCase() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .param("duplicateCase", "false")
                 .header("userId", "userId")
@@ -303,7 +305,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateStudyFromExistingCaseError() throws Exception {
+    void testCreateStudyFromExistingCaseError() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                         .header("userId", USER1)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -311,7 +313,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateCase() throws Exception {
+    void testCreateCase() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
 
@@ -325,7 +327,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCaseCreationError() throws Exception {
+    void testCaseCreationError() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
 
@@ -338,7 +340,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateScriptContingencyList() throws Exception {
+    void testCreateScriptContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
                 "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
@@ -348,7 +350,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateScriptContingencyListError() throws Exception {
+    void testCreateScriptContingencyListError() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
                 "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
                 .header("userId", USER1)
@@ -358,7 +360,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateFormContingencyList() throws Exception {
+    void testCreateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
@@ -368,7 +370,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateIdentifierContingencyList() throws Exception {
+    void testCreateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
@@ -378,7 +380,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testNewScriptFromFormContingencyList() throws Exception {
+    void testNewScriptFromFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -386,15 +388,12 @@ public class ExploreTest {
     }
 
     @Test
-    public void testReplaceFormContingencyListWithScript() throws Exception {
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script",
-                CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+    void testReplaceFormContingencyListWithScript() throws Exception {
+        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script", CONTINGENCY_LIST_UUID).header("userId", USER1)).andExpect(status().isOk());
     }
 
     @Test
-    public void testCreateFilter() throws Exception {
+    void testCreateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .header("userId", USER1)
@@ -404,7 +403,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCreateParameters() throws Exception {
+    void testCreateParameters() throws Exception {
         mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                 "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -414,7 +413,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testUpdateParameters() throws Exception {
+    void testUpdateParameters() throws Exception {
         mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                 PARAMETERS_UUID, "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -424,7 +423,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testNewScriptFromFilter() throws Exception {
+    void testNewScriptFromFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -432,7 +431,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testReplaceFilterWithScript() throws Exception {
+    void testReplaceFilterWithScript() throws Exception {
         mockMvc.perform(post("/v1/explore/filters/{id}/replace-with-script",
                 FILTER_UUID)
                 .header("userId", USER1)
@@ -440,19 +439,15 @@ public class ExploreTest {
     }
 
     public void deleteElement(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
-                        elementUUid).header("userId", USER1))
-                .andExpect(status().isOk());
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1)).andExpect(status().isOk());
     }
 
     public void deleteElementInvalidType(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid)
-                        .header("userId", USER1))
-                .andExpect(status().is2xxSuccessful());
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1)).andExpect(status().is2xxSuccessful());
     }
 
     @Test
-    public void testDeleteElement() throws Exception {
+    void testDeleteElement() throws Exception {
         deleteElement(FILTER_UUID);
         deleteElement(PRIVATE_STUDY_UUID);
         deleteElement(CONTINGENCY_LIST_UUID);
@@ -463,7 +458,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testGetElementsMetadata() throws Exception {
+    void testGetElementsMetadata() throws Exception {
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
@@ -494,21 +489,19 @@ public class ExploreTest {
     }
 
     @Test
-    public void testDuplicateCase() throws Exception {
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1))
-                .andExpect(status().isOk());
+    void testDuplicateCase() throws Exception {
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}", CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1)).andExpect(status().isOk());
     }
 
     @Test
-    public void testDuplicateFilter() throws Exception {
+    void testDuplicateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
     }
 
     @Test
-    public void testDuplicateScriptContingencyList() throws Exception {
+    void testDuplicateScriptContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                         .header("userId", USER1))
@@ -516,7 +509,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testDuplicateFormContingencyList() throws Exception {
+    void testDuplicateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -524,7 +517,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testDuplicateIdentifierContingencyList() throws Exception {
+    void testDuplicateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/identifier-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -532,7 +525,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testDuplicateStudy() throws Exception {
+    void testDuplicateStudy() throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
@@ -540,7 +533,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testCaseCreationErrorWithBadExtension() throws Exception {
+    void testCaseCreationErrorWithBadExtension() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_INCORRECT_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, "text/xml", is);
 
@@ -553,7 +546,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testChangeFilter() throws Exception {
+    void testChangeFilter() throws Exception {
         final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"],\"tso\":[\"ceps\"]}}}";
         final String name = "filter name";
         mockMvc.perform(put("/v1/explore/filters/{id}",
@@ -568,7 +561,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testModifyScriptContingencyList() throws Exception {
+    void testModifyScriptContingencyList() throws Exception {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
@@ -584,7 +577,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testModifyFormContingencyList() throws Exception {
+    void testModifyFormContingencyList() throws Exception {
         final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
         final String name = "form contingency name";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
@@ -600,7 +593,7 @@ public class ExploreTest {
     }
 
     @Test
-    public void testModifyIdentifierContingencyList() throws Exception {
+    void testModifyIdentifierContingencyList() throws Exception {
         final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
@@ -617,12 +610,12 @@ public class ExploreTest {
 
     private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
-        assertTrue("elementAttributes updated", requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)));
-        assertTrue("name updated", requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")), "name updated");
     }
 
     @Test
-    public void testGetMetadata() throws Exception {
+    void testGetMetadata() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
                 .header("userId", USER1))
                 .andExpect(status().isOk())
