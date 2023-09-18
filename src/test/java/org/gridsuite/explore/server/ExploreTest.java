@@ -20,9 +20,12 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
+import org.gridsuite.explore.server.utils.RequestWithBody;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,15 +42,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -610,8 +609,12 @@ class ExploreTest {
 
     private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")), "name updated");
+        assertThat(requests).as("elementAttributes updated")
+                .extracting(RequestWithBody::getPath)
+                .anyMatch(path -> path.startsWith(contingencyOrFilterPath));
+        assertThat(requests).as("name updated")
+                .extracting(RequestWithBody::getPath)
+                .anyMatch(path -> path.startsWith("/v1/elements/"));
     }
 
     @Test
@@ -621,10 +624,13 @@ class ExploreTest {
                 .andExpect(status().isOk())
                 .andReturn();
         String res = result.getResponse().getContentAsString();
-        List<ElementAttributes> elementsMetadata = mapper.readValue(res, new TypeReference<>() {
-        });
-        String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata));
-        assertEquals(1, elementsMetadata.size());
-        assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), caseAttributesAsString);
+        assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() { }))
+                .as("elementsMetadata")
+                .hasSize(1)
+                .extracting(mapper::writeValueAsString)
+                .first()
+                .asString()
+                .as("caseAttributesAsString")
+                .isEqualTo(mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata)));
     }
 }
