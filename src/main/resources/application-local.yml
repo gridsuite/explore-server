@@ -12,12 +12,19 @@ powsybl:
       
 gridsuite:
   services:
-    study-server:
+    -
+      name: study-server
       base-uri: http://localhost:5001
-    directory-server:
+    -  
+      name: directory-server
       base-uri: http://localhost:5026
-    actions-server:
+    -
+      name: actions-server
       base-uri: http://localhost:5022
-    filter-server:
+    -  
+      name: filter-server
       base-uri: http://localhost:5027
+    -
+      name: voltage-init-server
+      base-uri: http://localhost:5038
   

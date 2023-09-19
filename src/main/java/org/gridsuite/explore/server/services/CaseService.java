@@ -12,15 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,20 +56,16 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     UUID importCase(MultipartFile multipartFile) {
-        MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         UUID caseUuid;
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        try {
-            if (multipartFile != null) {
-                multipartBodyBuilder.part("file", multipartFile.getBytes())
-                        .filename(Objects.requireNonNull(multipartFile.getOriginalFilename()));
-            }
-        } catch (IOException e) {
-            throw new ExploreException(IMPORT_CASE_FAILED);
+        if (multipartFile != null) {
+            Objects.requireNonNull(multipartFile.getOriginalFilename());
+            body.add("file", multipartFile.getResource());
         }
-        HttpEntity<MultiValueMap<String, HttpEntity<?>>> request = new HttpEntity<>(
-                multipartBodyBuilder.build(), headers);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(
+                body, headers);
         try {
             caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
                     UUID.class);
