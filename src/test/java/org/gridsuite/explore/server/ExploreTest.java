@@ -303,10 +303,10 @@ class ExploreTest {
     @Test
     void testCreateStudyFromExistingCase() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
-                .param("duplicateCase", "false")
-                .header("userId", "userId")
-                .contentType(MediaType.APPLICATION_JSON)
-        ).andExpect(status().isOk());
+                        .param("duplicateCase", "false")
+                        .header("userId", "userId")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -323,10 +323,10 @@ class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                                STUDY1, "description", PARENT_DIRECTORY_UUID)
+                            .file(mockFile)
                             .header("userId", USER1)
-                            .contentType(MediaType.MULTIPART_FORM_DATA)
-                    )
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isOk());
         }
     }
@@ -337,7 +337,8 @@ class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                                STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
+                            .file(mockFile)
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isBadRequest());
@@ -347,108 +348,110 @@ class ExploreTest {
     @Test
     void testCreateScriptContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"Contingency list content\"}")
-        ).andExpect(status().isOk());
+                            "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Contingency list content\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testCreateScriptContingencyListError() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"Contingency list content\"}")
-        ).andExpect(status().isInternalServerError());
+                            "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Contingency list content\"}"))
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
     void testCreateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"Contingency list content\"}")
-        ).andExpect(status().isOk());
+                            FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Contingency list content\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testCreateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"Contingency list content\"}")
-        ).andExpect(status().isOk());
+                            "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Contingency list content\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testNewScriptFromFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                            CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testReplaceFormContingencyListWithScript() throws Exception {
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script", CONTINGENCY_LIST_UUID).header("userId", USER1)).andExpect(status().isOk());
+        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script", CONTINGENCY_LIST_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testCreateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"Filter content\"}")
-        ).andExpect(status().isOk());
+                            "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Filter content\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testCreateParameters() throws Exception {
         mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
-                "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"Parameters content\"}")
-        ).andExpect(status().isOk());
+                            "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"Parameters content\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testUpdateParameters() throws Exception {
         mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
-                PARAMETERS_UUID, "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"content\": \"new Parameters content\"}")
-        ).andExpect(status().isOk());
+                            PARAMETERS_UUID, "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\": \"new Parameters content\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testNewScriptFromFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                            FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testReplaceFilterWithScript() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{id}/replace-with-script",
-                FILTER_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(post("/v1/explore/filters/{id}/replace-with-script", FILTER_UUID).header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
-    public void deleteElement(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1)).andExpect(status().isOk());
+    private void deleteElement(UUID elementUUid) throws Exception {
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
-    public void deleteElementInvalidType(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1)).andExpect(status().is2xxSuccessful());
+    private void deleteElementInvalidType(UUID elementUUid) throws Exception {
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1))
+                .andExpect(status().is2xxSuccessful());
     }
 
     @Test
@@ -465,50 +468,54 @@ class ExploreTest {
     @Test
     void testGetElementsMetadata() throws Exception {
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpectAll(status().isOk());
+                        .header("userId", USER1))
+                .andExpectAll(status().isOk());
 
         ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA);
         ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA_2);
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
-            .header("userId", USER1))
-            .andExpectAll(
-                status().isOk(),
-                content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
-            );
+                        .header("userId", USER1))
+                .andExpectAll(
+                    status().isOk(),
+                    content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
+                );
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER")
-            .header("userId", USER1))
-            .andExpectAll(
-                status().isOk(),
-                content().string(mapper.writeValueAsString(List.of()))
-            );
+                        .header("userId", USER1))
+                .andExpectAll(
+                    status().isOk(),
+                    content().string("[]")
+                );
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER")
-            .header("userId", USER1))
-            .andExpectAll(
-                status().isOk(),
-                content().string(mapper.writeValueAsString(List.of(filter2)))
-            );
+                        .header("userId", USER1))
+                .andExpectAll(
+                    status().isOk(),
+                    content().string(mapper.writeValueAsString(List.of(filter2)))
+                );
     }
 
     @Test
     void testDuplicateCase() throws Exception {
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}", CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID).header("userId", USER1)).andExpect(status().isOk());
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testDuplicateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)).andExpect(status().isOk());
+                            FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testDuplicateScriptContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                            CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
     }
@@ -516,25 +523,25 @@ class ExploreTest {
     @Test
     void testDuplicateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                            CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testDuplicateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/identifier-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                            CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
     void testDuplicateStudy() throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                            PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -543,7 +550,8 @@ class ExploreTest {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, "text/xml", is);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                                STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
+                            .file(mockFile)
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isUnprocessableEntity());
@@ -554,13 +562,12 @@ class ExploreTest {
     void testChangeFilter() throws Exception {
         final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"],\"tso\":[\"ceps\"]}}}";
         final String name = "filter name";
-        mockMvc.perform(put("/v1/explore/filters/{id}",
-                FILTER_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(filter)
-                .param("name", name)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/filters/{id}", FILTER_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .content(filter)
+                        .param("name", name)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests("/v1/filters/");
     }
@@ -569,14 +576,13 @@ class ExploreTest {
     void testModifyScriptContingencyList() throws Exception {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(scriptContingency)
-                .param("name", name)
-                .param("contingencyListType", ContingencyListType.SCRIPT.name())
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .content(scriptContingency)
+                        .param("name", name)
+                        .param("contingencyListType", ContingencyListType.SCRIPT.name())
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests("/v1/script-contingency-lists");
     }
@@ -585,14 +591,13 @@ class ExploreTest {
     void testModifyFormContingencyList() throws Exception {
         final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
         final String name = "form contingency name";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(formContingency)
-                .param("name", name)
-                .param("contingencyListType", ContingencyListType.FORM.name())
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .content(formContingency)
+                        .param("name", name)
+                        .param("contingencyListType", ContingencyListType.FORM.name())
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests("/v1/form-contingency-lists/");
     }
@@ -601,14 +606,13 @@ class ExploreTest {
     void testModifyIdentifierContingencyList() throws Exception {
         final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(identifierContingencyList)
-                .param("name", name)
-                .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .content(identifierContingencyList)
+                        .param("name", name)
+                        .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
     }
@@ -626,9 +630,9 @@ class ExploreTest {
     @Test
     void testGetMetadata() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
-                .header("userId", USER1))
-                .andExpect(status().isOk())
-                .andReturn();
+                                            .header("userId", USER1))
+                                    .andExpect(status().isOk())
+                                    .andReturn();
         String res = result.getResponse().getContentAsString();
         assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() { }))
                 .as("elementsMetadata")
