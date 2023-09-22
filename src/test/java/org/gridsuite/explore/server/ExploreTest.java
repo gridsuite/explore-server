@@ -147,7 +147,7 @@ public class ExploreTest {
                 })
                 .filter(Objects::nonNull).toList();
         //TODO replace with SoftAssertions when AssertJ updated
-        if(errors.size() == 1) {
+        if (errors.size() == 1) {
             throw errors.get(0);
         } else if (errors.size() > 1) {
             final AssertionError error = new AssertionError("Some unexpected HTTP call happened");
@@ -157,133 +157,149 @@ public class ExploreTest {
         }
     }
 
-    @Test
-    void testCreateStudyFromExistingCase() throws Exception {
-        //TODO POST /studies/cases/${CASE_UUID}?studyUuid=7b504820-25b6-4ec1-a074-75899b7f058b&duplicateCase=false
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        studyService.expectPostStudies();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+    @DisplayName("test creation elements")
+    @Nested
+    class ExploreTestCreate {
+        @DisplayName("test creation studies")
+        @Nested
+        class ExploreTestCreateStudy {
+            @Test
+            void testCreateStudyFromExistingCase() throws Exception {
+                //TODO POST /studies/cases/${CASE_UUID}?studyUuid=7b504820-25b6-4ec1-a074-75899b7f058b&duplicateCase=false
+                //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+                studyService.expectPostStudies();
+                directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+                expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
-                        .param("duplicateCase", "false")
-                        .header("userId", "userId")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                                .param("duplicateCase", "false")
+                                .header("userId", "userId")
+                                .contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk());
+            }
 
-    @Test
-    void testCreateStudyFromExistingCaseError() throws Exception {
-        //TODO POST /studies/cases/${NON_EXISTING_CASE_UUID}?studyUuid=ee9753e3-24f3-4ba9-9ea3-58fcf14e224a&duplicateCase=false
-        studyService.expectPostStudiesCasesNonExistingCaseUuid();
-        expectNoMoreRestCall();
+            @Test
+            void testCreateStudyFromExistingCaseError() throws Exception {
+                //TODO POST /studies/cases/${NON_EXISTING_CASE_UUID}?studyUuid=ee9753e3-24f3-4ba9-9ea3-58fcf14e224a&duplicateCase=false
+                studyService.expectPostStudiesCasesNonExistingCaseUuid();
+                expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void testCreateCase() throws Exception {
-        //TODO POST /cases
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        caseService.expectPostCasesNoIncorrectOrErrorFile();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
-
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
-
-            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                                STUDY1, "description", PARENT_DIRECTORY_UUID)
-                            .file(mockFile)
-                            .header("userId", USER1)
-                            .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isOk());
+                mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                                .header("userId", USER1)
+                                .contentType(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isNotFound());
+            }
         }
-    }
 
-    @Test
-    void testCaseCreationError() throws Exception {
-        //TODO POST /cases
-        caseService.expectPostCasesTestFileWithErrors();
-        expectNoMoreRestCall();
+        @DisplayName("test creation cases")
+        @Nested
+        class ExploreTestCreateCase {
+            @Test
+            void testCreateCase() throws Exception {
+                //TODO POST /cases
+                //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+                caseService.expectPostCasesNoIncorrectOrErrorFile();
+                directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+                expectNoMoreRestCall();
 
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
+                try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
+                    MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
 
-            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                                STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
-                            .file(mockFile)
-                            .header("userId", USER1)
-                            .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isBadRequest());
+                    mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                        STUDY1, "description", PARENT_DIRECTORY_UUID)
+                                    .file(mockFile)
+                                    .header("userId", USER1)
+                                    .contentType(MediaType.MULTIPART_FORM_DATA))
+                            .andExpect(status().isOk());
+                }
+            }
+
+            @Test
+            void testCaseCreationError() throws Exception {
+                //TODO POST /cases
+                caseService.expectPostCasesTestFileWithErrors();
+                expectNoMoreRestCall();
+
+                try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
+                    MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, "text/xml", is);
+
+                    mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                        STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
+                                    .file(mockFile)
+                                    .header("userId", USER1)
+                                    .contentType(MediaType.MULTIPART_FORM_DATA))
+                            .andExpect(status().isBadRequest());
+                }
+            }
         }
-    }
 
-    @Test
-    void testCreateScriptContingencyList() throws Exception {
-        //TODO POST /script-contingency-lists?id=5d9c5d73-c033-4739-a3df-150d89da773b
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        contingencyListService.expectPostScriptContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+        @DisplayName("test creation contingency list")
+        @Nested
+        class ExploreTestCreateScriptContingencyList {
+            @Test
+            void testCreateScriptContingencyList() throws Exception {
+                //TODO POST /script-contingency-lists?id=5d9c5d73-c033-4739-a3df-150d89da773b
+                //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+                contingencyListService.expectPostScriptContingencyLists();
+                directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+                expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                            "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\": \"Contingency list content\"}"))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
+                                    "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
+                                .header("userId", USER1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"content\": \"Contingency list content\"}"))
+                        .andExpect(status().isOk());
+            }
 
-    @Test
-    void testCreateScriptContingencyListError() throws Exception {
-        //TODO POST /script-contingency-lists?id=b6b6ffd8-907c-48b8-81e6-f14879745baa
-        //TODO POST /directories/${PARENT_DIRECTORY_WITH_ERROR_UUID}/elements
-        contingencyListService.expectPostScriptContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryWithErrorUuidElements();
-        expectNoMoreRestCall();
+            @Test
+            void testCreateScriptContingencyListError() throws Exception {
+                //TODO POST /script-contingency-lists?id=b6b6ffd8-907c-48b8-81e6-f14879745baa
+                //TODO POST /directories/${PARENT_DIRECTORY_WITH_ERROR_UUID}/elements
+                contingencyListService.expectPostScriptContingencyLists();
+                directoryService.expectPostDirectoriesParentDirectoryWithErrorUuidElements();
+                expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                            "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\": \"Contingency list content\"}"))
-                .andExpect(status().isInternalServerError());
-    }
+                mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
+                                    "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
+                                .header("userId", USER1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"content\": \"Contingency list content\"}"))
+                        .andExpect(status().isInternalServerError());
+            }
 
-    @Test
-    void testCreateFormContingencyList() throws Exception {
-        //TODO POST /form-contingency-lists?id=c3197b47-d3a9-4180-b8e7-0dd027adcf1b
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        contingencyListService.expectPostFormContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+            @Test
+            void testCreateFormContingencyList() throws Exception {
+                //TODO POST /form-contingency-lists?id=c3197b47-d3a9-4180-b8e7-0dd027adcf1b
+                //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+                contingencyListService.expectPostFormContingencyLists();
+                directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+                expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                            FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\": \"Contingency list content\"}"))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                                    FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
+                                .header("userId", USER1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"content\": \"Contingency list content\"}"))
+                        .andExpect(status().isOk());
+            }
 
-    @Test
-    void testCreateIdentifierContingencyList() throws Exception {
-        //TODO POST /identifier-contingency-lists?id=9e5fe771-1587-4d80-a6cb-e541da4febc5
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        contingencyListService.expectPostIdentifierContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+            @Test
+            void testCreateIdentifierContingencyList() throws Exception {
+                //TODO POST /identifier-contingency-lists?id=9e5fe771-1587-4d80-a6cb-e541da4febc5
+                //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+                contingencyListService.expectPostIdentifierContingencyLists();
+                directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+                expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                            "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\": \"Contingency list content\"}"))
-                .andExpect(status().isOk());
+                mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                                    "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
+                                .header("userId", USER1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"content\": \"Contingency list content\"}"))
+                        .andExpect(status().isOk());
+            }
+        }
     }
 
     @Test
@@ -393,221 +409,265 @@ public class ExploreTest {
                 .andExpect(status().isOk());
     }
 
-    private void deleteElement(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1))
-                .andExpect(status().isOk());
+    @DisplayName("tests delete element")
+    @Nested
+    class ExploreTestDeleteElements {
+        private void deleteElement(UUID elementUUid) throws Exception {
+            mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        void testDeleteFilterElement() throws Exception {
+            //TODO GET /elements/${FILTER_UUID}
+            //TODO DELETE /filters/${FILTER_UUID}
+            //TODO DELETE /elements/${FILTER_UUID}
+            directoryService.expectGetElementsFilterUuid();
+            filterService.expectDeleteFiltersFilterUuid();
+            directoryService.expectDeleteElementsFilterUuid();
+            expectNoMoreRestCall();
+
+            deleteElement(FILTER_UUID);
+        }
+
+        @Test
+        void testDeleteElementPrivateStudy() throws Exception {
+            //TODO GET /elements/${PRIVATE_STUDY_UUID}
+            //TODO DELETE /studies/${PRIVATE_STUDY_UUID}
+            //TODO DELETE /elements/${PRIVATE_STUDY_UUID}
+            directoryService.expectGetElementsPrivateStudyUuid();
+            studyService.expectDeleteStudiesPrivateStudyUuid();
+            directoryService.expectDeleteElementsPrivateStudyUuid();
+            expectNoMoreRestCall();
+
+            deleteElement(PRIVATE_STUDY_UUID);
+        }
+
+        @Test
+        void testDeleteContingencyElement() throws Exception {
+            //TODO GET /elements/${CONTINGENCY_LIST_UUID}
+            //TODO DELETE /contingency-lists/${CONTINGENCY_LIST_UUID}
+            //TODO DELETE /elements/${CONTINGENCY_LIST_UUID}
+            directoryService.expectGetElementsContingencyListUuid();
+            contingencyListService.expectDeleteContingencyListsContingencyListUuid();
+            directoryService.expectDeleteElementsContingencyListUuid();
+            expectNoMoreRestCall();
+
+            deleteElement(CONTINGENCY_LIST_UUID);
+        }
+
+        @Test
+        void testDeleteInvalidElement() throws Exception {
+            //TODO GET /elements/${INVALID_ELEMENT_UUID}
+            //TODO DELETE /elements/${INVALID_ELEMENT_UUID}
+            directoryService.expectGetElementsInvalidElementUuid();
+            directoryService.expectDeleteElementsInvalidElementUuid();
+            expectNoMoreRestCall();
+
+            mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", INVALID_ELEMENT_UUID).header("userId", USER1))
+                    .andExpect(status().is2xxSuccessful());
+        }
+
+        @Test
+        void testDeleteParentDirectoryElement() throws Exception {
+            //TODO GET /elements/${PARENT_DIRECTORY_UUID}
+            //TODO GET /directories/${PARENT_DIRECTORY_UUID}/elements
+            //TODO DELETE /elements/${PARENT_DIRECTORY_UUID}
+            directoryService.expectGetElementsParentDirectoryUuid();
+            directoryService.expectGetDirectoriesParentDirectoryUuidElements();
+            directoryService.expectDeleteElementsParentDirectoryUuid();
+            expectNoMoreRestCall();
+
+            deleteElement(PARENT_DIRECTORY_UUID);
+        }
+
+        @Test
+        void testDeleteCaseElement() throws Exception {
+            //TODO GET /elements/${CASE_UUID}
+            //TODO DELETE /cases/${CASE_UUID}
+            //TODO DELETE /elements/${CASE_UUID}
+            directoryService.expectGetElementsCaseUuid();
+            caseService.expectDeleteCasesCaseUuid();
+            directoryService.expectDeleteElementsCaseUuid();
+            expectNoMoreRestCall();
+
+            deleteElement(CASE_UUID);
+        }
+
+        @Test
+        void testDeleteParametersElement() throws Exception {
+            //TODO GET /elements/${PARAMETERS_UUID}
+            //TODO GET /elements/${PARAMETERS_UUID}
+            //TODO DELETE http://voltage_init_parameters/v1/parameters/${PARAMETERS_UUID}
+            //TODO DELETE /elements/${PARAMETERS_UUID}
+            directoryService.expectGetElementsParametersUuid();
+            directoryService.expectGetElementsParametersUuid(); // why?
+            parametersService.expectDeleteVoltageInitParametersParametersUuid();
+            directoryService.expectDeleteElementsParametersUuid();
+            expectNoMoreRestCall();
+
+            deleteElement(PARAMETERS_UUID);
+        }
     }
 
-    private void deleteElementInvalidType(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid).header("userId", USER1))
-                .andExpect(status().is2xxSuccessful());
-    }
+    @DisplayName("tests get elements metadata")
+    @Nested
+    class ExploreTestGetElementsMetadata {
+        @Test
+        void testGetElementsMetadataWithoutFilter() throws Exception {
+            //TODO GET /elements?ids=${FILTER_UUID},${PRIVATE_STUDY_UUID},${CONTINGENCY_LIST_UUID}
+            //TODO GET /studies/metadata?ids=${PRIVATE_STUDY_UUID}
+            //TODO GET /filters/metadata?ids=${FILTER_UUID}
+            //TODO GET /contingency-lists/metadata?ids=${CONTINGENCY_LIST_UUID}
+            directoryService.expectGetElementsIdsFilterUuidPrivateStudyUuidContingencyListUuid();
+            studyService.expectGetStudiesMetadataIdsPrivateStudyUuid();
+            filterService.expectGetFiltersMetadataIdsFilterUuid();
+            contingencyListService.expectGetContingencyListsMetadataIdsContingencyListUuid();
+            expectNoMoreRestCall();
 
-    @Test
-    void testDeleteElement() throws Exception {
-        //TODO GET /elements/${FILTER_UUID}
-        //TODO DELETE /filters/${FILTER_UUID}
-        //TODO DELETE /elements/${FILTER_UUID}
-        //TODO GET /elements/${PRIVATE_STUDY_UUID}
-        //TODO DELETE /studies/${PRIVATE_STUDY_UUID}
-        //TODO DELETE /elements/${PRIVATE_STUDY_UUID}
-        //TODO GET /elements/${CONTINGENCY_LIST_UUID}
-        //TODO DELETE /contingency-lists/${CONTINGENCY_LIST_UUID}
-        //TODO DELETE /elements/${CONTINGENCY_LIST_UUID}
-        //TODO GET /elements/${INVALID_ELEMENT_UUID}
-        //TODO DELETE /elements/${INVALID_ELEMENT_UUID}
-        //TODO GET /elements/${PARENT_DIRECTORY_UUID}
-        //TODO GET /directories/${PARENT_DIRECTORY_UUID}/elements
-        //TODO DELETE /elements/${PARENT_DIRECTORY_UUID}
-        //TODO GET /elements/${CASE_UUID}
-        //TODO DELETE /cases/${CASE_UUID}
-        //TODO DELETE /elements/${CASE_UUID}
-        //TODO GET /elements/${PARAMETERS_UUID}
-        //TODO GET /elements/${PARAMETERS_UUID}
-        //TODO DELETE http://voltage_init_parameters/v1/parameters/${PARAMETERS_UUID}
-        //TODO DELETE /elements/${PARAMETERS_UUID}
-        directoryService.expectGetElementsFilterUuid();
-        filterService.expectDeleteFiltersFilterUuid();
-        directoryService.expectDeleteElementsFilterUuid();
-        directoryService.expectGetElementsPrivateStudyUuid();
-        studyService.expectDeleteStudiesPrivateStudyUuid();
-        directoryService.expectDeleteElementsPrivateStudyUuid();
-        directoryService.expectGetElementsContingencyListUuid();
-        contingencyListService.expectDeleteContingencyListsContingencyListUuid();
-        directoryService.expectDeleteElementsContingencyListUuid();
-        directoryService.expectGetElementsInvalidElementUuid();
-        directoryService.expectDeleteElementsInvalidElementUuid();
-        directoryService.expectGetElementsParentDirectoryUuid();
-        directoryService.expectGetDirectoriesParentDirectoryUuidElements();
-        directoryService.expectDeleteElementsParentDirectoryUuid();
-        directoryService.expectGetElementsCaseUuid();
-        caseService.expectDeleteCasesCaseUuid();
-        directoryService.expectDeleteElementsCaseUuid();
-        directoryService.expectGetElementsParametersUuid();
-        directoryService.expectGetElementsParametersUuid(); // why?
-        parametersService.expectDeleteVoltageInitParametersParametersUuid();
-        directoryService.expectDeleteElementsParametersUuid();
-        expectNoMoreRestCall();
+            mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
+                            .header("userId", USER1))
+                    .andExpectAll(status().isOk());
+        }
 
-        deleteElement(FILTER_UUID);
-        deleteElement(PRIVATE_STUDY_UUID);
-        deleteElement(CONTINGENCY_LIST_UUID);
-        deleteElementInvalidType(INVALID_ELEMENT_UUID);
-        deleteElement(PARENT_DIRECTORY_UUID);
-        deleteElement(CASE_UUID);
-        deleteElement(PARAMETERS_UUID);
-    }
+        private static final ElementAttributes FILTER1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA);
+        private static final ElementAttributes FILTER2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA_2);
 
-    @Test
-    void testGetElementsMetadataWithoutFilter() throws Exception {
-        //TODO GET /elements?ids=${FILTER_UUID},${PRIVATE_STUDY_UUID},${CONTINGENCY_LIST_UUID}
-        //TODO GET /studies/metadata?ids=${PRIVATE_STUDY_UUID}
-        //TODO GET /filters/metadata?ids=${FILTER_UUID}
-        //TODO GET /contingency-lists/metadata?ids=${CONTINGENCY_LIST_UUID}
-        directoryService.expectGetElementsIdsFilterUuidPrivateStudyUuidContingencyListUuid();
-        studyService.expectGetStudiesMetadataIdsPrivateStudyUuid();
-        filterService.expectGetFiltersMetadataIdsFilterUuid();
-        contingencyListService.expectGetContingencyListsMetadataIdsContingencyListUuid();
-        expectNoMoreRestCall();
+        @Test
+        void testGetElementsMetadataWithFilterNoEquipment() throws Exception {
+            //TODO GET /elements?ids=${FILTER_UUID},${FILTER_UUID_2}&elementTypes=FILTER
+            //TODO GET /filters/metadata?ids=${FILTER_UUID},${FILTER_UUID_2}
+            directoryService.expectGetElementsIdsFilterUuidFilterUuid2ElementtypesFilter();
+            filterService.expectGetFiltersMetadataIdsFilterUuidFilterUuid2();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
-                        .header("userId", USER1))
-                .andExpectAll(status().isOk());
-    }
-
-    private static final ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA);
-    private static final ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, SPECIFIC_METADATA_2);
-
-    @Test
-    void testGetElementsMetadataWithFilterNoEquipment() throws Exception {
-        //TODO GET /elements?ids=${FILTER_UUID},${FILTER_UUID_2}&elementTypes=FILTER
-        //TODO GET /filters/metadata?ids=${FILTER_UUID},${FILTER_UUID_2}
-        directoryService.expectGetElementsIdsFilterUuidFilterUuid2ElementtypesFilter();
-        filterService.expectGetFiltersMetadataIdsFilterUuidFilterUuid2();
-        expectNoMoreRestCall();
-
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
-                        .header("userId", USER1))
-                .andExpectAll(
-                    status().isOk(),
-                    content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
+            mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
+                            .header("userId", USER1))
+                    .andExpectAll(
+                            status().isOk(),
+                            content().string(mapper.writeValueAsString(List.of(FILTER1, FILTER2)))
                 );
-    }
+        }
 
-    @Test
-    void testGetElementsMetadataWithFilterGeneratorEquipment() throws Exception {
-        //TODO GET /elements?ids=${FILTER_UUID},${FILTER_UUID_2}&elementTypes=FILTER
-        //TODO GET /filters/metadata?ids=${FILTER_UUID},${FILTER_UUID_2}
-        directoryService.expectGetElementsIdsFilterUuidFilterUuid2ElementtypesFilter();
-        filterService.expectGetFiltersMetadataIdsFilterUuidFilterUuid2();
-        expectNoMoreRestCall();
+        @Test
+        void testGetElementsMetadataWithFilterGeneratorEquipment() throws Exception {
+            //TODO GET /elements?ids=${FILTER_UUID},${FILTER_UUID_2}&elementTypes=FILTER
+            //TODO GET /filters/metadata?ids=${FILTER_UUID},${FILTER_UUID_2}
+            directoryService.expectGetElementsIdsFilterUuidFilterUuid2ElementtypesFilter();
+            filterService.expectGetFiltersMetadataIdsFilterUuidFilterUuid2();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER")
-                        .header("userId", USER1))
-                .andExpectAll(
-                    status().isOk(),
-                    content().string("[]")
+            mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER")
+                            .header("userId", USER1))
+                    .andExpectAll(
+                        status().isOk(),
+                        content().string("[]")
                 );
-    }
+        }
 
-    @Test
-    void testGetElementsMetadataWithFilterLineEquipment() throws Exception {
-        //TODO GET /elements?ids=${FILTER_UUID},${FILTER_UUID_2}&elementTypes=FILTER
-        //TODO GET /filters/metadata?ids=${FILTER_UUID},${FILTER_UUID_2}
-        directoryService.expectGetElementsIdsFilterUuidFilterUuid2ElementtypesFilter();
-        filterService.expectGetFiltersMetadataIdsFilterUuidFilterUuid2();
-        expectNoMoreRestCall();
+        @Test
+        void testGetElementsMetadataWithFilterLineEquipment() throws Exception {
+            //TODO GET /elements?ids=${FILTER_UUID},${FILTER_UUID_2}&elementTypes=FILTER
+            //TODO GET /filters/metadata?ids=${FILTER_UUID},${FILTER_UUID_2}
+            directoryService.expectGetElementsIdsFilterUuidFilterUuid2ElementtypesFilter();
+            filterService.expectGetFiltersMetadataIdsFilterUuidFilterUuid2();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER")
-                        .header("userId", USER1))
-                .andExpectAll(
-                    status().isOk(),
-                    content().string(mapper.writeValueAsString(List.of(filter2)))
+            mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER")
+                            .header("userId", USER1))
+                    .andExpectAll(
+                            status().isOk(),
+                            content().string(mapper.writeValueAsString(List.of(FILTER2)))
                 );
+        }
     }
 
-    @Test
-    void testDuplicateCase() throws Exception {
-        //TODO POST /cases?duplicateFrom=${CASE_UUID}
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        caseService.expectPostCasesNoIncorrectOrErrorFile();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+    @DisplayName("tests duplicate elements")
+    @Nested
+    class ExploreTestDuplicate {
+        @Test
+        void testDuplicateCase() throws Exception {
+            //TODO POST /cases?duplicateFrom=${CASE_UUID}
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            caseService.expectPostCasesNoIncorrectOrErrorFile();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-    }
+            mockMvc.perform(post("/v1/explore/cases?duplicateFrom={parentCaseUuid}&caseName={caseName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                CASE_UUID, CASE1, "description", PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
 
-    @Test
-    void testDuplicateFilter() throws Exception {
-        //TODO POST /filters?duplicateFrom=${FILTER_UUID}&id=c49165e4-c6fa-4fd9-92ca-ff02c60e0927
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        filterService.expectPostFilters();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+        @Test
+        void testDuplicateFilter() throws Exception {
+            //TODO POST /filters?duplicateFrom=${FILTER_UUID}&id=c49165e4-c6fa-4fd9-92ca-ff02c60e0927
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            filterService.expectPostFilters();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-    }
+            mockMvc.perform(post("/v1/explore/filters?duplicateFrom={parentFilterId}&name={filterName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                FILTER_UUID, FILTER1, "description", PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
 
-    @Test
-    void testDuplicateScriptContingencyList() throws Exception {
-        //TODO POST /script-contingency-lists?duplicateFrom=${CONTINGENCY_LIST_UUID}&id=36a4a418-0e90-4493-80d1-128368a961e0
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        contingencyListService.expectPostScriptContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+        @Test
+        void testDuplicateScriptContingencyList() throws Exception {
+            //TODO POST /script-contingency-lists?duplicateFrom=${CONTINGENCY_LIST_UUID}&id=36a4a418-0e90-4493-80d1-128368a961e0
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            contingencyListService.expectPostScriptContingencyLists();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-    }
+            mockMvc.perform(post("/v1/explore/script-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
 
-    @Test
-    void testDuplicateFormContingencyList() throws Exception {
-        //TODO POST /form-contingency-lists?duplicateFrom=${CONTINGENCY_LIST_UUID}&id=b85d5ca6-08b7-480c-92df-d80678bccabf
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        contingencyListService.expectPostFormContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+        @Test
+        void testDuplicateFormContingencyList() throws Exception {
+            //TODO POST /form-contingency-lists?duplicateFrom=${CONTINGENCY_LIST_UUID}&id=b85d5ca6-08b7-480c-92df-d80678bccabf
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            contingencyListService.expectPostFormContingencyLists();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-    }
+            mockMvc.perform(post("/v1/explore/form-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
 
-    @Test
-    void testDuplicateIdentifierContingencyList() throws Exception {
-        //TODO POST /identifier-contingency-lists?duplicateFrom=${CONTINGENCY_LIST_UUID}&id=6b8c828a-cd29-4685-b6c3-06e871c86e5d
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        contingencyListService.expectPostIdentifierContingencyLists();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+        @Test
+        void testDuplicateIdentifierContingencyList() throws Exception {
+            //TODO POST /identifier-contingency-lists?duplicateFrom=${CONTINGENCY_LIST_UUID}&id=6b8c828a-cd29-4685-b6c3-06e871c86e5d
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            contingencyListService.expectPostIdentifierContingencyLists();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/identifier-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-    }
+            mockMvc.perform(post("/v1/explore/identifier-contingency-lists?duplicateFrom={parentListId}&listName={listName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                CONTINGENCY_LIST_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
 
-    @Test
-    void testDuplicateStudy() throws Exception {
-        //TODO POST /studies?duplicateFrom=${PUBLIC_STUDY_UUID}&studyUuid=5ecab065-afd8-4dcf-908c-d20d206c3e32
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        studyService.expectPostStudies();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
+        @Test
+        void testDuplicateStudy() throws Exception {
+            //TODO POST /studies?duplicateFrom=${PUBLIC_STUDY_UUID}&studyUuid=5ecab065-afd8-4dcf-908c-d20d206c3e32
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            studyService.expectPostStudies();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
 
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                            PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
+            mockMvc.perform(post("/v1/explore/studies?duplicateFrom={parentStudyUuid}&studyName={studyName}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
@@ -648,67 +708,71 @@ public class ExploreTest {
         verifyFilterOrContingencyUpdateRequests("/v1/filters/");
     }
 
-    @Test
-    void testModifyScriptContingencyList() throws Exception {
-        //TODO PUT /script-contingency-lists/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
-        //TODO PUT /elements/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
-        contingencyListService.expectPutScriptContingencyLists();
-        directoryService.expectPutElements();
-        expectNoMoreRestCall();
+    @DisplayName("tests modify contingency list")
+    @Nested
+    class ExploreTestModifyContingencyList {
+        @Test
+        void testModifyScriptContingencyList() throws Exception {
+            //TODO PUT /script-contingency-lists/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
+            //TODO PUT /elements/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
+            contingencyListService.expectPutScriptContingencyLists();
+            directoryService.expectPutElements();
+            expectNoMoreRestCall();
 
-        final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
-        final String name = "script name";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                        .contentType(APPLICATION_JSON)
-                        .content(scriptContingency)
-                        .param("name", name)
-                        .param("contingencyListType", ContingencyListType.SCRIPT.name())
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
+            final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
+            final String name = "script name";
+            mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                            .contentType(APPLICATION_JSON)
+                            .content(scriptContingency)
+                            .param("name", name)
+                            .param("contingencyListType", ContingencyListType.SCRIPT.name())
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests("/v1/script-contingency-lists");
-    }
+            verifyFilterOrContingencyUpdateRequests("/v1/script-contingency-lists");
+        }
 
-    @Test
-    void testModifyFormContingencyList() throws Exception {
-        //TODO PUT /form-contingency-lists/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
-        //TODO PUT /elements/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
-        contingencyListService.expectPutFormContingencyLists();
-        directoryService.expectPutElements();
-        expectNoMoreRestCall();
+        @Test
+        void testModifyFormContingencyList() throws Exception {
+            //TODO PUT /form-contingency-lists/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
+            //TODO PUT /elements/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
+            contingencyListService.expectPutFormContingencyLists();
+            directoryService.expectPutElements();
+            expectNoMoreRestCall();
 
-        final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
-        final String name = "form contingency name";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                        .contentType(APPLICATION_JSON)
-                        .content(formContingency)
-                        .param("name", name)
-                        .param("contingencyListType", ContingencyListType.FORM.name())
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
+            final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
+            final String name = "form contingency name";
+            mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                            .contentType(APPLICATION_JSON)
+                            .content(formContingency)
+                            .param("name", name)
+                            .param("contingencyListType", ContingencyListType.FORM.name())
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests("/v1/form-contingency-lists/");
-    }
+            verifyFilterOrContingencyUpdateRequests("/v1/form-contingency-lists/");
+        }
 
-    @Test
-    void testModifyIdentifierContingencyList() throws Exception {
-        //TODO PUT /identifier-contingency-lists/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
-        //TODO PUT /elements/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
-        contingencyListService.expectPutIdentifierContingencyLists();
-        directoryService.expectPutElements();
-        expectNoMoreRestCall();
+        @Test
+        void testModifyIdentifierContingencyList() throws Exception {
+            //TODO PUT /identifier-contingency-lists/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
+            //TODO PUT /elements/${SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID}
+            contingencyListService.expectPutIdentifierContingencyLists();
+            directoryService.expectPutElements();
+            expectNoMoreRestCall();
 
-        final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
-        final String name = "identifier contingencyList name";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                        .contentType(APPLICATION_JSON)
-                        .content(identifierContingencyList)
-                        .param("name", name)
-                        .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
+            final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
+            final String name = "identifier contingencyList name";
+            mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                            .contentType(APPLICATION_JSON)
+                            .content(identifierContingencyList)
+                            .param("name", name)
+                            .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
+                            .header("userId", USER1))
+                    .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
+            verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
+        }
     }
 
     private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) throws UncheckedInterruptedException, AssertionError {
