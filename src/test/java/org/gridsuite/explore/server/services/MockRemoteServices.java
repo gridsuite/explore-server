@@ -141,7 +141,7 @@ public final class MockRemoteServices {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo(Matchers.startsWith("/cases")))
                     .andExpect(MockRestRequestMatchers.content().string(Matchers.containsString("filename=\"" + TEST_INCORRECT_FILE + "\"")))
-                    .andRespond(withStatus(HttpStatus.CONFLICT).body("file with bad extension")); //TODO no content-type?
+                    .andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY).body("file with bad extension")); //TODO no content-type?
         }
 
         /**
