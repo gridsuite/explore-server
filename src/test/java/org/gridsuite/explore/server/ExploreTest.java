@@ -626,7 +626,7 @@ class ExploreTest {
         String res = result.getResponse().getContentAsString();
         assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() { }))
                 .as("elementsMetadata")
-                .hasSize(1)
+                .hasSize(1) //TODO replace only when assertj updated
                 .extracting(mapper::writeValueAsString)
                 .first()
                 .asString()
