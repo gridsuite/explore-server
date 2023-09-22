@@ -727,8 +727,6 @@ public class ExploreTest {
                         .param("name", name)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
-
-        verifyFilterOrContingencyUpdateRequests("/v1/filters/");
     }
 
     @DisplayName("tests modify contingency list")
@@ -751,8 +749,6 @@ public class ExploreTest {
                             .param("contingencyListType", ContingencyListType.SCRIPT.name())
                             .header("userId", USER1))
                     .andExpect(status().isOk());
-
-            verifyFilterOrContingencyUpdateRequests("/v1/script-contingency-lists");
         }
 
         @Test
@@ -772,8 +768,6 @@ public class ExploreTest {
                             .param("contingencyListType", ContingencyListType.FORM.name())
                             .header("userId", USER1))
                     .andExpect(status().isOk());
-
-            verifyFilterOrContingencyUpdateRequests("/v1/form-contingency-lists/");
         }
 
         @Test
@@ -793,28 +787,6 @@ public class ExploreTest {
                             .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
                             .header("userId", USER1))
                     .andExpect(status().isOk());
-
-            verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
         }
-    }
-
-    private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) throws UncheckedInterruptedException, AssertionError {
-        /*TODO var requests = IntStream.range(0, 2).mapToObj(i -> {
-            try {
-                var request = server.takeRequest(100L, TimeUnit.MILLISECONDS);
-                if (request == null) {
-                    throw new AssertionError("Expected 2 requests, got only " + i);
-                }
-                return new RequestWithBody(request.getPath(), request.getBody().readUtf8());
-            } catch (InterruptedException e) {
-                throw new UncheckedInterruptedException(e);
-            }
-        }).collect(Collectors.toSet());
-        assertThat(requests).as("elementAttributes updated")
-                .extracting(RequestWithBody::getPath)
-                .anyMatch(path -> path.startsWith(contingencyOrFilterPath));
-        assertThat(requests).as("name updated")
-                .extracting(RequestWithBody::getPath)
-                .anyMatch(path -> path.startsWith("/v1/elements/"));*/
     }
 }
