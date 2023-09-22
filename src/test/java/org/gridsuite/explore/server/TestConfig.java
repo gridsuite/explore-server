@@ -34,7 +34,7 @@ public class TestConfig {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     private static <T> RestTemplate getRestTemplate(final Class<T> clazz, final T service) throws IllegalAccessException {
-        Field rtField = Arrays.stream(clazz.getDeclaredFields()).filter(f -> RestTemplate.class.equals(f.getType())).findAny().get();
+        final Field rtField = Arrays.stream(clazz.getDeclaredFields()).filter(f -> RestTemplate.class.equals(f.getType())).findAny().get();
         rtField.setAccessible(true);
         return (RestTemplate) rtField.get(service);
     }
@@ -67,7 +67,7 @@ public class TestConfig {
     @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
     @Bean
     public Map<ParametersType, MockRestServiceServer> mockRestSrvParametersService(MockServerRestTemplateCustomizer customizer, ParametersService parametersService) throws IllegalAccessException {
-        Field rtField = Arrays.stream(ParametersService.class.getDeclaredFields()).filter(f -> Map.class.equals(f.getType())).findAny().get();
+        final Field rtField = Arrays.stream(ParametersService.class.getDeclaredFields()).filter(f -> Map.class.equals(f.getType())).findAny().get();
         rtField.setAccessible(true);
         return ((Map<ParametersType, RestTemplate>) rtField.get(parametersService)).entrySet().stream().collect(Collectors.toMap(
                 Map.Entry::getKey,

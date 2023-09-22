@@ -71,7 +71,6 @@ public final class MockRemoteServices {
             "format", "XIIDM"
     );
 
-    @SuppressWarnings({"unused"})
     @AllArgsConstructor
     private abstract static class AbstractMockRestService {
         protected final MockRestServiceServer mockServer;
@@ -100,7 +99,7 @@ public final class MockRemoteServices {
      * @see CaseService
      * @see MockRestServiceServer
      */
-    @SuppressWarnings({"deprecation", "unused"})
+    @SuppressWarnings({"deprecation"})
     public static class MockCaseService extends AbstractMockRestService {
         public MockCaseService(MockRestServiceServer mockServer, ObjectMapper mapper) {
             super(mockServer, mapper);
@@ -203,7 +202,7 @@ public final class MockRemoteServices {
      * @see ContingencyListService
      * @see MockRestServiceServer
      */
-    @SuppressWarnings({"deprecation", "unused"})
+    @SuppressWarnings({"deprecation"})
     public static class MockContingencyListService extends AbstractMockRestService {
         public MockContingencyListService(MockRestServiceServer mockServer, ObjectMapper mapper) {
             super(mockServer, mapper);
@@ -367,7 +366,7 @@ public final class MockRemoteServices {
      * @see DirectoryService
      * @see MockRestServiceServer
      */
-    @SuppressWarnings({"deprecation", "unused"})
+    @SuppressWarnings({"deprecation"})
     public static class MockDirectoryService extends AbstractMockRestService {
         public MockDirectoryService(MockRestServiceServer mockServer, ObjectMapper mapper) {
             super(mockServer, mapper);
@@ -772,7 +771,7 @@ public final class MockRemoteServices {
      * @see FilterService
      * @see MockRestServiceServer
      */
-    @SuppressWarnings({"deprecation", "unused"})
+    @SuppressWarnings({"deprecation"})
     public static class MockFilterService extends AbstractMockRestService {
         public MockFilterService(MockRestServiceServer mockServer, ObjectMapper mapper) {
             super(mockServer, mapper);
@@ -908,7 +907,7 @@ public final class MockRemoteServices {
      * @see StudyService
      * @see MockRestServiceServer
      */
-    @SuppressWarnings({"deprecation", "unused"})
+    @SuppressWarnings({"deprecation"})
     public static class MockStudyService extends AbstractMockRestService {
         public MockStudyService(MockRestServiceServer mockServer, ObjectMapper mapper) {
             super(mockServer, mapper);
@@ -997,7 +996,6 @@ public final class MockRemoteServices {
         }
     }
 
-    @SuppressWarnings("unused")
     public static class MockParametersService extends AbstractMockRestService {
         private final Map<ParametersType, MockRestServiceServer> mockServers;
 
