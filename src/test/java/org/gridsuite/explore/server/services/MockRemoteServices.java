@@ -186,6 +186,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /cases/$CASE_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -193,6 +194,7 @@ public final class MockRemoteServices {
         public void expectDeleteCasesCaseUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/cases/" + CASE_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
     }
@@ -230,6 +232,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /script-contingency-lists?id=$PARENT_DIRECTORY_WITH_ERROR_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -237,6 +240,7 @@ public final class MockRemoteServices {
         public void expectPostScriptContingencyListsIdParentDirectoryWithErrorUuid() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo("/script-contingency-lists?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withServerError());
         }
 
@@ -305,6 +309,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code PUT}</dd>
          *         <dd>uri = {@code /script-contingency-lists/*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -312,6 +317,7 @@ public final class MockRemoteServices {
         public void expectPutScriptContingencyLists() {
             mockServer.expect(method(HttpMethod.PUT))
                     .andExpect(requestTo(Matchers.startsWith("/script-contingency-lists/")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -320,6 +326,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code PUT}</dd>
          *         <dd>uri = {@code /form-contingency-lists/*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -327,6 +334,7 @@ public final class MockRemoteServices {
         public void expectPutFormContingencyLists() {
             mockServer.expect(method(HttpMethod.PUT))
                     .andExpect(requestTo(Matchers.startsWith("/form-contingency-lists/")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -335,6 +343,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code PUT}</dd>
          *         <dd>uri = {@code /identifier-contingency-lists/*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -342,6 +351,7 @@ public final class MockRemoteServices {
         public void expectPutIdentifierContingencyLists() {
             mockServer.expect(method(HttpMethod.PUT))
                     .andExpect(requestTo(Matchers.startsWith("/identifier-contingency-lists/")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -350,6 +360,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /contingency-lists/$CONTINGENCY_LIST_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -357,6 +368,7 @@ public final class MockRemoteServices {
         public void expectDeleteContingencyListsContingencyListUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/contingency-lists/" + CONTINGENCY_LIST_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
     }
@@ -382,6 +394,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /directories/$PARENT_DIRECTORY_UUID/elements}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          *         <dd>header: content-type = {@code application/json;charset=UTF-8}</dd>
@@ -391,6 +404,7 @@ public final class MockRemoteServices {
         public void expectPostDirectoriesParentDirectoryUuidElements() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo("/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess().contentType(APPLICATION_JSON_UTF8).body(privateStudyAttributesAsString));
         }
 
@@ -399,6 +413,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /directories/$PARENT_DIRECTORY_WITH_ERROR_UUID/elements}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 500 Internal Server Error}</dd>
          * </dl>
@@ -406,6 +421,7 @@ public final class MockRemoteServices {
         public void expectPostDirectoriesParentDirectoryWithErrorUuidElements() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo("/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements"))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withServerError());
         }
 
@@ -430,6 +446,7 @@ public final class MockRemoteServices {
          * <dl>
          *     <dt>HTTP request</dt>
          *         <dd>uri = {@code /elements/$CONTINGENCY_LIST_UUID/notification?type=UPDATE_DIRECTORY}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          *         <dd>header: content-type = {@code application/json;charset=UTF-8}</dd>
@@ -439,6 +456,7 @@ public final class MockRemoteServices {
         public void expectHttpElementsContingencyListUuidNotificationTypeUpdateDirectory() {
             //TODO missing method
             mockServer.expect(requestTo("/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY"))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess().contentType(APPLICATION_JSON_UTF8).body(formContingencyListAttributesAsString));
         }
 
@@ -480,6 +498,7 @@ public final class MockRemoteServices {
          * <dl>
          *     <dt>HTTP request</dt>
          *         <dd>uri = {@code /elements/$FILTER_UUID/notification?type=UPDATE_DIRECTORY}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          *         <dd>header: content-type = {@code application/json;charset=UTF-8}</dd>
@@ -489,6 +508,7 @@ public final class MockRemoteServices {
         public void expectHttpElementsFilterUuidNotificationTypeUpdateDirectory() {
             //TODO missing method
             mockServer.expect(requestTo("/elements/" + FILTER_UUID + "/notification?type=UPDATE_DIRECTORY"))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess().contentType(APPLICATION_JSON_UTF8).body(filterAttributesAsString));
         }
 
@@ -531,6 +551,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code GET}</dd>
          *         <dd>uri = {@code /elements/$PUBLIC_STUDY_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          *         <dd>header: content-type = {@code application/json;charset=UTF-8}</dd>
@@ -540,6 +561,7 @@ public final class MockRemoteServices {
         public void expectGetElementsPublicStudyUuid() {
             mockServer.expect(method(HttpMethod.GET))
                     .andExpect(requestTo("/elements/" + PUBLIC_STUDY_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess().contentType(APPLICATION_JSON_UTF8).body(jsonify(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null))));
         }
 
@@ -599,6 +621,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code PUT}</dd>
          *         <dd>uri = {@code /elements/}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          *         <dd>header: content-type = {@code application/json;charset=UTF-8}</dd>
@@ -607,6 +630,7 @@ public final class MockRemoteServices {
         public void expectPutElements() {
             mockServer.expect(method(HttpMethod.PUT))
                     .andExpect(requestTo(Matchers.startsWith("/elements/")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess().contentType(APPLICATION_JSON_UTF8)); //TODO missing body content
         }
 
@@ -632,6 +656,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELGETETE}</dd>
          *         <dd>uri = {@code /directories/$PARENT_DIRECTORY_UUID/elements}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          *         <dd>header: content-type = {@code application/json;charset=UTF-8}</dd>
@@ -640,6 +665,7 @@ public final class MockRemoteServices {
         public void expectGetDirectoriesParentDirectoryUuidElements() {
             mockServer.expect(method(HttpMethod.GET))
                     .andExpect(requestTo("/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess().contentType(APPLICATION_JSON_UTF8)); //TODO missing body content
         }
 
@@ -665,6 +691,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$INVALID_ELEMENT_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -672,6 +699,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsInvalidElementUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + INVALID_ELEMENT_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -680,6 +708,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$PRIVATE_STUDY_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -687,6 +716,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsPrivateStudyUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + PRIVATE_STUDY_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -695,6 +725,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$FILTER_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -702,6 +733,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsFilterUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + FILTER_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -710,6 +742,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$CONTINGENCY_LIST_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -717,6 +750,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsContingencyListUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + CONTINGENCY_LIST_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -725,6 +759,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$PARENT_DIRECTORY_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -732,6 +767,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsParentDirectoryUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + PARENT_DIRECTORY_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -740,6 +776,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$CASE_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -747,6 +784,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsCaseUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + CASE_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -755,6 +793,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /elements/$PARAMETERS_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -762,6 +801,7 @@ public final class MockRemoteServices {
         public void expectDeleteElementsParametersUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/elements/" + PARAMETERS_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
     }
@@ -814,6 +854,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /filters*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -821,6 +862,7 @@ public final class MockRemoteServices {
         public void expectPostFilters() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo(Matchers.startsWith("/filters")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -844,6 +886,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code PUT}</dd>
          *         <dd>uri = {@code /filters/*\/replace-with-script}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -851,6 +894,7 @@ public final class MockRemoteServices {
         public void expectPutFiltersReplaceWithScript() {
             mockServer.expect(method(HttpMethod.PUT))
                     .andExpect(requestTo(Matchers.matchesPattern("^/filters/.+/replace-with-script")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -859,6 +903,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code PUT}</dd>
          *         <dd>uri = {@code /filters/*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -866,6 +911,7 @@ public final class MockRemoteServices {
         public void expectPutFilters() {
             mockServer.expect(method(HttpMethod.PUT))
                     .andExpect(requestTo(Matchers.startsWith("/filters/")))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
 
@@ -891,6 +937,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /filters/$FILTER_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -898,6 +945,7 @@ public final class MockRemoteServices {
         public void expectDeleteFiltersFilterUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/filters/" + FILTER_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
     }
@@ -918,6 +966,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /studies/cases/$NON_EXISTING_CASE_UUID(/*)?}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 404 Not Found}</dd>
          * </dl>
@@ -925,6 +974,7 @@ public final class MockRemoteServices {
         public void expectPostStudiesCasesNonExistingCaseUuid() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo(Matchers.startsWith("/studies/cases/" + NON_EXISTING_CASE_UUID)))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withStatus(HttpStatus.NOT_FOUND));
         }
 
@@ -934,6 +984,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /studies*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *         <dd>body = {@code contains(filename=$TEST_FILE_WITH_ERRORS)}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 409 Conflict}</dd>
@@ -942,6 +993,7 @@ public final class MockRemoteServices {
         public void expectPostStudiesTestFileWithErrors() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo(Matchers.startsWith("/studies")))
+                    .andExpect(header("userId", USER1))
                     .andExpect(MockRestRequestMatchers.content().string(Matchers.containsString("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")))
                     .andRespond(withStatus(HttpStatus.CONFLICT));
         }
@@ -951,6 +1003,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code POST}</dd>
          *         <dd>uri = {@code /studies*}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *         <dd>body = {@code not_contains(filename=$TEST_FILE_WITH_ERRORS)}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
@@ -959,6 +1012,7 @@ public final class MockRemoteServices {
         public void expectPostStudies() {
             mockServer.expect(method(HttpMethod.POST))
                     .andExpect(requestTo(Matchers.startsWith("/studies")))
+                    .andExpect(header("userId", USER1))
                     .andExpect(MockRestRequestMatchers.content().string(Matchers.not(Matchers.containsString("filename=\"" + TEST_FILE_WITH_ERRORS + "\""))))
                     .andRespond(withSuccess());
         }
@@ -985,6 +1039,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code /studies/$PRIVATE_STUDY_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -992,6 +1047,7 @@ public final class MockRemoteServices {
         public void expectDeleteStudiesPrivateStudyUuid() {
             mockServer.expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("/studies/" + PRIVATE_STUDY_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
     }
@@ -1029,6 +1085,7 @@ public final class MockRemoteServices {
          *     <dt>HTTP request</dt>
          *         <dd>method = {@code DELETE}</dd>
          *         <dd>uri = {@code http://voltage_init_parameters/parameters/$PARAMETERS_UUID}</dd>
+         *         <dd>header: userId = {@code $USER1}</dd>
          *     <dt>HTTP response</dt>
          *         <dd>status = {@code 200 OK}</dd>
          * </dl>
@@ -1037,6 +1094,7 @@ public final class MockRemoteServices {
             mockServers.get(ParametersType.VOLTAGE_INIT_PARAMETERS)
                     .expect(method(HttpMethod.DELETE))
                     .andExpect(requestTo("http://voltage_init_parameters/v1/parameters/" + PARAMETERS_UUID))
+                    .andExpect(header("userId", USER1))
                     .andRespond(withSuccess());
         }
     }

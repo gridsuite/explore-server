@@ -171,7 +171,7 @@ public class ExploreTest {
 
                 mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                                 .param("duplicateCase", "false")
-                                .header("userId", "userId")
+                                .header("userId", USER1)
                                 .contentType(MediaType.APPLICATION_JSON))
                         .andExpect(status().isOk());
             }
