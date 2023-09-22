@@ -43,7 +43,7 @@ public class CaseService implements IDirectoryElementsService {
         this.restTemplate = restTemplate;
     }
 
-    private static ExploreException wrapRemoteError(String response, HttpStatus statusCode) {
+    private static ExploreException wrapRemoteError(String response, HttpStatusCode statusCode) {
         if (!"".equals(response)) {
             throw new ExploreException(ExploreException.Type.REMOTE_ERROR, response);
         } else {
