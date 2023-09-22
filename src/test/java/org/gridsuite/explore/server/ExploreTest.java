@@ -231,6 +231,24 @@ public class ExploreTest {
                             .andExpect(status().isBadRequest());
                 }
             }
+
+            @Test
+            void testCaseCreationErrorWithBadExtension() throws Exception {
+                //TODO POST /cases
+                caseService.expectPostCasesTestIncorrectFile();
+                expectNoMoreRestCall();
+
+                try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_INCORRECT_FILE))) {
+                    MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, "text/xml", is);
+
+                    mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                                        STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
+                                    .file(mockFile)
+                                    .header("userId", USER1)
+                                    .contentType(MediaType.MULTIPART_FORM_DATA))
+                            .andExpect(status().isUnprocessableEntity());
+                }
+            }
         }
 
         @DisplayName("test creation contingency list")
@@ -300,6 +318,38 @@ public class ExploreTest {
                         .andExpect(status().isOk());
             }
         }
+
+        @Test
+        void testCreateFilter() throws Exception {
+            //TODO POST /filters?id=b4a0ce8a-a1be-4e96-9e00-0a269811f9d0
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            filterService.expectPostFiltersIdAny();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
+
+            mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+                                "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
+                            .header("userId", USER1)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"content\": \"Filter content\"}"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        void testCreateParameters() throws Exception {
+            //TODO POST http://voltage_init_parameters/v1/parameters
+            //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
+            parametersService.expectHttpVoltageInitAny();
+            directoryService.expectPostDirectoriesParentDirectoryUuidElements();
+            expectNoMoreRestCall();
+
+            mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+                                "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+                            .header("userId", USER1)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"content\": \"Parameters content\"}"))
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
@@ -330,38 +380,6 @@ public class ExploreTest {
 
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script", CONTINGENCY_LIST_UUID)
                         .header("userId", USER1))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void testCreateFilter() throws Exception {
-        //TODO POST /filters?id=b4a0ce8a-a1be-4e96-9e00-0a269811f9d0
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        filterService.expectPostFiltersIdAny();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
-
-        mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                            "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\": \"Filter content\"}"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void testCreateParameters() throws Exception {
-        //TODO POST http://voltage_init_parameters/v1/parameters
-        //TODO POST /directories/${PARENT_DIRECTORY_UUID}/elements
-        parametersService.expectHttpVoltageInitAny();
-        directoryService.expectPostDirectoriesParentDirectoryUuidElements();
-        expectNoMoreRestCall();
-
-        mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
-                            "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\": \"Parameters content\"}"))
                 .andExpect(status().isOk());
     }
 
@@ -580,6 +598,29 @@ public class ExploreTest {
                             content().string(mapper.writeValueAsString(List.of(FILTER2)))
                 );
         }
+
+        @Test
+        void testGetCaseMetadata() throws Exception {
+            //TODO GET /elements?ids=${CASE_UUID}
+            //TODO GET /cases/metadata?ids=${CASE_UUID}
+            directoryService.expectGetElementsIdsCaseUuid();
+            caseService.expectGetCasesMetadataIdsCaseUuid();
+            expectNoMoreRestCall();
+
+            MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
+                                                .header("userId", USER1))
+                                        .andExpect(status().isOk())
+                                        .andReturn();
+            String res = result.getResponse().getContentAsString();
+            assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() { }))
+                    .as("elementsMetadata")
+                    .hasSize(1) //TODO replace only when assertj updated
+                    .extracting(mapper::writeValueAsString)
+                    .first()
+                    .asString()
+                    .as("caseAttributesAsString")
+                    .isEqualTo(mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, CASE_SPECIFIC_METADATA)));
+        }
     }
 
     @DisplayName("tests duplicate elements")
@@ -667,24 +708,6 @@ public class ExploreTest {
                                 PUBLIC_STUDY_UUID, STUDY1, "description", PARENT_DIRECTORY_UUID)
                             .header("userId", USER1))
                     .andExpect(status().isOk());
-        }
-    }
-
-    @Test
-    void testCaseCreationErrorWithBadExtension() throws Exception {
-        //TODO POST /cases
-        caseService.expectPostCasesTestIncorrectFile();
-        expectNoMoreRestCall();
-
-        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_INCORRECT_FILE))) {
-            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, "text/xml", is);
-
-            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
-                                STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID)
-                            .file(mockFile)
-                            .header("userId", USER1)
-                            .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isUnprocessableEntity());
         }
     }
 
@@ -793,28 +816,5 @@ public class ExploreTest {
         assertThat(requests).as("name updated")
                 .extracting(RequestWithBody::getPath)
                 .anyMatch(path -> path.startsWith("/v1/elements/"));*/
-    }
-
-    @Test
-    void testGetMetadata() throws Exception {
-        //TODO GET /elements?ids=${CASE_UUID}
-        //TODO GET /cases/metadata?ids=${CASE_UUID}
-        directoryService.expectGetElementsIdsCaseUuid();
-        caseService.expectGetCasesMetadataIdsCaseUuid();
-        expectNoMoreRestCall();
-
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
-                                            .header("userId", USER1))
-                                    .andExpect(status().isOk())
-                                    .andReturn();
-        String res = result.getResponse().getContentAsString();
-        assertThat(mapper.readValue(res, new TypeReference<List<ElementAttributes>>() { }))
-                .as("elementsMetadata")
-                .hasSize(1) //TODO replace only when assertj updated
-                .extracting(mapper::writeValueAsString)
-                .first()
-                .asString()
-                .as("caseAttributesAsString")
-                .isEqualTo(mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, CASE_SPECIFIC_METADATA)));
     }
 }
