@@ -10,6 +10,7 @@ package org.gridsuite.explore.server.services;
 import org.gridsuite.explore.server.ExploreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -26,21 +27,16 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreException.Type.INCORRECT_CASE_FILE;
 
 @Service
 public class CaseService implements IDirectoryElementsService {
-    private static final String CASE_SERVER_API_VERSION = "v1";
-
-    private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
-    private String caseServerBaseUri;
 
     @Autowired
     public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String studyServerBaseUri,
-            RestTemplate restTemplate) {
-        this.caseServerBaseUri = studyServerBaseUri;
-        this.restTemplate = restTemplate;
+                       RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplate = restTemplateBuilder.rootUri(studyServerBaseUri + "/v1").build();
     }
 
     private static ExploreException wrapRemoteError(String response, HttpStatus statusCode) {
@@ -51,11 +47,7 @@ public class CaseService implements IDirectoryElementsService {
         }
     }
 
-    public void setBaseUri(String actionsServerBaseUri) {
-        this.caseServerBaseUri = actionsServerBaseUri;
-    }
-
-    UUID importCase(MultipartFile multipartFile) {
+    public UUID importCase(MultipartFile multipartFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         UUID caseUuid;
         HttpHeaders headers = new HttpHeaders();
@@ -64,11 +56,9 @@ public class CaseService implements IDirectoryElementsService {
             Objects.requireNonNull(multipartFile.getOriginalFilename());
             body.add("file", multipartFile.getResource());
         }
-        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(
-                body, headers);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
         try {
-            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
-                    UUID.class);
+            caseUuid = restTemplate.postForObject("/cases", request, UUID.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
                 throw new ExploreException(INCORRECT_CASE_FILE, e.getMessage());
@@ -78,35 +68,33 @@ public class CaseService implements IDirectoryElementsService {
         return caseUuid;
     }
 
-    UUID duplicateCase(UUID sourceCaseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
+    public UUID duplicateCase(UUID sourceCaseUuid) {
+        String path = UriComponentsBuilder.fromPath("/cases")
                 .queryParam("duplicateFrom", sourceCaseUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
+        return restTemplate.exchange(path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
                 .getBody();
     }
 
     @Override
     public void delete(UUID id, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{id}")
+        String path = UriComponentsBuilder.fromPath("/cases/{id}")
                 .buildAndExpand(id)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
     @Override
     public List<Map<String, Object>> getMetadata(List<UUID> casesUuids) {
         var ids = casesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        String path = UriComponentsBuilder
-                .fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/metadata" + "?ids=" + ids)
-                .buildAndExpand()
+        String path = UriComponentsBuilder.fromPath("/cases/metadata")
+                .queryParam("ids", ids)
                 .toUriString();
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+        return restTemplate.exchange(path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() { }).getBody();
     }
 }

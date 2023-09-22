@@ -10,6 +10,8 @@ import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,9 +23,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
 import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
@@ -31,27 +34,15 @@ import static org.gridsuite.explore.server.services.ExploreService.*;
  */
 @Service
 public class DirectoryService implements IDirectoryElementsService {
-
-    private static final String DIRECTORY_SERVER_API_VERSION = "v1";
-
-    private static final String DELIMITER = "/";
-
-    private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
-            + "directories";
-
-    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
-            + "elements";
-
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
-    private String directoryServerBaseUri;
 
     @Autowired
     public DirectoryService(
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService,
-            CaseService caseService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
-        this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
-        this.restTemplate = restTemplate;
+            CaseService caseService, @Lazy ParametersService parametersService, RestTemplateBuilder restTemplateBuilder,
+            RemoteServicesProperties remoteServicesProperties) {
+        this.restTemplate = restTemplateBuilder.rootUri(remoteServicesProperties.getServiceUri("directory-server") + "/v1").build();
         this.genericServices = Map.of(
                 FILTER, filterService,
                 CONTINGENCY_LIST, contingencyListService,
@@ -61,89 +52,65 @@ public class DirectoryService implements IDirectoryElementsService {
                 ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService);
     }
 
-    public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
-        this.directoryServerBaseUri = directoryServerBaseUri;
-    }
-
     public ElementAttributes createElement(ElementAttributes elementAttributes, UUID directoryUuid, String userId) {
-        String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
+        String path = UriComponentsBuilder.fromPath("/directories/{directoryUuid}/elements")
                 .buildAndExpand(directoryUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
-        return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class)
-                .getBody();
+        return restTemplate.exchange(path, HttpMethod.POST, httpEntity, ElementAttributes.class).getBody();
     }
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
-        String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+        String path = UriComponentsBuilder.fromPath("/elements/{elementUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
     public ElementAttributes getElementInfos(UUID elementUuid) {
-        String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
+        String path = UriComponentsBuilder.fromPath("/elements/{directoryUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class)
-                .getBody();
+        return restTemplate.exchange(path, HttpMethod.GET, null, ElementAttributes.class).getBody();
     }
 
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
-
-        if (!CollectionUtils.isEmpty(elementTypes)) {
-            path += "&elementTypes=" + elementTypes.stream().collect(Collectors.joining(","));
-        }
-
-        List<ElementAttributes> elementAttributesList;
-        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<ElementAttributes>>() {
-                }).getBody();
-        if (elementAttributesList != null) {
-            return elementAttributesList;
-        } else {
-            return Collections.emptyList();
-        }
+        String path = UriComponentsBuilder.fromPath("/elements")
+                .queryParam("ids", ids)
+                .queryParamIfPresent("elementTypes", Optional.ofNullable(elementTypes)
+                        .filter(Predicate.not(List::isEmpty)).map(l -> String.join(",", l)))
+                .toUriString();
+        List<ElementAttributes> elementAttributesList = restTemplate.exchange(path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<ElementAttributes>>() { }).getBody();
+        return Objects.requireNonNullElseGet(elementAttributesList, Collections::emptyList);
     }
 
     public void notifyDirectoryChanged(UUID elementUuid, String userId) {
-        String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
-                .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
+        String path = UriComponentsBuilder.fromPath("/elements/{elementUuid}/notification")
+                .queryParam("type", NotificationType.UPDATE_DIRECTORY.name())
+                .buildAndExpand(elementUuid)
                 .toUriString();
-
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid, String userId) {
-        String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
+        String path = UriComponentsBuilder.fromPath("/directories/{directoryUuid}/elements")
                 .buildAndExpand(directoryUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         List<ElementAttributes> elementAttributesList;
-        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET,
-                new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
-                }).getBody();
-
-        if (elementAttributesList != null) {
-            return elementAttributesList;
-        } else {
-            return Collections.emptyList();
-        }
+        elementAttributesList = restTemplate.exchange(path, HttpMethod.GET,
+                new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() { }).getBody();
+        return Objects.requireNonNullElseGet(elementAttributesList, Collections::emptyList);
     }
 
     public void deleteElement(UUID id, String userId) {
@@ -156,8 +123,9 @@ public class DirectoryService implements IDirectoryElementsService {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
         if (iDirectoryElementsService == null) {
             throw new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type " + type);
+        } else {
+            return iDirectoryElementsService;
         }
-        return iDirectoryElementsService;
     }
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
@@ -170,28 +138,24 @@ public class DirectoryService implements IDirectoryElementsService {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
             listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
-
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
                     .filter(element -> "DIRECTORY".equals(element.getType())
                             || equipmentTypes.contains(element.getSpecificMetadata().get("equipmentType")))
                     .collect(Collectors.toList());
         }
-
         return listOfElements;
     }
 
     public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, String userId) {
-        String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+        String path = UriComponentsBuilder.fromPath("/elements/{elementUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.set(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
-        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+        restTemplate.exchange(path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
     // TODO get id/type recursively then do batch delete
