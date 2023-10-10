@@ -28,6 +28,7 @@ public class ParametersService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
+    private static final String HEADER_DUPLICATE_FROM = "duplicateFrom";
 
     private final RestTemplate restTemplate;
 
@@ -80,6 +81,20 @@ public class ParametersService implements IDirectoryElementsService {
         HttpEntity<String> httpEntity = new HttpEntity<>(parameters, headers);
 
         restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.PUT, httpEntity, UUID.class);
+    }
+
+    public UUID createParameters(UUID sourceParametersUuid, ParametersType parametersType) {
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
+        Objects.requireNonNull(sourceParametersUuid);
+
+        var path = UriComponentsBuilder
+            .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters")
+            .queryParam(HEADER_DUPLICATE_FROM, sourceParametersUuid)
+            .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
+        return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
 
     @Override

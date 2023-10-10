@@ -294,4 +294,16 @@ public class ExploreController {
         exploreService.updateParameters(id, parameters, parametersType, userId, name);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping(value = "/explore/parameters")
+    @Operation(summary = "Duplicate parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
+    public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parentParameterId,
+                                                 @RequestParam("name") String parametersName,
+                                                 @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
+                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                 @RequestHeader("userId") String userId) {
+        exploreService.duplicateParameters(parentParameterId, parametersType, parametersName, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
+    }
 }
