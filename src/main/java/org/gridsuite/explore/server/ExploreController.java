@@ -297,7 +297,7 @@ public class ExploreController {
 
     @PostMapping(value = "/explore/parameters")
     @Operation(summary = "Duplicate parameters")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
     public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parentParameterId,
                                                  @RequestParam("name") String parametersName,
                                                  @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
