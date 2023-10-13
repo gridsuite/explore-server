@@ -540,6 +540,14 @@ public class ExploreTest {
     }
 
     @Test
+    public void testDuplicateParameters() throws Exception {
+        mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parentParametersId}&name={parametersName}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+                PARAMETERS_UUID, STUDY1, ParametersType.VOLTAGE_INIT_PARAMETERS, PARENT_DIRECTORY_UUID)
+                .header("userId", USER1))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     public void testCaseCreationErrorWithBadExtension() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_INCORRECT_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, "text/xml", is);
