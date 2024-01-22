@@ -252,8 +252,8 @@ public class ExploreController {
     @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been successfully modified")})
-    public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody String filter, @RequestHeader("userId") String userId, @RequestParam("name") String name) {
-        exploreService.updateFilter(id, filter, userId, name);
+    public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody ElementInfos filter, @RequestHeader("userId") String userId) {
+        exploreService.updateFilter(id, filter, userId);
         return ResponseEntity.ok().build();
     }
 
@@ -262,12 +262,11 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The contingency list have been modified successfully")})
     public ResponseEntity<Void> updateContingencyList(
             @PathVariable UUID id,
-            @RequestParam(name = "name") String name,
             @RequestParam(name = "contingencyListType") ContingencyListType contingencyListType,
-            @RequestBody String content,
+            @RequestBody ElementInfos contingencyList,
             @RequestHeader("userId") String userId) {
 
-        exploreService.updateContingencyList(id, content, userId, name, contingencyListType);
+        exploreService.updateContingencyList(id, contingencyList, userId, contingencyListType);
         return ResponseEntity.ok().build();
     }
 

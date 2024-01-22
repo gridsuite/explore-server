@@ -198,14 +198,16 @@ public class ExploreService {
         }
     }
 
-    public void updateFilter(UUID id, String filter, String userId, String name) {
-        filterService.updateFilter(id, filter, userId);
-        updateElementName(id, name, userId);
+    public void updateFilter(UUID id, ElementInfos filter, String userId) {
+        filterService.updateFilter(id, filter.getElementContent(), userId);
+        directoryService.updateElement(id, filter.getElementAttributes(), userId);
+        //updateElement(id, name, userId);
     }
 
-    public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {
-        contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
-        updateElementName(id, name, userId);
+    public void updateContingencyList(UUID id, ElementInfos contingencyList, String userId, ContingencyListType contingencyListType) {
+        contingencyListService.updateContingencyList(id, contingencyList.getElementContent(), userId, getProperPath(contingencyListType));
+        directoryService.updateElement(id, contingencyList.getElementAttributes(), userId);
+        //updateElement(id, name, userId);
     }
 
     private void updateElementName(UUID id, String name, String userId) {
