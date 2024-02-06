@@ -307,7 +307,7 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/network-modifications")
+    @PostMapping(value = "/explore/modifications")
     @Operation(summary = "create some modification elements from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory")})
     public ResponseEntity<Void> createNetworkModifications(@RequestBody List<ElementAttributes> bodyContent,
