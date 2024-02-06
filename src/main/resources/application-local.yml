@@ -21,10 +21,12 @@ gridsuite:
     -
       name: actions-server
       base-uri: http://localhost:5022
-    -  
+    -
+      name: network-modification-server
+      base-uri: http://172.17.0.1:5007
+    -
       name: filter-server
       base-uri: http://localhost:5027
     -
       name: voltage-init-server
       base-uri: http://localhost:5038
-  

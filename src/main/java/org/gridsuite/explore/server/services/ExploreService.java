@@ -15,6 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,11 +37,13 @@ public class ExploreService {
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
+    static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
 
     private DirectoryService directoryService;
     private StudyService studyService;
     private ContingencyListService contingencyListService;
+    private NetworkModificationService networkModificationService;
     private FilterService filterService;
     private CaseService caseService;
     private ParametersService parametersService;
@@ -49,6 +55,7 @@ public class ExploreService {
         StudyService studyService,
         ContingencyListService contingencyListService,
         FilterService filterService,
+        NetworkModificationService networkModificationService,
         CaseService caseService,
         ParametersService parametersService) {
 
@@ -56,6 +63,7 @@ public class ExploreService {
         this.studyService = studyService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
+        this.networkModificationService = networkModificationService;
         this.caseService = caseService;
         this.parametersService = parametersService;
     }
@@ -247,5 +255,27 @@ public class ExploreService {
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
             null, userId, 0L, null);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, UUID parentDirectoryUuid) {
+        // This is important to sort on uuid, to make sure the input modification list will match the new/cloned modification list
+        List<ElementAttributes> sortedInputList = modificationAttributesList.stream()
+                .sorted(Comparator.comparing(ElementAttributes::getElementUuid))
+                .toList();
+        List<UUID> existingSortedModificationsUuids = sortedInputList.stream().map(ElementAttributes::getElementUuid).toList();
+
+        // create all duplicated modifications
+        List<UUID> newSortedModificationsUuids = networkModificationService.createModifications(existingSortedModificationsUuids);
+
+        // Iterate through both collection simultaneously (they have the same order)
+        Iterator<UUID> newUuidIterator = newSortedModificationsUuids.iterator();
+        Iterator<ElementAttributes> modificationAttributeIterator = sortedInputList.iterator();
+        while (newUuidIterator.hasNext() && modificationAttributeIterator.hasNext()) {
+            final UUID newid = newUuidIterator.next();
+            final ElementAttributes attributes = modificationAttributeIterator.next();
+            ElementAttributes elementAttributes = new ElementAttributes(newid, attributes.getElementName(), MODIFICATION,
+                    null, userId, 0L, attributes.getDescription());
+            directoryService.createNewElement(elementAttributes, parentDirectoryUuid, userId, true);
+        }
     }
 }

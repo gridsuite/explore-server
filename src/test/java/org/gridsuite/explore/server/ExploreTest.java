@@ -168,10 +168,10 @@ public class ExploreTest {
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements\\?allowNewName=false") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements\\?allowNewName=false") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(500);
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
