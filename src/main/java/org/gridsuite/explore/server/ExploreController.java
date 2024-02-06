@@ -56,7 +56,8 @@ public class ExploreController {
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader("userId") String userId,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
-        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, caseFormat, importParams, duplicateCase);
+        ExploreService.CaseInfo caseInfo = new ExploreService.CaseInfo(caseUuid, caseFormat);
+        exploreService.createStudy(studyName, caseInfo, description, userId, parentDirectoryUuid, importParams, duplicateCase);
         return ResponseEntity.ok().build();
     }
 
