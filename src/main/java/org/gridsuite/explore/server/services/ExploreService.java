@@ -6,8 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.*;
@@ -62,16 +60,13 @@ public class ExploreService {
         this.parametersService = parametersService;
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class CaseInfo {
-        private UUID caseUuid;
-        private String caseFormat;
+    public record CaseInfo(UUID caseUuid, String caseFormat) {
+
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
-        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.getCaseUuid(), caseInfo.getCaseFormat(), importParams, duplicateCase);
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
