@@ -59,7 +59,8 @@ public class DirectoryService implements IDirectoryElementsService {
                 DIRECTORY, this,
                 CASE, caseService,
                 ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService,
-                ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService);
+                ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService,
+                ParametersType.LOADFLOW_PARAMETERS.name(), parametersService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
