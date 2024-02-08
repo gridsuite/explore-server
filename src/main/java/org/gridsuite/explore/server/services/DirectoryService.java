@@ -67,10 +67,10 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public ElementAttributes createElement(ElementAttributes elementAttributes, UUID directoryUuid, String userId) {
-        return createNewElement(elementAttributes, directoryUuid, userId, false);
+        return createElementWithNewName(elementAttributes, directoryUuid, userId, false);
     }
 
-    public ElementAttributes createNewElement(ElementAttributes elementAttributes, UUID directoryUuid, String userId, boolean allowNewName) {
+    public ElementAttributes createElementWithNewName(ElementAttributes elementAttributes, UUID directoryUuid, String userId, boolean allowNewName) {
         String path = UriComponentsBuilder
                 .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements?allowNewName={allowNewName}")
                 .buildAndExpand(directoryUuid, allowNewName)
@@ -96,7 +96,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
         return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class)

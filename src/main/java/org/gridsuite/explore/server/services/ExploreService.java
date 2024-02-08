@@ -275,7 +275,7 @@ public class ExploreService {
             final ElementAttributes attributes = modificationAttributeIterator.next();
             ElementAttributes elementAttributes = new ElementAttributes(newid, attributes.getElementName(), MODIFICATION,
                     null, userId, 0L, attributes.getDescription());
-            directoryService.createNewElement(elementAttributes, parentDirectoryUuid, userId, true);
+            directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
         }
     }
 }
