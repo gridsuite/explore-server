@@ -49,7 +49,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
     }
 
-    public List<UUID> createModifications(List<UUID> modificationUuids) {
+    public Map<UUID, UUID> createModifications(List<UUID> modificationUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/duplicate")
                 .buildAndExpand()
                 .toUriString();
@@ -61,7 +61,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, httpEntity, new ParameterizedTypeReference<List<UUID>>() { })
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, httpEntity, new ParameterizedTypeReference<Map<UUID, UUID>>() { })
             .getBody();
     }
 

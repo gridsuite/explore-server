@@ -144,7 +144,7 @@ public class ExploreTest {
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
-        String modificationIdsAsString = mapper.writeValueAsString(List.of(MODIFICATION_UUID));
+        String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_UUID));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -471,6 +471,13 @@ public class ExploreTest {
 
     @Test
     public void testDeleteElement() throws Exception {
+        deleteElement(FILTER_UUID);
+        deleteElement(PRIVATE_STUDY_UUID);
+        deleteElement(CONTINGENCY_LIST_UUID);
+        deleteElementInvalidType(INVALID_ELEMENT_UUID);
+        deleteElement(PARENT_DIRECTORY_UUID);
+        deleteElement(CASE_UUID);
+        deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
     }
 

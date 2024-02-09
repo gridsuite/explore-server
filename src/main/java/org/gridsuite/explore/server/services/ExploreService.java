@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -258,24 +256,19 @@ public class ExploreService {
     }
 
     public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, UUID parentDirectoryUuid) {
-        // This is important to sort on uuid, to make sure the input modification list will match the new/cloned modification list
-        List<ElementAttributes> sortedInputList = modificationAttributesList.stream()
-                .sorted(Comparator.comparing(ElementAttributes::getElementUuid))
+        List<UUID> existingModificationsUuids = modificationAttributesList.stream()
+                .map(ElementAttributes::getElementUuid)
                 .toList();
-        List<UUID> existingSortedModificationsUuids = sortedInputList.stream().map(ElementAttributes::getElementUuid).toList();
 
         // create all duplicated modifications
-        List<UUID> newSortedModificationsUuids = networkModificationService.createModifications(existingSortedModificationsUuids);
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.createModifications(existingModificationsUuids);
 
-        // Iterate through both collection simultaneously (they have the same order)
-        Iterator<UUID> newUuidIterator = newSortedModificationsUuids.iterator();
-        Iterator<ElementAttributes> modificationAttributeIterator = sortedInputList.iterator();
-        while (newUuidIterator.hasNext() && modificationAttributeIterator.hasNext()) {
-            final UUID newid = newUuidIterator.next();
-            final ElementAttributes attributes = modificationAttributeIterator.next();
-            ElementAttributes elementAttributes = new ElementAttributes(newid, attributes.getElementName(), MODIFICATION,
-                    null, userId, 0L, attributes.getDescription());
+        // create all corresponding directory elements
+        modificationAttributesList.forEach(m -> {
+            final UUID newId = newModificationsUuids.get(m.getElementUuid());
+            ElementAttributes elementAttributes = new ElementAttributes(newId, m.getElementName(), MODIFICATION,
+                    null, userId, 0L, m.getDescription());
             directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
-        }
+        });
     }
 }
