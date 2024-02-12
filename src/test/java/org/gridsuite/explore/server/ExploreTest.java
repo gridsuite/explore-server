@@ -79,10 +79,10 @@ public class ExploreTest {
     public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
     public static final String FILTER = "FILTER";
-    private Map<String, Object> specificMetadata = new HashMap<>();
-    private Map<String, Object> specificMetadata2 = new HashMap<>();
-    private Map<String, Object> caseSpecificMetadata = new HashMap<>();
-    private Map<String, Object> modificationSpecificMetadata = new HashMap<>();
+    private final Map<String, Object> specificMetadata = Map.of("id", FILTER_UUID);
+    private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
+    private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
+    private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
 
@@ -122,11 +122,6 @@ public class ExploreTest {
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
-
-        specificMetadata = Map.of("id", FILTER_UUID);
-        specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
-        caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
-        modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));
