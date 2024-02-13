@@ -34,7 +34,7 @@ public class ParametersService implements IDirectoryElementsService {
 
     private DirectoryService directoryService;
 
-    private final Map<ParametersType, String> genericParametersServices = Map.of(ParametersType.VOLTAGE_INIT_PARAMETERS, "voltage-init-server");
+    private final Map<ParametersType, String> genericParametersServices = Map.of(ParametersType.VOLTAGE_INIT_PARAMETERS, "voltage-init-server", ParametersType.SECURITY_ANALYSIS_PARAMETERS, "security-analysis-server");
 
     private RemoteServicesProperties remoteServicesProperties;
 
@@ -86,12 +86,11 @@ public class ParametersService implements IDirectoryElementsService {
     public UUID createParameters(UUID sourceParametersUuid, ParametersType parametersType) {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
         Objects.requireNonNull(sourceParametersUuid);
-
+        String urlParams = parametersType == ParametersType.VOLTAGE_INIT_PARAMETERS ? "?" + HEADER_DUPLICATE_FROM + "=" + sourceParametersUuid : "/" + sourceParametersUuid;
         var path = UriComponentsBuilder
-            .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters")
-            .queryParam(HEADER_DUPLICATE_FROM, sourceParametersUuid)
-            .toUriString();
-
+                    .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters" + urlParams)
+                    .buildAndExpand()
+                    .toUriString();
         HttpHeaders headers = new HttpHeaders();
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
         return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
