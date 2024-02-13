@@ -30,3 +30,6 @@ gridsuite:
     -
       name: voltage-init-server
       base-uri: http://localhost:5038
+    -
+      name: security-analysis-server
+      base-uri: http://localhost:5023
