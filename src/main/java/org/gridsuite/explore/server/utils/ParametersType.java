@@ -12,6 +12,7 @@ package org.gridsuite.explore.server.utils;
 public enum ParametersType {
 
     VOLTAGE_INIT_PARAMETERS,
-    SECURITY_ANALYSIS_PARAMETERS
+    SECURITY_ANALYSIS_PARAMETERS,
+    LOADFLOW_PARAMETERS
 
 }

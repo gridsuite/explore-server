@@ -30,3 +30,6 @@ gridsuite:
     -
       name: security-analysis-server
       base-uri: http://localhost:5023
+    -
+      name: loadflow-server
+      base-uri: http://localhost:5008
