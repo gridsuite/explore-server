@@ -306,4 +306,14 @@ public class ExploreController {
         exploreService.duplicateParameters(parentParameterId, parametersType, parametersName, parentDirectoryUuid, userId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping(value = "/explore/modifications")
+    @Operation(summary = "create some modification elements from existing network modifications")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory")})
+    public ResponseEntity<Void> createNetworkModifications(@RequestBody List<ElementAttributes> bodyContent,
+                                                                @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                                @RequestHeader("userId") String userId) {
+        exploreService.createNetworkModifications(bodyContent, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,11 +35,13 @@ public class ExploreService {
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
+    static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
 
     private DirectoryService directoryService;
     private StudyService studyService;
     private ContingencyListService contingencyListService;
+    private NetworkModificationService networkModificationService;
     private FilterService filterService;
     private CaseService caseService;
     private ParametersService parametersService;
@@ -49,6 +53,7 @@ public class ExploreService {
         StudyService studyService,
         ContingencyListService contingencyListService,
         FilterService filterService,
+        NetworkModificationService networkModificationService,
         CaseService caseService,
         ParametersService parametersService) {
 
@@ -56,6 +61,7 @@ public class ExploreService {
         this.studyService = studyService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
+        this.networkModificationService = networkModificationService;
         this.caseService = caseService;
         this.parametersService = parametersService;
     }
@@ -247,5 +253,22 @@ public class ExploreService {
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
             null, userId, 0L, null);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, UUID parentDirectoryUuid) {
+        List<UUID> existingModificationsUuids = modificationAttributesList.stream()
+                .map(ElementAttributes::getElementUuid)
+                .toList();
+
+        // create all duplicated modifications
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.createModifications(existingModificationsUuids);
+
+        // create all corresponding directory elements
+        modificationAttributesList.forEach(m -> {
+            final UUID newId = newModificationsUuids.get(m.getElementUuid());
+            ElementAttributes elementAttributes = new ElementAttributes(newId, m.getElementName(), MODIFICATION,
+                    null, userId, 0L, m.getDescription());
+            directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
+        });
     }
 }

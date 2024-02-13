@@ -70,6 +70,7 @@ public class ExploreTest {
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID PARAMETERS_UUID = UUID.randomUUID();
+    private static final UUID MODIFICATION_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String CASE1 = "case1";
@@ -78,9 +79,10 @@ public class ExploreTest {
     public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
     public static final String FILTER = "FILTER";
-    private Map<String, Object> specificMetadata = new HashMap<>();
-    private Map<String, Object> specificMetadata2 = new HashMap<>();
-    private Map<String, Object> caseSpecificMetadata = new HashMap<>();
+    private final Map<String, Object> specificMetadata = Map.of("id", FILTER_UUID);
+    private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
+    private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
+    private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
 
@@ -95,6 +97,8 @@ public class ExploreTest {
     @Autowired
     private StudyService studyService;
     @Autowired
+    private NetworkModificationService networkModificationService;
+    @Autowired
     private CaseService caseService;
     @Autowired
     private RemoteServicesProperties remoteServicesProperties;
@@ -105,8 +109,6 @@ public class ExploreTest {
     @Before
     public void setup() throws IOException {
         server = new MockWebServer();
-
-        // Start the server.
         server.start();
 
         // Ask the server for its URL. You'll need this to make HTTP requests.
@@ -117,16 +119,9 @@ public class ExploreTest {
         studyService.setStudyServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
+        networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
-        specificMetadata.put("id", FILTER_UUID);
-
-        specificMetadata2.put("equipmentType", "LINE");
-        specificMetadata2.put("id", FILTER_UUID_2);
-
-        caseSpecificMetadata.put("uuid", CASE_UUID);
-        caseSpecificMetadata.put("name", TEST_FILE);
-        caseSpecificMetadata.put("format", "XIIDM");
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));
@@ -142,6 +137,9 @@ public class ExploreTest {
         String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), new AccessRightsAttributes(true), USER1, 0, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
+        String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null));
+        String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
+        String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_UUID));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -168,10 +166,10 @@ public class ExploreTest {
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(500);
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(formContingencyListAttributesAsString).setResponseCode(200)
@@ -188,6 +186,9 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(caseElementAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(modificationElementAttributesAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(privateStudyAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -203,6 +204,10 @@ public class ExploreTest {
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody("[" + caseElementAttributesAsString + "]")
+                            .setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements\\?ids=" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody("[" + modificationElementAttributesAsString + "]")
                             .setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
@@ -246,6 +251,8 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/network-modifications/duplicate")) {
+                    return new MockResponse().setBody(modificationIdsAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
@@ -257,6 +264,8 @@ public class ExploreTest {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
                         return new MockResponse().setBody(caseInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
+                        return new MockResponse().setBody(modificationInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -267,6 +276,8 @@ public class ExploreTest {
                     } else if (path.matches("/v1/studies/" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/network-modifications\\?uuids=" + MODIFICATION_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setResponseCode(200);
@@ -279,6 +290,8 @@ public class ExploreTest {
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/elements/" + PARAMETERS_UUID)) {
+                        return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("/v1/elements/" + MODIFICATION_UUID)) {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
                         return new MockResponse().setResponseCode(200);
@@ -460,6 +473,7 @@ public class ExploreTest {
         deleteElement(PARENT_DIRECTORY_UUID);
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
+        deleteElement(MODIFICATION_UUID);
     }
 
     @Test
@@ -641,5 +655,30 @@ public class ExploreTest {
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata));
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), caseAttributesAsString);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testcreateNetworkModifications() {
+        final String body = mapper.writeValueAsString(List.of(new ElementAttributes(MODIFICATION_UUID, "one modif", "", null, USER1, 0L, "a description")));
+        mockMvc.perform(post("/v1/explore/modifications?parentDirectoryUuid={parentDirectoryUuid}", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    @SneakyThrows
+    public void testGetModificationMetadata() {
+        final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null, modificationSpecificMetadata));
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk())
+                .andReturn();
+        String response = result.getResponse().getContentAsString();
+        List<ElementAttributes> elementsMetadata = mapper.readValue(response, new TypeReference<>() { });
+        assertEquals(1, elementsMetadata.size());
+        assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), expectedResult);
     }
 }
