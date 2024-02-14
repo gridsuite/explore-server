@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -240,7 +241,17 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/explore/elements/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/explore/elements/{directoryUuid}/delete-stashed")
+    @Operation(summary = "Remove directories/elements")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
+    public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
+                                               @RequestHeader("userId") String userId,
+                                               @PathVariable String directoryUuid) {
+        exploreService.deleteElements(elementsUuid, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/explore/elements", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids,

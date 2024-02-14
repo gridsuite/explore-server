@@ -89,6 +89,17 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
+    public void deleteDirectoryElements(List<UUID> elementUuids, String userId) {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "?ids=" + ids)
+                .buildAndExpand()
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+    }
+
     public ElementAttributes getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
                 .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")

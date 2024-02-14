@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -195,6 +197,17 @@ public class ExploreService {
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
             directoryService.deleteDirectoryElement(id, userId);
+        }
+    }
+
+    public void deleteElements(List<UUID> uuids, String userId) {
+        try {
+            uuids.forEach(id -> directoryService.deleteElement(id, userId));
+            directoryService.deleteDirectoryElements(uuids, userId);
+            // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
+        } catch (Exception e) {
+            LOGGER.error(e.toString(), e);
+            directoryService.deleteDirectoryElements(uuids, userId);
         }
     }
 

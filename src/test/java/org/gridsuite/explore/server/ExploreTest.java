@@ -39,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -284,6 +285,8 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID)) {
                         return new MockResponse().setResponseCode(200);
+                    } else if (path.matches("\\/v1\\/elements\\?ids=([^,]+,){2,}[^,]+$")) {
+                        return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
                 }
@@ -445,6 +448,13 @@ public class ExploreTest {
                 .andExpect(status().isOk());
     }
 
+    public void deleteElements(List<UUID> elementUuids, UUID parentUuid) throws Exception {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}/delete-stashed?ids=" + ids, parentUuid)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
+    }
+
     public void deleteElementInvalidType(UUID elementUUid) throws Exception {
         mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid)
                         .header("userId", USER1))
@@ -453,6 +463,7 @@ public class ExploreTest {
 
     @Test
     public void testDeleteElement() throws Exception {
+        deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID, CONTINGENCY_LIST_UUID, CASE_UUID), PARENT_DIRECTORY_UUID);
         deleteElement(FILTER_UUID);
         deleteElement(PRIVATE_STUDY_UUID);
         deleteElement(CONTINGENCY_LIST_UUID);
