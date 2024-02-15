@@ -48,7 +48,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     @Autowired
     public DirectoryService(
-            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService,
+            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
             CaseService caseService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
@@ -57,8 +57,11 @@ public class DirectoryService implements IDirectoryElementsService {
                 CONTINGENCY_LIST, contingencyListService,
                 STUDY, studyService,
                 DIRECTORY, this,
+                MODIFICATION, networkModificationService,
                 CASE, caseService,
-                ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService);
+                ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService,
+                ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService,
+                ParametersType.LOADFLOW_PARAMETERS.name(), parametersService);
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
@@ -66,9 +69,13 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public ElementAttributes createElement(ElementAttributes elementAttributes, UUID directoryUuid, String userId) {
+        return createElementWithNewName(elementAttributes, directoryUuid, userId, false);
+    }
+
+    public ElementAttributes createElementWithNewName(ElementAttributes elementAttributes, UUID directoryUuid, String userId, boolean allowNewName) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
-                .buildAndExpand(directoryUuid)
+                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements?allowNewName={allowNewName}")
+                .buildAndExpand(directoryUuid, allowNewName)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
@@ -102,7 +109,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{directoryUuid}")
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
                 .buildAndExpand(elementUuid)
                 .toUriString();
         return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class)
