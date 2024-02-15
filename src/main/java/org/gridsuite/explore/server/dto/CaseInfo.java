@@ -10,6 +10,5 @@ import java.util.UUID;
 /**
  * @author Jamal KHEYYAD <jamal.kheyyad at rte-france.com>
  */
-public record CaseInfo(UUID caseUuid, String caseFormat) {
 
-}
+public record CaseInfo(UUID caseUuid, String caseFormat) { }
