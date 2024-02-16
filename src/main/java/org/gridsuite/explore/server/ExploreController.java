@@ -50,12 +50,14 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
     public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
                                                             @PathVariable("caseUuid") UUID caseUuid,
+                                                            @RequestParam(name = "caseFormat") String caseFormat,
                                                             @RequestParam(name = "duplicateCase", required = false, defaultValue = "false") Boolean duplicateCase,
                                                             @RequestParam("description") String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader("userId") String userId,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
-        exploreService.createStudy(studyName, caseUuid, description, userId, parentDirectoryUuid, importParams, duplicateCase);
+        CaseInfo caseInfo = new CaseInfo(caseUuid, caseFormat);
+        exploreService.createStudy(studyName, caseInfo, description, userId, parentDirectoryUuid, importParams, duplicateCase);
         return ResponseEntity.ok().build();
     }
 
