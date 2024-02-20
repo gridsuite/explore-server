@@ -314,6 +314,7 @@ public class ExploreTest {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .param("duplicateCase", "false")
                 .header("userId", "userId")
+                .param("caseFormat", "XIIDM")
                 .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk());
     }
@@ -322,6 +323,7 @@ public class ExploreTest {
     public void testCreateStudyFromExistingCaseError() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                         .header("userId", USER1)
+                        .param("caseFormat", "XIIDM")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
