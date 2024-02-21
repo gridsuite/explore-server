@@ -244,7 +244,7 @@ public class ExploreController {
 
     @DeleteMapping(value = "/explore/elements/{directoryUuid}/delete-stashed")
     @Operation(summary = "Remove directories/elements")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "directories/elements was successfully removed")})
     public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
                                                @RequestHeader("userId") String userId,
                                                @PathVariable String directoryUuid) {
