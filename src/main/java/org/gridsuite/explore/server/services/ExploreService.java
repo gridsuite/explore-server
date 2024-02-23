@@ -207,10 +207,10 @@ public class ExploreService {
     public void deleteElements(List<UUID> uuids, String userId) {
         try {
             uuids.forEach(id -> directoryService.deleteElement(id, userId));
-            directoryService.deleteDirectoryElements(uuids, userId);
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
+        } finally {
             directoryService.deleteDirectoryElements(uuids, userId);
         }
     }
