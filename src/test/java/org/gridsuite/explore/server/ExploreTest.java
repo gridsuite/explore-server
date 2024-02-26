@@ -673,7 +673,11 @@ public class ExploreTest {
     @Test
     @SneakyThrows
     public void testcreateNetworkModifications() {
-        final String body = mapper.writeValueAsString(List.of(new ElementAttributes(MODIFICATION_UUID, "one modif", "", null, USER1, 0L, "a description")));
+        final String body = mapper.writeValueAsString(List.of(
+                new ElementAttributes(MODIFICATION_UUID, "one modif", "", null, USER1, 0L, "a description"),
+                new ElementAttributes(UUID.randomUUID(), "2nd modif", "", null, USER1, 0L, "a description")
+                )
+        );
         mockMvc.perform(post("/v1/explore/modifications?parentDirectoryUuid={parentDirectoryUuid}", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)

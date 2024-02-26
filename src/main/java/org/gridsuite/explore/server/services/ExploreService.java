@@ -277,9 +277,12 @@ public class ExploreService {
         // create all corresponding directory elements
         modificationAttributesList.forEach(m -> {
             final UUID newId = newModificationsUuids.get(m.getElementUuid());
-            ElementAttributes elementAttributes = new ElementAttributes(newId, m.getElementName(), MODIFICATION,
-                    null, userId, 0L, m.getDescription());
-            directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
+            if (newId != null) {
+                // an Id may be null if a duplication could not succeed (ex: we provide a bad uuid)
+                ElementAttributes elementAttributes = new ElementAttributes(newId, m.getElementName(), MODIFICATION,
+                        null, userId, 0L, m.getDescription());
+                directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
+            }
         });
     }
 }
