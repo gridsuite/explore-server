@@ -259,10 +259,10 @@ public class ExploreService {
         updateElementName(id, name, userId);
     }
 
-    public void duplicateParameters(UUID parentParameterId, ParametersType parametersType, String parametersName, UUID parentDirectoryUuid, String userId) {
+    public void duplicateParameters(UUID parentParameterId, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid, String userId) {
         UUID parametersUuid = parametersService.createParameters(parentParameterId, parametersType);
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
-            null, userId, 0L, null);
+            null, userId, 0L, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
