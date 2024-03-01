@@ -36,3 +36,7 @@ gridsuite:
     -
       name: loadflow-server
       base-uri: http://localhost:5008
+    -
+      name: sensitivity-analysis-server
+      base-uri: http://localhost:5030
+
