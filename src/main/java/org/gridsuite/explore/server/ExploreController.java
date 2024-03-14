@@ -313,9 +313,10 @@ public class ExploreController {
     public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parentParameterId,
                                                  @RequestParam("name") String parametersName,
                                                  @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
+                                                 @RequestParam(name = "description", required = false, defaultValue = "") String description,
                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                  @RequestHeader("userId") String userId) {
-        exploreService.duplicateParameters(parentParameterId, parametersType, parametersName, parentDirectoryUuid, userId);
+        exploreService.duplicateParameters(parentParameterId, parametersType, parametersName, description, parentDirectoryUuid, userId);
         return ResponseEntity.ok().build();
     }
 
