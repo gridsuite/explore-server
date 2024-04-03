@@ -24,6 +24,8 @@ import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,6 +65,8 @@ public class ExploreTest {
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
+
+    private static final UUID DIRECTORY_UUID = UUID.fromString("3cd7cdc4-5a5d-4970-913e-3e91deeb8c35");
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
@@ -107,6 +111,12 @@ public class ExploreTest {
     private ObjectMapper mapper;
     private MockWebServer server;
 
+    @InjectMocks
+    private ScheduledCleaner scheduledCleaner;
+
+    @Autowired
+    private ExploreService exploreService;
+
     @Before
     public void setup() throws IOException {
         server = new MockWebServer();
@@ -141,6 +151,8 @@ public class ExploreTest {
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
         String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_UUID));
+        String directoryAttributesAsString2 = mapper.writeValueAsString(new ElementAttributes(DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
+        String directoryAttributesStashedAsString = mapper.writeValueAsString(List.of(new ElementAttributes(DIRECTORY_UUID, "directory", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null)));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -261,6 +273,8 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
                         return new MockResponse().setBody(directoryAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/elements/" + DIRECTORY_UUID)) {
+                        return new MockResponse().setBody(directoryAttributesAsString2).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/filters/metadata[?]ids=" + FILTER_UUID)) {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
@@ -269,6 +283,12 @@ public class ExploreTest {
                         return new MockResponse().setBody(modificationInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/elements/stashed\\?daysAgo=.*")) {
+                        return new MockResponse().setBody(directoryAttributesStashedAsString).setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/directories/3cd7cdc4-5a5d-4970-913e-3e91deeb8c35/elements\\?stashed=true")) {
+                        return new MockResponse().setBody(directoryAttributesStashedAsString).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
@@ -698,4 +718,20 @@ public class ExploreTest {
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), expectedResult);
     }
+
+    @Test
+    public void testDeleteStashedExpired() {
+        scheduledCleaner.deleteStashedExpired();
+        Mockito.verify(exploreService).deleteStashedElements(30);
+    }
+   /* @Test
+    public void testDeleteStashedElements() {
+        int daysAgo = 30;
+        exploreService.deleteStashedElements(daysAgo);
+
+        Map<String, List<UUID>> expectedMap = Map.of(USER1, List.of(DIRECTORY_UUID));
+        expectedMap.forEach((userId, uuids) ->
+                Mockito.verify(exploreService).deleteElements(uuids, userId));
+    }*/
+
 }

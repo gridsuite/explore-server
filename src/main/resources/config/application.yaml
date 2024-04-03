@@ -1,3 +1,7 @@
 spring:
   application:
     name: explore-server
+
+# At 01:00 AM every day.
+cleaning-stash-cron: "0 0 1 * * *"
+

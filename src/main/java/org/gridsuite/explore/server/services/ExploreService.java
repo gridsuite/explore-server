@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
 import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
@@ -213,6 +214,18 @@ public class ExploreService {
         } finally {
             directoryService.deleteDirectoryElements(uuids, userId);
         }
+    }
+
+    public void deleteStashedElements(int daysAgo) {
+        Map<String, List<UUID>> stashedElementsToDelete = directoryService.getStashedElementInfos(daysAgo).stream()
+                .collect(Collectors.groupingBy(
+                        ElementAttributes::getOwner,
+                        Collectors.mapping(
+                                ElementAttributes::getElementUuid,
+                                Collectors.toList()
+                        )
+                ));
+        stashedElementsToDelete.forEach((userId, uuids) -> deleteElements(uuids, userId));
     }
 
     public void updateFilter(UUID id, String filter, String userId, String name) {

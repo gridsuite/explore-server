@@ -117,6 +117,16 @@ public class DirectoryService implements IDirectoryElementsService {
                 .getBody();
     }
 
+    public List<ElementAttributes> getStashedElementInfos(int daysAgo) {
+        String path = UriComponentsBuilder
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/stashed")
+                .queryParam("daysAgo", daysAgo)
+                .toUriString();
+        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<ElementAttributes>>() {
+        })
+                .getBody();
+    }
+
     private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;

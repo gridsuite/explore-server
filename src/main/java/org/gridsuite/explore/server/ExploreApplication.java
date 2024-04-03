@@ -8,12 +8,14 @@ package org.gridsuite.explore.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
+@EnableScheduling
 public class ExploreApplication {
     public static void main(String[] args) {
         SpringApplication.run(ExploreApplication.class, args);
