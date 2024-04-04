@@ -216,16 +216,33 @@ public class ExploreService {
         }
     }
 
-    public void deleteStashedElements(int daysAgo) {
-        Map<String, List<UUID>> stashedElementsToDelete = directoryService.getStashedElementInfos(daysAgo).stream()
-                .collect(Collectors.groupingBy(
-                        ElementAttributes::getOwner,
-                        Collectors.mapping(
-                                ElementAttributes::getElementUuid,
-                                Collectors.toList()
-                        )
-                ));
-        stashedElementsToDelete.forEach((userId, uuids) -> deleteElements(uuids, userId));
+    public void deleteElementsByElementAttributes(String userId, List<ElementAttributes> elementsAttributes) {
+        try {
+            elementsAttributes.forEach(elementAttributes ->
+                    directoryService.deleteElementByElementAttribute(elementAttributes, userId));
+        } catch (Exception e) {
+            LOGGER.error(e.toString(), e);
+        } finally {
+            List<UUID> elementsUuid = elementsAttributes.stream()
+                    .map(ElementAttributes::getElementUuid)
+                    .toList();
+            directoryService.deleteDirectoryElements(
+                    elementsUuid,
+                    userId);
+        }
+    }
+
+    public void deleteStashedElementsOlderThanDays(int daysAgo) {
+        Map<String, List<ElementAttributes>> stashedElementsToDelete = directoryService.getStashedElementInfos(daysAgo).stream()
+                .collect(Collectors.groupingBy(ElementAttributes::getOwner));
+        if (stashedElementsToDelete.isEmpty()) {
+            LOGGER.error("No elements found in the trash to clean up.");
+            return;
+        }
+        stashedElementsToDelete.forEach((owner, elementAttributesList) ->
+                deleteElementsByElementAttributes(owner, elementAttributesList)
+        );
+        LOGGER.error("Trash cleanup completed successfully.");
     }
 
     public void updateFilter(UUID id, String filter, String userId, String name) {

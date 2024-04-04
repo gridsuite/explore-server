@@ -22,7 +22,7 @@ public class ScheduledCleaner {
     public void deleteStashedExpired() {
         ZonedDateTime startZonedDateTime = ZonedDateTime.now(ZoneOffset.UTC);
         LOGGER.info("Cleaning cases cron starting execution at {}", startZonedDateTime);
-        exploreService.deleteStashedElements(30); // delete all stashed elements older than 30 days
+        exploreService.deleteStashedElementsOlderThanDays(30); // delete all stashed elements older than 30 days
         ZonedDateTime endZonedDateTime = ZonedDateTime.now(ZoneOffset.UTC);
         LOGGER.info("Cleaning cases cron finished execution at {}", endZonedDateTime);
     }

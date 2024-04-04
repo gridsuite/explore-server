@@ -178,8 +178,12 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void deleteElement(UUID id, String userId) {
         ElementAttributes elementAttribute = getElementInfos(id);
-        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
-        service.delete(elementAttribute.getElementUuid(), userId);
+        deleteElementByElementAttribute(elementAttribute, userId);
+    }
+
+    public void deleteElementByElementAttribute(ElementAttributes elementAttributes, String userId) {
+        IDirectoryElementsService service = getGenericService(elementAttributes.getType());
+        service.delete(elementAttributes.getElementUuid(), userId);
     }
 
     private IDirectoryElementsService getGenericService(String type) {

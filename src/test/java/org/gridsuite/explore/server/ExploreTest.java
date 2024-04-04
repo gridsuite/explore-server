@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -90,11 +91,17 @@ public class ExploreTest {
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
+    ElementAttributes contingencyElementAttributes = new ElementAttributes(CONTINGENCY_LIST_UUID, "directory", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null);
 
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private DirectoryService directoryService;
+
+    @Mock
+    private DirectoryService directoryServiceMock;
+    @InjectMocks
+    private ExploreService exploreServiceMock;
     @Autowired
     private ContingencyListService contingencyListService;
     @Autowired
@@ -114,7 +121,7 @@ public class ExploreTest {
     @InjectMocks
     private ScheduledCleaner scheduledCleaner;
 
-    @Autowired
+    @Mock
     private ExploreService exploreService;
 
     @Before
@@ -152,7 +159,7 @@ public class ExploreTest {
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
         String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_UUID));
         String directoryAttributesAsString2 = mapper.writeValueAsString(new ElementAttributes(DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
-        String directoryAttributesStashedAsString = mapper.writeValueAsString(List.of(new ElementAttributes(DIRECTORY_UUID, "directory", "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null)));
+        String contingencyAttributesStashedAsString = mapper.writeValueAsString(List.of(contingencyElementAttributes));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -285,10 +292,7 @@ public class ExploreTest {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/elements/stashed\\?daysAgo=.*")) {
-                        return new MockResponse().setBody(directoryAttributesStashedAsString).setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/directories/3cd7cdc4-5a5d-4970-913e-3e91deeb8c35/elements\\?stashed=true")) {
-                        return new MockResponse().setBody(directoryAttributesStashedAsString).setResponseCode(200)
+                        return new MockResponse().setBody(contingencyAttributesStashedAsString).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
@@ -318,7 +322,7 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("\\/v1\\/elements\\?ids=([^,]+,){2,}[^,]+$")) {
+                    } else if (path.matches("\\/v1\\/elements\\?ids=([^,]+,?)+$")) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
@@ -722,16 +726,25 @@ public class ExploreTest {
     @Test
     public void testDeleteStashedExpired() {
         scheduledCleaner.deleteStashedExpired();
-        Mockito.verify(exploreService).deleteStashedElements(30);
+        Mockito.verify(exploreService).deleteStashedElementsOlderThanDays(30);
     }
-   /* @Test
-    public void testDeleteStashedElements() {
-        int daysAgo = 30;
-        exploreService.deleteStashedElements(daysAgo);
 
-        Map<String, List<UUID>> expectedMap = Map.of(USER1, List.of(DIRECTORY_UUID));
-        expectedMap.forEach((userId, uuids) ->
-                Mockito.verify(exploreService).deleteElements(uuids, userId));
-    }*/
+    @Test
+    public void testDeleteStashedElementsOlderThanDaysWithNonEmptyList() {
+        Mockito.when(directoryServiceMock.getStashedElementInfos(Mockito.anyInt())).thenReturn(List.of(contingencyElementAttributes));
 
+        exploreServiceMock.deleteStashedElementsOlderThanDays(30);
+
+        Mockito.verify(directoryServiceMock, Mockito.atLeastOnce()).deleteElementByElementAttribute(Mockito.any(ElementAttributes.class), Mockito.anyString());
+        Mockito.verify(directoryServiceMock, Mockito.atLeastOnce()).deleteDirectoryElements(Mockito.anyList(), Mockito.anyString());
+    }
+
+    @Test
+    public void testGetStashedElementInfos() {
+        List<ElementAttributes> elementAttributes = directoryService.getStashedElementInfos(30);
+        assertEquals(1, elementAttributes.size());
+        assertEquals(CONTINGENCY_LIST_UUID, elementAttributes.get(0).getElementUuid());
+        assertEquals(USER1, elementAttributes.get(0).getOwner());
+
+    }
 }
