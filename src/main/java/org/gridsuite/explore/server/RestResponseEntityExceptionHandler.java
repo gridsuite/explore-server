@@ -47,6 +47,9 @@ public class RestResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = {Exception.class})
     protected ResponseEntity<Object> handleAllException(Exception exception) {
+        if (LOGGER.isErrorEnabled()) {
+            LOGGER.error(exception.getMessage(), exception);
+        }
         if (exception instanceof HttpStatusCodeException) {
             return ResponseEntity.status(((HttpStatusCodeException) exception).getStatusCode()).body(exception.getMessage());
         } else {
