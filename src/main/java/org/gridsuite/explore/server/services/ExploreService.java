@@ -204,14 +204,14 @@ public class ExploreService {
         }
     }
 
-    public void deleteElements(List<UUID> uuids, String userId) {
+    public void deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuids, String userId) {
         try {
             uuids.forEach(id -> directoryService.deleteElement(id, userId));
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
         } finally {
-            directoryService.deleteDirectoryElements(uuids, userId);
+            directoryService.deleteElementsFromDirectory(uuids, parentDirectoryUuids, userId);
         }
     }
 
