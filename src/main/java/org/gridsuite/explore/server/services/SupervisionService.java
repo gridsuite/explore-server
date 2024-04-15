@@ -24,14 +24,14 @@ public class SupervisionService {
 
     private static final String SUPERVISION_PATH = "/supervision";
 
-    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER +  SUPERVISION_PATH + DELIMITER
+    private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + SUPERVISION_PATH + DELIMITER
         + "elements";
 
     private String directoryServerBaseUri;
 
     private final RestTemplate restTemplate;
 
-    public SupervisionService (DirectoryService directoryService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public SupervisionService(DirectoryService directoryService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.directoryService = directoryService;
         this.restTemplate = restTemplate;
@@ -50,8 +50,6 @@ public class SupervisionService {
         deleteElements(uuids);
     }
 
-
-
     // DOES NOT CHECK OWNER BEFORE DELETING
     public void deleteElements(List<UUID> elementUuids) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
@@ -63,5 +61,4 @@ public class SupervisionService {
         HttpHeaders headers = new HttpHeaders();
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
-
 }
