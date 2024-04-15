@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package org.gridsuite.explore.server.services;
 
 import org.slf4j.Logger;
@@ -13,23 +19,21 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * @author Kevin Le Saulnier <kevin.lesaulnier at rte-france.com>
+ */
 @Service
 public class SupervisionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupervisionService.class);
-    private DirectoryService directoryService;
+    private final DirectoryService directoryService;
+    private final String directoryServerBaseUri;
+    private final RestTemplate restTemplate;
 
     private static final String DIRECTORY_SERVER_API_VERSION = "v1";
-
     private static final String DELIMITER = "/";
-
-    private static final String SUPERVISION_PATH = "/supervision";
-
+    private static final String SUPERVISION_PATH = DELIMITER + "supervision";
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + SUPERVISION_PATH + DELIMITER
         + "elements";
-
-    private String directoryServerBaseUri;
-
-    private final RestTemplate restTemplate;
 
     public SupervisionService(DirectoryService directoryService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
@@ -47,11 +51,11 @@ public class SupervisionService {
                 LOGGER.error(e.toString(), e);
             }
         });
-        deleteElements(uuids);
+        deleteDirectoryElements(uuids);
     }
 
     // DOES NOT CHECK OWNER BEFORE DELETING
-    public void deleteElements(List<UUID> elementUuids) {
+    private void deleteDirectoryElements(List<UUID> elementUuids) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ROOT_PATH)
