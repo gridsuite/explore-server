@@ -12,7 +12,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 
-
 import java.util.List;
 import java.util.UUID;
 
@@ -31,7 +30,6 @@ public class SupervisionTest {
 
     @MockBean
     RestTemplate restTemplate;
-
 
     ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", null, "userId", 0L, null, null);
 
@@ -52,7 +50,7 @@ public class SupervisionTest {
     void testDeleteElementsWithErrors() {
         List<UUID> uuidsToDelete = List.of(filter.getElementUuid(), study.getElementUuid());
 
-        // one deletion will fail, this test checks deletions does not stop even when one of them is throwing an exception
+        // one deletion will fail, this test checks deletions does not stop even when one of them is throwing       an exception
         doThrow(new RuntimeException("An error occured when deleting filter")).when(directoryService).deleteElement(filter.getElementUuid(), "userId");
 
         supervisionService.deleteElements(uuidsToDelete, "userId");
