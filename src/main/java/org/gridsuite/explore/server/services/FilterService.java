@@ -79,13 +79,14 @@ public class FilterService implements IDirectoryElementsService {
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
-    public void insertFilter(UUID sourceFilterId, UUID filterId, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters")
-                .queryParam("duplicateFrom", sourceFilterId)
-                .queryParam("id", filterId)
+    public UUID duplicateFilter(UUID filterId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{filterId}/duplicate")
+                .buildAndExpand(filterId)
                 .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)),
-                Void.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers),
+                UUID.class).getBody();
     }
 
     @Override
