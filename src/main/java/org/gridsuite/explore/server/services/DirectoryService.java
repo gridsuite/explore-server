@@ -151,7 +151,6 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
-                .queryParam("stashed", true)
                 .buildAndExpand(directoryUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
