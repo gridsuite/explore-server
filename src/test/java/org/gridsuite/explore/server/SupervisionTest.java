@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
  * @author Kevin Le Saulnier <kevin.lesaulnier at rte-france.com>
  */
 @SpringBootTest
-public class SupervisionTest {
+class SupervisionTest {
     @Autowired
     SupervisionService supervisionService;
 
