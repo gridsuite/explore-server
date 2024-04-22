@@ -97,10 +97,12 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
-    public void deleteDirectoryElements(List<UUID> elementUuids, String userId) {
+    public void deleteElementsFromDirectory(List<UUID> elementUuids, UUID parentDirectoryUuid, String userId) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "?ids=" + ids)
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                .queryParam("ids", ids)
+                .queryParam("parentDirectoryUuid", parentDirectoryUuid)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -149,7 +151,6 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/{directoryUuid}/elements")
-                .queryParam("stashed", true)
                 .buildAndExpand(directoryUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
