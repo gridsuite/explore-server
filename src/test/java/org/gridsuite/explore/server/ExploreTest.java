@@ -152,7 +152,7 @@ public class ExploreTest {
 
                 if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(404);
-                } else if (path.matches("/v1/studies/" + PUBLIC_STUDY_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
@@ -162,7 +162,7 @@ public class ExploreTest {
                     } else {
                         return new MockResponse().setResponseCode(200);
                     }
-                } else if (path.matches("/v1/cases/" + CASE_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/cases\\?duplicateFrom=" + CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
@@ -228,13 +228,13 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/.*contingency-lists/" + CONTINGENCY_LIST_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/.*contingency-lists\\?duplicateFrom=" + CONTINGENCY_LIST_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/script-contingency-lists\\?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
@@ -249,7 +249,7 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/filters/" + FILTER_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/filters\\?duplicateFrom=" + FILTER_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters.*") && "POST".equals(request.getMethod())) {
@@ -271,7 +271,7 @@ public class ExploreTest {
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/network-modifications/duplicate")) {
+                } else if (path.matches("/v1/network-modifications")) {
                     return new MockResponse().setBody(modificationIdsAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
@@ -541,21 +541,21 @@ public class ExploreTest {
 
     @Test
     public void testDuplicateCase() throws Exception {
-        mockMvc.perform(post("/v1/explore/cases/{caseId}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testDuplicateFilter() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{filterId}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
     }
 
     @Test
     public void testDuplicateScriptContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListsId}/duplicate?contingencyListType={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                         CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT, PARENT_DIRECTORY_UUID)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
@@ -563,7 +563,7 @@ public class ExploreTest {
 
     @Test
     public void testDuplicateFormContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListsId}/duplicate?contingencyListType={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.FORM, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -571,7 +571,7 @@ public class ExploreTest {
 
     @Test
     public void testDuplicateIdentifierContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListsId}/duplicate?contingencyListType={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -579,7 +579,7 @@ public class ExploreTest {
 
     @Test
     public void testDuplicateStudy() throws Exception {
-        mockMvc.perform(post("/v1/explore/studies/{studyId}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -587,7 +587,7 @@ public class ExploreTest {
 
     @Test
     public void testDuplicateParameters() throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters/{parameterId}/duplicate?type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1))
             .andExpect(status().isOk());

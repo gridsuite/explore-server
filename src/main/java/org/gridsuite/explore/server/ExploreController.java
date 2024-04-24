@@ -35,7 +35,7 @@ public class ExploreController {
     // /!\ This query parameter is used by the gateway to control access
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
 
-    private static final String QUERY_PARAM_PARAMETERS_TYPE = "type";
+    private static final String QUERY_PARAM_TYPE = "type";
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
@@ -61,10 +61,10 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/studies/{studyId}/duplicate")
+    @PostMapping(value = "/explore/studies", params = "duplicateFrom")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    public ResponseEntity<Void> duplicateStudy(@PathVariable("studyId") UUID studyId,
+    public ResponseEntity<Void> duplicateStudy(@RequestParam("duplicateFrom") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                @RequestHeader("userId") String userId) {
         exploreService.duplicateStudy(studyId, targetDirectoryId, userId);
@@ -83,11 +83,11 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/cases/{caseId}/duplicate")
+    @PostMapping(value = "/explore/cases", params = "duplicateFrom")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
     public ResponseEntity<Void> duplicateCase(
-            @PathVariable("caseId") UUID caseId,
+            @RequestParam("duplicateFrom") UUID caseId,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
             @RequestHeader("userId") String userId) {
         exploreService.duplicateCase(caseId, targetDirectoryId, userId);
@@ -106,15 +106,15 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/contingency-lists/{contingencyListsId}/duplicate")
+    @PostMapping(value = "/explore/contingency-lists", params = "duplicateFrom")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created")})
     public ResponseEntity<Void> duplicateContingencyList(
-            @PathVariable("contingencyListsId") UUID contingencyListsId,
-            @RequestParam(name = "contingencyListType") ContingencyListType contingencyListType,
+            @RequestParam("duplicateFrom") UUID contingencyListUuid,
+            @RequestParam(name = QUERY_PARAM_TYPE) ContingencyListType contingencyListType,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
             @RequestHeader("userId") String userId) {
-        exploreService.duplicateContingencyList(contingencyListsId, targetDirectoryId, userId, contingencyListType);
+        exploreService.duplicateContingencyList(contingencyListUuid, targetDirectoryId, userId, contingencyListType);
         return ResponseEntity.ok().build();
     }
 
@@ -162,7 +162,7 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
     public ResponseEntity<Void> createFilter(@RequestBody String filter,
@@ -174,11 +174,11 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/filters/{filterId}/duplicate")
+    @PostMapping(value = "/explore/filters", params = "duplicateFrom")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
     public ResponseEntity<Void> duplicateFilter(
-                                             @PathVariable("filterId") UUID filterId,
+                                             @RequestParam("duplicateFrom") UUID filterId,
                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                              @RequestHeader("userId") String userId) {
         exploreService.duplicateFilter(filterId, targetDirectoryId, userId);
@@ -260,7 +260,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
     public ResponseEntity<Void> createParameters(@RequestBody String parameters,
                                              @RequestParam("name") String parametersName,
-                                             @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
+                                             @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                              @RequestHeader("userId") String userId) {
         exploreService.createParameters(parameters, parametersType, parametersName, parentDirectoryUuid, userId);
@@ -272,19 +272,19 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
     public ResponseEntity<Void> updateParameters(@PathVariable UUID id,
                                              @RequestBody String parameters,
-                                             @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
+                                             @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestHeader("userId") String userId,
                                              @RequestParam("name") String name) {
         exploreService.updateParameters(id, parameters, parametersType, userId, name);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/parameters/{parametersId}/duplicate")
+    @PostMapping(value = "/explore/parameters", params = "duplicateFrom")
     @Operation(summary = "Duplicate parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
-    public ResponseEntity<Void> duplicateParameters(@PathVariable("parametersId") UUID parametersId,
+    public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
-                                                    @RequestParam(name = QUERY_PARAM_PARAMETERS_TYPE, defaultValue = "") ParametersType parametersType,
+                                                    @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                                     @RequestHeader("userId") String userId) {
         exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
         return ResponseEntity.ok().build();
@@ -300,10 +300,10 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/modifications/{networkModificationId}/duplicate")
+    @PostMapping(value = "/explore/modifications", params = "duplicateFrom")
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory")})
-    public ResponseEntity<Void> duplicateNetworkModifications(@PathVariable("networkModificationId") UUID networkModificationId,
+    public ResponseEntity<Void> duplicateNetworkModifications(@RequestParam("duplicateFrom") UUID networkModificationId,
                                                               @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                               @RequestHeader("userId") String userId) {
         exploreService.duplicateNetworkModifications(networkModificationId, targetDirectoryId, userId);

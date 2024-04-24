@@ -50,7 +50,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     }
 
     public Map<UUID, UUID> createModifications(List<UUID> modificationUuids) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/duplicate")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();

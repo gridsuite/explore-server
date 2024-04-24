@@ -89,7 +89,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes duplicateElement(UUID elementUuid, UUID newElementUuid, UUID targetDirectoryId, String userId) {
         UriComponentsBuilder uri = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}/duplicate")
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                .queryParam("duplicateFrom", elementUuid)
                 .queryParam("newElementUuid", newElementUuid);
         if (targetDirectoryId != null) {
             uri.queryParam("targetDirectoryId", targetDirectoryId);

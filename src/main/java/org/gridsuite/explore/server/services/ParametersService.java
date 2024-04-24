@@ -89,9 +89,8 @@ public class ParametersService implements IDirectoryElementsService {
     public UUID createParameters(UUID sourceParametersUuid, ParametersType parametersType) {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
         Objects.requireNonNull(sourceParametersUuid);
-        String urlParams = parametersType == ParametersType.VOLTAGE_INIT_PARAMETERS ? "?" + HEADER_DUPLICATE_FROM + "=" + sourceParametersUuid : "/" + sourceParametersUuid;
         var path = UriComponentsBuilder
-                    .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters" + urlParams)
+                    .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters/" + sourceParametersUuid)
                     .buildAndExpand()
                     .toUriString();
         HttpHeaders headers = new HttpHeaders();

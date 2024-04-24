@@ -79,7 +79,8 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     UUID duplicateCase(UUID caseId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseId}/duplicate")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
+                .queryParam("duplicateFrom", caseId)
                 .buildAndExpand(caseId)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();

@@ -62,7 +62,8 @@ public class ContingencyListService implements IDirectoryElementsService {
     }
 
     public UUID duplicateScriptContingencyList(UUID scriptContingencyListsId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists/{scriptContingencyListsId}/duplicate")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists")
+                .queryParam(HEADER_DUPLICATE_FROM, scriptContingencyListsId)
                 .buildAndExpand(scriptContingencyListsId)
                 .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
@@ -89,14 +90,16 @@ public class ContingencyListService implements IDirectoryElementsService {
     }
 
     public UUID duplicateFormContingencyList(UUID formContingencyListsId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{formContingencyListsId}/duplicate")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
+                .queryParam(HEADER_DUPLICATE_FROM, formContingencyListsId)
                 .buildAndExpand(formContingencyListsId)
                 .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
     public UUID duplicateIdentifierContingencyList(UUID identifierContingencyListsId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{identifierContingencyListsId}/duplicate")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists")
+                .queryParam(HEADER_DUPLICATE_FROM, identifierContingencyListsId)
                 .buildAndExpand(identifierContingencyListsId)
                 .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
