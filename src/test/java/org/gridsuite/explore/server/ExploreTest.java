@@ -484,7 +484,7 @@ public class ExploreTest {
 
     public void deleteElements(List<UUID> elementUuids, UUID parentUuid) throws Exception {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}/delete-stashed?ids=" + ids, parentUuid)
+        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
     }

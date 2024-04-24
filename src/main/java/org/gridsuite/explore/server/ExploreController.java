@@ -214,13 +214,13 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping(value = "/explore/elements/{directoryUuid}/delete-stashed")
+    @DeleteMapping(value = "/explore/elements/{directoryUuid}", params = "ids")
     @Operation(summary = "Remove directories/elements")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "directories/elements was successfully removed")})
     public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
                                                @RequestHeader("userId") String userId,
-                                               @PathVariable String directoryUuid) {
-        exploreService.deleteElements(elementsUuid, userId);
+                                               @PathVariable UUID directoryUuid) {
+        exploreService.deleteElementsFromDirectory(elementsUuid, directoryUuid, userId);
         return ResponseEntity.ok().build();
     }
 
