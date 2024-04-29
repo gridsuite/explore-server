@@ -72,7 +72,13 @@ public class ExploreTest {
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID PARAMETERS_UUID = UUID.randomUUID();
     private static final UUID MODIFICATION_UUID = UUID.randomUUID();
-    private static final UUID NEW_ELEMENT_UUID = UUID.randomUUID();
+    private static final UUID STUDY_COPY_UUID = UUID.randomUUID();
+    private static final UUID CASE_COPY_UUID = UUID.randomUUID();
+    private static final UUID CONTINGENCY_LIST_COPY_UUID = UUID.randomUUID();
+    private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
+    private static final UUID MODIFICATION_COPY_UUID = UUID.randomUUID();
+    private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
+    private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String CASE1 = "case1";
@@ -141,8 +147,13 @@ public class ExploreTest {
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
-        String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_UUID));
-        String newElementUuidAsString = mapper.writeValueAsString(NEW_ELEMENT_UUID);
+        String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_COPY_UUID));
+        String newStudyUuidAsString = mapper.writeValueAsString(STUDY_COPY_UUID);
+        String newCaseUuidAsString = mapper.writeValueAsString(CASE_COPY_UUID);
+        String newContingencyUuidAsString = mapper.writeValueAsString(CONTINGENCY_LIST_COPY_UUID);
+        String newFilterUuidAsString = mapper.writeValueAsString(FILTER_COPY_UUID);
+        String newParametersUuidAsString = mapper.writeValueAsString(PARAMETER_COPY_UUID);
+        String newElementUuidAsString = mapper.writeValueAsString(ELEMENT_COPY_UUID);
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
@@ -153,7 +164,7 @@ public class ExploreTest {
                 if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(404);
                 } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
+                    return new MockResponse().setBody(newStudyUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
@@ -163,7 +174,7 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     }
                 } else if (path.matches("/v1/cases\\?duplicateFrom=" + CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
+                    return new MockResponse().setBody(newCaseUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
@@ -226,7 +237,7 @@ public class ExploreTest {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200)
+                    return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200)
@@ -235,7 +246,7 @@ public class ExploreTest {
                     return new MockResponse().setBody(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/.*contingency-lists\\?duplicateFrom=" + CONTINGENCY_LIST_UUID) && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
+                    return new MockResponse().setBody(newContingencyUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/script-contingency-lists\\?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(500);
@@ -250,7 +261,7 @@ public class ExploreTest {
                 } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/filters\\?duplicateFrom=" + FILTER_UUID) && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
+                    return new MockResponse().setBody(newFilterUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
@@ -266,8 +277,8 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID) && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
+                } else if (path.matches("/v1/parameters\\?duplicateFrom=" + PARAMETERS_UUID) && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setBody(newParametersUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse().setResponseCode(200);

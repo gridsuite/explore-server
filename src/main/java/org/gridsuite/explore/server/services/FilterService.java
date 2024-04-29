@@ -82,7 +82,7 @@ public class FilterService implements IDirectoryElementsService {
     public UUID duplicateFilter(UUID filterId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters")
                 .queryParam("duplicateFrom", filterId)
-                .buildAndExpand(filterId)
+                .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

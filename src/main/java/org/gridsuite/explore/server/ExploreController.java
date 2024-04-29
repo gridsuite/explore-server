@@ -162,7 +162,7 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
     public ResponseEntity<Void> createFilter(@RequestBody String filter,
@@ -284,7 +284,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
     public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
-                                                    @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
+                                                    @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType,
                                                     @RequestHeader("userId") String userId) {
         exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
         return ResponseEntity.ok().build();

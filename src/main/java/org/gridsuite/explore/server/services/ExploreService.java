@@ -95,6 +95,15 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
+    public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, String userId, ContingencyListType contingencyListType) {
+        UUID newId = switch (contingencyListType) {
+            case SCRIPT -> contingencyListService.duplicateScriptContingencyList(contingencyListsId);
+            case FORM -> contingencyListService.duplicateFormContingencyList(contingencyListsId);
+            case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
+        };
+        directoryService.duplicateElement(contingencyListsId, newId, targetDirectoryId, userId);
+    }
+
     public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
@@ -234,7 +243,7 @@ public class ExploreService {
     }
 
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
-        UUID newParametersUuid = parametersService.createParameters(sourceId, parametersType);
+        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
@@ -244,7 +253,7 @@ public class ExploreService {
                 .toList();
 
         // create all duplicated modifications
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.createModifications(existingModificationsUuids);
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(existingModificationsUuids);
 
         // create all corresponding directory elements
         modificationAttributesList.forEach(m -> {
@@ -258,18 +267,9 @@ public class ExploreService {
         });
     }
 
-    public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, String userId, ContingencyListType contingencyListType) {
-        UUID newId = switch (contingencyListType) {
-            case SCRIPT -> contingencyListService.duplicateScriptContingencyList(contingencyListsId);
-            case FORM -> contingencyListService.duplicateFormContingencyList(contingencyListsId);
-            case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
-        };
-        directoryService.duplicateElement(contingencyListsId, newId, targetDirectoryId, userId);
-    }
-
     public void duplicateNetworkModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
         // create duplicated modification
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.createModifications(List.of(sourceId));
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);

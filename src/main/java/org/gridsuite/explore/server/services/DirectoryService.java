@@ -95,14 +95,13 @@ public class DirectoryService implements IDirectoryElementsService {
         if (targetDirectoryId != null) {
             uri.queryParam("targetDirectoryId", targetDirectoryId);
         }
-        String path = uri.buildAndExpand(elementUuid)
+        String path = uri.buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(headers);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class)
+                .exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), ElementAttributes.class)
                 .getBody();
     }
 
