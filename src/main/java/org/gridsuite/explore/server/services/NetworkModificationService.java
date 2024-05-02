@@ -34,13 +34,11 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
 
     @Autowired
-    public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties, ObjectMapper objectMapper) {
+    public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
         this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
     }
 
     public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
