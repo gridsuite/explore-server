@@ -6,8 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,32 +33,24 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
 
     @Autowired
-    public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties, ObjectMapper objectMapper) {
+    public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
         this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
     }
 
     public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
     }
 
-    public Map<UUID, UUID> createModifications(List<UUID> modificationUuids) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/duplicate")
+    public Map<UUID, UUID> duplicateModifications(List<UUID> modificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity;
-        try {
-            httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(modificationUuids), headers);
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
-        }
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, httpEntity, new ParameterizedTypeReference<Map<UUID, UUID>>() { })
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<Map<UUID, UUID>>() { })
             .getBody();
     }
 

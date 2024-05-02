@@ -61,12 +61,12 @@ public class ContingencyListService implements IDirectoryElementsService {
         restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
-    public void insertScriptContingencyList(UUID sourceListId, UUID id) {
+    public UUID duplicateScriptContingencyList(UUID scriptContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/script-contingency-lists")
-                .queryParam(HEADER_DUPLICATE_FROM, sourceListId)
-                .queryParam("id", id)
+                .queryParam(HEADER_DUPLICATE_FROM, scriptContingencyListsId)
+                .buildAndExpand()
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
     public void insertFormContingencyList(UUID id, String content) {
@@ -89,20 +89,20 @@ public class ContingencyListService implements IDirectoryElementsService {
         restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
-    public void insertFormContingencyList(UUID sourceListId, UUID id) {
+    public UUID duplicateFormContingencyList(UUID formContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
-                .queryParam(HEADER_DUPLICATE_FROM, sourceListId)
-                .queryParam("id", id)
+                .queryParam(HEADER_DUPLICATE_FROM, formContingencyListsId)
+                .buildAndExpand()
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
-    public void insertIdentifierContingencyList(UUID sourceListId, UUID id) {
+    public UUID duplicateIdentifierContingencyList(UUID identifierContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists")
-                .queryParam(HEADER_DUPLICATE_FROM, sourceListId)
-                .queryParam("id", id)
+                .queryParam(HEADER_DUPLICATE_FROM, identifierContingencyListsId)
+                .buildAndExpand()
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, Void.class);
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
     public void newScriptFromFormContingencyList(UUID id, UUID newId) {

@@ -72,11 +72,9 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void duplicateStudy(UUID sourceStudyUuid, String studyName, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY,
-                null, userId, 0L, description);
-        studyService.duplicateStudy(sourceStudyUuid, elementAttributes.getElementUuid(), userId);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    public void duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId, String userId) {
+        UUID newStudyId = studyService.duplicateStudy(sourceStudyUuid, userId);
+        directoryService.duplicateElement(sourceStudyUuid, newStudyId, targetDirectoryId, userId);
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
@@ -85,10 +83,9 @@ public class ExploreService {
                 parentDirectoryUuid, userId);
     }
 
-    public void duplicateCase(String caseName, String description, String userId, UUID sourceCaseUuid, UUID parentDirectoryUuid) {
-        UUID uuid = caseService.duplicateCase(sourceCaseUuid);
-        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE,
-                null, userId, 0L, description), parentDirectoryUuid, userId);
+    public void duplicateCase(UUID sourceCaseUuid, UUID targetDirectoryId, String userId) {
+        UUID newCaseId = caseService.duplicateCase(sourceCaseUuid);
+        directoryService.duplicateElement(sourceCaseUuid, newCaseId, targetDirectoryId, userId);
     }
 
     public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
@@ -98,31 +95,19 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void duplicateScriptContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                null, userId, 0L, description);
-        contingencyListService.insertScriptContingencyList(sourceListId, elementAttributes.getElementUuid());
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, String userId, ContingencyListType contingencyListType) {
+        UUID newId = switch (contingencyListType) {
+            case SCRIPT -> contingencyListService.duplicateScriptContingencyList(contingencyListsId);
+            case FORM -> contingencyListService.duplicateFormContingencyList(contingencyListsId);
+            case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
+        };
+        directoryService.duplicateElement(contingencyListsId, newId, targetDirectoryId, userId);
     }
 
     public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
                 null, userId, 0L, description);
         contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-    }
-
-    public void duplicateFormContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                null, userId, 0L, description);
-        contingencyListService.insertFormContingencyList(sourceListId, elementAttributes.getElementUuid());
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-    }
-
-    public void duplicateIdentifierContingencyList(UUID sourceListId, String listName, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                null, userId, 0L, description);
-        contingencyListService.insertIdentifierContingencyList(sourceListId, elementAttributes.getElementUuid());
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -163,11 +148,9 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void duplicateFilter(String filterName, String description, UUID sourceFilterUuid, UUID parentDirectoryUuid, String userId) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
-                null, userId, 0, description);
-        filterService.insertFilter(sourceFilterUuid, elementAttributes.getElementUuid(), userId);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    public void duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId, String userId) {
+        UUID newFilterId = filterService.duplicateFilter(sourceFilterId);
+        directoryService.duplicateElement(sourceFilterId, newFilterId, targetDirectoryId, userId);
     }
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
@@ -259,11 +242,9 @@ public class ExploreService {
         updateElementName(id, name, userId);
     }
 
-    public void duplicateParameters(UUID parentParameterId, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid, String userId) {
-        UUID parametersUuid = parametersService.createParameters(parentParameterId, parametersType);
-        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
-            null, userId, 0L, description);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
+        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
+        directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
     public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, UUID parentDirectoryUuid) {
@@ -272,7 +253,7 @@ public class ExploreService {
                 .toList();
 
         // create all duplicated modifications
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.createModifications(existingModificationsUuids);
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(existingModificationsUuids);
 
         // create all corresponding directory elements
         modificationAttributesList.forEach(m -> {
@@ -285,4 +266,13 @@ public class ExploreService {
             }
         });
     }
+
+    public void duplicateNetworkModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
+        // create duplicated modification
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(List.of(sourceId));
+        UUID newNetworkModification = newModificationsUuids.get(sourceId);
+        // create corresponding directory element
+        directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
+    }
+
 }
