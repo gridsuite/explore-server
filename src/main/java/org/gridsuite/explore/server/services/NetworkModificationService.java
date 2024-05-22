@@ -30,6 +30,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
     public static final String UUIDS = "uuids";
+    public static final String GROUPS = "groups";
+
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
@@ -54,6 +56,16 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
+    public UUID duplicateGroupModifications(List<UUID> modificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + GROUPS + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+                .buildAndExpand()
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<UUID>() { })
+                .getBody();
+    }
+
     @Override
     public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
@@ -69,7 +81,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public List<Map<String, Object>> getMetadata(List<UUID> modificationUuids) {
         var ids = modificationUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-                .fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/metadata" + "?ids=" + ids)
+                .fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + GROUPS + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,

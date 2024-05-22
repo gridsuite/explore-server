@@ -247,24 +247,16 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, UUID parentDirectoryUuid) {
+    public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, String name, String description, UUID parentDirectoryUuid) {
         List<UUID> existingModificationsUuids = modificationAttributesList.stream()
                 .map(ElementAttributes::getElementUuid)
                 .toList();
 
-        // create all duplicated modifications
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(existingModificationsUuids);
-
-        // create all corresponding directory elements
-        modificationAttributesList.forEach(m -> {
-            final UUID newId = newModificationsUuids.get(m.getElementUuid());
-            if (newId != null) {
-                // an Id may be null if a duplication could not succeed (ex: we provide a bad uuid)
-                ElementAttributes elementAttributes = new ElementAttributes(newId, m.getElementName(), MODIFICATION,
-                        null, userId, 0L, m.getDescription());
-                directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
-            }
-        });
+        // create modifications group
+        UUID newModificationsUuids = networkModificationService.duplicateGroupModifications(existingModificationsUuids);
+        ElementAttributes elementAttributes = new ElementAttributes(newModificationsUuids, name, MODIFICATION,
+                        null, userId, 0L, description);
+        directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
 
     public void duplicateNetworkModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
