@@ -31,9 +31,9 @@ class SupervisionTest {
     @MockBean
     RestTemplate restTemplate;
 
-    ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", null, "userId", 0L, null, null);
+    ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", "userId", 0L, null, null);
 
-    ElementAttributes study = new ElementAttributes(UUID.randomUUID(), "study", "STUDY", null, "userId", 0L, null, null);
+    ElementAttributes study = new ElementAttributes(UUID.randomUUID(), "study", "STUDY", "userId", 0L, null, null);
 
     @Test
     void testDeleteElements() {
