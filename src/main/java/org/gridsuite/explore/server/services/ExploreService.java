@@ -177,6 +177,9 @@ public class ExploreService {
     }
 
     public void deleteElement(UUID id, String userId) {
+        // Verify if the user is allowed to delete the element.
+        // FIXME: to be deleted when it's properly handled by the gateway
+        canDeleteDirectoryElement(List.of(id), userId);
         try {
             directoryService.deleteElement(id, userId);
             directoryService.deleteDirectoryElement(id, userId);
@@ -188,6 +191,10 @@ public class ExploreService {
     }
 
     public void deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuids, String userId) {
+
+        // Verify if the user is allowed to delete the elements.
+        // FIXME: to be deleted when it's properly handled by the gateway
+        canDeleteDirectoryElement(uuids, userId);
         try {
             uuids.forEach(id -> directoryService.deleteElement(id, userId));
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
@@ -273,6 +280,12 @@ public class ExploreService {
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
+    }
+
+    private void canDeleteDirectoryElement(List<UUID> elementUuids, String userId) {
+        if (!directoryService.canDeleteDirectoryElement(elementUuids, userId).orElse(false)) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
     }
 
 }

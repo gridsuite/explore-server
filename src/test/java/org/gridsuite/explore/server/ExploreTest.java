@@ -65,6 +65,7 @@ public class ExploreTest {
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
+    private static final UUID NOT_ALLOWED_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
@@ -81,8 +82,6 @@ public class ExploreTest {
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
-    private static final String CASE1 = "case1";
-    private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
     public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
@@ -300,6 +299,12 @@ public class ExploreTest {
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
+                    }else if (path.matches("/v1/elements/can-delete\\?ids=" + NOT_ALLOWED_STUDY_UUID)) {
+                        return new MockResponse().setBody("false").setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/elements/can-delete\\?ids=.*" )) {
+                        return new MockResponse().setBody("true").setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -506,6 +511,18 @@ public class ExploreTest {
                 .andExpect(status().is2xxSuccessful());
     }
 
+    public void deleteElementNotAllowed(UUID elementUUid) throws Exception {
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
+                        elementUUid).header("userId", USER1))
+                .andExpect(status().is(403));
+    }
+
+    public void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid) throws Exception {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
+                        .header("userId", USER1))
+                .andExpect(status().is(403));
+    }
     @Test
     public void testDeleteElement() throws Exception {
         deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID, CONTINGENCY_LIST_UUID, CASE_UUID), PARENT_DIRECTORY_UUID);
@@ -517,6 +534,8 @@ public class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
+        deleteElementNotAllowed(NOT_ALLOWED_STUDY_UUID);
+        deleteElementsNotAllowed(List.of(NOT_ALLOWED_STUDY_UUID), PARENT_DIRECTORY_UUID);
     }
 
     @Test

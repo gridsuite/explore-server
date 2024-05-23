@@ -115,6 +115,21 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
+    public Optional<Boolean> canDeleteDirectoryElement(List<UUID> elementUuids, String userId) {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        String path = UriComponentsBuilder
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/can-delete")
+                .queryParam("ids", ids)
+                .buildAndExpand()
+                .toUriString();
+        return Optional.ofNullable(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), Boolean.class)
+                .getBody());
+
+    }
+
     public void deleteElementsFromDirectory(List<UUID> elementUuids, UUID parentDirectoryUuid, String userId) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
