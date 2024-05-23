@@ -299,10 +299,10 @@ public class ExploreTest {
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
-                    }else if (path.matches("/v1/elements/can-delete\\?ids=" + NOT_ALLOWED_STUDY_UUID)) {
+                    } else if (path.matches("/v1/elements/can-delete\\?ids=" + NOT_ALLOWED_STUDY_UUID)) {
                         return new MockResponse().setBody("false").setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/elements/can-delete\\?ids=.*" )) {
+                    } else if (path.matches("/v1/elements/can-delete\\?ids=.*")) {
                         return new MockResponse().setBody("true").setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
@@ -523,6 +523,7 @@ public class ExploreTest {
                         .header("userId", USER1))
                 .andExpect(status().is(403));
     }
+
     @Test
     public void testDeleteElement() throws Exception {
         deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID, CONTINGENCY_LIST_UUID, CASE_UUID), PARENT_DIRECTORY_UUID);
