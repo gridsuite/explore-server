@@ -40,8 +40,6 @@ public class ExploreController {
     private static final String QUERY_PARAM_TYPE = "type";
     private static final String QUERY_PARAM_USER_ID = "userId";
 
-    private static final String QUERY_PARAM_MODIFICATION_TYPE = "modificationType";
-
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
 
