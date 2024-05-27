@@ -64,7 +64,8 @@ public class ExploreTest {
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
-    private static final UUID NOT_ALLOWED_STUDY_UUID = UUID.randomUUID();
+    private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
+    private static final UUID NOT_FOUND_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
@@ -298,12 +299,6 @@ public class ExploreTest {
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/elements/can-delete\\?ids=" + NOT_ALLOWED_STUDY_UUID)) {
-                        return new MockResponse().setBody("false").setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/elements/can-delete\\?ids=.*")) {
-                        return new MockResponse().setBody("true").setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -336,6 +331,14 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
+                } else if ("HEAD".equals(request.getMethod())) {
+                    if (path.matches("/v1/elements\\?forDeletion=true&ids=" + FORBIDDEN_STUDY_UUID)) {
+                        return new MockResponse().setResponseCode(403);
+                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=" + NOT_FOUND_STUDY_UUID)) {
+                        return new MockResponse().setResponseCode(404);
+                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
+                        return new MockResponse().setResponseCode(200);
+                    }
                 }
                 return new MockResponse().setResponseCode(418);
             }
@@ -510,17 +513,17 @@ public class ExploreTest {
                 .andExpect(status().is2xxSuccessful());
     }
 
-    public void deleteElementNotAllowed(UUID elementUUid) throws Exception {
+    public void deleteElementNotAllowed(UUID elementUUid, int status) throws Exception {
         mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
                         elementUUid).header("userId", USER1))
-                .andExpect(status().is(403));
+                .andExpect(status().is(status));
     }
 
-    public void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid) throws Exception {
+    public void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid, int status) throws Exception {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
                         .header("userId", USER1))
-                .andExpect(status().is(403));
+                .andExpect(status().is(status));
     }
 
     @Test
@@ -534,8 +537,10 @@ public class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
-        deleteElementNotAllowed(NOT_ALLOWED_STUDY_UUID);
-        deleteElementsNotAllowed(List.of(NOT_ALLOWED_STUDY_UUID), PARENT_DIRECTORY_UUID);
+        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID, 403);
+        deleteElementsNotAllowed(List.of(NOT_FOUND_STUDY_UUID), PARENT_DIRECTORY_UUID, 404);
+        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
+        deleteElementNotAllowed(NOT_FOUND_STUDY_UUID, 404);
     }
 
     @Test

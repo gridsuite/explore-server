@@ -38,13 +38,13 @@ public class ExploreService {
     static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
 
-    private DirectoryService directoryService;
-    private StudyService studyService;
-    private ContingencyListService contingencyListService;
-    private NetworkModificationService networkModificationService;
-    private FilterService filterService;
-    private CaseService caseService;
-    private ParametersService parametersService;
+    private final DirectoryService directoryService;
+    private final StudyService studyService;
+    private final ContingencyListService contingencyListService;
+    private final NetworkModificationService networkModificationService;
+    private final FilterService filterService;
+    private final CaseService caseService;
+    private final ParametersService parametersService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
 
@@ -175,7 +175,7 @@ public class ExploreService {
     public void deleteElement(UUID id, String userId) {
         // Verify if the user is allowed to delete the element.
         // FIXME: to be deleted when it's properly handled by the gateway
-        canDeleteDirectoryElement(List.of(id), userId);
+        directoryService.areDirectoryElementsDeletable(List.of(id), userId);
         try {
             directoryService.deleteElement(id, userId);
             directoryService.deleteDirectoryElement(id, userId);
@@ -190,7 +190,7 @@ public class ExploreService {
 
         // Verify if the user is allowed to delete the elements.
         // FIXME: to be deleted when it's properly handled by the gateway
-        canDeleteDirectoryElement(uuids, userId);
+        directoryService.areDirectoryElementsDeletable(uuids, userId);
         try {
             uuids.forEach(id -> directoryService.deleteElement(id, userId));
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
@@ -275,11 +275,4 @@ public class ExploreService {
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
     }
-
-    private void canDeleteDirectoryElement(List<UUID> elementUuids, String userId) {
-        if (!directoryService.canDeleteDirectoryElement(elementUuids, userId).orElse(false)) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
-    }
-
 }
