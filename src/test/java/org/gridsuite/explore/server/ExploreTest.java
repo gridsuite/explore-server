@@ -285,7 +285,7 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/network-modifications")) {
                     return new MockResponse().setBody(modificationIdsAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/groups/network-modifications")) {
+                } else if (path.matches("/v1/composite/network-modifications")) {
                     return new MockResponse().setBody(modificationGroupIdAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
@@ -298,7 +298,7 @@ public class ExploreTest {
                         return new MockResponse().setBody(listOfFilterAttributesAsString.replace("elementUuid", "id")).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
                         return new MockResponse().setBody(caseInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/groups/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
+                    } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
                         return new MockResponse().setBody(modificationInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)

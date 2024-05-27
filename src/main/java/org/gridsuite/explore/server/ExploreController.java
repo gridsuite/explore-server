@@ -40,6 +40,8 @@ public class ExploreController {
     private static final String QUERY_PARAM_TYPE = "type";
     private static final String QUERY_PARAM_USER_ID = "userId";
 
+    private static final String QUERY_PARAM_MODIFICATION_TYPE = "modificationType";
+
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
 
@@ -296,12 +298,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/modifications")
     @Operation(summary = "create some modification elements from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory")})
-    public ResponseEntity<Void> createNetworkModifications(@RequestBody List<ElementAttributes> bodyContent,
+    public ResponseEntity<Void> createNetworkModifications(@RequestBody String modificationAttributes,
                                                                 @RequestParam(QUERY_PARAM_NAME) String name,
                                                                 @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                 @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createNetworkModifications(bodyContent, userId, name, description, parentDirectoryUuid);
+        exploreService.createNetworkModifications(modificationAttributes, userId, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 

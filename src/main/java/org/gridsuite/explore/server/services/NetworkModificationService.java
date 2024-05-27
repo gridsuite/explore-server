@@ -30,7 +30,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
     public static final String UUIDS = "uuids";
-    public static final String GROUPS = "groups";
+    public static final String COMPOSITE = "composite";
 
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private String networkModificationServerBaseUri;
@@ -56,8 +56,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
-    public UUID duplicateGroupModifications(List<UUID> modificationUuids) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + GROUPS + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+    public UUID createNetworkModifications(String modificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + COMPOSITE + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -81,7 +81,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public List<Map<String, Object>> getMetadata(List<UUID> modificationUuids) {
         var ids = modificationUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-                .fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + GROUPS + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/metadata" + "?ids=" + ids)
+                .fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,

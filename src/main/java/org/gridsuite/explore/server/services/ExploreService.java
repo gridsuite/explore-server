@@ -247,13 +247,11 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, String name, String description, UUID parentDirectoryUuid) {
-        List<UUID> existingModificationsUuids = modificationAttributesList.stream()
-                .map(ElementAttributes::getElementUuid)
-                .toList();
+    public void createNetworkModifications(String modificationAttributesList, String userId, String name,
+                                           String description, UUID parentDirectoryUuid) {
 
         // create modifications group
-        UUID newModificationsUuids = networkModificationService.duplicateGroupModifications(existingModificationsUuids);
+        UUID newModificationsUuids = networkModificationService.createNetworkModifications(modificationAttributesList);
         ElementAttributes elementAttributes = new ElementAttributes(newModificationsUuids, name, MODIFICATION,
                         null, userId, 0L, description);
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
