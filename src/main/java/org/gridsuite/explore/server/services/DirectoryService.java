@@ -127,8 +127,11 @@ public class DirectoryService implements IDirectoryElementsService {
                 .queryParam(PARAM_IDS, ids)
                 .buildAndExpand()
                 .toUriString();
+
+        ResponseEntity<Void> response;
         try {
-            restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
+            response = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
+
         } catch (HttpStatusCodeException e) {
             if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
                 throw new ExploreException(NOT_ALLOWED);
@@ -137,6 +140,10 @@ public class DirectoryService implements IDirectoryElementsService {
             } else {
                 throw e;
             }
+        }
+
+        if (HttpStatus.NO_CONTENT.equals(response.getStatusCode())) {
+            throw new ExploreException(NOT_ALLOWED);
         }
     }
 
