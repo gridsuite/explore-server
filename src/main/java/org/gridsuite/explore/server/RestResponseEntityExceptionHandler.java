@@ -32,6 +32,8 @@ public class RestResponseEntityExceptionHandler {
         }
         ExploreException exploreException = exception;
         switch (exploreException.getType()) {
+            case NOT_FOUND:
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             case NOT_ALLOWED:
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
             case REMOTE_ERROR:

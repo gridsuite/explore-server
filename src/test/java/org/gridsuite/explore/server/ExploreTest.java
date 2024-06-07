@@ -15,7 +15,6 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
-import org.gridsuite.explore.server.dto.AccessRightsAttributes;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -65,6 +64,8 @@ public class ExploreTest {
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
+    private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
+    private static final UUID NOT_FOUND_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
@@ -81,8 +82,6 @@ public class ExploreTest {
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
-    private static final String CASE1 = "case1";
-    private static final String FILTER1 = "filter1";
     private static final String USER1 = "user1";
     public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
@@ -131,21 +130,21 @@ public class ExploreTest {
         caseService.setBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
 
-        String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null));
-        String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(true), USER1, 0, null)));
-        String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", new AccessRightsAttributes(false), USER1, 0, null));
-        String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", new AccessRightsAttributes(false), USER1, 0, null));
-        String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null));
-        String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", new AccessRightsAttributes(true), USER1, 0, null)));
-        String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null));
-        String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0, null));
-        String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0, null)));
-        String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", new AccessRightsAttributes(true), USER1, 0, null));
-        String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null));
-        String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), new AccessRightsAttributes(true), USER1, 0, null));
+        String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
+        String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
+        String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
+        String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", USER1, 0, null));
+        String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0, null));
+        String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0, null)));
+        String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null));
+        String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, USER1, 0, null));
+        String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)));
+        String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
+        String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
+        String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1, 0, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
-        String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null));
+        String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
         String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_COPY_UUID));
         String modificationGroupIdAsString = mapper.writeValueAsString(MODIFICATION_UUID);
@@ -335,6 +334,14 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
+                } else if ("HEAD".equals(request.getMethod())) {
+                    if (path.matches("/v1/elements\\?forDeletion=true&ids=" + FORBIDDEN_STUDY_UUID)) {
+                        return new MockResponse().setResponseCode(403);
+                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=" + NOT_FOUND_STUDY_UUID)) {
+                        return new MockResponse().setResponseCode(404);
+                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
+                        return new MockResponse().setResponseCode(200);
+                    }
                 }
                 return new MockResponse().setResponseCode(418);
             }
@@ -509,6 +516,19 @@ public class ExploreTest {
                 .andExpect(status().is2xxSuccessful());
     }
 
+    public void deleteElementNotAllowed(UUID elementUUid, int status) throws Exception {
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
+                        elementUUid).header("userId", USER1))
+                .andExpect(status().is(status));
+    }
+
+    public void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid, int status) throws Exception {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
+                        .header("userId", USER1))
+                .andExpect(status().is(status));
+    }
+
     @Test
     public void testDeleteElement() throws Exception {
         deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID, CONTINGENCY_LIST_UUID, CASE_UUID), PARENT_DIRECTORY_UUID);
@@ -520,6 +540,10 @@ public class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
+        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID, 403);
+        deleteElementsNotAllowed(List.of(NOT_FOUND_STUDY_UUID), PARENT_DIRECTORY_UUID, 404);
+        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
+        deleteElementNotAllowed(NOT_FOUND_STUDY_UUID, 404);
     }
 
     @Test
@@ -528,8 +552,8 @@ public class ExploreTest {
                 .header("userId", USER1)
         ).andExpectAll(status().isOk());
 
-        ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, specificMetadata);
-        ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, new AccessRightsAttributes(true), USER1, 0L, null, specificMetadata2);
+        ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0L, null, specificMetadata);
+        ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, USER1, 0L, null, specificMetadata2);
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
             .header("userId", USER1))
@@ -698,7 +722,7 @@ public class ExploreTest {
         String res = result.getResponse().getContentAsString();
         List<ElementAttributes> elementsMetadata = mapper.readValue(res, new TypeReference<>() {
         });
-        String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", new AccessRightsAttributes(true), USER1, 0L, null, caseSpecificMetadata));
+        String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null, caseSpecificMetadata));
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), caseAttributesAsString);
     }
@@ -707,8 +731,8 @@ public class ExploreTest {
     @SneakyThrows
     public void testcreateNetworkModifications() {
         final String body = mapper.writeValueAsString(List.of(
-                new ElementAttributes(MODIFICATION_UUID, "one modif", "", null, USER1, 0L, "a description"),
-                new ElementAttributes(UUID.randomUUID(), "2nd modif", "", null, USER1, 0L, "a description")
+                new ElementAttributes(MODIFICATION_UUID, "one modif", "", USER1, 0L, "a description"),
+                new ElementAttributes(UUID.randomUUID(), "2nd modif", "", USER1, 0L, "a description")
                 )
         );
         mockMvc.perform(post("/v1/explore/modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
@@ -722,7 +746,7 @@ public class ExploreTest {
     @Test
     @SneakyThrows
     public void testGetModificationMetadata() {
-        final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", new AccessRightsAttributes(true), USER1, 0L, null, modificationSpecificMetadata));
+        final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null, modificationSpecificMetadata));
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID)
                         .header("userId", USER1))
                 .andExpect(status().isOk())

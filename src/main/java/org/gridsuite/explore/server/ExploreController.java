@@ -210,7 +210,11 @@ public class ExploreController {
 
     @DeleteMapping(value = "/explore/elements/{elementUuid}")
     @Operation(summary = "Remove directory/element")
-    @ApiResponses(@ApiResponse(responseCode = "200", description = "Directory/element was successfully removed"))
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Directory/element was successfully removed"),
+        @ApiResponse(responseCode = "404", description = "Directory/element was not found"),
+        @ApiResponse(responseCode = "403", description = "Access forbidden for the directory/element")
+    })
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
                                               @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.deleteElement(elementUuid, userId);
@@ -219,7 +223,11 @@ public class ExploreController {
 
     @DeleteMapping(value = "/explore/elements/{directoryUuid}", params = "ids")
     @Operation(summary = "Remove directories/elements")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "directories/elements was successfully removed")})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "directories/elements was successfully removed"),
+        @ApiResponse(responseCode = "404", description = "At least one directory/element was not found"),
+        @ApiResponse(responseCode = "403", description = "Access forbidden for at least one directory/element")
+    })
     public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                @PathVariable UUID directoryUuid) {

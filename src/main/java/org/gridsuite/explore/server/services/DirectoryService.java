@@ -11,12 +11,10 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,6 +39,9 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
             + "elements";
+
+    private static final String PARAM_IDS = "ids";
+    private static final String PARAM_FOR_DELETION = "forDeletion";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -115,11 +116,42 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
+    public void areDirectoryElementsDeletable(List<UUID> elementUuids, String userId) {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        String path = UriComponentsBuilder
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                .queryParam(PARAM_FOR_DELETION, true)
+                .queryParam(PARAM_IDS, ids)
+                .buildAndExpand()
+                .toUriString();
+
+        ResponseEntity<Void> response;
+        try {
+            response = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
+
+        } catch (HttpStatusCodeException e) {
+            if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
+                throw new ExploreException(NOT_ALLOWED);
+            } else if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+                throw new ExploreException(NOT_FOUND);
+            } else {
+                throw e;
+            }
+        }
+
+        if (HttpStatus.NO_CONTENT.equals(response.getStatusCode())) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+    }
+
     public void deleteElementsFromDirectory(List<UUID> elementUuids, UUID parentDirectoryUuid, String userId) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
                 .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam("ids", ids)
+                .queryParam(PARAM_IDS, ids)
                 .queryParam("parentDirectoryUuid", parentDirectoryUuid)
                 .buildAndExpand()
                 .toUriString();

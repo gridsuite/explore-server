@@ -38,13 +38,13 @@ public class ExploreService {
     static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
 
-    private DirectoryService directoryService;
-    private StudyService studyService;
-    private ContingencyListService contingencyListService;
-    private NetworkModificationService networkModificationService;
-    private FilterService filterService;
-    private CaseService caseService;
-    private ParametersService parametersService;
+    private final DirectoryService directoryService;
+    private final StudyService studyService;
+    private final ContingencyListService contingencyListService;
+    private final NetworkModificationService networkModificationService;
+    private final FilterService filterService;
+    private final CaseService caseService;
+    private final ParametersService parametersService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
 
@@ -67,7 +67,7 @@ public class ExploreService {
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, null, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, userId, 0L, description);
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
@@ -79,7 +79,7 @@ public class ExploreService {
 
     public void createCase(String caseName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
         UUID uuid = caseService.importCase(caseFile);
-        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, null, userId, 0L, description),
+        directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, userId, 0L, description),
                 parentDirectoryUuid, userId);
     }
 
@@ -89,8 +89,7 @@ public class ExploreService {
     }
 
     public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                null, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
         contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
@@ -105,8 +104,7 @@ public class ExploreService {
     }
 
     public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                null, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
         contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
@@ -117,7 +115,7 @@ public class ExploreService {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                CONTINGENCY_LIST, new AccessRightsAttributes(elementAttribute.getAccessRights().isPrivate()), userId, 0L, null);
+                CONTINGENCY_LIST, userId, 0L, null);
         contingencyListService.newScriptFromFormContingencyList(id, newElementAttributes.getElementUuid());
         directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
     }
@@ -135,15 +133,13 @@ public class ExploreService {
     }
 
     public void createIdentifierContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST,
-                null, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
         contingencyListService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER,
-                null, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, userId, 0, description);
         filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
@@ -159,7 +155,7 @@ public class ExploreService {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                FILTER, new AccessRightsAttributes(elementAttribute.getAccessRights().isPrivate()), userId, 0, null);
+                FILTER, userId, 0, null);
         filterService.insertNewScriptFromFilter(filterId, newElementAttributes.getElementUuid());
         directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
     }
@@ -177,6 +173,9 @@ public class ExploreService {
     }
 
     public void deleteElement(UUID id, String userId) {
+        // Verify if the user is allowed to delete the element.
+        // FIXME: to be deleted when it's properly handled by the gateway
+        directoryService.areDirectoryElementsDeletable(List.of(id), userId);
         try {
             directoryService.deleteElement(id, userId);
             directoryService.deleteDirectoryElement(id, userId);
@@ -188,6 +187,10 @@ public class ExploreService {
     }
 
     public void deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuids, String userId) {
+
+        // Verify if the user is allowed to delete the elements.
+        // FIXME: to be deleted when it's properly handled by the gateway
+        directoryService.areDirectoryElementsDeletable(uuids, userId);
         try {
             uuids.forEach(id -> directoryService.deleteElement(id, userId));
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
@@ -232,8 +235,7 @@ public class ExploreService {
 
     public void createParameters(String parameters, ParametersType parametersType, String parametersName, UUID parentDirectoryUuid, String userId) {
         UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
-        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(),
-                null, userId, 0, null);
+        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), userId, 0, null);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -253,7 +255,7 @@ public class ExploreService {
         // create modifications group
         UUID newModificationsUuids = networkModificationService.createNetworkModifications(modificationAttributesList);
         ElementAttributes elementAttributes = new ElementAttributes(newModificationsUuids, name, MODIFICATION,
-                        null, userId, 0L, description);
+                        userId, 0L, description);
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
 

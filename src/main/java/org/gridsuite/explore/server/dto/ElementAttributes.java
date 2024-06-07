@@ -26,8 +26,6 @@ public class ElementAttributes {
 
     private String type;
 
-    private AccessRightsAttributes accessRights;
-
     private String owner;
 
     private Long subdirectoriesCount;
@@ -36,7 +34,7 @@ public class ElementAttributes {
 
     private Map<String, Object> specificMetadata = new HashMap<>();
 
-    public ElementAttributes(UUID elementUuid, String elementName, String type, AccessRightsAttributes accessRights, String owner, long subdirectoriesCount, String description) {
-        this(elementUuid, elementName, type, accessRights, owner, subdirectoriesCount, description, null);
+    public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description) {
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null);
     }
 }
