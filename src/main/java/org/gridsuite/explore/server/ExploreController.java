@@ -309,7 +309,7 @@ public class ExploreController {
                                                                 @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                 @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createNetworkModifications(modificationAttributes, userId, name, description, parentDirectoryUuid);
+        exploreService.createCompositeModification(modificationAttributes, userId, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 

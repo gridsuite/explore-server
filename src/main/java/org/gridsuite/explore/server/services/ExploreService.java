@@ -249,12 +249,12 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createNetworkModifications(String modificationAttributesList, String userId, String name,
+    public void createCompositeModification(String modificationAttributesList, String userId, String name,
                                            String description, UUID parentDirectoryUuid) {
 
         // create modifications group
-        UUID newModificationsUuids = networkModificationService.createNetworkModifications(modificationAttributesList);
-        ElementAttributes elementAttributes = new ElementAttributes(newModificationsUuids, name, MODIFICATION,
+        UUID modificationsUuid = networkModificationService.createModification(modificationAttributesList);
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
