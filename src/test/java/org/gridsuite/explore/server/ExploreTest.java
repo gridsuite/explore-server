@@ -83,7 +83,10 @@ public class ExploreTest {
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
-    private static final String USER_WITH_CASE_LIMIT = "limitedUser";
+    private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
+    private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
+    private static final String USER_NOT_FOUND = "userNotFound";
+    private static final String USER_UNEXPECTED_ERROR = "unexpectedErrorUser";
     public static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     public static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
     public static final String FILTER = "FILTER";
@@ -303,14 +306,26 @@ public class ExploreTest {
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT + "/profile/max-cases")) {
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
                         return new MockResponse().setBody("3").setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/profile/max-cases")) {
+                        return new MockResponse().setBody("5").setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/profile/max-cases")) {
+                        return new MockResponse().setResponseCode(404)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/profile/max-cases")) {
+                        return new MockResponse().setResponseCode(500)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/users/.*/profile/max-cases")) {
                         return new MockResponse().setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT + "/cases/count")) {
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/cases/count")) {
                         return new MockResponse().setBody("4").setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/cases/count")) {
+                        return new MockResponse().setBody("2").setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/users/.*/cases/count")) {
                         return new MockResponse().setBody("0").setResponseCode(200)
@@ -775,7 +790,7 @@ public class ExploreTest {
         //test create a study with a user that already exceeded his cases limit
         MvcResult result = mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                         .param("duplicateCase", "false")
-                        .header("userId", USER_WITH_CASE_LIMIT)
+                        .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
                         .param("caseFormat", "XIIDM")
                         .contentType(APPLICATION_JSON)
                 ).andExpect(status().isForbidden())
@@ -785,14 +800,14 @@ public class ExploreTest {
         //test duplicate a study with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER_WITH_CASE_LIMIT)
+                .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
         ).andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
 
         //test duplicate a case with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT))
+                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_EXCEEDED))
                 .andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
@@ -803,12 +818,119 @@ public class ExploreTest {
 
             result = mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER_WITH_CASE_LIMIT)
+                            .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isForbidden())
                     .andReturn();
             assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
+        }
+    }
+
+    @Test
+    public void testMaxCaseCreationNotExceeded() throws Exception {
+
+        //test create a study with a user that hasn't already exceeded his cases limit
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                        .param("duplicateCase", "false")
+                        .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
+                        .param("caseFormat", "XIIDM")
+                        .contentType(APPLICATION_JSON)
+                ).andExpect(status().isOk());
+
+        //test duplicate a study with a user that hasn't already exceeded his cases limit
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
+                        .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
+                ).andExpect(status().isOk());
+
+        //test duplicate a case with a user that hasn't already exceeded his cases limit
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
+                .andExpect(status().isOk());
+
+        //test create a case with a user that hasn't already exceeded his cases limit
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
+
+            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn();
+        }
+    }
+
+    @Test
+    public void testMaxCaseCreationProfileNotSet() throws Exception {
+
+        //test create a study with a user that has no profile to limit his case creation
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                .param("duplicateCase", "false")
+                .header("userId", USER_NOT_FOUND)
+                .param("caseFormat", "XIIDM")
+                .contentType(APPLICATION_JSON)
+        ).andExpect(status().isOk());
+
+        //test duplicate a study with a user that has no profile to limit his case creation
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
+                .header("userId", USER_NOT_FOUND)
+        ).andExpect(status().isOk());
+
+        //test duplicate a case with a user that has no profile to limit his case creation
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_NOT_FOUND))
+                .andExpect(status().isOk());
+
+        //test create a case with a user that has no profile to limit his case creation
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
+
+            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER_NOT_FOUND)
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                    )
+                    .andExpect(status().isOk())
+                    .andReturn();
+        }
+    }
+
+    @Test
+    public void testMaxCaseCreationWithRemoteException() throws Exception {
+
+        //test create a study with a remote unexpected exception
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+                .param("duplicateCase", "false")
+                .header("userId", USER_UNEXPECTED_ERROR)
+                .param("caseFormat", "XIIDM")
+                .contentType(APPLICATION_JSON)
+        ).andExpect(status().isBadRequest());
+
+        //test duplicate a study with a remote unexpected exception
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
+                .header("userId", USER_UNEXPECTED_ERROR)
+        ).andExpect(status().isBadRequest());
+
+        //test duplicate a case with a remote unexpected exception
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_UNEXPECTED_ERROR))
+                .andExpect(status().isBadRequest());
+
+        //test create a case with a remote unexpected exception
+        try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
+            MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, "text/xml", is);
+
+            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                            STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .header("userId", USER_UNEXPECTED_ERROR)
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                    )
+                    .andExpect(status().isBadRequest());
         }
     }
 }
