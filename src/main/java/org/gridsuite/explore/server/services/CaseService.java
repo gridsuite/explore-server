@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
 
 @Service
 public class CaseService implements IDirectoryElementsService {
@@ -41,14 +42,6 @@ public class CaseService implements IDirectoryElementsService {
             RestTemplate restTemplate) {
         this.caseServerBaseUri = studyServerBaseUri;
         this.restTemplate = restTemplate;
-    }
-
-    private static ExploreException wrapRemoteError(String response, HttpStatusCode statusCode) {
-        if (!"".equals(response)) {
-            throw new ExploreException(ExploreException.Type.REMOTE_ERROR, response);
-        } else {
-            throw new ExploreException(ExploreException.Type.REMOTE_ERROR, "{\"message\": " + statusCode + "\"}");
-        }
     }
 
     public void setBaseUri(String actionsServerBaseUri) {

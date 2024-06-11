@@ -19,7 +19,8 @@ public class ExploreException extends RuntimeException {
         UNKNOWN_ELEMENT_TYPE,
         REMOTE_ERROR,
         IMPORT_CASE_FAILED,
-        INCORRECT_CASE_FILE
+        INCORRECT_CASE_FILE,
+        MAX_ELEMENTS_EXCEEDED,
     }
 
     private final Type type;

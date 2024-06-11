@@ -42,6 +42,8 @@ public class RestResponseEntityExceptionHandler {
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(exception.getMessage());
             case UNKNOWN_ELEMENT_TYPE:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(UNKNOWN_ELEMENT_TYPE);
+            case MAX_ELEMENTS_EXCEEDED:
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(MAX_ELEMENTS_EXCEEDED);
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
