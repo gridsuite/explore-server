@@ -824,6 +824,7 @@ public class ExploreTest {
                     .andExpect(status().isForbidden())
                     .andReturn();
             assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
+            assertTrue(result.getResponse().getContentAsString().contains("max allowed cases : 3"));
         }
     }
 
