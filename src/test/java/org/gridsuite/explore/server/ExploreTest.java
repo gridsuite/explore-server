@@ -284,7 +284,7 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/network-modifications")) {
                     return new MockResponse().setBody(modificationIdsAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/composite/network-modifications")) {
+                } else if (path.matches("/v1/network-composite-modifications")) {
                     return new MockResponse().setBody(modificationGroupIdAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
@@ -729,7 +729,7 @@ public class ExploreTest {
 
     @Test
     @SneakyThrows
-    public void testcreateNetworkModifications() {
+    public void testCreateNetworkModifications() {
         final String body = mapper.writeValueAsString(List.of(
                 new ElementAttributes(MODIFICATION_UUID, "one modif", "", USER1, 0L, "a description"),
                 new ElementAttributes(UUID.randomUUID(), "2nd modif", "", USER1, 0L, "a description")
