@@ -56,13 +56,13 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
-    public UUID createModification(String modificationsUuid) {
+    public UUID createNetworkCompositeModification(String modificationAttributes) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + COMPOSITE + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationsUuid, headers), new ParameterizedTypeReference<UUID>() { })
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationAttributes, headers), new ParameterizedTypeReference<UUID>() { })
                 .getBody();
     }
 
