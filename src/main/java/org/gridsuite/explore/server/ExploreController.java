@@ -56,6 +56,7 @@ public class ExploreController {
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader("userId") String userId,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
+        exploreService.assertCanCreateCase(userId);
         CaseInfo caseInfo = new CaseInfo(caseUuid, caseFormat);
         exploreService.createStudy(studyName, caseInfo, description, userId, parentDirectoryUuid, importParams, duplicateCase);
         return ResponseEntity.ok().build();
@@ -67,6 +68,7 @@ public class ExploreController {
     public ResponseEntity<Void> duplicateStudy(@RequestParam("duplicateFrom") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                @RequestHeader("userId") String userId) {
+        exploreService.assertCanCreateCase(userId);
         exploreService.duplicateStudy(studyId, targetDirectoryId, userId);
         return ResponseEntity.ok().build();
     }
@@ -79,6 +81,7 @@ public class ExploreController {
                                            @RequestParam("description") String description,
                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                            @RequestHeader("userId") String userId) {
+        exploreService.assertCanCreateCase(userId);
         exploreService.createCase(caseName, caseFile, description, userId, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
@@ -90,6 +93,7 @@ public class ExploreController {
             @RequestParam("duplicateFrom") UUID caseId,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
             @RequestHeader("userId") String userId) {
+        exploreService.assertCanCreateCase(userId);
         exploreService.duplicateCase(caseId, targetDirectoryId, userId);
         return ResponseEntity.ok().build();
     }

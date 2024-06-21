@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
-import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 
 /**
@@ -47,15 +46,16 @@ public class ExploreService {
     private final ParametersService parametersService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
+    private final UserAdminService userAdminService;
 
     public ExploreService(
-        DirectoryService directoryService,
-        StudyService studyService,
-        ContingencyListService contingencyListService,
-        FilterService filterService,
-        NetworkModificationService networkModificationService,
-        CaseService caseService,
-        ParametersService parametersService) {
+            DirectoryService directoryService,
+            StudyService studyService,
+            ContingencyListService contingencyListService,
+            FilterService filterService,
+            NetworkModificationService networkModificationService,
+            CaseService caseService,
+            ParametersService parametersService, UserAdminService userAdminService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -64,6 +64,7 @@ public class ExploreService {
         this.networkModificationService = networkModificationService;
         this.caseService = caseService;
         this.parametersService = parametersService;
+        this.userAdminService = userAdminService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -274,5 +275,15 @@ public class ExploreService {
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
+    }
+
+    public void assertCanCreateCase(String userId) {
+        Integer userMaxAllowedStudiesAndCases = userAdminService.getUserMaxAllowedCases(userId);
+        if (userMaxAllowedStudiesAndCases != null) {
+            int userCasesCount = directoryService.getUserCasesCount(userId);
+            if (userCasesCount >= userMaxAllowedStudiesAndCases) {
+                throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+            }
+        }
     }
 }

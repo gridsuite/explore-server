@@ -39,4 +39,7 @@ gridsuite:
     -
       name: sensitivity-analysis-server
       base-uri: http://localhost:5030
+    -
+      name: user-admin-server
+      base-uri: http://localhost:5033
 
