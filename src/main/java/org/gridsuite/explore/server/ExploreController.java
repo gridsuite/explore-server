@@ -304,12 +304,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/modifications")
     @Operation(summary = "create some modification elements from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory")})
-    public ResponseEntity<Void> createNetworkModifications(@RequestBody List<UUID> modificationAttributes,
+    public ResponseEntity<Void> createNetworkModifications(@RequestBody String modificationAttributes,
                                                                 @RequestParam(QUERY_PARAM_NAME) String name,
                                                                 @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                                 @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createNetworkCompositeModification(modificationAttributes, userId, name, description, parentDirectoryUuid);
+        exploreService.createCompositeModification(modificationAttributes, userId, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
