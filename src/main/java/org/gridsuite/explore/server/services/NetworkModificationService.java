@@ -30,8 +30,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
     public static final String UUIDS = "uuids";
-    public static final String COMPOSITE = "composite";
-
+    public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
@@ -56,13 +55,13 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
-    public UUID createModification(String modificationsUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + COMPOSITE + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+    public UUID createCompositeModifications(List<UUID> modificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationsUuid, headers), new ParameterizedTypeReference<UUID>() { })
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<UUID>() { })
                 .getBody();
     }
 

@@ -212,7 +212,7 @@ public class ExploreService {
     }
 
     private void updateElementName(UUID id, String name, String userId) {
-        /** if the name is empty, no need to call directory-server */
+        // if the name is empty, no need to call directory-server
         if (StringUtils.isNotBlank(name)) {
             ElementAttributes elementAttributes = new ElementAttributes();
             elementAttributes.setElementName(name);
@@ -249,11 +249,11 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createCompositeModification(String modificationAttributesList, String userId, String name,
+    public void createCompositeModifications(List<UUID> modificationUuids, String userId, String name,
                                            String description, UUID parentDirectoryUuid) {
 
-        // create modifications group
-        UUID modificationsUuid = networkModificationService.createModification(modificationAttributesList);
+        // create composite modifications
+        UUID modificationsUuid = networkModificationService.createCompositeModifications(modificationUuids);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
