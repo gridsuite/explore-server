@@ -42,4 +42,7 @@ gridsuite:
     -
       name: user-admin-server
       base-uri: http://localhost:5033
+    -
+      name: shortcircuit-server
+      base-uri: http://localhost:5031
 
