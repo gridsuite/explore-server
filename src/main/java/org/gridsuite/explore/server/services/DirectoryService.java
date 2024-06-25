@@ -188,6 +188,19 @@ public class DirectoryService implements IDirectoryElementsService {
         }
     }
 
+    public int getUserCasesCount(String userId) {
+        String path = UriComponentsBuilder
+                .fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "users/{userId}/cases/count")
+                .buildAndExpand(userId)
+                .toUriString();
+
+        Integer casesCount = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, Integer.class).getBody();
+        if (casesCount == null) {
+            throw new ExploreException(REMOTE_ERROR, "Could not get cases count");
+        }
+        return casesCount;
+    }
+
     public void notifyDirectoryChanged(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
                 .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
