@@ -77,7 +77,6 @@ public class ExploreTest {
     private static final UUID CASE_COPY_UUID = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_COPY_UUID = UUID.randomUUID();
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
-    private static final UUID MODIFICATION_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
@@ -153,7 +152,6 @@ public class ExploreTest {
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
-        String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_COPY_UUID));
         String compositeModificationIdAsString = mapper.writeValueAsString(MODIFICATION_UUID);
         String newStudyUuidAsString = mapper.writeValueAsString(STUDY_COPY_UUID);
         String newCaseUuidAsString = mapper.writeValueAsString(CASE_COPY_UUID);
@@ -359,7 +357,7 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("\\/v1\\/elements\\?ids=([^,]+,){2,}[^,]+$")) {
+                    } else if (path.matches("/v1/elements\\?ids=([^,]+,){2,}[^,]+$")) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
