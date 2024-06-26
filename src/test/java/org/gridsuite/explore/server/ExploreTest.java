@@ -77,7 +77,6 @@ public class ExploreTest {
     private static final UUID CASE_COPY_UUID = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_COPY_UUID = UUID.randomUUID();
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
-    private static final UUID MODIFICATION_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
@@ -153,7 +152,7 @@ public class ExploreTest {
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
-        String modificationIdsAsString = mapper.writeValueAsString(Map.of(MODIFICATION_UUID, MODIFICATION_COPY_UUID));
+        String compositeModificationIdAsString = mapper.writeValueAsString(MODIFICATION_UUID);
         String newStudyUuidAsString = mapper.writeValueAsString(STUDY_COPY_UUID);
         String newCaseUuidAsString = mapper.writeValueAsString(CASE_COPY_UUID);
         String newContingencyUuidAsString = mapper.writeValueAsString(CONTINGENCY_LIST_COPY_UUID);
@@ -288,8 +287,8 @@ public class ExploreTest {
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse().setResponseCode(200);
-                } else if (path.matches("/v1/network-modifications")) {
-                    return new MockResponse().setBody(modificationIdsAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/network-composite-modifications")) {
+                    return new MockResponse().setBody(compositeModificationIdAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
@@ -358,7 +357,7 @@ public class ExploreTest {
                         return new MockResponse().setResponseCode(200);
                     } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID)) {
                         return new MockResponse().setResponseCode(200);
-                    } else if (path.matches("\\/v1\\/elements\\?ids=([^,]+,){2,}[^,]+$")) {
+                    } else if (path.matches("/v1/elements\\?ids=([^,]+,){2,}[^,]+$")) {
                         return new MockResponse().setResponseCode(200);
                     }
                     return new MockResponse().setResponseCode(404);
@@ -757,16 +756,13 @@ public class ExploreTest {
 
     @Test
     @SneakyThrows
-    public void testcreateNetworkModifications() {
-        final String body = mapper.writeValueAsString(List.of(
-                new ElementAttributes(MODIFICATION_UUID, "one modif", "", USER1, 0L, "a description"),
-                new ElementAttributes(UUID.randomUUID(), "2nd modif", "", USER1, 0L, "a description")
-                )
-        );
-        mockMvc.perform(post("/v1/explore/modifications?parentDirectoryUuid={parentDirectoryUuid}", PARENT_DIRECTORY_UUID)
+    public void testCreateNetworkCompositeModifications() {
+        List<UUID> modificationUuids = Arrays.asList(MODIFICATION_UUID, UUID.randomUUID());
+        mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                "nameModif", "descModif", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body)
+                .content(mapper.writeValueAsString(modificationUuids))
         ).andExpect(status().isOk());
     }
 
