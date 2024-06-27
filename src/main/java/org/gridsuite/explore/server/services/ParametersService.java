@@ -37,7 +37,8 @@ public class ParametersService implements IDirectoryElementsService {
     private final Map<ParametersType, String> genericParametersServices = Map.of(ParametersType.VOLTAGE_INIT_PARAMETERS, "voltage-init-server",
             ParametersType.SECURITY_ANALYSIS_PARAMETERS, "security-analysis-server",
             ParametersType.LOADFLOW_PARAMETERS, "loadflow-server",
-            ParametersType.SENSITIVITY_PARAMETERS, "sensitivity-analysis-server");
+            ParametersType.SENSITIVITY_PARAMETERS, "sensitivity-analysis-server",
+            ParametersType.SHORT_CIRCUIT_PARAMETERS, "shortcircuit-server");
 
     private RemoteServicesProperties remoteServicesProperties;
 

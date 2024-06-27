@@ -40,6 +40,9 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
             + "elements";
 
+    private static final String ELEMENTS_SERVER_ELEMENT_PATH = ELEMENTS_SERVER_ROOT_PATH + DELIMITER
+            + "{elementUuid}";
+
     private static final String PARAM_IDS = "ids";
     private static final String PARAM_FOR_DELETION = "forDeletion";
 
@@ -53,17 +56,19 @@ public class DirectoryService implements IDirectoryElementsService {
             CaseService caseService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
-        this.genericServices = Map.of(
-                FILTER, filterService,
-                CONTINGENCY_LIST, contingencyListService,
-                STUDY, studyService,
-                DIRECTORY, this,
-                MODIFICATION, networkModificationService,
-                CASE, caseService,
-                ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService,
-                ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService,
-                ParametersType.LOADFLOW_PARAMETERS.name(), parametersService,
-                ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService);
+        this.genericServices = Map.ofEntries(
+            Map.entry(FILTER, filterService),
+            Map.entry(CONTINGENCY_LIST, contingencyListService),
+            Map.entry(STUDY, studyService),
+            Map.entry(DIRECTORY, this),
+            Map.entry(MODIFICATION, networkModificationService),
+            Map.entry(CASE, caseService),
+            Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
+            Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
+            Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
+            Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
+            Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService)
+        );
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
@@ -108,7 +113,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
                 .buildAndExpand(elementUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -162,7 +167,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
                 .buildAndExpand(elementUuid)
                 .toUriString();
         return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class)
@@ -181,11 +186,7 @@ public class DirectoryService implements IDirectoryElementsService {
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null,
                 new ParameterizedTypeReference<List<ElementAttributes>>() {
                 }).getBody();
-        if (elementAttributesList != null) {
-            return elementAttributesList;
-        } else {
-            return Collections.emptyList();
-        }
+        return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
     }
 
     public int getUserCasesCount(String userId) {
@@ -203,7 +204,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void notifyDirectoryChanged(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}/notification?type={update_directory}")
+                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/notification?type={update_directory}")
                 .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
                 .toUriString();
 
@@ -223,11 +224,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
                 }).getBody();
 
-        if (elementAttributesList != null) {
-            return elementAttributesList;
-        } else {
-            return Collections.emptyList();
-        }
+        return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
     }
 
     public void deleteElement(UUID id, String userId) {
@@ -267,7 +264,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/{elementUuid}")
+                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
                 .buildAndExpand(elementUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
