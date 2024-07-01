@@ -198,6 +198,7 @@ public class ExploreService {
             LOGGER.error(e.toString(), e);
         } finally {
             directoryService.deleteElementsFromDirectory(uuids, parentDirectoryUuids, userId);
+            //
         }
     }
 
@@ -275,4 +276,28 @@ public class ExploreService {
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
     }
+
+    public void updateStudy(UUID id, ElementAttributes elementAttributes, String userId) {
+        directoryService.updateElement(id, elementAttributes, userId);
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        // send notification if the study name was updated
+        if (STUDY.equals(elementsInfos.getType()) && StringUtils.isNotBlank(elementAttributes.getElementName())) {
+            studyService.notifyStudyUpdate(id, userId);
+        }
+    }
+
+    public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
+        directoryService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
+        //send notification to all studies
+        List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null);
+        elementsAttributes.forEach(elementAttributes -> notifyStudyUpdate(elementAttributes, userId));
+
+    }
+
+    private void notifyStudyUpdate(ElementAttributes element, String userId) {
+        if (STUDY.equals(element.getType())) {
+            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
+        }
+    }
+
 }
