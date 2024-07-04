@@ -277,7 +277,7 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
     }
 
-    public void updateStudy(UUID id, ElementAttributes elementAttributes, String userId) {
+    public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated

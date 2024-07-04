@@ -318,15 +318,15 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "/explore/studies/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Modify a study")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The study has been modified successfully")})
-    public ResponseEntity<Void> updateStudy(
+    @PutMapping(value = "/explore/elements/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify an element")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
+    public ResponseEntity<Void> updateElement(
             @PathVariable UUID id,
             @RequestBody ElementAttributes elementAttributes,
             @RequestHeader("userId") String userId) {
 
-        exploreService.updateStudy(id, elementAttributes, userId);
+        exploreService.updateElement(id, elementAttributes, userId);
         return ResponseEntity.ok().build();
     }
 
