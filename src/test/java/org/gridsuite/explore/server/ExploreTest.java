@@ -95,6 +95,7 @@ public class ExploreTest {
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
+    private static final UUID ELEMENT_UUID = UUID.randomUUID();
 
     @Autowired
     private MockMvc mockMvc;
@@ -159,6 +160,9 @@ public class ExploreTest {
         String newFilterUuidAsString = mapper.writeValueAsString(FILTER_COPY_UUID);
         String newParametersUuidAsString = mapper.writeValueAsString(PARAMETER_COPY_UUID);
         String newElementUuidAsString = mapper.writeValueAsString(ELEMENT_COPY_UUID);
+        String newElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", USER1, 0, null));
+        String listElementsAsString = "[" + newElementAttributesAsString + "," + publicStudyAttributesAsString + "]";
+
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
@@ -168,6 +172,8 @@ public class ExploreTest {
 
                 if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(404);
+                } else if (path.matches("/v1/studies/.*/notification?type=metadata_updated") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(newStudyUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -241,6 +247,15 @@ public class ExploreTest {
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse().setBody(listElementsAttributesAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements\\?ids=" + ELEMENT_UUID + "," + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse().setBody(listElementsAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements/" + ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements\\?targetDirectoryUuid=" + PARENT_DIRECTORY_UUID) && "PUT".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -292,6 +307,8 @@ public class ExploreTest {
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
+                        return new MockResponse().setBody(newElementAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
                         return new MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
@@ -329,6 +346,8 @@ public class ExploreTest {
                     } else if (path.matches("/v1/users/.*/cases/count")) {
                         return new MockResponse().setBody("0").setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
+                        return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -929,5 +948,29 @@ public class ExploreTest {
                     )
                     .andExpect(status().isBadRequest());
         }
+    }
+
+    @Test
+    public void testUpdateElement() throws Exception {
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementName(STUDY1);
+        mockMvc.perform(put("/v1/explore/elements/{id}",
+                ELEMENT_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(elementAttributes))
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testMoveElementsDirectory() throws Exception {
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementName(STUDY1);
+        mockMvc.perform(put("/v1/explore/elements?targetDirectoryUuid={parentDirectoryUuid}",
+                PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(List.of(ELEMENT_UUID, PUBLIC_STUDY_UUID)))
+        ).andExpect(status().isOk());
     }
 }
