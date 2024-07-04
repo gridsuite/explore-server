@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_ALLOWED;
-import static org.gridsuite.explore.server.ExploreException.Type.UNKNOWN_ELEMENT_TYPE;
+import static org.gridsuite.explore.server.ExploreException.Type.*;
 
 
 /**
@@ -47,15 +46,16 @@ public class ExploreService {
     private final ParametersService parametersService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
+    private final UserAdminService userAdminService;
 
     public ExploreService(
-        DirectoryService directoryService,
-        StudyService studyService,
-        ContingencyListService contingencyListService,
-        FilterService filterService,
-        NetworkModificationService networkModificationService,
-        CaseService caseService,
-        ParametersService parametersService) {
+            DirectoryService directoryService,
+            StudyService studyService,
+            ContingencyListService contingencyListService,
+            FilterService filterService,
+            NetworkModificationService networkModificationService,
+            CaseService caseService,
+            ParametersService parametersService, UserAdminService userAdminService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -64,6 +64,7 @@ public class ExploreService {
         this.networkModificationService = networkModificationService;
         this.caseService = caseService;
         this.parametersService = parametersService;
+        this.userAdminService = userAdminService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -198,7 +199,6 @@ public class ExploreService {
             LOGGER.error(e.toString(), e);
         } finally {
             directoryService.deleteElementsFromDirectory(uuids, parentDirectoryUuids, userId);
-            //
         }
     }
 
@@ -213,7 +213,7 @@ public class ExploreService {
     }
 
     private void updateElementName(UUID id, String name, String userId) {
-        /** if the name is empty, no need to call directory-server */
+        // if the name is empty, no need to call directory-server
         if (StringUtils.isNotBlank(name)) {
             ElementAttributes elementAttributes = new ElementAttributes();
             elementAttributes.setElementName(name);
@@ -250,23 +250,14 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createNetworkModifications(List<ElementAttributes> modificationAttributesList, String userId, UUID parentDirectoryUuid) {
-        List<UUID> existingModificationsUuids = modificationAttributesList.stream()
-                .map(ElementAttributes::getElementUuid)
-                .toList();
+    public void createCompositeModifications(List<UUID> modificationUuids, String userId, String name,
+                                           String description, UUID parentDirectoryUuid) {
 
-        // create all duplicated modifications
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(existingModificationsUuids);
-
-        // create all corresponding directory elements
-        modificationAttributesList.forEach(m -> {
-            final UUID newId = newModificationsUuids.get(m.getElementUuid());
-            if (newId != null) {
-                // an Id may be null if a duplication could not succeed (ex: we provide a bad uuid)
-                ElementAttributes elementAttributes = new ElementAttributes(newId, m.getElementName(), MODIFICATION, userId, 0L, m.getDescription());
-                directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
-            }
-        });
+        // create composite modifications
+        UUID modificationsUuid = networkModificationService.createCompositeModifications(modificationUuids);
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
+                        userId, 0L, description);
+        directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
 
     public void duplicateNetworkModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
@@ -275,6 +266,16 @@ public class ExploreService {
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
+    }
+
+    public void assertCanCreateCase(String userId) {
+        Integer userMaxAllowedStudiesAndCases = userAdminService.getUserMaxAllowedCases(userId);
+        if (userMaxAllowedStudiesAndCases != null) {
+            int userCasesCount = directoryService.getUserCasesCount(userId);
+            if (userCasesCount >= userMaxAllowedStudiesAndCases) {
+                throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+            }
+        }
     }
 
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
