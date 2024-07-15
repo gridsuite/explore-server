@@ -282,9 +282,7 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated
-        if (STUDY.equals(elementsInfos.getType()) && StringUtils.isNotBlank(elementAttributes.getElementName())) {
-            studyService.notifyStudyUpdate(id, userId);
-        }
+        notifyStudyUpdate(elementsInfos, userId);
     }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
