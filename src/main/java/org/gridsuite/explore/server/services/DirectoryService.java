@@ -45,6 +45,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String PARAM_IDS = "ids";
     private static final String PARAM_FOR_DELETION = "forDeletion";
+    private static final String PARAM_TARGET_DIRECTORY_UUID = "targetDirectoryUuid";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -174,7 +175,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .getBody();
     }
 
-    private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
+    public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
 
@@ -280,5 +281,18 @@ public class DirectoryService implements IDirectoryElementsService {
     public void delete(UUID id, String userId) {
         List<ElementAttributes> elementAttributesList = getDirectoryElements(id, userId);
         elementAttributesList.forEach(elementAttributes -> deleteElement(elementAttributes.getElementUuid(), userId));
+    }
+
+    public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
+        String path = UriComponentsBuilder
+                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(elementsUuids, headers);
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 }

@@ -326,4 +326,32 @@ public class ExploreController {
         exploreService.duplicateNetworkModifications(networkModificationId, targetDirectoryId, userId);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping(value = "/explore/elements/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify an element")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
+    public ResponseEntity<Void> updateElement(
+            @PathVariable UUID id,
+            @RequestBody ElementAttributes elementAttributes,
+            @RequestHeader("userId") String userId) {
+
+        exploreService.updateElement(id, elementAttributes, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/elements", params = "targetDirectoryUuid")
+    @Operation(summary = "Move elements within directory tree")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Elements was successfully updated"),
+        @ApiResponse(responseCode = "404", description = "The elements or the targeted directory was not found"),
+        @ApiResponse(responseCode = "403", description = "Not authorized execute this update")
+    })
+    public ResponseEntity<Void> moveElementsDirectory(
+            @RequestParam UUID targetDirectoryUuid,
+            @RequestBody List<UUID> elementsUuids,
+            @RequestHeader("userId") String userId) {
+        exploreService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
+    }
+
 }

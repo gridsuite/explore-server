@@ -24,6 +24,7 @@ public class StudyService implements IDirectoryElementsService {
     private static final String STUDY_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
+    private static final String NOTIFICATION_TYPE_METADATA_UPDATED = "metadata_updated";
     private final RestTemplate restTemplate;
     private String studyServerBaseUri;
 
@@ -90,5 +91,16 @@ public class StudyService implements IDirectoryElementsService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(HEADER_USER_ID, userId);
         return headers;
+    }
+
+    public ResponseEntity<Void> notifyStudyUpdate(UUID studyUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                        "/studies/{studyUuid}/notification?type={metadata_updated}")
+                .buildAndExpand(studyUuid, NOTIFICATION_TYPE_METADATA_UPDATED)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 }
