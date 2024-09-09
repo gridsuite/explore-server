@@ -95,21 +95,29 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public ElementAttributes duplicateElement(UUID elementUuid, UUID newElementUuid, UUID targetDirectoryId, String userId) {
-        UriComponentsBuilder uri = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam("duplicateFrom", elementUuid)
-                .queryParam("newElementUuid", newElementUuid);
-        if (targetDirectoryId != null) {
-            uri.queryParam("targetDirectoryId", targetDirectoryId);
+        int retryCount = 0;
+        while (retryCount < 3) {
+            try {
+                UriComponentsBuilder uri = UriComponentsBuilder
+                        .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                        .queryParam("duplicateFrom", elementUuid)
+                        .queryParam("newElementUuid", newElementUuid);
+                if (targetDirectoryId != null) {
+                    uri.queryParam("targetDirectoryId", targetDirectoryId);
+                }
+                String path = uri.buildAndExpand().toUriString();
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HEADER_USER_ID, userId);
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), ElementAttributes.class).getBody();
+            } catch (HttpStatusCodeException e) {
+                retryCount++;
+                if (retryCount == 3) {
+                    throw e;
+                }
+            }
         }
-        String path = uri.buildAndExpand()
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), ElementAttributes.class)
-                .getBody();
+        return null; // This line should never be reached
     }
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
