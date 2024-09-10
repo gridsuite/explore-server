@@ -46,7 +46,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_IDS = "ids";
     private static final String PARAM_FOR_DELETION = "forDeletion";
     private static final String PARAM_TARGET_DIRECTORY_UUID = "targetDirectoryUuid";
-
+    private static final int MAX_RETRY = 3;
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
     private String directoryServerBaseUri;
@@ -96,7 +96,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes duplicateElement(UUID elementUuid, UUID newElementUuid, UUID targetDirectoryId, String userId) {
         int retryCount = 0;
-        while (retryCount < 3) {
+        while (retryCount < MAX_RETRY) {
             try {
                 UriComponentsBuilder uri = UriComponentsBuilder
                         .fromPath(ELEMENTS_SERVER_ROOT_PATH)
@@ -111,8 +111,12 @@ public class DirectoryService implements IDirectoryElementsService {
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), ElementAttributes.class).getBody();
             } catch (HttpStatusCodeException e) {
-                retryCount++;
-                if (retryCount == 3) {
+                if (e.getStatusCode() == HttpStatus.CONFLICT) { // if the newElementUuid is already used, retry
+                    retryCount++;
+                    if (retryCount == MAX_RETRY) {
+                        throw e;
+                    }
+                } else { // for other errors, throw the exception without retrying
                     throw e;
                 }
             }
