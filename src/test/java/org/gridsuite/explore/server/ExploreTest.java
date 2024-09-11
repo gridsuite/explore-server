@@ -67,6 +67,7 @@ public class ExploreTest {
     private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
     private static final UUID NOT_FOUND_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
+    private static final UUID CONFLICT_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
@@ -174,6 +175,9 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(404);
                 } else if (path.matches("/v1/studies/.*/notification?type=metadata_updated") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200);
+                } else if (path.matches("/v1/studies\\?duplicateFrom=" + CONFLICT_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setBody(newStudyUuidAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setBody(newStudyUuidAsString).setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -258,6 +262,9 @@ public class ExploreTest {
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse().setBody(newElementUuidAsString).setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/elements\\?duplicateFrom=" + CONFLICT_STUDY_UUID + "&newElementUuid=.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse().setResponseCode(409).setBody("conflict")
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse().setResponseCode(200)
@@ -667,6 +674,14 @@ public class ExploreTest {
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDuplicateStudyConflict() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                CONFLICT_STUDY_UUID, PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isConflict());
     }
 
     @Test
