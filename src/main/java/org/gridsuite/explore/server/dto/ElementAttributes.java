@@ -32,9 +32,19 @@ public class ElementAttributes {
 
     private String description;
 
+    private String lastModifiedBy;
+
     private Map<String, Object> specificMetadata = new HashMap<>();
 
+    // TODO do we need to pass lastModifiedBy like other attributes and remove null from this constructor, and
+    // change all places calling the constructor to explicitly pass lastModifiedBy ? or is it like specificMetadata ?
+    // and remove the other constructor because it becomes the AllArgsConstructor
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description) {
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null);
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null);
     }
+
+    public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, Map<String, Object> specificMetadata) {
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, specificMetadata);
+    }
+
 }

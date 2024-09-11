@@ -20,6 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.ExploreException.Type.*;
 import static org.gridsuite.explore.server.services.ExploreService.*;
@@ -50,11 +51,12 @@ public class DirectoryService implements IDirectoryElementsService {
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
     private String directoryServerBaseUri;
+    private final UserIdentityService userIdentityService;
 
     @Autowired
     public DirectoryService(
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-            CaseService caseService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+            CaseService caseService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties, UserIdentityService userIdentityService) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
         this.genericServices = Map.ofEntries(
@@ -70,6 +72,7 @@ public class DirectoryService implements IDirectoryElementsService {
             Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService)
         );
+        this.userIdentityService = userIdentityService;
     }
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
@@ -294,5 +297,13 @@ public class DirectoryService implements IDirectoryElementsService {
 
         HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(elementsUuids, headers);
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
+    public String getUsersIdentities(List<UUID> elementsUuids) {
+        // this returns names for owner and lastmodifiedby,
+        // if we need it in the future, we can do separate requests.
+        List<String> subs = this.getElementsInfos(elementsUuids, null).stream()
+                .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().toList();
+        return userIdentityService.getUserIdentities(subs);
     }
 }
