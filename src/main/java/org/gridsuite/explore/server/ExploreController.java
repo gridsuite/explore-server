@@ -68,7 +68,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies", params = "duplicateFrom")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server"),
-        @ApiResponse(responseCode = "409", description = "An element with the same name and type already exists in the directory")
+        @ApiResponse(responseCode = "403", description = "Access forbidden: An element with the same name and type already exists in the directory")
     })
     public ResponseEntity<Void> duplicateStudy(@RequestParam("duplicateFrom") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
@@ -94,7 +94,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases", params = "duplicateFrom")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server"),
-        @ApiResponse(responseCode = "409", description = "An element with the same name and type already exists in the directory")
+        @ApiResponse(responseCode = "403", description = "Access forbidden: An element with the same name and type already exists in the directory")
     })
     public ResponseEntity<Void> duplicateCase(
             @RequestParam("duplicateFrom") UUID caseId,
@@ -120,7 +120,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/contingency-lists", params = "duplicateFrom")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created"),
-        @ApiResponse(responseCode = "409", description = "An element with the same name and type already exists in the directory")
+        @ApiResponse(responseCode = "403", description = "Access forbidden: An element with the same name and type already exists in the directory")
     })
     public ResponseEntity<Void> duplicateContingencyList(
             @RequestParam("duplicateFrom") UUID contingencyListUuid,
@@ -190,7 +190,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters", params = "duplicateFrom")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully"),
-        @ApiResponse(responseCode = "409", description = "An element with the same name and type already exists in the directory")
+        @ApiResponse(responseCode = "403", description = "Access forbidden: An element with the same name and type already exists in the directory")
     })
     public ResponseEntity<Void> duplicateFilter(
                                              @RequestParam("duplicateFrom") UUID filterId,
@@ -305,7 +305,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/parameters", params = "duplicateFrom")
     @Operation(summary = "Duplicate parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated"),
-        @ApiResponse(responseCode = "409", description = "An element with the same name and type already exists in the directory")
+        @ApiResponse(responseCode = "403", description = "Access forbidden: An element with the same name and type already exists in the directory")
     })
     public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
@@ -330,7 +330,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/modifications", params = "duplicateFrom")
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory"),
-        @ApiResponse(responseCode = "409", description = "An element with the same name and type already exists in the directory")
+        @ApiResponse(responseCode = "403", description = "Access forbidden: An element with the same name and type already exists in the directory")
     })
     public ResponseEntity<Void> duplicateNetworkModifications(@RequestParam("duplicateFrom") UUID networkModificationId,
                                                               @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
