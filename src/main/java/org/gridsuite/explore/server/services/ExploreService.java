@@ -36,6 +36,7 @@ public class ExploreService {
     static final String FILTER = "FILTER";
     static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
+    static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -44,6 +45,7 @@ public class ExploreService {
     private final FilterService filterService;
     private final CaseService caseService;
     private final ParametersService parametersService;
+    private final SpreadsheetConfigService spreadsheetConfigService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -55,7 +57,8 @@ public class ExploreService {
             FilterService filterService,
             NetworkModificationService networkModificationService,
             CaseService caseService,
-            ParametersService parametersService, UserAdminService userAdminService) {
+            ParametersService parametersService, UserAdminService userAdminService,
+            SpreadsheetConfigService spreadsheetConfigService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -65,6 +68,7 @@ public class ExploreService {
         this.caseService = caseService;
         this.parametersService = parametersService;
         this.userAdminService = userAdminService;
+        this.spreadsheetConfigService = spreadsheetConfigService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -248,6 +252,22 @@ public class ExploreService {
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
         UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
+    }
+
+    public void createSpreadsheetConfig(SpreadsheetConfigDto spreadsheetConfigDto, String configName, UUID parentDirectoryUuid, String userId) {
+        UUID spreadsheetConfigUuid = spreadsheetConfigService.createSpreadsheetConfig(spreadsheetConfigDto);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, userId, 0, null);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    public void updateSpreadsheetConfig(UUID id, SpreadsheetConfigDto spreadsheetConfigDto, String userId, String name) {
+        spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
+        updateElementName(id, name, userId);
+    }
+
+    public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
+        UUID newSpreadsheetConfigUuid = spreadsheetConfigService.duplicateSpreadsheetConfig(sourceId);
+        directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
     }
 
     public void createCompositeModifications(List<UUID> modificationUuids, String userId, String name,

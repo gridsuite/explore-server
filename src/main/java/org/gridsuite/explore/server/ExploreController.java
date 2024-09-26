@@ -10,11 +10,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -303,6 +305,38 @@ public class ExploreController {
                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/spreadsheet-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a spreadsheet configuration")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config created")})
+    public ResponseEntity<Void> createSpreadsheetConfig(@Valid @RequestBody SpreadsheetConfigDto spreadsheetConfigDto,
+                                                        @RequestParam("name") String configName,
+                                                        @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, parentDirectoryUuid, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PutMapping(value = "/explore/spreadsheet-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a spreadsheet configuration")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config has been successfully modified")})
+    public ResponseEntity<Void> updateSpreadsheetConfig(@PathVariable UUID id,
+                                                        @Valid @RequestBody SpreadsheetConfigDto spreadsheetConfigDto,
+                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                        @RequestParam("name") String name) {
+        exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, userId, name);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/explore/spreadsheet-configs/duplicate", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a spreadsheet configuration")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
+    public ResponseEntity<Void> duplicateSpreadsheetConfig(@RequestParam("duplicateFrom") UUID sourceId,
+                                                           @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateSpreadsheetConfig(sourceId, targetDirectoryId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping(value = "/explore/composite-modifications")
