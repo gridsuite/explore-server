@@ -13,9 +13,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.SpreadsheetConfigDto;
 import org.gridsuite.explore.server.services.*;
-import org.gridsuite.explore.server.utils.SheetType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +26,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -62,7 +59,7 @@ class SpreadsheetConfigTest {
     private static final String USER_ID = "testUser";
     private static final String CONFIG_NAME = "Test Config";
 
-    private SpreadsheetConfigDto spreadsheetConfigDto;
+    private String spreadsheetConfigJson;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -81,13 +78,7 @@ class SpreadsheetConfigTest {
         spreadsheetConfigService.setSpreadsheetConfigServerBaseUri(baseUrl);
         directoryService.setDirectoryServerBaseUri(baseUrl);
 
-        spreadsheetConfigDto = SpreadsheetConfigDto.builder()
-                .id(CONFIG_UUID)
-                .sheetType(SheetType.GENERATORS)
-                .customColumns(List.of(
-                        new SpreadsheetConfigDto.CustomColumnDto(UUID.randomUUID(), "Custom Column", "SUM(A1:A10)")
-                ))
-                .build();
+        spreadsheetConfigJson = "{\"sheetType\":\"GENERATORS\",\"customColumns\":[{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Custom Column\",\"formula\":\"SUM(A1:A10)\"}]}";
 
         mockWebServer.setDispatcher(new Dispatcher() {
             @SneakyThrows
@@ -133,7 +124,7 @@ class SpreadsheetConfigTest {
     void testCreateSpreadsheetConfig() throws Exception {
         ResultActions perform = mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(spreadsheetConfigDto))
+                .content(spreadsheetConfigJson)
                 .param("name", CONFIG_NAME)
                 .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                 .header("userId", USER_ID));
@@ -141,38 +132,13 @@ class SpreadsheetConfigTest {
     }
 
     @Test
-    void testCreateSpreadsheetConfigWithInvalidData() throws Exception {
-        spreadsheetConfigDto.setSheetType(null); // Invalid: sheetType is mandatory
-
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(spreadsheetConfigDto))
-                        .param("name", CONFIG_NAME)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void testUpdateSpreadsheetConfig() throws Exception {
         mockMvc.perform(put(BASE_URL + "/{id}", CONFIG_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(spreadsheetConfigDto))
+                        .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
                         .header("userId", USER_ID))
                 .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testUpdateSpreadsheetConfigWithInvalidData() throws Exception {
-        spreadsheetConfigDto.setSheetType(null); // Invalid: sheetType is mandatory
-
-        mockMvc.perform(put(BASE_URL + "/{id}", CONFIG_UUID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(spreadsheetConfigDto))
-                        .param("name", CONFIG_NAME)
-                        .header("userId", USER_ID))
-                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -204,7 +170,7 @@ class SpreadsheetConfigTest {
 
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(spreadsheetConfigDto))
+                        .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
@@ -222,7 +188,7 @@ class SpreadsheetConfigTest {
 
         mockMvc.perform(put(BASE_URL + "/{id}", CONFIG_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(spreadsheetConfigDto))
+                        .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
                         .header("userId", USER_ID))
                 .andExpect(status().isInternalServerError());

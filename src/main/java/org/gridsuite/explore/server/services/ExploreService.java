@@ -254,13 +254,13 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createSpreadsheetConfig(SpreadsheetConfigDto spreadsheetConfigDto, String configName, UUID parentDirectoryUuid, String userId) {
+    public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, UUID parentDirectoryUuid, String userId) {
         UUID spreadsheetConfigUuid = spreadsheetConfigService.createSpreadsheetConfig(spreadsheetConfigDto);
         ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, userId, 0, null);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void updateSpreadsheetConfig(UUID id, SpreadsheetConfigDto spreadsheetConfigDto, String userId, String name) {
+    public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String userId, String name) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
         updateElementName(id, name, userId);
     }

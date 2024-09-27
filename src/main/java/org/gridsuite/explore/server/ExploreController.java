@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
@@ -310,7 +309,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config created")})
-    public ResponseEntity<Void> createSpreadsheetConfig(@Valid @RequestBody SpreadsheetConfigDto spreadsheetConfigDto,
+    public ResponseEntity<Void> createSpreadsheetConfig(@RequestBody String spreadsheetConfigDto,
                                                         @RequestParam("name") String configName,
                                                         @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -322,7 +321,7 @@ public class ExploreController {
     @Operation(summary = "Modify a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config has been successfully modified")})
     public ResponseEntity<Void> updateSpreadsheetConfig(@PathVariable UUID id,
-                                                        @Valid @RequestBody SpreadsheetConfigDto spreadsheetConfigDto,
+                                                        @RequestBody String spreadsheetConfigDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                         @RequestParam("name") String name) {
         exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, userId, name);

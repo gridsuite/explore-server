@@ -7,7 +7,6 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
-import org.gridsuite.explore.server.dto.SpreadsheetConfigDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -42,7 +41,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         this.restTemplate = restTemplate;
     }
 
-    public UUID createSpreadsheetConfig(SpreadsheetConfigDto config) {
+    public UUID createSpreadsheetConfig(String config) {
         Objects.requireNonNull(config);
 
         var path = UriComponentsBuilder
@@ -53,7 +52,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<SpreadsheetConfigDto> httpEntity = new HttpEntity<>(config, headers);
+        HttpEntity<String> httpEntity = new HttpEntity<>(config, headers);
 
         return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
@@ -75,7 +74,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
 
-    public void updateSpreadsheetConfig(UUID configUuid, SpreadsheetConfigDto config) {
+    public void updateSpreadsheetConfig(UUID configUuid, String config) {
         Objects.requireNonNull(configUuid);
         Objects.requireNonNull(config);
 
@@ -87,7 +86,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<SpreadsheetConfigDto> httpEntity = new HttpEntity<>(config, headers);
+        HttpEntity<String> httpEntity = new HttpEntity<>(config, headers);
 
         restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
