@@ -58,7 +58,7 @@ public class RestResponseEntityExceptionHandler {
         }
         if (exception instanceof HttpStatusCodeException) {
             return ResponseEntity.status(((HttpStatusCodeException) exception).getStatusCode()).body(exception.getMessage());
-        } else if(exception instanceof HandlerMethodValidationException || exception instanceof MethodArgumentNotValidException) {
+        } else if (exception instanceof HandlerMethodValidationException || exception instanceof MethodArgumentNotValidException) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
