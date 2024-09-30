@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Achour BERRAHMA <achour.berrahma at rte-france.com>
@@ -104,6 +108,22 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
 
         restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+    }
+
+    @Override
+    public List<Map<String, Object>> getMetadata(List<UUID> configsUuids) {
+        Objects.requireNonNull(configsUuids);
+
+        var ids = configsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH + "/metadata" + "?ids=" + ids)
+                .buildAndExpand()
+                .toUriString();
+
+        return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }).getBody();
     }
 
 }
