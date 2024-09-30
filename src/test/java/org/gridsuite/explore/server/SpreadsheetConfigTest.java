@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -97,6 +97,34 @@ class SpreadsheetConfigTest {
                             .setResponseCode(201)
                             .setHeader("Content-Type", "application/json")
                             .setBody(objectMapper.writeValueAsString(UUID.randomUUID()));
+                } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/metadata\\?ids=" + CONFIG_UUID)) {
+                    Map<String, Object> metadata = new HashMap<>();
+                    metadata.put("id", CONFIG_UUID);
+                    metadata.put("sheetType", "GENERATORS");
+
+                    List<Map<String, Object>> responseList = Collections.singletonList(metadata);
+
+                    return new MockResponse()
+                            .setResponseCode(200)
+                            .setHeader("Content-Type", "application/json")
+                            .setBody(objectMapper.writeValueAsString(responseList));
+                } else if (path.matches("/v1/elements\\?ids=.*")) {
+                    ElementAttributes elementAttributes = new ElementAttributes(
+                            CONFIG_UUID,
+                            CONFIG_NAME,
+                            "SPREADSHEET_CONFIG",
+                            USER_ID,
+                            0L,
+                            null,
+                            null  // We'll set specificMetadata to null here as it's handled separately
+                    );
+
+                    List<ElementAttributes> elementAttributesList = Collections.singletonList(elementAttributes);
+
+                    return new MockResponse()
+                            .setResponseCode(200)
+                            .setHeader("Content-Type", "application/json")
+                            .setBody(objectMapper.writeValueAsString(elementAttributesList));
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     ElementAttributes elementAttributes = new ElementAttributes(CONFIG_UUID, CONFIG_NAME, "SPREADSHEET_CONFIG", USER_ID, 0L, null);
                     return new MockResponse()
@@ -208,5 +236,15 @@ class SpreadsheetConfigTest {
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void testGetSpreadsheetConfigMetadata() throws Exception {
+        mockMvc.perform(get("/v1/explore/elements/metadata")
+                        .param("ids", CONFIG_UUID.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].specificMetadata.id").value(CONFIG_UUID.toString()))
+                .andExpect(jsonPath("$[0].specificMetadata.sheetType").value("GENERATORS"));
     }
 }
