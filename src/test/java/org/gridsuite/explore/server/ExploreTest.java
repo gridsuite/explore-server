@@ -348,6 +348,9 @@ public class ExploreTest {
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/cases-alert-threshold")) {
+                        return new MockResponse().setBody("90").setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
