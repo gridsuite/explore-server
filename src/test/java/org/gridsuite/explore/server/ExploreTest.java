@@ -304,6 +304,9 @@ public class ExploreTest {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.matches("/v1/network-composite-modifications")) {
                     return new MockResponse().setBody(compositeModificationIdAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message.*")) {
+                    return new MockResponse().setResponseCode(200)
+                        .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
@@ -349,7 +352,7 @@ public class ExploreTest {
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
                         return new MockResponse().setBody(invalidElementAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/cases-alert-threshold")) {
-                        return new MockResponse().setBody("90").setResponseCode(200)
+                        return new MockResponse().setBody("1").setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
