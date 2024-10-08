@@ -87,4 +87,19 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 new ParameterizedTypeReference<List<Map<String, Object>>>() {
                 }).getBody();
     }
+
+    public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
+        String path = UriComponentsBuilder
+                .fromPath(DELIMITER +
+                        NETWORK_MODIFICATION_API_VERSION +
+                        DELIMITER +
+                        "/network-composite-modification/" +
+                        compositeModificationId)
+                .buildAndExpand()
+                .toUriString();
+        List<Object> body = restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Object>>() {
+                }).getBody();
+        return body;
+    }
 }

@@ -243,6 +243,10 @@ public class DirectoryService implements IDirectoryElementsService {
         return iDirectoryElementsService;
     }
 
+    public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
+        return ((NetworkModificationService) getGenericService(MODIFICATION)).getCompositeModificationContent(compositeModificationId);
+    }
+
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
             List<String> equipmentTypes) {
         Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
