@@ -6,4 +6,5 @@
  */
 package org.gridsuite.explore.server.dto;
 
-public record CaseAlertThresholdMessage (Integer userUsagePercentage, Integer casesCount) {}
+public record CaseAlertThresholdMessage(Integer userUsagePercentage, Integer casesCount) {
+}
