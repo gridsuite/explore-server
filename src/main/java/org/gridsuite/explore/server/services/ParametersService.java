@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -42,7 +41,6 @@ public class ParametersService implements IDirectoryElementsService {
 
     private RemoteServicesProperties remoteServicesProperties;
 
-    @Autowired
     public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         this.remoteServicesProperties = remoteServicesProperties;
