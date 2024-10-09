@@ -23,17 +23,16 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class SupervisionTest {
     @Autowired
-    SupervisionService supervisionService;
+    private SupervisionService supervisionService;
 
     @MockBean
-    DirectoryService directoryService;
+    private DirectoryService directoryService;
 
     @MockBean
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
-    ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", "userId", 0L, null, null);
-
-    ElementAttributes study = new ElementAttributes(UUID.randomUUID(), "study", "STUDY", "userId", 0L, null, null);
+    private final ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", "userId", 0L, null, null);
+    private final ElementAttributes study = new ElementAttributes(UUID.randomUUID(), "study", "STUDY", "userId", 0L, null, null);
 
     @Test
     void testDeleteElements() {
@@ -62,7 +61,7 @@ class SupervisionTest {
     }
 
     @AfterEach
-    public void verifyNoMoreInteractionsMocks() {
+    void verifyNoMoreInteractionsMocks() {
         verifyNoMoreInteractions(restTemplate);
         verifyNoMoreInteractions(directoryService);
     }
