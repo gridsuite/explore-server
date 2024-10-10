@@ -6,5 +6,8 @@
  */
 package org.gridsuite.explore.server.dto;
 
+/**
+ * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ */
 public record CaseAlertThresholdMessage(Integer userUsagePercentage, Integer casesCount) {
 }
