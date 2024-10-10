@@ -7,7 +7,12 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +28,8 @@ public class UserAdminService {
 
     private static final String USER_ADMIN_API_VERSION = "v1";
     private static final String USERS_MAX_ALLOWED_CASES_URI = "/users/{sub}/profile/max-cases";
-
+    private static final String CASES_ALERT_THRESHOLD_URI = "/cases-alert-threshold";
+    private static final String USER_MESSAGE_URI = "/messages/{sub}/user-message";
     private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
     @Setter
@@ -47,6 +53,28 @@ public class UserAdminService {
             throw wrapRemoteError(e.getMessage(), e.getStatusCode());
 
         }
+    }
+
+    public Integer getCasesAlertThreshold() {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + CASES_ALERT_THRESHOLD_URI)
+            .buildAndExpand().toUriString();
+        try {
+            return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
+        } catch (HttpStatusCodeException e) {
+            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
+        }
+    }
+
+    public void sendUserCasesAlertThresholdMessage(String sub, String messageId, CaseAlertThresholdMessage caseAlertThresholdMessage) {
+        UriComponentsBuilder uri = UriComponentsBuilder
+            .fromPath(DELIMITER + USER_ADMIN_API_VERSION + USER_MESSAGE_URI)
+            .queryParam("messageId", messageId);
+
+        String path = uri.buildAndExpand(sub)
+            .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.exchange(userAdminServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(caseAlertThresholdMessage, headers), Void.class);
     }
 
 }

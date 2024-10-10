@@ -295,6 +295,18 @@ public class ExploreService {
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
                 throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
             }
+            notifyCasesThresholdReached(userCasesCount, userMaxAllowedStudiesAndCases, userId);
+        }
+    }
+
+    public void notifyCasesThresholdReached(int userCasesCount, int userMaxAllowedStudiesAndCases, String userId) {
+        Integer casesAlertThreshold = userAdminService.getCasesAlertThreshold();
+        if (casesAlertThreshold != null) {
+            int userCasesUsagePercentage = (100 * userCasesCount) / userMaxAllowedStudiesAndCases;
+            if (userCasesUsagePercentage >= casesAlertThreshold) {
+                CaseAlertThresholdMessage caseAlertThresholdMessage = new CaseAlertThresholdMessage(userCasesUsagePercentage, userCasesCount);
+                userAdminService.sendUserCasesAlertThresholdMessage(userId, "casesAlertThreshold", caseAlertThresholdMessage);
+            }
         }
     }
 
