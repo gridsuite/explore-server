@@ -48,4 +48,3 @@ gridsuite:
     -
       name: spreadsheet-config-server
       base-uri: http://localhost:5035
-
