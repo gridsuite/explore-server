@@ -86,6 +86,8 @@ class ExploreTest {
     private static final String USER1 = "user1";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
+    private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 = "limitedUser3";
+
     private static final String USER_NOT_FOUND = "userNotFound";
     private static final String USER_UNEXPECTED_ERROR = "unexpectedErrorUser";
     private static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
@@ -273,6 +275,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/network-composite-modifications")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), compositeModificationIdAsString);
+                } else if (path.matches("/v1/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message.*")) {
+                    return new MockResponse(200, Headers.of("Content-Type", "application/json; charset=utf-8") /*, body: TODO content??*/);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), invalidElementAsString);
@@ -294,6 +298,8 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "3");
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/profile/max-cases")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "5");
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/profile/max-cases")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "5");
                     } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/profile/max-cases")) {
                         return new MockResponse(404, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE));
                     } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/profile/max-cases")) {
@@ -304,10 +310,14 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "4");
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/cases/count")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "2");
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/cases/count")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "1");
                     } else if (path.matches("/v1/users/.*/cases/count")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "0");
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), invalidElementAsString);
+                    } else if (path.matches("/v1/cases-alert-threshold")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE), "40");
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -902,6 +912,29 @@ class ExploreTest {
                     )
                     .andExpect(status().isBadRequest());
         }
+    }
+
+    @Test
+    void testCaseAlertThreshold(final MockWebServer server) throws Exception {
+        //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 has not yet reached the defined case alert threshold, no message sent to him
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+            .param("duplicateCase", "false")
+            .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2)
+            .param("caseFormat", "XIIDM")
+            .contentType(APPLICATION_JSON)
+        ).andExpect(status().isOk());
+        var requests = TestUtils.getRequestsWithBodyDone(5, server);
+        assertTrue(requests.stream().noneMatch(r -> r.getPath().contains("/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/user-message")));
+
+        //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED has reached the defined case alert threshold, a message has been sent to him
+        mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
+            .param("duplicateCase", "false")
+            .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
+            .param("caseFormat", "XIIDM")
+            .contentType(APPLICATION_JSON)
+        ).andExpect(status().isOk());
+        requests = TestUtils.getRequestsWithBodyDone(6, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message")));
     }
 
     @Test

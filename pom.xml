@@ -44,6 +44,8 @@
     <properties>
         <gridsuite-dependencies.version>34</gridsuite-dependencies.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
+        <!-- FIXME: powsybl-ws-commons version is overridden. To be removed at next powsybl-ws-dependencies.version upgrade -->
+        <powsybl-ws-commons.version>1.15.0</powsybl-ws-commons.version>
     </properties>
 
     <build>
@@ -89,6 +91,12 @@
                 <version>${mockwebserver3.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- FIXME: powsybl-ws-commons version is overridden. To be removed at next powsybl-ws-dependencies.version upgrade -->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ws-commons</artifactId>
+                <version>${powsybl-ws-commons.version}</version>
             </dependency>
 
             <!-- imports -->
