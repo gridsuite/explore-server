@@ -4,5 +4,5 @@ logging:
   level:
     org.springframework.orm.jpa: INFO
     org.springframework.transaction: INFO
-    org.hibernate.sql: INFO
-    org.hibernate.type.descriptor.sql.basic-binder: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO
