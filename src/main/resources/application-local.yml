@@ -45,6 +45,4 @@ gridsuite:
     -
       name: shortcircuit-server
       base-uri: http://localhost:5031
-    -
-      name: spreadsheet-config-server
-      base-uri: http://localhost:5035
+
