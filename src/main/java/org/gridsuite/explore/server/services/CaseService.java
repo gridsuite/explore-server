@@ -8,7 +8,6 @@
 package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -26,7 +25,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreException.Type.INCORRECT_CASE_FILE;
 import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
 
 @Service
@@ -37,7 +36,6 @@ public class CaseService implements IDirectoryElementsService {
     private final RestTemplate restTemplate;
     private String caseServerBaseUri;
 
-    @Autowired
     public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String studyServerBaseUri,
             RestTemplate restTemplate) {
         this.caseServerBaseUri = studyServerBaseUri;
