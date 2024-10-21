@@ -305,7 +305,7 @@ public class DirectoryService implements IDirectoryElementsService {
         // this returns names for owner and lastmodifiedby,
         // if we need it in the future, we can do separate requests.
         List<String> subs = this.getElementsInfos(elementsUuids, null).stream()
-                .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().toList();
+                .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
         return userIdentityService.getUserIdentities(subs);
     }
 }

@@ -6,10 +6,13 @@
  */
 package org.gridsuite.explore.server.services;
 
+import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -28,11 +31,11 @@ public class UserIdentityService {
     private final RestTemplate restTemplate;
 
     @Setter
-    private String userAdminServerBaseUri;
+    private String userIdentityServerBaseUri;
 
     @Autowired
     public UserIdentityService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
-        this.userAdminServerBaseUri = remoteServicesProperties.getServiceUri("user-identity-server");
+        this.userIdentityServerBaseUri = remoteServicesProperties.getServiceUri("user-identity-server");
         this.restTemplate = restTemplate;
     }
 
@@ -40,9 +43,12 @@ public class UserIdentityService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_IDENTITY_API_VERSION + USERS_IDENTITY_PATH)
                 .buildAndExpand(String.join(",", subs)).toUriString();
         try {
-            return restTemplate.getForObject(userAdminServerBaseUri + path, String.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            return restTemplate.getForObject(userIdentityServerBaseUri + path, String.class);
+        } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().value() == 404) {
+                return null; // no profile == unlimited import
+            }
+            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
         }
     }
 
