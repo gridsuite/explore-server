@@ -124,6 +124,7 @@ class SpreadsheetConfigTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(spreadsheetConfigJson)
                 .param("name", CONFIG_NAME)
+                .param("description", "comment")
                 .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                 .header("userId", USER_ID));
         perform.andExpect(status().isCreated());
