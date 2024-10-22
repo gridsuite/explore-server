@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
+import org.gridsuite.explore.server.services.SpreadsheetConfigService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
@@ -43,10 +44,12 @@ public class ExploreController {
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
+    private final SpreadsheetConfigService spreadsheetConfigService;
 
-    public ExploreController(ExploreService exploreService, DirectoryService directoryService) {
+    public ExploreController(ExploreService exploreService, DirectoryService directoryService, SpreadsheetConfigService spreadsheetConfigService) {
         this.exploreService = exploreService;
         this.directoryService = directoryService;
+        this.spreadsheetConfigService = spreadsheetConfigService;
     }
 
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
@@ -343,7 +346,7 @@ public class ExploreController {
     @Operation(summary = "Get a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Spreadsheet config retrieved")})
     public ResponseEntity<String> getSpreadsheetConfig(@PathVariable UUID id) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getSpreadsheetConfig(id));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(spreadsheetConfigService.getSpreadsheetConfig(id));
     }
 
     @PostMapping(value = "/explore/composite-modifications")
