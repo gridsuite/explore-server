@@ -249,10 +249,10 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
 
-    @GetMapping(value = "/explore/network-composite-modification/{id}", produces = MediaType.APPLICATION_JSON_VALUE) // TODO : POURQUOI '/EXPLORE' ?
+    @GetMapping(value = "/explore/network-composite-modification/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get the network modifications infos contained in a composite network modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Infos from all the contained network modifications")})
-    public ResponseEntity<List<Object>> getCompositeModificationContent(@PathVariable("id") UUID compositeModificationId) { // TODO : should probably be turned into List<ElementAttributes>
+    public ResponseEntity<List<Object>> getCompositeModificationContent(@PathVariable("id") UUID compositeModificationId) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(directoryService.getCompositeModificationContent(compositeModificationId));

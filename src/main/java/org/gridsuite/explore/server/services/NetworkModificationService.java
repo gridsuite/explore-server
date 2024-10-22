@@ -97,9 +97,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
                         compositeModificationId)
                 .buildAndExpand()
                 .toUriString();
-        List<Object> body = restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
                 new ParameterizedTypeReference<List<Object>>() {
                 }).getBody();
-        return body;
     }
 }

@@ -73,6 +73,7 @@ public class ExploreTest {
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID PARAMETERS_UUID = UUID.randomUUID();
     private static final UUID MODIFICATION_UUID = UUID.randomUUID();
+    private static final UUID COMPOSITE_MODIFICATION_UUID = UUID.randomUUID();
     private static final UUID STUDY_COPY_UUID = UUID.randomUUID();
     private static final UUID CASE_COPY_UUID = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_COPY_UUID = UUID.randomUUID();
@@ -93,6 +94,20 @@ public class ExploreTest {
     private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
     private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
+    private final List<Map<String, Object>> compositeModificationMetadata = List.of(
+            Map.of(
+            "uuid", MODIFICATION_UUID,
+            "type", "LOAD_MODIFICATION",
+            "messageType", "LOAD_MODIFICATION",
+            "messageValues", "{\"equipmentId\":\"VERSA6T611\"}",
+            "activated", true),
+            Map.of(
+            "uuid", MODIFICATION_UUID,
+            "type", "SHUNT_COMPENSATOR_MODIFICATION",
+            "messageType", "SHUNT_COMPENSATOR_MODIFICATION",
+            "messageValues", "{\"equipmentId\":\"MERLA4COND.31\"}",
+            "activated", true)
+    );
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
@@ -318,7 +333,12 @@ public class ExploreTest {
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
                         return new MockResponse().setBody(caseInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
-                        return new MockResponse().setBody(modificationInfosAttributesAsString).setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse().setBody(modificationInfosAttributesAsString)
+                                .setResponseCode(200).addHeader("Content-Type", "application/json; charset=utf-8");
+                    } else if (path.matches("/v1/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID)) {
+                        return new MockResponse().setBody(mapper.writeValueAsString(compositeModificationMetadata))
+                                .setResponseCode(200)
+                                .addHeader("Content-Type", "application/json; charset=utf-8");
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse().setBody(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id")).setResponseCode(200)
                                 .addHeader("Content-Type", "application/json; charset=utf-8");
@@ -797,6 +817,17 @@ public class ExploreTest {
         List<ElementAttributes> elementsMetadata = mapper.readValue(response, new TypeReference<>() { });
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), expectedResult);
+    }
+
+    @Test
+    public void testGetCompositeModificationContent() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID)
+                .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        String response = result.getResponse().getContentAsString();
+        List<Map<String, Object>> metadata = mapper.readValue(response, new TypeReference<>() { });
+        assertEquals(2, metadata.size());
     }
 
     @Test
