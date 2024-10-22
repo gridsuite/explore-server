@@ -108,6 +108,14 @@ class SpreadsheetConfigTest {
                             .setResponseCode(200)
                             .setHeader("Content-Type", "application/json")
                             .setBody(objectMapper.writeValueAsString(responseList));
+                } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/" + CONFIG_UUID) && "GET".equals(request.getMethod())) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("sheetType", "GENERATOR");
+
+                    return new MockResponse()
+                            .setResponseCode(200)
+                            .setHeader("Content-Type", "application/json")
+                            .setBody(objectMapper.writeValueAsString(response));
                 } else if (path.matches("/v1/elements\\?ids=.*")) {
                     ElementAttributes elementAttributes = new ElementAttributes(
                             CONFIG_UUID,
@@ -247,5 +255,13 @@ class SpreadsheetConfigTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].specificMetadata.id").value(CONFIG_UUID.toString()))
                 .andExpect(jsonPath("$[0].specificMetadata.sheetType").value("GENERATORS"));
+    }
+
+    @Test
+    void testGetSpreadsheetConfig() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/{id}", CONFIG_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.sheetType").value("GENERATOR"));
     }
 }

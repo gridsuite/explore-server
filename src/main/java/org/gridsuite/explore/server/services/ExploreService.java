@@ -270,6 +270,10 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
     }
 
+    public String getSpreadsheetConfig(UUID configUuid) {
+        return spreadsheetConfigService.getSpreadsheetConfig(configUuid);
+    }
+
     public void createCompositeModifications(List<UUID> modificationUuids, String userId, String name,
                                            String description, UUID parentDirectoryUuid) {
 

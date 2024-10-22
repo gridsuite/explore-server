@@ -339,6 +339,13 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @GetMapping(value = "/explore/spreadsheet-configs/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a spreadsheet configuration")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Spreadsheet config retrieved")})
+    public ResponseEntity<String> getSpreadsheetConfig(@PathVariable UUID id) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getSpreadsheetConfig(id));
+    }
+
     @PostMapping(value = "/explore/composite-modifications")
     @Operation(summary = "create composite modification element from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been created and composite modification element created in the directory")})

@@ -61,6 +61,17 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
 
+    public String getSpreadsheetConfig(UUID configUuid) {
+        Objects.requireNonNull(configUuid);
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH + DELIMITER + configUuid)
+                .buildAndExpand()
+                .toUriString();
+
+        return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
+    }
+
     public UUID duplicateSpreadsheetConfig(UUID configUuid) {
         Objects.requireNonNull(configUuid);
 
