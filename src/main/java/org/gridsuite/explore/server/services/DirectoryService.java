@@ -9,7 +9,6 @@ package org.gridsuite.explore.server.services;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -51,7 +50,6 @@ public class DirectoryService implements IDirectoryElementsService {
     private final RestTemplate restTemplate;
     private String directoryServerBaseUri;
 
-    @Autowired
     public DirectoryService(
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
             CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
