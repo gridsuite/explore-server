@@ -276,7 +276,7 @@ class ExploreTest {
                 } else if (path.matches("/v1/network-composite-modifications")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if (path.matches("/v1/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message.*")) {
-                    return new MockResponse(200, Headers.of("Content-Type", "application/json; charset=utf-8") /*, body: TODO content??*/);
+                    return new MockResponse(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), invalidElementAsString);

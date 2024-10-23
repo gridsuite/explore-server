@@ -163,7 +163,7 @@ class SpreadsheetConfigTest {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
             @Override
-            public MockResponse dispatch(@NotNull RecordedRequest request) {
+            public MockResponse dispatch(RecordedRequest request) {
                 return new MockResponse(500);
             }
         });
@@ -182,7 +182,7 @@ class SpreadsheetConfigTest {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
             @Override
-            public MockResponse dispatch(@NotNull RecordedRequest request) {
+            public MockResponse dispatch(RecordedRequest request) {
                 return new MockResponse(500);
             }
         });
@@ -200,7 +200,7 @@ class SpreadsheetConfigTest {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
             @Override
-            public MockResponse dispatch(@NotNull RecordedRequest request) {
+            public MockResponse dispatch(RecordedRequest request) {
                 return new MockResponse(500);
             }
         });
