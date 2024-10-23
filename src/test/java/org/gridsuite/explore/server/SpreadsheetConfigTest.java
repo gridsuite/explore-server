@@ -77,7 +77,7 @@ class SpreadsheetConfigTest {
             @NotNull
             @SneakyThrows
             @Override
-            public MockResponse dispatch(@NotNull RecordedRequest request) {
+            public MockResponse dispatch(RecordedRequest request) {
                 String path = request.getPath();
                 if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL) && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(CONFIG_UUID));
@@ -105,7 +105,7 @@ class SpreadsheetConfigTest {
                     ElementAttributes elementAttributes = new ElementAttributes(CONFIG_UUID, CONFIG_NAME, "SPREADSHEET_CONFIG", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(elementAttributes));
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
-                    return new MockResponse(200, Headers.of("Content-Type", "application/json; charset=utf-8") /*, body: TODO content ???*/);
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/elements/" + CONFIG_UUID) && "PUT".equals(request.getMethod())) {
                     // Mock response for updating element in directory
                     return new MockResponse(200);
