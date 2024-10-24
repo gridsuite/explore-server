@@ -249,6 +249,15 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
 
+    @GetMapping(value = "/explore/composite-modification/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "get the network modifications infos contained in a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Infos from all the contained network modifications")})
+    public ResponseEntity<List<Object>> getCompositeModificationContent(@PathVariable("id") UUID compositeModificationId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(directoryService.getCompositeModificationContent(compositeModificationId));
+    }
+
     @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been successfully modified")})
@@ -268,6 +277,18 @@ public class ExploreController {
             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
 
         exploreService.updateContingencyList(id, content, userId, name, contingencyListType);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/composite-modification/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
+    public ResponseEntity<Void> updateCompositeModification(
+            @PathVariable UUID id,
+            @RequestParam(name = "name") String name,
+            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+
+        exploreService.updateCompositeModification(id, userId, name);
         return ResponseEntity.ok().build();
     }
 
