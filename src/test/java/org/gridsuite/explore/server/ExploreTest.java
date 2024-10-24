@@ -783,7 +783,7 @@ class ExploreTest {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
         mockMvc.perform(
-                put("/v1/explore/composite-modification/{id}",COMPOSITE_MODIFICATION_UUID)
+                put("/v1/explore/composite-modification/{id}", COMPOSITE_MODIFICATION_UUID)
                         .contentType(APPLICATION_JSON)
                         .param("name", name)
                         .header("userId", USER1)
