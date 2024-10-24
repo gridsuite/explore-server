@@ -314,6 +314,8 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 mapper.writeValueAsString(compositeModificationMetadata));
+                    } else if (path.matches("/v1/network-composite-modification/.*") && "PUT".equals(request.getMethod())) {
+                        return new MockResponse(200);
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
@@ -777,6 +779,17 @@ class ExploreTest {
     }
 
     @Test
+    void testModifyCompositeModifications(final MockWebServer server) throws Exception {
+        final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
+        final String name = "script name";
+        mockMvc.perform(put("/v1/explore/composite-modification/{id}")
+                .contentType(APPLICATION_JSON)
+                .param("name", name)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     void testGetModificationMetadata() throws Exception {
         final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null, modificationSpecificMetadata));
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID)
@@ -791,7 +804,7 @@ class ExploreTest {
 
     @Test
     void testGetCompositeModificationContent() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID)
+        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modification/" + COMPOSITE_MODIFICATION_UUID)
                 .header("userId", USER1)
                 ).andExpect(status().isOk())
                 .andReturn();
