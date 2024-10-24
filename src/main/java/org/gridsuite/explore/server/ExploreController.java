@@ -268,7 +268,7 @@ public class ExploreController {
 
     @PutMapping(value = "/explore/contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The contingency list have been modified successfully")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The contingency list has been modified successfully")})
     public ResponseEntity<Void> updateContingencyList(
             @PathVariable UUID id,
             @RequestParam(name = "name") String name,
@@ -277,6 +277,18 @@ public class ExploreController {
             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
 
         exploreService.updateContingencyList(id, content, userId, name, contingencyListType);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/composite-modification/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
+    public ResponseEntity<Void> updateCompositeModification(
+            @PathVariable UUID id,
+            @RequestParam(name = "name") String name,
+            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+
+        exploreService.updateCompositeModification(id, userId, name);
         return ResponseEntity.ok().build();
     }
 
