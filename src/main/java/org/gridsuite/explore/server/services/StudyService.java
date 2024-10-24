@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,6 @@ public class StudyService implements IDirectoryElementsService {
     private final RestTemplate restTemplate;
     private String studyServerBaseUri;
 
-    @Autowired
     public StudyService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.studyServerBaseUri = remoteServicesProperties.getServiceUri("study-server");
         this.restTemplate = restTemplate;

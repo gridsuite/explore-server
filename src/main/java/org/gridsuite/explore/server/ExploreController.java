@@ -320,9 +320,10 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config created")})
     public ResponseEntity<Void> createSpreadsheetConfig(@RequestBody String spreadsheetConfigDto,
                                                         @RequestParam("name") String configName,
+                                                        @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                         @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, parentDirectoryUuid, userId);
+        exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, description, parentDirectoryUuid, userId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

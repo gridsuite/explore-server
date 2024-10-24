@@ -254,9 +254,9 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
-    public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, UUID parentDirectoryUuid, String userId) {
+    public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid, String userId) {
         UUID spreadsheetConfigUuid = spreadsheetConfigService.createSpreadsheetConfig(spreadsheetConfigDto);
-        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, userId, 0, null);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, userId, 0, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -294,6 +294,18 @@ public class ExploreService {
             int userCasesCount = directoryService.getUserCasesCount(userId);
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
                 throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+            }
+            notifyCasesThresholdReached(userCasesCount, userMaxAllowedStudiesAndCases, userId);
+        }
+    }
+
+    public void notifyCasesThresholdReached(int userCasesCount, int userMaxAllowedStudiesAndCases, String userId) {
+        Integer casesAlertThreshold = userAdminService.getCasesAlertThreshold();
+        if (casesAlertThreshold != null) {
+            int userCasesUsagePercentage = (100 * userCasesCount) / userMaxAllowedStudiesAndCases;
+            if (userCasesUsagePercentage >= casesAlertThreshold) {
+                CaseAlertThresholdMessage caseAlertThresholdMessage = new CaseAlertThresholdMessage(userCasesUsagePercentage, userCasesCount);
+                userAdminService.sendUserCasesAlertThresholdMessage(userId, "casesAlertThreshold", caseAlertThresholdMessage);
             }
         }
     }
