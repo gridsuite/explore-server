@@ -73,6 +73,7 @@ public class ExploreTest {
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID PARAMETERS_UUID = UUID.randomUUID();
     private static final UUID MODIFICATION_UUID = UUID.randomUUID();
+    private static final UUID MODIFICATION2_UUID = UUID.randomUUID();
     private static final UUID COMPOSITE_MODIFICATION_UUID = UUID.randomUUID();
     private static final UUID STUDY_COPY_UUID = UUID.randomUUID();
     private static final UUID CASE_COPY_UUID = UUID.randomUUID();
@@ -99,13 +100,13 @@ public class ExploreTest {
             "uuid", MODIFICATION_UUID,
             "type", "LOAD_MODIFICATION",
             "messageType", "LOAD_MODIFICATION",
-            "messageValues", "{\"equipmentId\":\"VERSA6T611\"}",
+            "messageValues", "{\"equipmentId\":\"equipmentId1\"}",
             "activated", true),
             Map.of(
-            "uuid", MODIFICATION_UUID,
+            "uuid", MODIFICATION2_UUID,
             "type", "SHUNT_COMPENSATOR_MODIFICATION",
             "messageType", "SHUNT_COMPENSATOR_MODIFICATION",
-            "messageValues", "{\"equipmentId\":\"MERLA4COND.31\"}",
+            "messageValues", "{\"equipmentId\":\"equipmentId2\"}",
             "activated", true)
     );
 
