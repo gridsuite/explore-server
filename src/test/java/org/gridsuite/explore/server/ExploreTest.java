@@ -780,7 +780,6 @@ class ExploreTest {
 
     @Test
     void testModifyCompositeModifications(final MockWebServer server) throws Exception {
-        final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
         mockMvc.perform(
                 put("/v1/explore/composite-modification/{id}", COMPOSITE_MODIFICATION_UUID)
