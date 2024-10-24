@@ -782,10 +782,11 @@ class ExploreTest {
     void testModifyCompositeModifications(final MockWebServer server) throws Exception {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
-        mockMvc.perform(put("/v1/explore/composite-modification/{id}")
-                .contentType(APPLICATION_JSON)
-                .param("name", name)
-                .header("userId", USER1)
+        mockMvc.perform(
+                put("/v1/explore/composite-modification/{id}",COMPOSITE_MODIFICATION_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .param("name", name)
+                        .header("userId", USER1)
         ).andExpect(status().isOk());
     }
 
