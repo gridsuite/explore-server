@@ -307,11 +307,13 @@ class ExploreTest {
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), caseInfosAttributesAsString);
                     } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationInfosAttributesAsString);
+                        return new MockResponse(200,
+                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                                modificationInfosAttributesAsString);
                     } else if (path.matches("/v1/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID)) {
-                        return new MockResponse().setBody(mapper.writeValueAsString(compositeModificationMetadata))
-                                .setResponseCode(200)
-                                .addHeader("Content-Type", "application/json; charset=utf-8");
+                        return new MockResponse(200,
+                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                                mapper.writeValueAsString(compositeModificationMetadata));
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
@@ -787,7 +789,8 @@ class ExploreTest {
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), expectedResult);
     }
 
-    public void testGetCompositeModificationContent() throws Exception {
+    @Test
+    void testGetCompositeModificationContent() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID)
                 .header("userId", USER1)
                 ).andExpect(status().isOk())
