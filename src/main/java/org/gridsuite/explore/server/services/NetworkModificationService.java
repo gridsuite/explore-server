@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -35,7 +34,6 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
 
-    @Autowired
     public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
         this.restTemplate = restTemplate;

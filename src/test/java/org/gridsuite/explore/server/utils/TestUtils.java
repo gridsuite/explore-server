@@ -8,8 +8,9 @@
 package org.gridsuite.explore.server.utils;
 
 import com.powsybl.commons.exceptions.UncheckedInterruptedException;
-import okhttp3.mockwebserver.MockWebServer;
-import java.util.*;
+import mockwebserver3.MockWebServer;
+
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
