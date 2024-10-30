@@ -250,12 +250,12 @@ public class ExploreController {
     }
 
     @GetMapping(value = "/explore/composite-modification/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "get the network modifications infos contained in a composite modification")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Infos from all the contained network modifications")})
+    @Operation(summary = "get the basic information of the network modifications contained in a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Basic infos from all the contained network modifications")})
     public ResponseEntity<List<Object>> getCompositeModificationContent(@PathVariable("id") UUID compositeModificationId) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(directoryService.getCompositeModificationContent(compositeModificationId));
+                .body(exploreService.getCompositeModificationContent(compositeModificationId));
     }
 
     @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
