@@ -230,21 +230,16 @@ public class ExploreService {
     }
 
     private String getProperPath(ContingencyListType contingencyListType) {
-        switch (contingencyListType) {
-            case SCRIPT:
-                return "/script-contingency-lists/{id}";
-            case FORM:
-                return "/form-contingency-lists/{id}";
-            case IDENTIFIERS:
-                return "/identifier-contingency-lists/{id}";
-            default:
-                throw new ExploreException(UNKNOWN_ELEMENT_TYPE);
-        }
+        return switch (contingencyListType) {
+            case SCRIPT -> "/script-contingency-lists/{id}";
+            case FORM -> "/form-contingency-lists/{id}";
+            case IDENTIFIERS -> "/identifier-contingency-lists/{id}";
+        };
     }
 
-    public void createParameters(String parameters, ParametersType parametersType, String parametersName, UUID parentDirectoryUuid, String userId) {
+    public void createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid, String userId) {
         UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
-        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), userId, 0, null);
+        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), userId, 0, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 

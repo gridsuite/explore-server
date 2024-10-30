@@ -504,8 +504,8 @@ class ExploreTest {
 
     @Test
     void testCreateParameters() throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
-                "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+        mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                "paramName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), "comment", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Parameters content\"")

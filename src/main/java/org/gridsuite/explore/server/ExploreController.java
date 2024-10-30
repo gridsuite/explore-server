@@ -298,9 +298,10 @@ public class ExploreController {
     public ResponseEntity<Void> createParameters(@RequestBody String parameters,
                                              @RequestParam("name") String parametersName,
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
+                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createParameters(parameters, parametersType, parametersName, parentDirectoryUuid, userId);
+        exploreService.createParameters(parameters, parametersType, parametersName, description, parentDirectoryUuid, userId);
         return ResponseEntity.ok().build();
     }
 
