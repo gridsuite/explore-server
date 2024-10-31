@@ -395,7 +395,7 @@ public class ExploreController {
                             @ApiResponse(responseCode = "404", description = "The elements or The users identities of the elements were not found")
     })
     public ResponseEntity<String> getUsersIdentities(@RequestParam("ids") List<UUID> ids) {
-        String usersIdentities = directoryService.getUsersIdentities(ids);
+        String usersIdentities = exploreService.getUsersIdentities(ids);
         return usersIdentities != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities) :
                 ResponseEntity.notFound().build();
     }

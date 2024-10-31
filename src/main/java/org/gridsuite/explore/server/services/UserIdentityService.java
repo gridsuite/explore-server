@@ -39,7 +39,7 @@ public class UserIdentityService {
         this.restTemplate = restTemplate;
     }
 
-    public String getUserIdentities(List<String> subs) {
+    public String getUsersIdentities(List<String> subs) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_IDENTITY_API_VERSION + USERS_IDENTITY_PATH)
                 .buildAndExpand(String.join(",", subs)).toUriString();
         try {

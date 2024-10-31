@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.dto;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,4 +48,8 @@ public class ElementAttributes {
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, specificMetadata);
     }
 
+    // DTO in directory-server has those others properties
+    // TODO clean this DTO duplication problem
+    //private Instant creationDate;
+    //private Instant lastModificationDate;
 }
