@@ -310,7 +310,7 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 modificationInfosAttributesAsString);
-                    } else if (path.matches("/v1/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID)) {
+                    } else if (path.matches("/v1/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications")) {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 mapper.writeValueAsString(compositeModificationMetadata));
@@ -804,7 +804,7 @@ class ExploreTest {
 
     @Test
     void testGetCompositeModificationContent() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modification/" + COMPOSITE_MODIFICATION_UUID)
+        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications")
                 .header("userId", USER1)
                 ).andExpect(status().isOk())
                 .andReturn();

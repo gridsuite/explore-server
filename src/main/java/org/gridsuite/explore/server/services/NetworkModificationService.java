@@ -92,7 +92,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
                         NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER +
                         "/network-composite-modification/" +
-                        compositeModificationId)
+                        compositeModificationId +
+                        "/network-modifications")
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
