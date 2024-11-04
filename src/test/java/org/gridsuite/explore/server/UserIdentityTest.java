@@ -71,7 +71,7 @@ class UserIdentityTest {
     private static final String ELEMENT_UNKNOWN_SUB_NAME = "Test Element Unknown sub";
 
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp() {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();

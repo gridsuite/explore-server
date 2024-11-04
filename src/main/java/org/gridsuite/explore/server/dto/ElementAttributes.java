@@ -47,8 +47,6 @@ public class ElementAttributes {
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, specificMetadata);
     }
 
-    // DTO in directory-server has those others properties
+    // DTO in directory-server has others properties : creationDate, lastModificationDate
     // TODO clean this DTO duplication problem
-    //private Instant creationDate;
-    //private Instant lastModificationDate;
 }
