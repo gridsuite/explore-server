@@ -140,19 +140,6 @@ class UserIdentityTest {
     }
 
     @Test
-    void testGetSubIdentityNotFoundSub() throws Exception {
-        UUID stubId = wireMockServer.stubFor(WireMock.get(WireMock.urlMatching(USER_IDENTITY_SERVER_BASE_URL + "/identities\\?subs=" + UNKNOWN_SUB))
-                .willReturn(WireMock.notFound())).getId();
-
-        mockMvc.perform(get(BASE_URL)
-               .param("ids", ELEMENT_UNKNOWN_SUB_UUID.toString()))
-               .andExpect(status().isNotFound());
-
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null);
-        wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(UNKNOWN_SUB)), false);
-    }
-
-    @Test
     void testGetSubIdentityException() throws Exception {
         UUID stubId = wireMockServer.stubFor(WireMock.get(WireMock.urlMatching(USER_IDENTITY_SERVER_BASE_URL + "/identities\\?subs=" + EXCEPTION_SUB))
                 .willReturn(WireMock.serverError())).getId();

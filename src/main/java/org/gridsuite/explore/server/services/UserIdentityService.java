@@ -45,9 +45,6 @@ public class UserIdentityService {
         try {
             return restTemplate.getForObject(userIdentityServerBaseUri + path, String.class);
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 404) {
-                return null;
-            }
             throw wrapRemoteError(e.getMessage(), e.getStatusCode());
         }
     }

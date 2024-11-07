@@ -391,12 +391,11 @@ public class ExploreController {
 
     @GetMapping(value = "/explore/elements/users-identities", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get users identities from the elements ids given as parameters")
-    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "The users identities"),
-                            @ApiResponse(responseCode = "404", description = "The elements or The users identities of the elements were not found")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The users identities"),
     })
     public ResponseEntity<String> getUsersIdentities(@RequestParam("ids") List<UUID> ids) {
         String usersIdentities = exploreService.getUsersIdentities(ids);
-        return usersIdentities != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities) :
-                ResponseEntity.notFound().build();
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities);
     }
 }
