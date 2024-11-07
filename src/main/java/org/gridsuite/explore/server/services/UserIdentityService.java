@@ -46,7 +46,7 @@ public class UserIdentityService {
             return restTemplate.getForObject(userIdentityServerBaseUri + path, String.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().value() == 404) {
-                return null; // no profile == unlimited import
+                return null;
             }
             throw wrapRemoteError(e.getMessage(), e.getStatusCode());
         }
