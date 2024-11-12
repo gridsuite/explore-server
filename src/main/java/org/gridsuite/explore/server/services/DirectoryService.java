@@ -52,7 +52,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public DirectoryService(
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, ParametersService parametersService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, ParametersService parametersService, RestTemplate restTemplate,
+            RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
         this.genericServices = Map.ofEntries(
