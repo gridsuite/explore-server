@@ -75,6 +75,8 @@ class ExploreTest {
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID PARAMETERS_UUID = UUID.randomUUID();
     private static final UUID MODIFICATION_UUID = UUID.randomUUID();
+    private static final UUID MODIFICATION2_UUID = UUID.randomUUID();
+    private static final UUID COMPOSITE_MODIFICATION_UUID = UUID.randomUUID();
     private static final UUID STUDY_COPY_UUID = UUID.randomUUID();
     private static final UUID CASE_COPY_UUID = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_COPY_UUID = UUID.randomUUID();
@@ -97,6 +99,20 @@ class ExploreTest {
     private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
     private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
+    private final List<Map<String, Object>> compositeModificationMetadata = List.of(
+            Map.of(
+            "uuid", MODIFICATION_UUID,
+            "type", "LOAD_MODIFICATION",
+            "messageType", "LOAD_MODIFICATION",
+            "messageValues", "{\"equipmentId\":\"equipmentId1\"}",
+            "activated", true),
+            Map.of(
+            "uuid", MODIFICATION2_UUID,
+            "type", "SHUNT_COMPENSATOR_MODIFICATION",
+            "messageType", "SHUNT_COMPENSATOR_MODIFICATION",
+            "messageValues", "{\"equipmentId\":\"equipmentId2\"}",
+            "activated", true)
+    );
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
@@ -291,7 +307,15 @@ class ExploreTest {
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), caseInfosAttributesAsString);
                     } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationInfosAttributesAsString);
+                        return new MockResponse(200,
+                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                                modificationInfosAttributesAsString);
+                    } else if (path.matches("/v1/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications")) {
+                        return new MockResponse(200,
+                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                                mapper.writeValueAsString(compositeModificationMetadata));
+                    } else if (path.matches("/v1/network-composite-modification/.*") && "PUT".equals(request.getMethod())) {
+                        return new MockResponse(200);
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
@@ -755,6 +779,17 @@ class ExploreTest {
     }
 
     @Test
+    void testModifyCompositeModifications(final MockWebServer server) throws Exception {
+        final String name = "script name";
+        mockMvc.perform(
+                put("/v1/explore/composite-modification/{id}", COMPOSITE_MODIFICATION_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .param("name", name)
+                        .header("userId", USER1)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     void testGetModificationMetadata() throws Exception {
         final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null, modificationSpecificMetadata));
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID)
@@ -765,6 +800,17 @@ class ExploreTest {
         List<ElementAttributes> elementsMetadata = mapper.readValue(response, new TypeReference<>() { });
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), expectedResult);
+    }
+
+    @Test
+    void testGetCompositeModificationContent() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications")
+                .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        String response = result.getResponse().getContentAsString();
+        List<Map<String, Object>> metadata = mapper.readValue(response, new TypeReference<>() { });
+        assertEquals(2, metadata.size());
     }
 
     @Test

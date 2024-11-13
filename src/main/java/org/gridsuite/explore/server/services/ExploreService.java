@@ -221,6 +221,14 @@ public class ExploreService {
         updateElementName(id, name, userId);
     }
 
+    public void updateCompositeModification(UUID id, String userId, String name) {
+        updateElementName(id, name, userId);
+    }
+
+    public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
+        return networkModificationService.getCompositeModificationContent(compositeModificationId);
+    }
+
     private void updateElementName(UUID id, String name, String userId) {
         // if the name is empty, no need to call directory-server
         if (StringUtils.isNotBlank(name)) {
