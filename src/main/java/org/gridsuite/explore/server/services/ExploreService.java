@@ -18,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.ExploreException.Type.*;
 
@@ -46,6 +48,7 @@ public class ExploreService {
     private final CaseService caseService;
     private final ParametersService parametersService;
     private final SpreadsheetConfigService spreadsheetConfigService;
+    private final UserIdentityService userIdentityService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -58,7 +61,8 @@ public class ExploreService {
             NetworkModificationService networkModificationService,
             CaseService caseService,
             ParametersService parametersService, UserAdminService userAdminService,
-            SpreadsheetConfigService spreadsheetConfigService) {
+            SpreadsheetConfigService spreadsheetConfigService,
+            UserIdentityService userIdentityService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -69,6 +73,7 @@ public class ExploreService {
         this.parametersService = parametersService;
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
+        this.userIdentityService = userIdentityService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -334,4 +339,11 @@ public class ExploreService {
         }
     }
 
+    public String getUsersIdentities(List<UUID> elementsUuids) {
+        // this returns names for owner and lastmodifiedby,
+        // if we need it in the future, we can do separate requests.
+        List<String> subs = directoryService.getElementsInfos(elementsUuids, null).stream()
+                .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
+        return userIdentityService.getUsersIdentities(subs);
+    }
 }
