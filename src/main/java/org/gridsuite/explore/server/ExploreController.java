@@ -340,6 +340,18 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PostMapping(value = "/explore/spreadsheet-config-collections", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a spreadsheet configuration collection")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
+    public ResponseEntity<Void> createSpreadsheetConfigCollection(@RequestBody String spreadsheetConfigCollectionDto,
+                                                        @RequestParam("name") String collectionName,
+                                                        @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                        @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto, collectionName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @PutMapping(value = "/explore/spreadsheet-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config has been successfully modified")})
@@ -351,6 +363,17 @@ public class ExploreController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping(value = "/explore/spreadsheet-config-collections/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a spreadsheet configuration collection")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config collection has been successfully modified")})
+    public ResponseEntity<Void> updateSpreadsheetConfigCollection(@PathVariable UUID id,
+                                                        @RequestBody String spreadsheetConfigCollectionDto,
+                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                        @RequestParam("name") String name) {
+        exploreService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, userId, name);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping(value = "/explore/spreadsheet-configs/duplicate", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
@@ -358,6 +381,16 @@ public class ExploreController {
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateSpreadsheetConfig(sourceId, targetDirectoryId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping(value = "/explore/spreadsheet-config-collections/duplicate", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a spreadsheet configuration collection")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
+    public ResponseEntity<Void> duplicateSpreadsheetConfigCollection(@RequestParam("duplicateFrom") UUID sourceId,
+                                                           @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateSpreadsheetConfigCollection(sourceId, targetDirectoryId, userId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
