@@ -39,6 +39,7 @@ public class ExploreService {
     static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
+    static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -48,6 +49,7 @@ public class ExploreService {
     private final CaseService caseService;
     private final ParametersService parametersService;
     private final SpreadsheetConfigService spreadsheetConfigService;
+    private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
     private final UserIdentityService userIdentityService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
@@ -62,6 +64,7 @@ public class ExploreService {
             CaseService caseService,
             ParametersService parametersService, UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
+            SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
             UserIdentityService userIdentityService) {
 
         this.directoryService = directoryService;
@@ -73,6 +76,7 @@ public class ExploreService {
         this.parametersService = parametersService;
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
+        this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
         this.userIdentityService = userIdentityService;
     }
 
@@ -268,13 +272,29 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
+    public void createSpreadsheetConfigCollection(String spreadsheetConfigCollectionDto, String collectionName, String description, UUID parentDirectoryUuid, String userId) {
+        UUID spreadsheetConfigUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, collectionName, SPREADSHEET_CONFIG_COLLECTION, userId, 0, description);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String userId, String name) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
         updateElementName(id, name, userId);
     }
 
+    public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String userId, String name) {
+        spreadsheetConfigCollectionService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto);
+        updateElementName(id, name, userId);
+    }
+
     public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigService.duplicateSpreadsheetConfig(sourceId);
+        directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
+    }
+
+    public void duplicateSpreadsheetConfigCollection(UUID sourceId, UUID targetDirectoryId, String userId) {
+        UUID newSpreadsheetConfigUuid = spreadsheetConfigCollectionService.duplicateSpreadsheetConfigCollection(sourceId);
         directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
     }
 
