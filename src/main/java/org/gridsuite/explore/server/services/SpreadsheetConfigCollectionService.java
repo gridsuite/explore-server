@@ -37,7 +37,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
 
     @Autowired
     public SpreadsheetConfigCollectionService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
-        this.spreadsheetConfigServerBaseUri = remoteServicesProperties.getServiceUri("spreadsheet-config-server");
+        this.spreadsheetConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
         this.restTemplate = restTemplate;
     }
 
