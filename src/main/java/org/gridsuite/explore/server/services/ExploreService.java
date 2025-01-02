@@ -215,7 +215,7 @@ public class ExploreService {
         }
     }
 
-    public void updateFilter(UUID id, String filter, String userId, String name,UUID elementUuid, String description) {
+    public void updateFilter(UUID id, String filter, String userId, String name, UUID elementUuid, String description) {
         filterService.updateFilter(id, filter, userId);
         updateElementName(id, name, userId);
         ElementAttributes elementAttributes = new ElementAttributes();
