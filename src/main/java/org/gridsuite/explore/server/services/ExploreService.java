@@ -220,7 +220,9 @@ public class ExploreService {
 
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setDescription(description);
-        elementAttributes.setElementName(name);
+        if (StringUtils.isNotBlank(name)) {
+            elementAttributes.setElementName(name);
+        }
         directoryService.updateElement(id, elementAttributes, userId);
     }
 

@@ -695,7 +695,6 @@ class ExploreTest {
                 .contentType(APPLICATION_JSON)
                 .content(filter)
                 .param("name", name)
-                .param("elementUuid", ELEMENT_UUID.toString())
                 .param("description", description)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
