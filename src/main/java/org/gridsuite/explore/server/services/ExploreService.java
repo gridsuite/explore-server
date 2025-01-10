@@ -215,9 +215,15 @@ public class ExploreService {
         }
     }
 
-    public void updateFilter(UUID id, String filter, String userId, String name) {
+    public void updateFilter(UUID id, String filter, String userId, String name, String description) {
         filterService.updateFilter(id, filter, userId);
-        updateElementName(id, name, userId);
+
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setDescription(description);
+        if (StringUtils.isNotBlank(name)) {
+            elementAttributes.setElementName(name);
+        }
+        directoryService.updateElement(id, elementAttributes, userId);
     }
 
     public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {

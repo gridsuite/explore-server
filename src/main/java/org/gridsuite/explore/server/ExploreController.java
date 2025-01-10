@@ -261,8 +261,9 @@ public class ExploreController {
     @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been successfully modified")})
-    public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody String filter, @RequestHeader(QUERY_PARAM_USER_ID) String userId, @RequestParam("name") String name) {
-        exploreService.updateFilter(id, filter, userId, name);
+    public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody String filter, @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                             @RequestParam("name") String name, @RequestParam("description") String description) {
+        exploreService.updateFilter(id, filter, userId, name, description);
         return ResponseEntity.ok().build();
     }
 

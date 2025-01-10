@@ -689,11 +689,13 @@ class ExploreTest {
     void testChangeFilter(final MockWebServer server) throws Exception {
         final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"],\"tso\":[\"ceps\"]}}}";
         final String name = "filter name";
+        final String description = "new filter description";
         mockMvc.perform(put("/v1/explore/filters/{id}",
                 FILTER_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(filter)
                 .param("name", name)
+                .param("description", description)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
