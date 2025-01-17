@@ -273,11 +273,12 @@ public class ExploreController {
     public ResponseEntity<Void> updateContingencyList(
             @PathVariable UUID id,
             @RequestParam(name = "name") String name,
+            @RequestParam(name = QUERY_PARAM_DESCRIPTION) String description,
             @RequestParam(name = "contingencyListType") ContingencyListType contingencyListType,
             @RequestBody String content,
             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
 
-        exploreService.updateContingencyList(id, content, userId, name, contingencyListType);
+        exploreService.updateContingencyList(id, content, userId, name, description, contingencyListType);
         return ResponseEntity.ok().build();
     }
 

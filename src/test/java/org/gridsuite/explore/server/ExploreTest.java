@@ -710,11 +710,13 @@ class ExploreTest {
     void testModifyScriptContingencyList(final MockWebServer server) throws Exception {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
+        final String description = "description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(scriptContingency)
                 .param("name", name)
+                .param("description", description)
                 .param("contingencyListType", ContingencyListType.SCRIPT.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -726,11 +728,13 @@ class ExploreTest {
     void testModifyFormContingencyList(final MockWebServer server) throws Exception {
         final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
         final String name = "form contingency name";
+        final String description = "form contingency description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(formContingency)
                 .param("name", name)
+                .param("description", description)
                 .param("contingencyListType", ContingencyListType.FORM.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -742,12 +746,14 @@ class ExploreTest {
     void testModifyIdentifierContingencyList(final MockWebServer server) throws Exception {
         final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
+        final String description = "identifier contingencyList description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(identifierContingencyList)
                 .param("name", name)
                 .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
+                .param("description", description)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 

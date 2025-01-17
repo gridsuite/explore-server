@@ -228,11 +228,16 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes, userId);
     }
 
-    public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {
+    public void updateContingencyList(UUID id, String content, String userId, String name, String description, ContingencyListType contingencyListType) {
         // check if the  user have the right to update the contingency
         directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
-        updateElementName(id, name, userId);
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setDescription(description);
+        if (StringUtils.isNotBlank(name)) {
+            elementAttributes.setElementName(name);
+        }
+        directoryService.updateElement(id, elementAttributes, userId);
     }
 
     public void updateCompositeModification(UUID id, String userId, String name) {
