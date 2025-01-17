@@ -86,6 +86,7 @@ class ExploreTest {
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
+    private static final String USER_NOT_ALLOWED = "user not allowed";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 = "limitedUser3";
@@ -116,6 +117,7 @@ class ExploreTest {
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
+    private static final UUID FORBIDDEN_ELEMENT_UUID = UUID.randomUUID();
 
     @Autowired
     private MockMvc mockMvc;
@@ -379,7 +381,9 @@ class ExploreTest {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=" + NOT_FOUND_STUDY_UUID)) {
                         return new MockResponse(404);
-                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
+                    } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
                     }
                 }
@@ -753,7 +757,7 @@ class ExploreTest {
     private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")), "name updated");
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
     }
 
     @Test
@@ -1007,5 +1011,17 @@ class ExploreTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(List.of(ELEMENT_UUID, PUBLIC_STUDY_UUID)))
         ).andExpect(status().isOk());
+    }
+
+    @Test
+    void testUpdateElementNotOk() throws Exception {
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementName(STUDY1);
+        mockMvc.perform(put("/v1/explore/elements/{id}",
+                FORBIDDEN_ELEMENT_UUID)
+                .header("userId", USER_NOT_ALLOWED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(elementAttributes))
+        ).andExpect(status().isForbidden());
     }
 }

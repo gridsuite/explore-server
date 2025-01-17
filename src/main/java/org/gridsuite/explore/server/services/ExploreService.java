@@ -216,6 +216,8 @@ public class ExploreService {
     }
 
     public void updateFilter(UUID id, String filter, String userId, String name, String description) {
+        // check if the  user have the right to update the filter
+        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         filterService.updateFilter(id, filter, userId);
 
         ElementAttributes elementAttributes = new ElementAttributes();
@@ -227,6 +229,8 @@ public class ExploreService {
     }
 
     public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {
+        // check if the  user have the right to update the contingency
+        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
         updateElementName(id, name, userId);
     }
@@ -345,6 +349,8 @@ public class ExploreService {
     }
 
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
+        // check if the  user have the right to update the element
+        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated
