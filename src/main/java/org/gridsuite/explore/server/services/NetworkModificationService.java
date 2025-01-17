@@ -43,8 +43,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
     }
 
-    public Map<UUID, UUID> duplicateModifications(List<UUID> modificationUuids) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+    public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + "duplication")
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -53,7 +53,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
-    public UUID createCompositeModifications(List<UUID> modificationUuids) {
+    public UUID createCompositeModification(List<UUID> modificationUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH)
                 .buildAndExpand()
                 .toUriString();
