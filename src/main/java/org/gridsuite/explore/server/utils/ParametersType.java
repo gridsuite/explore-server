@@ -10,10 +10,10 @@ package org.gridsuite.explore.server.utils;
  * @author Ayoub LABIDI <ayoub.labidi@rte-france.com>
  */
 public enum ParametersType {
-
     VOLTAGE_INIT_PARAMETERS,
     SECURITY_ANALYSIS_PARAMETERS,
     LOADFLOW_PARAMETERS,
     SENSITIVITY_PARAMETERS,
-    SHORT_CIRCUIT_PARAMETERS
+    SHORT_CIRCUIT_PARAMETERS,
+    NETWORK_VISUALIZATIONS_PARAMETERS
 }
