@@ -354,7 +354,7 @@ public class ExploreService {
     }
 
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
-        // check if the  user have the right to update the element
+        // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated
