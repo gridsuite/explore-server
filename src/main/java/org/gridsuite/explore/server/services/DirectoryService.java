@@ -44,6 +44,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String PARAM_IDS = "ids";
     private static final String PARAM_FOR_DELETION = "forDeletion";
+    private static final String PARAM_FOR_UPDATE = "forUpdate";
     private static final String PARAM_TARGET_DIRECTORY_UUID = "targetDirectoryUuid";
 
     private final Map<String, IDirectoryElementsService> genericServices;
@@ -125,34 +126,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public void areDirectoryElementsDeletable(List<UUID> elementUuids, String userId) {
-        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam(PARAM_FOR_DELETION, true)
-                .queryParam(PARAM_IDS, ids)
-                .buildAndExpand()
-                .toUriString();
-
-        ResponseEntity<Void> response;
-        try {
-            response = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
-
-        } catch (HttpStatusCodeException e) {
-            if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
-                throw new ExploreException(NOT_ALLOWED);
-            } else if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                throw new ExploreException(NOT_FOUND);
-            } else {
-                throw e;
-            }
-        }
-
-        if (HttpStatus.NO_CONTENT.equals(response.getStatusCode())) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
+        checkPermission(elementUuids, userId, false);
     }
 
     public void deleteElementsFromDirectory(List<UUID> elementUuids, UUID parentDirectoryUuid, String userId) {
@@ -296,5 +270,41 @@ public class DirectoryService implements IDirectoryElementsService {
 
         HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(elementsUuids, headers);
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
+    public void areDirectoryElementsUpdatable(List<UUID> elementUuids, String userId) {
+        checkPermission(elementUuids, userId, true);
+    }
+
+    public void checkPermission(List<UUID> elementUuids, String userId, boolean isUpdate) {
+        String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                .queryParam(isUpdate ? PARAM_FOR_UPDATE : PARAM_FOR_DELETION, true)
+                .queryParam(PARAM_IDS, ids)
+                .buildAndExpand()
+                .toUriString();
+
+        ResponseEntity<Void> response = null;
+        try {
+            response = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
+        } catch (HttpStatusCodeException e) {
+            handleException(e);
+        }
+        if (response != null && HttpStatus.NO_CONTENT.equals(response.getStatusCode())) {
+            throw new ExploreException(NOT_ALLOWED);
+        }
+    }
+
+    private void handleException(HttpStatusCodeException e) {
+        if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
+            throw new ExploreException(NOT_ALLOWED);
+        } else if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+            throw new ExploreException(NOT_FOUND);
+        } else {
+            throw e;
+        }
     }
 }
