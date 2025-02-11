@@ -399,22 +399,22 @@ public class ExploreController {
     @PostMapping(value = "/explore/composite-modifications")
     @Operation(summary = "Create composite modification element from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been created and composite modification element created in the directory")})
-    public ResponseEntity<Void> createCompositeModifications(@RequestBody List<UUID> modificationAttributes,
-                                                                @RequestParam(QUERY_PARAM_NAME) String name,
-                                                                @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
-                                                                @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+    public ResponseEntity<Void> createCompositeModification(@RequestBody List<UUID> modificationAttributes,
+                                                            @RequestParam(QUERY_PARAM_NAME) String name,
+                                                            @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.createCompositeModification(modificationAttributes, userId, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/explore/composite-modifications", params = "duplicateFrom")
     @Operation(summary = "duplicate modification element")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been duplicated and corresponding elements created in the directory")})
-    public ResponseEntity<Void> duplicateCompositeNetworkModifications(@RequestParam("duplicateFrom") UUID networkModificationId,
-                                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
-                                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.duplicateCompositeModifications(networkModificationId, targetDirectoryId, userId);
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Composite modification has been duplicated and corresponding element created in the directory")})
+    public ResponseEntity<Void> duplicateCompositeNetworkModification(@RequestParam("duplicateFrom") UUID networkModificationId,
+                                                                      @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                                      @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateCompositeModification(networkModificationId, targetDirectoryId, userId);
         return ResponseEntity.ok().build();
     }
 

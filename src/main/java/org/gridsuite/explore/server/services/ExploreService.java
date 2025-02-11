@@ -327,7 +327,7 @@ public class ExploreService {
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
 
-    public void duplicateCompositeModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
+    public void duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid, String userId) {
         // create duplicated modification
         Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateCompositeModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
