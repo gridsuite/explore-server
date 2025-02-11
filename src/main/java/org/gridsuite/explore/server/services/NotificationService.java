@@ -39,11 +39,16 @@ public class NotificationService {
 
     private static final Logger MESSAGE_OUTPUT_LOGGER = LoggerFactory.getLogger(CATEGORY_BROKER_OUTPUT);
 
-    @Autowired
-    private StreamBridge updatePublisher;
+    private final StreamBridge updatePublisher;
+
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    public NotificationService(StreamBridge updatePublisher,
+                               ObjectMapper objectMapper) {
+        this.updatePublisher = updatePublisher;
+        this.objectMapper = objectMapper;
+    }
 
     private void sendMessage(Message<String> message, String bindingName) {
         MESSAGE_OUTPUT_LOGGER.debug(MESSAGE_LOG, message);
