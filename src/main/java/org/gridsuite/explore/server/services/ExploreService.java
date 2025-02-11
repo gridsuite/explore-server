@@ -51,6 +51,7 @@ public class ExploreService {
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
     private final UserIdentityService userIdentityService;
+    private final NotificationService notificationService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -62,10 +63,12 @@ public class ExploreService {
             FilterService filterService,
             NetworkModificationService networkModificationService,
             CaseService caseService,
-            ParametersService parametersService, UserAdminService userAdminService,
+            ParametersService parametersService,
+            UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
             SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
-            UserIdentityService userIdentityService) {
+            UserIdentityService userIdentityService,
+            NotificationService notificationService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -78,6 +81,7 @@ public class ExploreService {
         this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
         this.userIdentityService = userIdentityService;
+        this.notificationService = notificationService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -216,6 +220,8 @@ public class ExploreService {
     }
 
     public void updateFilter(UUID id, String filter, String userId, String name, String description) {
+        // check if the  user have the right to update the filter
+        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         filterService.updateFilter(id, filter, userId);
 
         ElementAttributes elementAttributes = new ElementAttributes();
@@ -226,9 +232,16 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes, userId);
     }
 
-    public void updateContingencyList(UUID id, String content, String userId, String name, ContingencyListType contingencyListType) {
+    public void updateContingencyList(UUID id, String content, String userId, String name, String description, ContingencyListType contingencyListType) {
+        // check if the  user have the right to update the contingency
+        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
-        updateElementName(id, name, userId);
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setDescription(description);
+        if (StringUtils.isNotBlank(name)) {
+            elementAttributes.setElementName(name);
+        }
+        directoryService.updateElement(id, elementAttributes, userId);
     }
 
     public void updateCompositeModification(UUID id, String userId, String name) {
@@ -339,12 +352,13 @@ public class ExploreService {
             int userCasesUsagePercentage = (100 * userCasesCount) / userMaxAllowedStudiesAndCases;
             if (userCasesUsagePercentage >= casesAlertThreshold) {
                 CaseAlertThresholdMessage caseAlertThresholdMessage = new CaseAlertThresholdMessage(userCasesUsagePercentage, userCasesCount);
-                userAdminService.sendUserCasesAlertThresholdMessage(userId, "casesAlertThreshold", caseAlertThresholdMessage);
+                notificationService.emitUserMessage(userId, "casesAlertThreshold", caseAlertThresholdMessage);
             }
         }
     }
 
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
+        // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated

@@ -6,6 +6,8 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.context.annotation.Lazy;
@@ -28,18 +30,29 @@ public class ParametersService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
     private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
+    private static final String COMPUTATION_PARAMETERS = "/parameters";
+    private static final String NETWORK_VISU_PARAMETERS = "/network-visualizations-params";
 
     private final RestTemplate restTemplate;
 
-    private DirectoryService directoryService;
+    private final DirectoryService directoryService;
 
-    private final Map<ParametersType, String> genericParametersServices = Map.of(ParametersType.VOLTAGE_INIT_PARAMETERS, "voltage-init-server",
-            ParametersType.SECURITY_ANALYSIS_PARAMETERS, "security-analysis-server",
-            ParametersType.LOADFLOW_PARAMETERS, "loadflow-server",
-            ParametersType.SENSITIVITY_PARAMETERS, "sensitivity-analysis-server",
-            ParametersType.SHORT_CIRCUIT_PARAMETERS, "shortcircuit-server");
+    @Getter
+    @AllArgsConstructor
+    private static class ParameterServerConfig {
+        private String serverName;
+        private String parametersBaseUrl;
+    }
 
-    private RemoteServicesProperties remoteServicesProperties;
+    private final Map<ParametersType, ParameterServerConfig> genericParametersServices = Map.of(
+            ParametersType.VOLTAGE_INIT_PARAMETERS, new ParameterServerConfig("voltage-init-server", COMPUTATION_PARAMETERS),
+            ParametersType.SECURITY_ANALYSIS_PARAMETERS, new ParameterServerConfig("security-analysis-server", COMPUTATION_PARAMETERS),
+            ParametersType.LOADFLOW_PARAMETERS, new ParameterServerConfig("loadflow-server", COMPUTATION_PARAMETERS),
+            ParametersType.SENSITIVITY_PARAMETERS, new ParameterServerConfig("sensitivity-analysis-server", COMPUTATION_PARAMETERS),
+            ParametersType.SHORT_CIRCUIT_PARAMETERS, new ParameterServerConfig("shortcircuit-server", COMPUTATION_PARAMETERS),
+            ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS, new ParameterServerConfig("study-config-server", NETWORK_VISU_PARAMETERS));
+
+    private final RemoteServicesProperties remoteServicesProperties;
 
     public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -48,11 +61,11 @@ public class ParametersService implements IDirectoryElementsService {
     }
 
     public UUID createParameters(String parameters, ParametersType parametersType) {
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(parameters);
 
         var path = UriComponentsBuilder
-                .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters")
+                .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl())
                 .buildAndExpand()
                 .toUriString();
 
@@ -69,11 +82,11 @@ public class ParametersService implements IDirectoryElementsService {
     }
 
     public void updateParameters(UUID parametersUuid, String parameters, ParametersType parametersType) {
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(parameters);
 
         var path = UriComponentsBuilder
-                .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters/{parametersUuid}")
+                .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
                 .buildAndExpand(parametersUuid)
                 .toUriString();
 
@@ -86,10 +99,10 @@ public class ParametersService implements IDirectoryElementsService {
     }
 
     public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(sourceParametersUuid);
         var path = UriComponentsBuilder
-                    .fromPath(DELIMITER + SERVER_API_VERSION + "/parameters")
+                    .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl())
                     .queryParam(DUPLICATE_FROM_PARAMETER, sourceParametersUuid)
                     .buildAndExpand()
                     .toUriString();
@@ -102,8 +115,8 @@ public class ParametersService implements IDirectoryElementsService {
     public void delete(UUID parametersUuid, String userId) {
         ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType));
-        String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + "/parameters/{parametersUuid}")
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
+        String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
                 .buildAndExpand(parametersUuid)
                 .toUriString();
 

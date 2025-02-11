@@ -18,6 +18,7 @@ import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okio.Buffer;
+import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -30,8 +31,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -44,6 +49,8 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.MAX_ELEMENTS_EXCEEDED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -55,7 +62,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(MockWebServerExtension.class)
 @AutoConfigureMockMvc
-@SpringBootTest(classes = {ExploreApplication.class})
+@SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
@@ -86,6 +93,7 @@ class ExploreTest {
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
+    private static final String USER_NOT_ALLOWED = "user not allowed";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 = "limitedUser3";
@@ -116,6 +124,7 @@ class ExploreTest {
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
+    private static final UUID FORBIDDEN_ELEMENT_UUID = UUID.randomUUID();
 
     @Autowired
     private MockMvc mockMvc;
@@ -137,6 +146,16 @@ class ExploreTest {
     private ObjectMapper mapper;
     @Autowired
     private UserAdminService userAdminService;
+    @Autowired
+    private OutputDestination output;
+
+    private static final String USER_MESSAGE_DESTINATION = "directory.update";
+    public static final String HEADER_USER_MESSAGE = "userMessage";
+    public static final String HEADER_USER_ID = "userId";
+    public static final String HEADER_UPDATE_TYPE = "updateType";
+    public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
+
+    private static final long TIMEOUT = 1000;
 
     @BeforeEach
     void setup(final MockWebServer server) throws Exception {
@@ -186,7 +205,6 @@ class ExploreTest {
             public MockResponse dispatch(RecordedRequest request) {
                 String path = Objects.requireNonNull(request.getPath());
                 Buffer body = request.getBody();
-
                 if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(404);
                 } else if (path.matches("/v1/studies/.*/notification?type=metadata_updated") && "POST".equals(request.getMethod())) {
@@ -249,6 +267,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?targetDirectoryUuid=" + PARENT_DIRECTORY_UUID) && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/elements/" + FORBIDDEN_ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(403);
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementUuidAsString);
                 } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*") && "POST".equals(request.getMethod())) {
@@ -291,8 +311,6 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/network-composite-modifications")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
-                } else if (path.matches("/v1/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message.*")) {
-                    return new MockResponse(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), invalidElementAsString);
@@ -379,7 +397,9 @@ class ExploreTest {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=" + NOT_FOUND_STUDY_UUID)) {
                         return new MockResponse(404);
-                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
+                    } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
                     }
                 }
@@ -388,6 +408,7 @@ class ExploreTest {
         };
         server.setDispatcher(dispatcher);
         server.start();
+        output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
     }
 
     @Test
@@ -706,11 +727,13 @@ class ExploreTest {
     void testModifyScriptContingencyList(final MockWebServer server) throws Exception {
         final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
         final String name = "script name";
+        final String description = "description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(scriptContingency)
                 .param("name", name)
+                .param("description", description)
                 .param("contingencyListType", ContingencyListType.SCRIPT.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -722,11 +745,13 @@ class ExploreTest {
     void testModifyFormContingencyList(final MockWebServer server) throws Exception {
         final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
         final String name = "form contingency name";
+        final String description = "form contingency description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(formContingency)
                 .param("name", name)
+                .param("description", description)
                 .param("contingencyListType", ContingencyListType.FORM.name())
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -738,12 +763,14 @@ class ExploreTest {
     void testModifyIdentifierContingencyList(final MockWebServer server) throws Exception {
         final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
+        final String description = "identifier contingencyList description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
                 SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
                 .contentType(APPLICATION_JSON)
                 .content(identifierContingencyList)
                 .param("name", name)
                 .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
+                .param("description", description)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
@@ -753,7 +780,7 @@ class ExploreTest {
     private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/")), "name updated");
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
     }
 
     @Test
@@ -971,8 +998,9 @@ class ExploreTest {
             .param("caseFormat", "XIIDM")
             .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk());
-        var requests = TestUtils.getRequestsWithBodyDone(5, server);
-        assertTrue(requests.stream().noneMatch(r -> r.getPath().contains("/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/user-message")));
+
+        Message<byte[]> message = output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
+        assertNull(message);
 
         //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED has reached the defined case alert threshold, a message has been sent to him
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
@@ -981,8 +1009,16 @@ class ExploreTest {
             .param("caseFormat", "XIIDM")
             .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk());
-        requests = TestUtils.getRequestsWithBodyDone(6, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message")));
+
+        message = output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
+        assertNotNull(message);
+        MessageHeaders headers = message.getHeaders();
+        assertEquals(HEADER_UPDATE_TYPE_DIRECTORY, headers.get(HEADER_UPDATE_TYPE));
+        assertEquals("casesAlertThreshold", headers.get(HEADER_USER_MESSAGE));
+        assertEquals(USER_WITH_CASE_LIMIT_NOT_EXCEEDED, headers.get(HEADER_USER_ID));
+        CaseAlertThresholdMessage alertThresholdMessage = mapper.readValue(message.getPayload(), CaseAlertThresholdMessage.class);
+        assertEquals(2, alertThresholdMessage.casesCount());
+        assertEquals(40, alertThresholdMessage.userUsagePercentage());
     }
 
     @Test
@@ -1007,5 +1043,17 @@ class ExploreTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(List.of(ELEMENT_UUID, PUBLIC_STUDY_UUID)))
         ).andExpect(status().isOk());
+    }
+
+    @Test
+    void testUpdateElementNotOk() throws Exception {
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementName(STUDY1);
+        mockMvc.perform(put("/v1/explore/elements/{id}",
+                FORBIDDEN_ELEMENT_UUID)
+                .header("userId", USER_NOT_ALLOWED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(elementAttributes))
+        ).andExpect(status().isForbidden());
     }
 }
