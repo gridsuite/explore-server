@@ -18,6 +18,7 @@ import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okio.Buffer;
+import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -30,8 +31,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -44,6 +49,8 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.MAX_ELEMENTS_EXCEEDED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -55,7 +62,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(MockWebServerExtension.class)
 @AutoConfigureMockMvc
-@SpringBootTest(classes = {ExploreApplication.class})
+@SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
@@ -139,6 +146,16 @@ class ExploreTest {
     private ObjectMapper mapper;
     @Autowired
     private UserAdminService userAdminService;
+    @Autowired
+    private OutputDestination output;
+
+    private static final String USER_MESSAGE_DESTINATION = "directory.update";
+    public static final String HEADER_USER_MESSAGE = "userMessage";
+    public static final String HEADER_USER_ID = "userId";
+    public static final String HEADER_UPDATE_TYPE = "updateType";
+    public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
+
+    private static final long TIMEOUT = 1000;
 
     @BeforeEach
     void setup(final MockWebServer server) throws Exception {
@@ -294,8 +311,6 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/network-composite-modifications")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
-                } else if (path.matches("/v1/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message.*")) {
-                    return new MockResponse(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), invalidElementAsString);
@@ -393,6 +408,7 @@ class ExploreTest {
         };
         server.setDispatcher(dispatcher);
         server.start();
+        output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
     }
 
     @Test
@@ -982,8 +998,9 @@ class ExploreTest {
             .param("caseFormat", "XIIDM")
             .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk());
-        var requests = TestUtils.getRequestsWithBodyDone(5, server);
-        assertTrue(requests.stream().noneMatch(r -> r.getPath().contains("/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/user-message")));
+
+        Message<byte[]> message = output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
+        assertNull(message);
 
         //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED has reached the defined case alert threshold, a message has been sent to him
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
@@ -992,8 +1009,16 @@ class ExploreTest {
             .param("caseFormat", "XIIDM")
             .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk());
-        requests = TestUtils.getRequestsWithBodyDone(6, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message")));
+
+        message = output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
+        assertNotNull(message);
+        MessageHeaders headers = message.getHeaders();
+        assertEquals(HEADER_UPDATE_TYPE_DIRECTORY, headers.get(HEADER_UPDATE_TYPE));
+        assertEquals("casesAlertThreshold", headers.get(HEADER_USER_MESSAGE));
+        assertEquals(USER_WITH_CASE_LIMIT_NOT_EXCEEDED, headers.get(HEADER_USER_ID));
+        CaseAlertThresholdMessage alertThresholdMessage = mapper.readValue(message.getPayload(), CaseAlertThresholdMessage.class);
+        assertEquals(2, alertThresholdMessage.casesCount());
+        assertEquals(40, alertThresholdMessage.userUsagePercentage());
     }
 
     @Test

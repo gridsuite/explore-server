@@ -1,3 +1,9 @@
 spring:
   application:
     name: explore-server
+  cloud:
+    stream:
+      bindings:
+        publishDirectoryUpdate-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}directory.update
+      output-bindings: publishDirectoryUpdate-out-0
