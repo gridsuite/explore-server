@@ -317,19 +317,19 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
     }
 
-    public void createCompositeModifications(List<UUID> modificationUuids, String userId, String name,
-                                           String description, UUID parentDirectoryUuid) {
+    public void createCompositeModification(List<UUID> modificationUuids, String userId, String name,
+                                            String description, UUID parentDirectoryUuid) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModifications(modificationUuids);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
 
-    public void duplicateNetworkModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
+    public void duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid, String userId) {
         // create duplicated modification
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(List.of(sourceId));
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateCompositeModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
