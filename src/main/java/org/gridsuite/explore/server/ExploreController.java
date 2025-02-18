@@ -342,8 +342,8 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping(value = "/explore/spreadsheet-config-collections/collect", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Create a new spreadsheet configuration collection collecting and duplicating a list of existing configurations")
+    @PostMapping(value = "/explore/spreadsheet-config-collections/merge", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a new spreadsheet configuration collection duplicating and merging a list of existing configurations")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
     public ResponseEntity<Void> createSpreadsheetConfigCollectionFromConfigIds(@RequestBody List<UUID> configUuids,
                                                         @RequestParam("name") String collectionName,

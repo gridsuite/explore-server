@@ -46,7 +46,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         Objects.requireNonNull(configIds);
 
         var path = UriComponentsBuilder
-                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + "/collect")
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + "/merge")
                 .buildAndExpand()
                 .toUriString();
 
