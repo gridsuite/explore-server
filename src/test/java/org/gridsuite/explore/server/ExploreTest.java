@@ -64,6 +64,7 @@ class ExploreTest {
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
+    private static final UUID PARENT_DIRECTORY_UUID2 = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
@@ -86,10 +87,12 @@ class ExploreTest {
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
+    private static final String DIRECTORY1 = "directory1";
     private static final String USER_NOT_ALLOWED = "user not allowed";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 = "limitedUser3";
+    private static final String GENERIC_STRING = "a generic string";
 
     private static final String USER_NOT_FOUND = "userNotFound";
     private static final String USER_UNEXPECTED_ERROR = "unexpectedErrorUser";
@@ -156,6 +159,7 @@ class ExploreTest {
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
+        String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
         String listOfPrivateStudyAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", USER1, 0, null));
@@ -214,6 +218,8 @@ class ExploreTest {
                     }
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), privateStudyAttributesAsString);
+                } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newDirectoryAttributesAsString);
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(500);
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
@@ -296,9 +302,19 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if (path.matches("/v1/messages/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/user-message.*")) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/root-directories") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                 } else if ("GET".equals(request.getMethod())) {
-                    if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), invalidElementAsString);
+                    if (path.matches("/v1/root-directories[?]elementTypes")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                    } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate[?]type=type")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                    } else if (path.matches("/v1/elements/indexation-infos[?]directoryUuid=directoryUuid&userInput=userInput")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementAttributesAsString);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
@@ -385,6 +401,8 @@ class ExploreTest {
                     } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
                         return new MockResponse(200);
                     }
                 }
@@ -1030,5 +1048,108 @@ class ExploreTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testGetRootDirectories(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/root-directories")
+                        .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/root-directories")));
+    }
+
+    @Test
+    void testCreateRootDirectories(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(post("/v1/explore/directories/root-directories")
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(GENERIC_STRING)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/root-directories")));
+    }
+
+    @Test
+    void testGetDirectoryElements(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?elementTypes&recursive=false")));
+    }
+
+    @Test
+    void testCreateDirectory(final MockWebServer server) throws Exception {
+        String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
+        MvcResult result = mockMvc.perform(post("/v1/explore/directories/{directoryUuid}/directories", PARENT_DIRECTORY_UUID2)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(newDirectoryAttributesAsString)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(newDirectoryAttributesAsString, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?allowNewName=false")
+                && r.getBody().equals(newDirectoryAttributesAsString)));
+    }
+
+    @Test
+    void testGetElementPath(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/{elementUuid}/path", PARENT_DIRECTORY_UUID2)
+                        .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")));
+    }
+
+    @Test
+    void testElementExists(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}",
+                        PARENT_DIRECTORY_UUID2,
+                        "elementName",
+                        "type")
+                        .header("userId", USER1)
+                ).andExpect(status().isOk());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")));
+    }
+
+    @Test
+    void testGetElementNameCandidate(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elementName/newNameCandidate?type=type", PARENT_DIRECTORY_UUID2)
+                        .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate")));
+    }
+
+    @Test
+    void testSearchElement(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/indexation-infos?userInput=userInput&directoryUuid=directoryUuid")
+                        .header("userId", USER1)
+                ).andExpect(status().isOk())
+                .andReturn();
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/indexation-infos")));
     }
 }
