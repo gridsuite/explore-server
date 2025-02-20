@@ -51,6 +51,7 @@ public class ExploreService {
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
     private final UserIdentityService userIdentityService;
+    private final NotificationService notificationService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -62,10 +63,12 @@ public class ExploreService {
             FilterService filterService,
             NetworkModificationService networkModificationService,
             CaseService caseService,
-            ParametersService parametersService, UserAdminService userAdminService,
+            ParametersService parametersService,
+            UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
             SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
-            UserIdentityService userIdentityService) {
+            UserIdentityService userIdentityService,
+            NotificationService notificationService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -78,6 +81,7 @@ public class ExploreService {
         this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
         this.userIdentityService = userIdentityService;
+        this.notificationService = notificationService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -313,19 +317,19 @@ public class ExploreService {
         directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
     }
 
-    public void createCompositeModifications(List<UUID> modificationUuids, String userId, String name,
-                                           String description, UUID parentDirectoryUuid) {
+    public void createCompositeModification(List<UUID> modificationUuids, String userId, String name,
+                                            String description, UUID parentDirectoryUuid) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModifications(modificationUuids);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
     }
 
-    public void duplicateNetworkModifications(UUID sourceId, UUID parentDirectoryUuid, String userId) {
+    public void duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid, String userId) {
         // create duplicated modification
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateModifications(List.of(sourceId));
+        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateCompositeModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         directoryService.duplicateElement(sourceId, newNetworkModification, parentDirectoryUuid, userId);
@@ -348,7 +352,7 @@ public class ExploreService {
             int userCasesUsagePercentage = (100 * userCasesCount) / userMaxAllowedStudiesAndCases;
             if (userCasesUsagePercentage >= casesAlertThreshold) {
                 CaseAlertThresholdMessage caseAlertThresholdMessage = new CaseAlertThresholdMessage(userCasesUsagePercentage, userCasesCount);
-                userAdminService.sendUserCasesAlertThresholdMessage(userId, "casesAlertThreshold", caseAlertThresholdMessage);
+                notificationService.emitUserMessage(userId, "casesAlertThreshold", caseAlertThresholdMessage);
             }
         }
     }
