@@ -376,7 +376,7 @@ public class ExploreController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(value = "/explore/spreadsheet-configs/duplicate", params = "duplicateFrom")
+    @PostMapping(value = "/explore/spreadsheet-configs", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
     public ResponseEntity<Void> duplicateSpreadsheetConfig(@RequestParam("duplicateFrom") UUID sourceId,
@@ -386,7 +386,7 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping(value = "/explore/spreadsheet-config-collections/duplicate", params = "duplicateFrom")
+    @PostMapping(value = "/explore/spreadsheet-config-collections", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
     public ResponseEntity<Void> duplicateSpreadsheetConfigCollection(@RequestParam("duplicateFrom") UUID sourceId,
