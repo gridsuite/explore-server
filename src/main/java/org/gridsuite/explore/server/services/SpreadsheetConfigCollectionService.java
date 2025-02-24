@@ -55,7 +55,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
 
         HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
 
-        return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+        return restTemplate.postForObject(spreadsheetConfigServerBaseUri + path, httpEntity, UUID.class);
     }
 
     public UUID createSpreadsheetConfigCollection(String collection) {
