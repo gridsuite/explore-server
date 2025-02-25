@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -465,5 +466,94 @@ public class ExploreController {
     public ResponseEntity<String> getUsersIdentities(@RequestParam("ids") List<UUID> ids) {
         String usersIdentities = exploreService.getUsersIdentities(ids);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities);
+    }
+
+    @GetMapping(value = "/explore/directories/root-directories", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get root directories")
+    @ApiResponses(@ApiResponse(responseCode = "200", description = "The root directories"))
+    public ResponseEntity<String> getRootDirectories(@RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
+                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().body(directoryService.getRootDirectories(types, userId));
+    }
+
+    @RequestMapping(value = "explore/directories/root-directories", method = RequestMethod.HEAD)
+    @Operation(summary = "Get if a root directory of this name exists")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The root directory exists"),
+        @ApiResponse(responseCode = "204", description = "The root directory doesn't exist"),
+    })
+    public ResponseEntity<Void> rootDirectoryExists(@RequestParam("directoryName") String directoryName,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.status(directoryService.rootDirectoryExists(directoryName, userId)).contentType(MediaType.APPLICATION_JSON).build();
+    }
+
+    @PostMapping(value = "/explore/directories/root-directories", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create root directory")
+    @ApiResponses(@ApiResponse(responseCode = "200", description = "The created root directory"))
+    public ResponseEntity<String> createRootDirectory(@RequestBody String rootDirectoryAttributes,
+                                                      @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createRootDirectory(rootDirectoryAttributes, userId));
+    }
+
+    @GetMapping(value = "/explore/directories/{directoryUuid}/elements", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get directory elements")
+    @ApiResponses(@ApiResponse(responseCode = "200", description = "List directory's elements"))
+    public ResponseEntity<String> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
+                                                       @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
+                                                       @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive,
+                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getDirectoryElements(directoryUuid, types, recursive, userId));
+    }
+
+    @PostMapping(value = "/explore/directories/{directoryUuid}/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a subdirectory")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The created directory"),
+        @ApiResponse(responseCode = "409", description = "A directory with the same name already exists in the directory")})
+    public ResponseEntity<ElementAttributes> createDirectory(@PathVariable("directoryUuid") UUID directoryUuid,
+                                                             @RequestBody ElementAttributes elementAttributes,
+                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createElement(elementAttributes, directoryUuid, userId));
+    }
+
+    @GetMapping(value = "/explore/directories/elements/{elementUuid}/path", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get path of element")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "List info of an element and its parents in order to get its path"),
+        @ApiResponse(responseCode = "403", description = "Access forbidden for the element"),
+        @ApiResponse(responseCode = "404", description = "The searched element was not found")})
+    public ResponseEntity<String> getPath(@PathVariable("elementUuid") UUID elementUuid,
+                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getPath(elementUuid, userId));
+    }
+
+    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}")
+    @Operation(summary = "Check if an element with this name and this type already exists in the given directory")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element exists"),
+        @ApiResponse(responseCode = "204", description = "The element doesn't exist")})
+    public ResponseEntity<Void> elementExists(@PathVariable("directoryUuid") UUID directoryUuid,
+                                              @PathVariable("elementName") String elementName,
+                                              @PathVariable("type") String type,
+                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.status(directoryService.elementExists(directoryUuid, elementName, type, userId)).contentType(MediaType.APPLICATION_JSON).build();
+    }
+
+    @GetMapping(value = "/explore/directories/{directoryUuid}/{elementName}/newNameCandidate")
+    @Operation(summary = "Get a free name in directory based on the one given and it's type")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "If the element exists or not")})
+    public ResponseEntity<String> elementNameCandidate(@PathVariable("directoryUuid") UUID directoryUuid,
+                                                       @PathVariable("elementName") String elementName,
+                                                       @RequestParam("type") String type,
+                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getNameCandidate(directoryUuid, elementName, type, userId));
+    }
+
+    @GetMapping(value = "/explore/directories/elements/indexation-infos", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Search elements in elasticsearch")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "List of elements found")})
+    public ResponseEntity<String> searchElements(
+            @Parameter(description = "User input") @RequestParam(value = "userInput") String userInput,
+            @Parameter(description = "Current directory UUID") @RequestParam(value = "directoryUuid", required = false, defaultValue = "") String directoryUuid,
+            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(directoryService.searchElements(userInput, directoryUuid, userId));
     }
 }
