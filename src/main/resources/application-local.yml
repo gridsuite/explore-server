@@ -48,4 +48,7 @@ gridsuite:
     -
       name: study-config-server
       base-uri: http://localhost:5035
+    -
+      name: user-identity-server
+      base-uri: http://localhost:5034
 
