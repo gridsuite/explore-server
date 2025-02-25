@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -39,6 +40,22 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
     public SpreadsheetConfigCollectionService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.spreadsheetConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
         this.restTemplate = restTemplate;
+    }
+
+    public UUID createSpreadsheetConfigCollectionFromConfigIds(List<UUID> configIds) {
+        Objects.requireNonNull(configIds);
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + "/merge")
+                .buildAndExpand()
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
+
+        return restTemplate.postForObject(spreadsheetConfigServerBaseUri + path, httpEntity, UUID.class);
     }
 
     public UUID createSpreadsheetConfigCollection(String collection) {

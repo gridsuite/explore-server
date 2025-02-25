@@ -79,7 +79,7 @@ class SpreadsheetConfigCollectionTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = request.getPath();
-                if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL) && "POST".equals(request.getMethod())) {
+                if ((path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL) || path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/merge")) && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(COLLECTION_UUID));
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID)) {
                     return new MockResponse(204);
@@ -104,6 +104,19 @@ class SpreadsheetConfigCollectionTest {
         ResultActions perform = mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(spreadsheetConfigCollectionJson)
+                .param("name", COLLECTION_NAME)
+                .param("description", "Test Description")
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                .header("userId", USER_ID));
+        perform.andExpect(status().isCreated());
+    }
+
+    @Test
+    void testCreateSpreadsheetConfigCollectionWithMerge() throws Exception {
+        String configIds = "[\"" + UUID.randomUUID() + "\", \"" + UUID.randomUUID() + "\"]";
+        ResultActions perform = mockMvc.perform(post(BASE_URL + "/merge")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(configIds)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
                 .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
