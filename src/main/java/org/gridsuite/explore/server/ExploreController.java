@@ -308,6 +308,18 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "create diagram configuration")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram configuration creation request delegated to corresponding server")})
+    public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfiguration,
+                                                    @RequestParam("name") String diagramConfigurationName,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createDiagramConfiguration(diagramConfiguration, diagramConfigurationName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})

@@ -61,8 +61,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public DirectoryService(
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService, RestTemplate restTemplate,
-            RemoteServicesProperties remoteServicesProperties) {
+            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
+            SingleLineDiagramService singleLineDiagramService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
         this.genericServices = Map.ofEntries(
@@ -74,6 +74,7 @@ public class DirectoryService implements IDirectoryElementsService {
             Map.entry(CASE, caseService),
             Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
             Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
+            Map.entry(DIAGRAM, singleLineDiagramService),
             Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
