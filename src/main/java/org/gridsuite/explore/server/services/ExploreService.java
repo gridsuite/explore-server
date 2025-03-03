@@ -278,7 +278,7 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void createDiagramConfiguration(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid, String userId) {
+    public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid, String userId) {
         UUID diagramConfigUuid = singleLineDiagramService.createDiagramConfig(diagramConfig);
         ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM, userId, 0, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
