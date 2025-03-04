@@ -222,7 +222,8 @@ class SpreadsheetConfigTest {
     @Test
     void testGetSpreadsheetConfigMetadata() throws Exception {
         mockMvc.perform(get("/v1/explore/elements/metadata")
-                        .param("ids", CONFIG_UUID.toString()))
+                        .param("ids", CONFIG_UUID.toString())
+                        .header("userId", USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].specificMetadata.id").value(CONFIG_UUID.toString()))

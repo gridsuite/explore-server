@@ -46,7 +46,6 @@ public class DirectoryService implements IDirectoryElementsService {
             + "{elementUuid}";
 
     private static final String PARAM_IDS = "ids";
-    private static final String PARAM_FOR_DELETION = "forDeletion";
     private static final String PARAM_ACCESS_TYPE = "accessType";
     private static final String PARAM_TARGET_DIRECTORY_UUID = "targetDirectoryUuid";
     private static final String PARAM_ELEMENT_TYPES = "elementTypes";
