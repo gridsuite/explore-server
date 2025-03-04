@@ -371,11 +371,23 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createSpreadsheetConfigCollection(@RequestBody String spreadsheetConfigCollectionDto,
-                                                        @RequestParam("name") String collectionName,
-                                                        @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
-                                                        @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+                                                                  @RequestParam("name") String collectionName,
+                                                                  @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                                  @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto, collectionName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping(value = "/explore/spreadsheet-config-collections/merge", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a new spreadsheet configuration collection duplicating and merging a list of existing configurations")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
+    public ResponseEntity<Void> createSpreadsheetConfigCollectionFromConfigIds(@RequestBody List<UUID> configUuids,
+                                                                               @RequestParam("name") String collectionName,
+                                                                               @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                                               @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                                               @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createSpreadsheetConfigCollectionFromConfigIds(configUuids, collectionName, description, parentDirectoryUuid, userId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -403,7 +415,7 @@ public class ExploreController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(value = "/explore/spreadsheet-configs/duplicate", params = "duplicateFrom")
+    @PostMapping(value = "/explore/spreadsheet-configs", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, #targetDirectoryId, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
@@ -414,7 +426,7 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping(value = "/explore/spreadsheet-config-collections/duplicate", params = "duplicateFrom")
+    @PostMapping(value = "/explore/spreadsheet-config-collections", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, #targetDirectoryId, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")

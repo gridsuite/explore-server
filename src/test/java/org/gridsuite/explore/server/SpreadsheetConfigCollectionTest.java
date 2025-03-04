@@ -84,11 +84,11 @@ class SpreadsheetConfigCollectionTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = request.getPath();
-                if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL) && "POST".equals(request.getMethod())) {
+                if ((path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL) || path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/merge")) && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(COLLECTION_UUID));
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID)) {
                     return new MockResponse(204);
-                } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/duplicate\\?duplicateFrom=" + COLLECTION_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "\\?duplicateFrom=" + COLLECTION_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod()) || path.matches("/v1/elements/" + COLLECTION_UUID)) {
                     ElementAttributes elementAttributes = new ElementAttributes(COLLECTION_UUID, COLLECTION_NAME, "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
@@ -119,6 +119,19 @@ class SpreadsheetConfigCollectionTest {
     }
 
     @Test
+    void testCreateSpreadsheetConfigCollectionWithMerge() throws Exception {
+        String configIds = "[\"" + UUID.randomUUID() + "\", \"" + UUID.randomUUID() + "\"]";
+        ResultActions perform = mockMvc.perform(post(BASE_URL + "/merge")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(configIds)
+                .param("name", COLLECTION_NAME)
+                .param("description", "Test Description")
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                .header("userId", USER_ID));
+        perform.andExpect(status().isCreated());
+    }
+
+    @Test
     void testUpdateSpreadsheetConfigCollection() throws Exception {
         mockMvc.perform(put(BASE_URL + "/{id}", COLLECTION_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,7 +143,7 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollection() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/duplicate")
+        mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", COLLECTION_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
@@ -139,7 +152,7 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollectionWithInvalidUUID() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/duplicate")
+        mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", "invalid-uuid")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))

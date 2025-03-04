@@ -88,7 +88,7 @@ class SpreadsheetConfigTest {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(CONFIG_UUID));
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/" + CONFIG_UUID) && "PUT".equals(request.getMethod())) {
                     return new MockResponse(204);
-                } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/duplicate\\?duplicateFrom=" + CONFIG_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "\\?duplicateFrom=" + CONFIG_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/metadata\\?ids=" + CONFIG_UUID)) {
                     Map<String, Object> metadata = new HashMap<>();
@@ -149,7 +149,7 @@ class SpreadsheetConfigTest {
 
     @Test
     void testDuplicateSpreadsheetConfig() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/duplicate")
+        mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", CONFIG_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
@@ -158,7 +158,7 @@ class SpreadsheetConfigTest {
 
     @Test
     void testDuplicateSpreadsheetConfigWithInvalidUUID() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/duplicate")
+        mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", "invalid-uuid")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))

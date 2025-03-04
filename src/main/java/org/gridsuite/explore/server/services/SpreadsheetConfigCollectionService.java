@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -41,6 +42,22 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         this.restTemplate = restTemplate;
     }
 
+    public UUID createSpreadsheetConfigCollectionFromConfigIds(List<UUID> configIds) {
+        Objects.requireNonNull(configIds);
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + "/merge")
+                .buildAndExpand()
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
+
+        return restTemplate.postForObject(spreadsheetConfigServerBaseUri + path, httpEntity, UUID.class);
+    }
+
     public UUID createSpreadsheetConfigCollection(String collection) {
         Objects.requireNonNull(collection);
 
@@ -61,7 +78,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         Objects.requireNonNull(collectionId);
 
         var path = UriComponentsBuilder
-                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + DELIMITER + "duplicate")
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH)
                 .queryParam(DUPLICATE_FROM_PARAMETER, collectionId)
                 .buildAndExpand()
                 .toUriString();

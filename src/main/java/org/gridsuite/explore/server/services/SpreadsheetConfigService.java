@@ -65,7 +65,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         Objects.requireNonNull(configUuid);
 
         var path = UriComponentsBuilder
-                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH + DELIMITER + "duplicate")
+                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH)
                 .queryParam(DUPLICATE_FROM_PARAMETER, configUuid)
                 .buildAndExpand()
                 .toUriString();
