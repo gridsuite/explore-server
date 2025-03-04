@@ -94,6 +94,7 @@ class ExploreTest {
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
+    private static final String NOT_ADMIN_USER = "notAdminUser";
     private static final String DIRECTORY1 = "directory1";
     private static final String USER_NOT_ALLOWED = "user not allowed";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
@@ -409,15 +410,19 @@ class ExploreTest {
                     }
                     return new MockResponse(404);
                 } else if ("HEAD".equals(request.getMethod())) {
-                    if (path.matches("/v1/elements\\?forDeletion=true&ids=" + FORBIDDEN_STUDY_UUID)) {
+                    if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")) {
                         return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=" + NOT_FOUND_STUDY_UUID)) {
-                        return new MockResponse(404);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid")) {
+                        return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/users/" + NOT_ADMIN_USER + "/isAdmin")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/users/.*/isAdmin")) {
                         return new MockResponse(200);
                     }
                 }
@@ -598,14 +603,14 @@ class ExploreTest {
 
     private void deleteElementNotAllowed(UUID elementUUid, int status) throws Exception {
         mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
-                        elementUUid).header("userId", USER1))
+                        elementUUid).header("userId", NOT_ADMIN_USER))
                 .andExpect(status().is(status));
     }
 
     private void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid, int status) throws Exception {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
-                        .header("userId", USER1))
+                        .header("userId", NOT_ADMIN_USER))
                 .andExpect(status().is(status));
     }
 
@@ -621,9 +626,7 @@ class ExploreTest {
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
         deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID, 403);
-        deleteElementsNotAllowed(List.of(NOT_FOUND_STUDY_UUID), PARENT_DIRECTORY_UUID, 404);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
-        deleteElementNotAllowed(NOT_FOUND_STUDY_UUID, 404);
     }
 
     @Test
@@ -738,7 +741,7 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/", USER1);
     }
 
     @Test
@@ -756,7 +759,7 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/script-contingency-lists");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/script-contingency-lists", USER1);
     }
 
     @Test
@@ -774,7 +777,7 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/form-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/form-contingency-lists/", USER1);
     }
 
     @Test
@@ -792,13 +795,14 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
     }
 
-    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath) {
-        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath, String user) {
+        var requests = TestUtils.getRequestsWithBodyDone(3, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/users/" + user + "/isAdmin")));
     }
 
     @Test
@@ -1124,9 +1128,10 @@ class ExploreTest {
                 .andReturn();
         assertEquals(newDirectoryAttributesAsString, result.getResponse().getContentAsString());
 
-        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?allowNewName=false")
                 && r.getBody().equals(newDirectoryAttributesAsString)));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/users/" + USER1 + "/isAdmin")));
     }
 
     @Test

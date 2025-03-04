@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -46,7 +47,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private static final String PARAM_IDS = "ids";
     private static final String PARAM_FOR_DELETION = "forDeletion";
-    private static final String PARAM_FOR_UPDATE = "forUpdate";
+    private static final String PARAM_ACCESS_TYPE = "accessType";
     private static final String PARAM_TARGET_DIRECTORY_UUID = "targetDirectoryUuid";
     private static final String PARAM_ELEMENT_TYPES = "elementTypes";
     private static final String PARAM_RECURSIVE = "recursive";
@@ -247,10 +248,6 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
-    public void areDirectoryElementsDeletable(List<UUID> elementUuids, String userId) {
-        checkPermission(elementUuids, userId, false);
-    }
-
     public void deleteElementsFromDirectory(List<UUID> elementUuids, UUID parentDirectoryUuid, String userId) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
@@ -273,7 +270,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .getBody();
     }
 
-    public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes) {
+    public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
 
@@ -282,7 +279,9 @@ public class DirectoryService implements IDirectoryElementsService {
         }
 
         List<ElementAttributes> elementAttributesList;
-        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null,
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers),
                 new ParameterizedTypeReference<List<ElementAttributes>>() {
                 }).getBody();
         return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
@@ -341,8 +340,8 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
-            List<String> equipmentTypes) {
-        Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
+            List<String> equipmentTypes, String userId) {
+        Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes, userId)
                 .stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType));
         List<ElementAttributes> listOfElements = new ArrayList<>();
@@ -394,18 +393,15 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    public void areDirectoryElementsUpdatable(List<UUID> elementUuids, String userId) {
-        checkPermission(elementUuids, userId, true);
-    }
-
-    public void checkPermission(List<UUID> elementUuids, String userId, boolean isUpdate) {
+    public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
 
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam(isUpdate ? PARAM_FOR_UPDATE : PARAM_FOR_DELETION, true)
+                .queryParam(PARAM_ACCESS_TYPE, permissionType)
                 .queryParam(PARAM_IDS, ids)
+                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
                 .buildAndExpand()
                 .toUriString();
 
@@ -415,9 +411,7 @@ public class DirectoryService implements IDirectoryElementsService {
         } catch (HttpStatusCodeException e) {
             handleException(e);
         }
-        if (HttpStatus.NO_CONTENT.equals(response.getStatusCode())) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
+        return !HttpStatus.NO_CONTENT.equals(response.getStatusCode());
     }
 
     private void handleException(HttpStatusCodeException e) {
