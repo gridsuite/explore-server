@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -25,15 +26,12 @@ public class StudyService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String NOTIFICATION_TYPE_METADATA_UPDATED = "metadata_updated";
     private final RestTemplate restTemplate;
+    @Setter
     private String studyServerBaseUri;
 
     public StudyService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.studyServerBaseUri = remoteServicesProperties.getServiceUri("study-server");
         this.restTemplate = restTemplate;
-    }
-
-    public void setStudyServerBaseUri(String studyServerBaseUri) {
-        this.studyServerBaseUri = studyServerBaseUri;
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, String caseFormat,

@@ -284,7 +284,7 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void duplicateDiagramConfiguration(UUID sourceId, UUID targetDirectoryId, String userId) {
+    public void duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
         UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
         directoryService.duplicateElement(sourceId, newConfigUuid, targetDirectoryId, userId);
     }

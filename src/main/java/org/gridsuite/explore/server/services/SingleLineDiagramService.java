@@ -1,5 +1,6 @@
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +16,7 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH = DELIMITER + SINGLE_LINE_DIAGRAM_API_VERSION + DELIMITER + "network-area-diagram/config";
 
+    @Setter
     String singleLineDiagramServerBaseUri;
 
     private final RestTemplate restTemplate;

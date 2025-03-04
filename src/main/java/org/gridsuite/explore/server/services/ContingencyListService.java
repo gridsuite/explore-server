@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -29,16 +30,13 @@ public class ContingencyListService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
     private static final String HEADER_DUPLICATE_FROM = "duplicateFrom";
+    @Setter
     private String actionsServerBaseUri;
     private final RestTemplate restTemplate;
 
     public ContingencyListService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.actionsServerBaseUri = remoteServicesProperties.getServiceUri("actions-server");
         this.restTemplate = restTemplate;
-    }
-
-    public void setActionsServerBaseUri(String actionsServerBaseUri) {
-        this.actionsServerBaseUri = actionsServerBaseUri;
     }
 
     @Override

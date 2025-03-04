@@ -91,6 +91,8 @@ class ExploreTest {
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
+    private static final UUID DIAGRAM_CONFIG_UUID = UUID.randomUUID();
+    private static final UUID DIAGRAM_CONFIG_COPY_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
@@ -151,6 +153,8 @@ class ExploreTest {
     private UserAdminService userAdminService;
     @Autowired
     private OutputDestination output;
+    @Autowired
+    private SingleLineDiagramService singleLineDiagramService;
 
     private static final String USER_MESSAGE_DESTINATION = "directory.update";
     public static final String HEADER_USER_MESSAGE = "userMessage";
@@ -174,6 +178,7 @@ class ExploreTest {
         caseService.setBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
+        singleLineDiagramService.setSingleLineDiagramServerBaseUri(baseUrl);
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
@@ -201,6 +206,7 @@ class ExploreTest {
         String newElementUuidAsString = mapper.writeValueAsString(ELEMENT_COPY_UUID);
         String newElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", USER1, 0, null));
         String listElementsAsString = "[" + newElementAttributesAsString + "," + publicStudyAttributesAsString + "]";
+        String newDiagramConfigUuidAsString = mapper.writeValueAsString(DIAGRAM_CONFIG_COPY_UUID);
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -215,6 +221,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newStudyUuidAsString);
+                } else if (path.matches("/v1/network-area-diagram/config\\?duplicateFrom=" + DIAGRAM_CONFIG_UUID + ".*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newDiagramConfigUuidAsString);
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
@@ -399,6 +407,8 @@ class ExploreTest {
                     } else if (path.matches("/v1/elements/" + PARAMETERS_UUID)) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/elements/" + MODIFICATION_UUID)) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements/" + DIAGRAM_CONFIG_UUID)) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
                         return new MockResponse(200);
@@ -620,6 +630,7 @@ class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
+        deleteElement(DIAGRAM_CONFIG_UUID);
         deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID, 403);
         deleteElementsNotAllowed(List.of(NOT_FOUND_STUDY_UUID), PARENT_DIRECTORY_UUID, 404);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
@@ -709,6 +720,14 @@ class ExploreTest {
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    void testDuplicateDiagramConfig() throws Exception {
+        mockMvc.perform(post("/v1/explore/diagram-config?duplicateFrom={diagramConfigUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+                        DIAGRAM_CONFIG_UUID, PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
     }
 
     @Test
