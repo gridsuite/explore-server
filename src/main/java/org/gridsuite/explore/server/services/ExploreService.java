@@ -284,6 +284,11 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
+    public void duplicateDiagramConfiguration(UUID sourceId, UUID targetDirectoryId, String userId) {
+        UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
+        directoryService.duplicateElement(sourceId, newConfigUuid, targetDirectoryId, userId);
+    }
+
     public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name) {
         parametersService.updateParameters(id, parameters, parametersType);
         updateElementName(id, name, userId);

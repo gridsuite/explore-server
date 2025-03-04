@@ -320,6 +320,16 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a spreadsheet configuration")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
+    public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
+                                                           @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateDiagramConfiguration(sourceId, targetDirectoryId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})

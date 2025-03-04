@@ -54,4 +54,17 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
 
         return restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
+
+    public UUID duplicateDiagramConfig(UUID sourceUuid) {
+        Objects.requireNonNull(sourceUuid);
+
+        String path = UriComponentsBuilder.fromPath(SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH)
+            .queryParam("duplicateFrom", sourceUuid)
+            .buildAndExpand()
+            .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
+            .getBody();
+    }
 }
