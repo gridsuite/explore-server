@@ -300,6 +300,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/network-area-diagram/config.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
@@ -571,6 +573,16 @@ class ExploreTest {
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"new Parameters content\"")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void testCreateDiagramConfig() throws Exception {
+        mockMvc.perform(post("/v1/explore/diagram-config?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                "diagramConfigName", "DIAGRAM_CONFIG", "description", PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("\"Diagram config content\"")
         ).andExpect(status().isOk());
     }
 
