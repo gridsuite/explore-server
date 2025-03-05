@@ -207,6 +207,7 @@ class ExploreTest {
         String newElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", USER1, 0, null));
         String listElementsAsString = "[" + newElementAttributesAsString + "," + publicStudyAttributesAsString + "]";
         String newDiagramConfigUuidAsString = mapper.writeValueAsString(DIAGRAM_CONFIG_COPY_UUID);
+        String diagramConfigAttributesAsString = mapper.writeValueAsString(new ElementAttributes(DIAGRAM_CONFIG_UUID, "diagramConfigName", "DIAGRAM_CONFIG", USER1, 0, null));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -265,6 +266,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), publicStudyAttributesAsString);
                 } else if (path.matches("/v1/elements/" + PARAMETERS_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parametersElementAttributesAsString);
+                } else if (path.matches("/v1/elements/" + DIAGRAM_CONFIG_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), diagramConfigAttributesAsString);
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
