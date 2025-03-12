@@ -279,6 +279,8 @@ public class ExploreService {
     }
 
     public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid, String userId, UUID studyUuid, UUID rootNetworkUuid, UUID nodeUuid) {
+        // The single-line-diagram-server needs a variant ID for the NadConfig creation, which can only be found in study-server.
+        // To get the variant ID, we have to give study-server the studyUuid, rootNetworkUuid and nodeUuid.
         UUID diagramConfigUuid = studyService.createDiagramConfig(diagramConfig, studyUuid, rootNetworkUuid, nodeUuid);
         ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM, userId, 0, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);

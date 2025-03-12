@@ -15,6 +15,7 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
     private static final String SINGLE_LINE_DIAGRAM_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH = DELIMITER + SINGLE_LINE_DIAGRAM_API_VERSION + DELIMITER + "network-area-diagram/config";
+    private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
 
     @Setter
     String singleLineDiagramServerBaseUri;
@@ -45,7 +46,7 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
         Objects.requireNonNull(sourceUuid);
 
         String path = UriComponentsBuilder.fromPath(SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH)
-            .queryParam("duplicateFrom", sourceUuid)
+            .queryParam(DUPLICATE_FROM_PARAMETER, sourceUuid)
             .buildAndExpand()
             .toUriString();
         HttpHeaders headers = new HttpHeaders();

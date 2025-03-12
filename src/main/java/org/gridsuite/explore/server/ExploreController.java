@@ -312,6 +312,29 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
+    public ResponseEntity<Void> updateParameters(@PathVariable UUID id,
+                                             @RequestBody String parameters,
+                                             @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
+                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                             @RequestParam("name") String name) {
+        exploreService.updateParameters(id, parameters, parametersType, userId, name);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/parameters", params = "duplicateFrom")
+    @Operation(summary = "Duplicate parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
+    public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
+                                                    @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                    @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
@@ -334,29 +357,6 @@ public class ExploreController {
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId, userId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Modify parameters")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
-    public ResponseEntity<Void> updateParameters(@PathVariable UUID id,
-                                             @RequestBody String parameters,
-                                             @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
-                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                             @RequestParam("name") String name) {
-        exploreService.updateParameters(id, parameters, parametersType, userId, name);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/parameters", params = "duplicateFrom")
-    @Operation(summary = "Duplicate parameters")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
-    public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
-                                                    @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
-                                                    @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType,
-                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
         return ResponseEntity.ok().build();
     }
 
