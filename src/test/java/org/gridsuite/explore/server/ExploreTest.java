@@ -577,7 +577,7 @@ class ExploreTest {
     }
 
     @Test
-    void testCreateDiagramConfig() throws Exception {
+    void testCreateDiagramConfig() throws Exception { // TODO Fix this
         mockMvc.perform(post("/v1/explore/diagram-config?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "diagramConfigName", "DIAGRAM_CONFIG", "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)

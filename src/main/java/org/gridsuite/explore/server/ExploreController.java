@@ -42,6 +42,10 @@ public class ExploreController {
     private static final String QUERY_PARAM_TYPE = "type";
     private static final String QUERY_PARAM_USER_ID = "userId";
 
+    private static final String QUERY_PARAM_STUDY_ID = "studyUuid";
+    private static final String QUERY_PARAM_ROOT_NETWORK_ID = "rootNetworkUuid";
+    private static final String QUERY_PARAM_NODE_ID = "nodeUuid";
+
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
 
@@ -315,8 +319,11 @@ public class ExploreController {
                                                     @RequestParam("name") String diagramConfigName,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                    @RequestParam(QUERY_PARAM_STUDY_ID) UUID studyUuid,
+                                                    @RequestParam(QUERY_PARAM_ROOT_NETWORK_ID) UUID rootNetworkUuid,
+                                                    @RequestParam(QUERY_PARAM_NODE_ID) UUID nodeUuid,
                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid, userId);
+        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid, userId, studyUuid, rootNetworkUuid, nodeUuid);
         return ResponseEntity.ok().build();
     }
 
