@@ -278,6 +278,16 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
+    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name) {
+        parametersService.updateParameters(id, parameters, parametersType);
+        updateElementName(id, name, userId);
+    }
+
+    public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
+        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
+        directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
+    }
+
     public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid, String userId, UUID studyUuid, UUID rootNetworkUuid, UUID nodeUuid) {
         // The single-line-diagram-server needs a variant ID for the NadConfig creation, which can only be found in study-server.
         // To get the variant ID, we have to give study-server the studyUuid, rootNetworkUuid and nodeUuid.
@@ -289,16 +299,6 @@ public class ExploreService {
     public void duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
         UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
         directoryService.duplicateElement(sourceId, newConfigUuid, targetDirectoryId, userId);
-    }
-
-    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name) {
-        parametersService.updateParameters(id, parameters, parametersType);
-        updateElementName(id, name, userId);
-    }
-
-    public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
-        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
-        directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid, String userId) {
