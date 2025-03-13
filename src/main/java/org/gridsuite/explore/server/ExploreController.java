@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
+import org.gridsuite.explore.server.services.UserAdminService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
@@ -45,10 +46,12 @@ public class ExploreController {
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
+    private final UserAdminService userAdminService;
 
-    public ExploreController(ExploreService exploreService, DirectoryService directoryService) {
+    public ExploreController(ExploreService exploreService, DirectoryService directoryService, UserAdminService userAdminService) {
         this.exploreService = exploreService;
         this.directoryService = directoryService;
+        this.userAdminService = userAdminService;
     }
 
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
@@ -593,5 +596,21 @@ public class ExploreController {
             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(directoryService.searchElements(userInput, directoryUuid, userId));
+    }
+
+    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/directories/{directoryUuid}")
+    @Operation(summary = "Check if user has a right on a directory")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The user has the right on the directory"),
+        @ApiResponse(responseCode = "204", description = "The user has not the right on the directory"),
+    })
+    public ResponseEntity<Void> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
+                                         @RequestParam(name = "permission") PermissionType permission,
+                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        if (userAdminService.isUserAdmin(userId) || directoryService.hasPermission(List.of(directoryUuid), null, userId, permission)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.noContent().build();
+        }
     }
 }

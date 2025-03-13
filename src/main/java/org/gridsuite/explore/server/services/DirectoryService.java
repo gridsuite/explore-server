@@ -399,11 +399,11 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
 
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam(PARAM_ACCESS_TYPE, permissionType)
-                .queryParam(PARAM_IDS, ids)
-                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
-                .buildAndExpand()
-                .toUriString();
+            .queryParam(PARAM_ACCESS_TYPE, permissionType)
+            .queryParam(PARAM_IDS, ids)
+            .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+            .buildAndExpand()
+            .toUriString();
 
         ResponseEntity<Void> response = null;
         try {
