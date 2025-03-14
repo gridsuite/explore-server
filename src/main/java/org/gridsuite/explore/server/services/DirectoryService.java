@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import lombok.Setter;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -58,7 +57,6 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
-    @Setter
     private String directoryServerBaseUri;
 
     public DirectoryService(
@@ -84,6 +82,10 @@ public class DirectoryService implements IDirectoryElementsService {
             Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), parametersService)
         );
+    }
+
+    public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
+        this.directoryServerBaseUri = directoryServerBaseUri;
     }
 
     public String getRootDirectories(List<String> types, String userId) {

@@ -42,10 +42,6 @@ public class ExploreController {
     private static final String QUERY_PARAM_TYPE = "type";
     private static final String QUERY_PARAM_USER_ID = "userId";
 
-    private static final String QUERY_PARAM_STUDY_ID = "studyUuid";
-    private static final String QUERY_PARAM_ROOT_NETWORK_ID = "rootNetworkUuid";
-    private static final String QUERY_PARAM_NODE_ID = "nodeUuid";
-
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
 
@@ -312,6 +308,28 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "create diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
+    public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfig,
+                                                    @RequestParam("name") String diagramConfigName,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
+    public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
+                                                           @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId, userId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
@@ -332,31 +350,6 @@ public class ExploreController {
                                                     @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType,
                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "create diagram config")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
-    public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfig,
-                                                    @RequestParam("name") String diagramConfigName,
-                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
-                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                    @RequestParam(QUERY_PARAM_STUDY_ID) UUID studyUuid,
-                                                    @RequestParam(QUERY_PARAM_ROOT_NETWORK_ID) UUID rootNetworkUuid,
-                                                    @RequestParam(QUERY_PARAM_NODE_ID) UUID nodeUuid,
-                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid, userId, studyUuid, rootNetworkUuid, nodeUuid);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
-    @Operation(summary = "Duplicate a diagram config")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
-    public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
-                                                           @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
-                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId, userId);
         return ResponseEntity.ok().build();
     }
 

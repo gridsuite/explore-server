@@ -99,18 +99,4 @@ public class StudyService implements IDirectoryElementsService {
         headers.set(HEADER_USER_ID, userId);
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
-
-    public UUID createDiagramConfig(String diagramConfig, UUID studyUuid, UUID rootNetworkUuid, UUID nodeUuid) {
-        Objects.requireNonNull(diagramConfig);
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                        "/studies/{studyUuid}/root-networks/{rootNetworkUuid}/nodes/{nodeUuid}/network-area-diagram/config")
-                .buildAndExpand(studyUuid, rootNetworkUuid, nodeUuid)
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(diagramConfig, headers);
-
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
-    }
 }

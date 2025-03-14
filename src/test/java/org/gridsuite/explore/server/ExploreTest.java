@@ -578,9 +578,8 @@ class ExploreTest {
 
     @Test
     void testCreateDiagramConfig() throws Exception {
-        mockMvc.perform(post("/v1/explore/diagram-config?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}"
-                +"&studyUuid={studyUuid}&rootNetworkUuid={rootNetworkUuid}&nodeUuid={nodeUuid}",
-                "diagramConfigName", "DIAGRAM_CONFIG", "description", PARENT_DIRECTORY_UUID, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())
+        mockMvc.perform(post("/v1/explore/diagram-config?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                "diagramConfigName", "DIAGRAM_CONFIG", "description", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Diagram config content\"")
