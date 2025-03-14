@@ -70,7 +70,8 @@ public class ExploreService {
         SpreadsheetConfigService spreadsheetConfigService,
         SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
         UserIdentityService userIdentityService,
-        NotificationService notificationService, SingleLineDiagramService singleLineDiagramService) {
+        NotificationService notificationService,
+        SingleLineDiagramService singleLineDiagramService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;

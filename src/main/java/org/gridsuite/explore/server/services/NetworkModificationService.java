@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,13 +31,16 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public static final String UUIDS = "uuids";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
-    @Setter
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
 
     public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
         this.restTemplate = restTemplate;
+    }
+
+    public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
+        this.networkModificationServerBaseUri = networkModificationServerBaseUri;
     }
 
     public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {

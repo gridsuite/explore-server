@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +30,6 @@ public class FilterService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
 
-    @Setter
     private String filterServerBaseUri;
 
     private final RestTemplate restTemplate;
@@ -39,6 +37,10 @@ public class FilterService implements IDirectoryElementsService {
     public FilterService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.filterServerBaseUri = remoteServicesProperties.getServiceUri("filter-server");
         this.restTemplate = restTemplate;
+    }
+
+    public void setFilterServerBaseUri(String filterServerBaseUri) {
+        this.filterServerBaseUri = filterServerBaseUri;
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
