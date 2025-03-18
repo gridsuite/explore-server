@@ -74,7 +74,7 @@ public class DirectoryService implements IDirectoryElementsService {
             Map.entry(CASE, caseService),
             Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
             Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
-            Map.entry(DIAGRAM, singleLineDiagramService),
+            Map.entry(DIAGRAM_CONFIG, singleLineDiagramService),
             Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),

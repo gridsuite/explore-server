@@ -40,7 +40,7 @@ public class ExploreService {
     static final String DIRECTORY = "DIRECTORY";
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
-    static final String DIAGRAM = "DIAGRAM_CONFIG";
+    static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -291,7 +291,7 @@ public class ExploreService {
 
     public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid, String userId) {
         UUID diagramConfigUuid = singleLineDiagramService.createDiagramConfig(diagramConfig);
-        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, userId, 0, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
