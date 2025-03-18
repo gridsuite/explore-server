@@ -140,9 +140,6 @@ public class ExploreService {
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!userId.equals(elementAttribute.getOwner())) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }

@@ -72,6 +72,7 @@ class ExploreTest {
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID2 = UUID.randomUUID();
+    private static final UUID PARENT_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
@@ -410,18 +411,18 @@ class ExploreTest {
                     return new MockResponse(404);
                 } else if ("HEAD".equals(request.getMethod())) {
                     if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")) {
-                        return new MockResponse(403);
+                        return new MockResponse(200);
                     } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
-                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                         return new MockResponse(200);
-                    } else if (path.matches("/v1/users/" + NOT_ADMIN_USER + "/isAdmin")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/users/.*/isAdmin")) {
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
                         return new MockResponse(200);
                     }
                 }
@@ -624,7 +625,7 @@ class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
-        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID, 403);
+        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
     }
 
@@ -801,7 +802,6 @@ class ExploreTest {
         var requests = TestUtils.getRequestsWithBodyDone(3, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/users/" + user + "/isAdmin")));
     }
 
     @Test
@@ -1130,7 +1130,6 @@ class ExploreTest {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?allowNewName=false")
                 && r.getBody().equals(newDirectoryAttributesAsString)));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/users/" + USER1 + "/isAdmin")));
     }
 
     @Test

@@ -98,7 +98,11 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
                 } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/elements\\?f=true&ids=.*")) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
+                    return new MockResponse(200);
+                } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                     return new MockResponse(200);
                 }
                 return new MockResponse(404);

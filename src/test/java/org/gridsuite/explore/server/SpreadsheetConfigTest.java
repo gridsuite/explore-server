@@ -117,7 +117,7 @@ class SpreadsheetConfigTest {
                 } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*")) {
                     ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), CONFIG_NAME + " (copy)", "SPREADSHEET_CONFIG", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
-                } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                     return new MockResponse(200);
                 }
                 return new MockResponse(404);

@@ -20,16 +20,15 @@ import java.util.UUID;
 @Service
 public class AuthorizationService {
 
-    private final UserAdminService userAdminService;
     private final DirectoryService directoryService;
 
-    public AuthorizationService(UserAdminService userAdminService, DirectoryService directoryService) {
-        this.userAdminService = userAdminService;
+    public AuthorizationService(DirectoryService directoryService) {
         this.directoryService = directoryService;
     }
 
+    //This method should only be called inside of @PreAuthorize to centralize permission checks
     public void isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
-        if (!userAdminService.isUserAdmin(userId) && !directoryService.hasPermission(elementUuids, targetDirectoryUuid, userId, permissionType)) {
+        if (!directoryService.hasPermission(elementUuids, targetDirectoryUuid, userId, permissionType)) {
             throw new ExploreException(ExploreException.Type.NOT_ALLOWED);
         }
     }

@@ -392,6 +392,7 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
+    //This method should only be called inside of AuthorizationService to centralize permission checks
     public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
