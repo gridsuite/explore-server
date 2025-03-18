@@ -28,7 +28,14 @@ public class WireMockUtils {
     }
 
     public void verifyGetRequest(UUID stubId, String urlPath, Map<String, StringValuePattern> queryParams, boolean regexMatching) {
-        RequestPatternBuilder requestBuilder = regexMatching ? WireMock.getRequestedFor(WireMock.urlPathMatching(urlPath)) : WireMock.getRequestedFor(WireMock.urlPathEqualTo(urlPath));
+        RequestPatternBuilder requestBuilder = WireMock.getRequestedFor(regexMatching ? WireMock.urlPathMatching(urlPath) : WireMock.urlPathEqualTo(urlPath));
+        queryParams.forEach(requestBuilder::withQueryParam);
+        wireMockServer.verify(1, requestBuilder);
+        removeRequestForStub(stubId, 1);
+    }
+
+    public void verifyPostRequest(UUID stubId, String urlPath, Map<String, StringValuePattern> queryParams, boolean regexMatching) {
+        RequestPatternBuilder requestBuilder = WireMock.postRequestedFor(regexMatching ? WireMock.urlPathMatching(urlPath) : WireMock.urlPathEqualTo(urlPath));
         queryParams.forEach(requestBuilder::withQueryParam);
         wireMockServer.verify(1, requestBuilder);
         removeRequestForStub(stubId, 1);
