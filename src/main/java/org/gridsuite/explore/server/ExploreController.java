@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
-import org.gridsuite.explore.server.services.UserAdminService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
@@ -46,12 +45,10 @@ public class ExploreController {
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
-    private final UserAdminService userAdminService;
 
-    public ExploreController(ExploreService exploreService, DirectoryService directoryService, UserAdminService userAdminService) {
+    public ExploreController(ExploreService exploreService, DirectoryService directoryService) {
         this.exploreService = exploreService;
         this.directoryService = directoryService;
-        this.userAdminService = userAdminService;
     }
 
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
@@ -607,7 +604,7 @@ public class ExploreController {
     public ResponseEntity<Void> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
                                          @RequestParam(name = "permission") PermissionType permission,
                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        if (userAdminService.isUserAdmin(userId) || directoryService.hasPermission(List.of(directoryUuid), null, userId, permission)) {
+        if (directoryService.hasPermission(List.of(directoryUuid), null, userId, permission)) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.noContent().build();
