@@ -51,4 +51,7 @@ gridsuite:
     -
       name: user-identity-server
       base-uri: http://localhost:5034
+    -
+      name: single-line-diagram-server
+      base-uri: http://localhost:5005
 
