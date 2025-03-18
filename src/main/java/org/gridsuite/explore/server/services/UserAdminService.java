@@ -8,8 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -26,7 +24,6 @@ public class UserAdminService {
     private static final String USER_ADMIN_API_VERSION = "v1";
     private static final String USERS_MAX_ALLOWED_CASES_URI = "/users/{sub}/profile/max-cases";
     private static final String CASES_ALERT_THRESHOLD_URI = "/cases-alert-threshold";
-    private static final String IS_USER_ADMIN_URI = "/users/{sub}/isAdmin";
     private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
     @Setter
@@ -59,17 +56,6 @@ public class UserAdminService {
             return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
         } catch (HttpStatusCodeException e) {
             throw wrapRemoteError(e.getMessage(), e.getStatusCode());
-        }
-    }
-
-    public boolean isUserAdmin(String sub) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + IS_USER_ADMIN_URI)
-                .buildAndExpand(sub).toUriString();
-        try {
-            var responseEntity = restTemplate.exchange(userAdminServerBaseUri + path, HttpMethod.HEAD, HttpEntity.EMPTY, Void.class);
-            return responseEntity.getStatusCode().is2xxSuccessful();
-        } catch (HttpStatusCodeException e) {
-            return false;
         }
     }
 }
