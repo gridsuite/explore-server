@@ -19,6 +19,7 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,6 +54,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
     @Operation(summary = "create a study from an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
                                                             @PathVariable("caseUuid") UUID caseUuid,
                                                             @RequestParam(name = "caseFormat") String caseFormat,
@@ -70,6 +72,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies", params = "duplicateFrom")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #studyId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateStudy(@RequestParam("duplicateFrom") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -81,6 +85,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases/{caseName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "create a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case creation request delegated to case server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createCase(@PathVariable("caseName") String caseName,
                                            @RequestPart("caseFile") MultipartFile caseFile,
                                            @RequestParam("description") String description,
@@ -94,6 +99,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases", params = "duplicateFrom")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #caseId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateCase(
             @RequestParam("duplicateFrom") UUID caseId,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
@@ -106,6 +113,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/script-contingency-lists/{listName}")
     @Operation(summary = "create a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createScriptContingencyList(@PathVariable("listName") String listName,
                                                             @RequestBody(required = false) String content,
                                                             @RequestParam("description") String description,
@@ -118,6 +126,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/contingency-lists", params = "duplicateFrom")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #contingencyListUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateContingencyList(
             @RequestParam("duplicateFrom") UUID contingencyListUuid,
             @RequestParam(name = QUERY_PARAM_TYPE) ContingencyListType contingencyListType,
@@ -130,6 +140,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/form-contingency-lists/{listName}")
     @Operation(summary = "create a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createFormContingencyList(@PathVariable("listName") String listName,
                                                           @RequestBody(required = false) String content,
                                                           @RequestParam("description") String description,
@@ -142,6 +153,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/form-contingency-lists/{id}/new-script/{scriptName}")
     @Operation(summary = "Create a new script contingency list from a form contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list have been created successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> newScriptFromFormContingencyList(@PathVariable("id") UUID id,
                                                                  @PathVariable("scriptName") String scriptName,
                                                                  @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
@@ -153,6 +165,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/form-contingency-lists/{id}/replace-with-script")
     @Operation(summary = "Replace a form contingency list with a script contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The form contingency list has been replaced successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> replaceFilterContingencyListWithScript(@PathVariable("id") UUID id,
                                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.replaceFormContingencyListWithScript(id, userId);
@@ -162,6 +175,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/identifier-contingency-lists/{listName}")
     @Operation(summary = "create an identifier contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createIdentifierContingencyList(@PathVariable("listName") String listName,
                                                           @RequestBody(required = false) String content,
                                                           @RequestParam("description") String description,
@@ -174,6 +188,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createFilter(@RequestBody String filter,
                                              @RequestParam("name") String filterName,
                                              @RequestParam("description") String description,
@@ -186,6 +201,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters", params = "duplicateFrom")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #filterId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateFilter(
                                              @RequestParam("duplicateFrom") UUID filterId,
                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
@@ -197,6 +214,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters/{id}/new-script/{scriptName}")
     @Operation(summary = "Create a new script from a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> newScriptFromFilter(@PathVariable("id") UUID filterId,
                                                     @PathVariable("scriptName") String scriptName,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
@@ -208,6 +226,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters/{id}/replace-with-script")
     @Operation(summary = "Replace a filter with a script")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been replaced successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> replaceFilterWithScript(@PathVariable("id") UUID id,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.replaceFilterWithScript(id, userId);
@@ -221,6 +240,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "Directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for the directory/element")
     })
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #elementUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
                                               @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.deleteElement(elementUuid, userId);
@@ -234,6 +254,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "At least one directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for at least one directory/element")
     })
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #directoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                @PathVariable UUID directoryUuid) {
@@ -246,8 +267,9 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids,
                                                                        @RequestParam(value = "equipmentTypes", required = false) List<String> equipmentTypes,
-                                                                       @RequestParam(value = "elementTypes", required = false) List<String> elementTypes) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
+                                                                       @RequestParam(value = "elementTypes", required = false) List<String> elementTypes,
+                                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes, userId));
     }
 
     @GetMapping(value = "/explore/composite-modification/{id}/network-modifications", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -262,6 +284,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/filters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> changeFilter(@PathVariable UUID id, @RequestBody String filter, @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                              @RequestParam("name") String name, @RequestParam("description") String description) {
         exploreService.updateFilter(id, filter, userId, name, description);
@@ -271,6 +294,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/contingency-lists/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The contingency list have been modified successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateContingencyList(
             @PathVariable UUID id,
             @RequestParam(name = "name") String name,
@@ -286,6 +310,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/composite-modification/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a composite modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateCompositeModification(
             @PathVariable UUID id,
             @RequestParam(name = "name") String name,
@@ -298,6 +323,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/parameters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createParameters(@RequestBody String parameters,
                                              @RequestParam("name") String parametersName,
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
@@ -311,6 +337,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfig,
                                                     @RequestParam("name") String diagramConfigName,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
@@ -323,6 +350,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
     @Operation(summary = "Duplicate a diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -333,6 +362,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateParameters(@PathVariable UUID id,
                                              @RequestBody String parameters,
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
@@ -345,6 +375,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/parameters", params = "duplicateFrom")
     @Operation(summary = "Duplicate parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parametersId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                     @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType,
@@ -356,6 +388,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createSpreadsheetConfig(@RequestBody String spreadsheetConfigDto,
                                                         @RequestParam("name") String configName,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
@@ -368,6 +401,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-config-collections", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createSpreadsheetConfigCollection(@RequestBody String spreadsheetConfigCollectionDto,
                                                                   @RequestParam("name") String collectionName,
                                                                   @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
@@ -380,6 +414,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-config-collections/merge", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a new spreadsheet configuration collection duplicating and merging a list of existing configurations")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createSpreadsheetConfigCollectionFromConfigIds(@RequestBody List<UUID> configUuids,
                                                                                @RequestParam("name") String collectionName,
                                                                                @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
@@ -392,6 +427,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/spreadsheet-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateSpreadsheetConfig(@PathVariable UUID id,
                                                         @RequestBody String spreadsheetConfigDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
@@ -403,6 +439,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/spreadsheet-config-collections/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config collection has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateSpreadsheetConfigCollection(@PathVariable UUID id,
                                                         @RequestBody String spreadsheetConfigCollectionDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
@@ -414,6 +451,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-configs", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateSpreadsheetConfig(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -424,6 +463,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-config-collections", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateSpreadsheetConfigCollection(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -434,6 +475,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/composite-modifications")
     @Operation(summary = "Create composite modification element from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been created and composite modification element created in the directory")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createCompositeModification(@RequestBody List<UUID> modificationAttributes,
                                                             @RequestParam(QUERY_PARAM_NAME) String name,
                                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
@@ -446,6 +488,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/composite-modifications", params = "duplicateFrom")
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Composite modification has been duplicated and corresponding element created in the directory")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #networkModificationId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateCompositeNetworkModification(@RequestParam("duplicateFrom") UUID networkModificationId,
                                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -456,6 +500,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/elements/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateElement(
             @PathVariable UUID id,
             @RequestBody ElementAttributes elementAttributes,
@@ -472,6 +517,8 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "The elements or the targeted directory was not found"),
         @ApiResponse(responseCode = "403", description = "Not authorized execute this update")
     })
+    @PreAuthorize(
+            "@authorizationService.isAuthorized(#userId, #elementsUuids, #targetDirectoryUuid, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> moveElementsDirectory(
             @RequestParam UUID targetDirectoryUuid,
             @RequestBody List<UUID> elementsUuids,
@@ -485,8 +532,9 @@ public class ExploreController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The users identities"),
     })
-    public ResponseEntity<String> getUsersIdentities(@RequestParam("ids") List<UUID> ids) {
-        String usersIdentities = exploreService.getUsersIdentities(ids);
+    public ResponseEntity<String> getUsersIdentities(@RequestParam("ids") List<UUID> ids,
+                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        String usersIdentities = exploreService.getUsersIdentities(ids, userId);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities);
     }
 
@@ -531,6 +579,7 @@ public class ExploreController {
     @Operation(summary = "Create a subdirectory")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The created directory"),
         @ApiResponse(responseCode = "409", description = "A directory with the same name already exists in the directory")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #directoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<ElementAttributes> createDirectory(@PathVariable("directoryUuid") UUID directoryUuid,
                                                              @RequestBody ElementAttributes elementAttributes,
                                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId) {

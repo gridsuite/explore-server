@@ -17,6 +17,7 @@ import okhttp3.Headers;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SpreadsheetConfigService;
+import org.gridsuite.explore.server.services.UserAdminService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,9 @@ class SpreadsheetConfigTest {
     @Autowired
     private DirectoryService directoryService;
 
+    @Autowired
+    private UserAdminService userAdminService;
+
     private static final String BASE_URL = "/v1/explore/spreadsheet-configs";
     private static final String SPREADSHEET_CONFIG_SERVER_BASE_URL = "/v1/spreadsheet-configs";
     private static final UUID CONFIG_UUID = UUID.randomUUID();
@@ -70,6 +74,7 @@ class SpreadsheetConfigTest {
         String baseUrl = String.format("http://localhost:%s", mockWebServer.getPort());
         spreadsheetConfigService.setSpreadsheetConfigServerBaseUri(baseUrl);
         directoryService.setDirectoryServerBaseUri(baseUrl);
+        userAdminService.setUserAdminServerBaseUri(baseUrl);
 
         spreadsheetConfigJson = "{\"sheetType\":\"GENERATORS\",\"customColumns\":[{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Custom Column\",\"formula\":\"SUM(A1:A10)\"}]}";
 
@@ -112,6 +117,8 @@ class SpreadsheetConfigTest {
                 } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*")) {
                     ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), CONFIG_NAME + " (copy)", "SPREADSHEET_CONFIG", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
+                } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
+                    return new MockResponse(200);
                 }
                 return new MockResponse(404);
             }
@@ -215,7 +222,8 @@ class SpreadsheetConfigTest {
     @Test
     void testGetSpreadsheetConfigMetadata() throws Exception {
         mockMvc.perform(get("/v1/explore/elements/metadata")
-                        .param("ids", CONFIG_UUID.toString()))
+                        .param("ids", CONFIG_UUID.toString())
+                        .header("userId", USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].specificMetadata.id").value(CONFIG_UUID.toString()))
