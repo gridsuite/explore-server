@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SingleLineDiagramService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -19,14 +20,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -76,6 +77,8 @@ class SingleLineDiagramTest {
                         .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
                 )).getId();
 
+        when(directoryService.hasPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE)).thenReturn(true);
+
         mockMvc.perform(post(BASE_URL)
                     .param("name", "diagram config name")
                     .param("type", "DIAGRAM_CONFIG")
@@ -88,6 +91,7 @@ class SingleLineDiagramTest {
                     .andReturn();
 
         verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID), eq(USER1));
+        verify(directoryService, times(1)).hasPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE);
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
     }
@@ -100,6 +104,9 @@ class SingleLineDiagramTest {
                         .withBody(mapper.writeValueAsString(DUPLICATE_NAD_CONFIG_UUID.toString()))
                 )).getId();
 
+        when(directoryService.hasPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE)).thenReturn(true);
+        when(directoryService.hasPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.READ)).thenReturn(true);
+
         mockMvc.perform(post(BASE_URL)
                     .param("duplicateFrom", NAD_CONFIG_UUID.toString())
                     .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
@@ -108,6 +115,8 @@ class SingleLineDiagramTest {
                     .andReturn();
 
         verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, USER1);
+        verify(directoryService, times(1)).hasPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE);
+        verify(directoryService, times(1)).hasPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.READ);
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
     }
 }
