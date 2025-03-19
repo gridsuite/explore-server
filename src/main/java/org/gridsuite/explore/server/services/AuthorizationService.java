@@ -27,9 +27,10 @@ public class AuthorizationService {
     }
 
     //This method should only be called inside of @PreAuthorize to centralize permission checks
-    public void isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
+    public boolean isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
         if (!directoryService.hasPermission(elementUuids, targetDirectoryUuid, userId, permissionType)) {
             throw new ExploreException(ExploreException.Type.NOT_ALLOWED);
         }
+        return true;
     }
 }

@@ -661,57 +661,71 @@ class ExploreTest {
     }
 
     @Test
-    void testDuplicateCase() throws Exception {
+    void testDuplicateCase(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
                 .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CASE_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateFilter() throws Exception {
+    void testDuplicateFilter(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateScriptContingencyList() throws Exception {
+    void testDuplicateScriptContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                         CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT, PARENT_DIRECTORY_UUID)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateFormContingencyList() throws Exception {
+    void testDuplicateFormContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.FORM, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateIdentifierContingencyList() throws Exception {
+    void testDuplicateIdentifierContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateStudy() throws Exception {
+    void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateParameters() throws Exception {
+    void testDuplicateParameters(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1))
             .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
@@ -1179,5 +1193,13 @@ class ExploreTest {
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/indexation-infos")));
+    }
+
+    private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
+        // check that we called 2 times the directory server to checks authorization and 1 time the server to duplicate
+        // check read authorization on the duplicated element and write authorization on the target directory
+        var requests = TestUtils.getRequestsWithBodyDone(3, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + readElementUuid + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + writeElementUuid + "&targetDirectoryUuid")));
     }
 }
