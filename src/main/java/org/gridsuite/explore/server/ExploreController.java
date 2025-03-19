@@ -334,6 +334,28 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "create diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
+    public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfig,
+                                                    @RequestParam("name") String diagramConfigName,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
+    public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
+                                                           @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId, userId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
