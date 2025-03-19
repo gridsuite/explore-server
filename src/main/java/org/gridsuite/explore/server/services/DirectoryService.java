@@ -61,8 +61,8 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public DirectoryService(
             FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService, RestTemplate restTemplate,
-            RemoteServicesProperties remoteServicesProperties) {
+            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
+            SingleLineDiagramService singleLineDiagramService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
         this.genericServices = Map.ofEntries(
@@ -74,6 +74,7 @@ public class DirectoryService implements IDirectoryElementsService {
             Map.entry(CASE, caseService),
             Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
             Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
+            Map.entry(DIAGRAM_CONFIG, singleLineDiagramService),
             Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
@@ -399,11 +400,11 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
 
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH)
-            .queryParam(PARAM_ACCESS_TYPE, permissionType)
-            .queryParam(PARAM_IDS, ids)
-            .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
-            .buildAndExpand()
-            .toUriString();
+                .queryParam(PARAM_ACCESS_TYPE, permissionType)
+                .queryParam(PARAM_IDS, ids)
+                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+                .buildAndExpand()
+                .toUriString();
 
         ResponseEntity<Void> response = null;
         try {

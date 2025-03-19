@@ -20,6 +20,7 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -146,12 +148,18 @@ class SpreadsheetConfigCollectionTest {
     }
 
     @Test
-    void testDuplicateSpreadsheetConfigCollection() throws Exception {
+    void testDuplicateSpreadsheetConfigCollection(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", COLLECTION_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
+
+        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
+        // check read authorization on the duplicated element and write authorization on the target directory
+        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")));
     }
 
     @Test

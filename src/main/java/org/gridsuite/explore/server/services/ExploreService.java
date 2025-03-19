@@ -40,6 +40,7 @@ public class ExploreService {
     static final String DIRECTORY = "DIRECTORY";
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
+    static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -55,20 +56,22 @@ public class ExploreService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
+    private final SingleLineDiagramService singleLineDiagramService;
 
     public ExploreService(
-            DirectoryService directoryService,
-            StudyService studyService,
-            ContingencyListService contingencyListService,
-            FilterService filterService,
-            NetworkModificationService networkModificationService,
-            CaseService caseService,
-            ParametersService parametersService,
-            UserAdminService userAdminService,
-            SpreadsheetConfigService spreadsheetConfigService,
-            SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
-            UserIdentityService userIdentityService,
-            NotificationService notificationService) {
+        DirectoryService directoryService,
+        StudyService studyService,
+        ContingencyListService contingencyListService,
+        FilterService filterService,
+        NetworkModificationService networkModificationService,
+        CaseService caseService,
+        ParametersService parametersService,
+        UserAdminService userAdminService,
+        SpreadsheetConfigService spreadsheetConfigService,
+        SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
+        UserIdentityService userIdentityService,
+        NotificationService notificationService,
+        SingleLineDiagramService singleLineDiagramService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -82,6 +85,7 @@ public class ExploreService {
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
+        this.singleLineDiagramService = singleLineDiagramService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -272,6 +276,17 @@ public class ExploreService {
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
         UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
+    }
+
+    public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid, String userId) {
+        UUID diagramConfigUuid = singleLineDiagramService.createDiagramConfig(diagramConfig);
+        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, userId, 0, description);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    public void duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
+        UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
+        directoryService.duplicateElement(sourceId, newConfigUuid, targetDirectoryId, userId);
     }
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid, String userId) {
