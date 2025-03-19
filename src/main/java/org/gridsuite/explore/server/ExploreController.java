@@ -337,6 +337,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfig,
                                                     @RequestParam("name") String diagramConfigName,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
@@ -349,6 +350,8 @@ public class ExploreController {
     @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
     @Operation(summary = "Duplicate a diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
+            "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
