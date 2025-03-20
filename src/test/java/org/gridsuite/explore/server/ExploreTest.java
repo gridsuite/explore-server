@@ -92,6 +92,8 @@ class ExploreTest {
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
+    private static final UUID TEST_ACCESS_DIRECTORY_UUID_ALLOWED = UUID.randomUUID();
+    private static final UUID TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
@@ -424,9 +426,17 @@ class ExploreTest {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
-                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
-                        return new MockResponse(200);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
+                        return new MockResponse(204);
+                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
+                        return new MockResponse(204);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                         return new MockResponse(200);
                     }
                 }
@@ -1273,6 +1283,41 @@ class ExploreTest {
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/indexation-infos")));
+    }
+
+    @Test
+    void testHasRights(final MockWebServer server) throws Exception {
+        // test read access allowed
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=READ")
+                .header("userId", NOT_ADMIN_USER)
+            ).andExpect(status().isOk());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+
+        // test read access forbidden
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
+            .header("userId", NOT_ADMIN_USER)
+        ).andExpect(status().isNoContent());
+
+        requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
+
+        // test write access forbidden
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
+            .header("userId", NOT_ADMIN_USER)
+        ).andExpect(status().isNoContent());
+
+        requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
+
+        // test write access allowed (admin)
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
