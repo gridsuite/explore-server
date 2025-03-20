@@ -72,10 +72,11 @@ class ExploreTest {
     private static final UUID NON_EXISTING_CASE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID2 = UUID.randomUUID();
+    private static final UUID PARENT_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
+    private static final UUID NO_CONTENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
-    private static final UUID NOT_FOUND_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
@@ -91,9 +92,12 @@ class ExploreTest {
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
+    private static final UUID TEST_ACCESS_DIRECTORY_UUID_ALLOWED = UUID.randomUUID();
+    private static final UUID TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
+    private static final String NOT_ADMIN_USER = "notAdminUser";
     private static final String DIRECTORY1 = "directory1";
     private static final String USER_NOT_ALLOWED = "user not allowed";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
@@ -410,15 +414,29 @@ class ExploreTest {
                     }
                     return new MockResponse(404);
                 } else if ("HEAD".equals(request.getMethod())) {
-                    if (path.matches("/v1/elements\\?forDeletion=true&ids=" + FORBIDDEN_STUDY_UUID)) {
+                    if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + NO_CONTENT_DIRECTORY_UUID + "&targetDirectoryUuid")) {
+                        return new MockResponse(204);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid")) {
                         return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=" + NOT_FOUND_STUDY_UUID)) {
-                        return new MockResponse(404);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
+                        return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
+                        return new MockResponse(204);
+                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
+                        return new MockResponse(204);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                         return new MockResponse(200);
                     }
                 }
@@ -599,14 +617,14 @@ class ExploreTest {
 
     private void deleteElementNotAllowed(UUID elementUUid, int status) throws Exception {
         mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
-                        elementUUid).header("userId", USER1))
+                        elementUUid).header("userId", NOT_ADMIN_USER))
                 .andExpect(status().is(status));
     }
 
     private void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid, int status) throws Exception {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
-                        .header("userId", USER1))
+                        .header("userId", NOT_ADMIN_USER))
                 .andExpect(status().is(status));
     }
 
@@ -621,10 +639,8 @@ class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
-        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID, 403);
-        deleteElementsNotAllowed(List.of(NOT_FOUND_STUDY_UUID), PARENT_DIRECTORY_UUID, 404);
+        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
-        deleteElementNotAllowed(NOT_FOUND_STUDY_UUID, 404);
     }
 
     @Test
@@ -659,57 +675,147 @@ class ExploreTest {
     }
 
     @Test
-    void testDuplicateCase() throws Exception {
+    void testDuplicateCase(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
                 .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CASE_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateFilter() throws Exception {
+    void testDuplicateCaseInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}",
+                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
+                .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CASE_UUID, CASE_UUID);
+    }
+
+    @Test
+    void testDuplicateFilter(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateScriptContingencyList() throws Exception {
+    void testDuplicateFilterInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}",
+                FILTER_UUID, PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, FILTER_UUID);
+    }
+
+    @Test
+    void testDuplicateScriptContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                         CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT, PARENT_DIRECTORY_UUID)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateFormContingencyList() throws Exception {
+    void testDuplicateScriptContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}",
+                        CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
+    void testDuplicateFormContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.FORM, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateIdentifierContingencyList() throws Exception {
+    void testDuplicateFormContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}",
+                CONTINGENCY_LIST_UUID, ContingencyListType.FORM)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
+    void testDuplicateIdentifierContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateStudy() throws Exception {
+    void testDuplicateIdentifierContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}",
+                CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
+    void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateParameters() throws Exception {
+    void testDuplicateStudyInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
+                PUBLIC_STUDY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PUBLIC_STUDY_UUID);
+    }
+
+    @Test
+    void testDuplicateStudyInSameDirectoryNotAllowed() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
+                NO_CONTENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testDuplicateParameters(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1))
             .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARENT_DIRECTORY_UUID);
+    }
+
+    @Test
+    void testDuplicateParametersInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}",
+                        PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARAMETERS_UUID);
     }
 
     @Test
@@ -739,7 +845,7 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/", USER1);
     }
 
     @Test
@@ -757,7 +863,7 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/script-contingency-lists");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/script-contingency-lists", USER1);
     }
 
     @Test
@@ -775,7 +881,7 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/form-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/form-contingency-lists/", USER1);
     }
 
     @Test
@@ -793,11 +899,11 @@ class ExploreTest {
                 .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
     }
 
-    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath) {
-        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath, String user) {
+        var requests = TestUtils.getRequestsWithBodyDone(3, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
     }
@@ -1125,7 +1231,7 @@ class ExploreTest {
                 .andReturn();
         assertEquals(newDirectoryAttributesAsString, result.getResponse().getContentAsString());
 
-        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?allowNewName=false")
                 && r.getBody().equals(newDirectoryAttributesAsString)));
     }
@@ -1177,5 +1283,48 @@ class ExploreTest {
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/indexation-infos")));
+    }
+
+    @Test
+    void testHasRights(final MockWebServer server) throws Exception {
+        // test read access allowed
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=READ")
+                .header("userId", NOT_ADMIN_USER)
+            ).andExpect(status().isOk());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+
+        // test read access forbidden
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
+            .header("userId", NOT_ADMIN_USER)
+        ).andExpect(status().isNoContent());
+
+        requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
+
+        // test write access forbidden
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
+            .header("userId", NOT_ADMIN_USER)
+        ).andExpect(status().isNoContent());
+
+        requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
+
+        // test write access allowed (admin)
+        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+    }
+
+    private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
+        // check that we called 2 times the directory server to checks authorization and 1 time the server to duplicate
+        // check read authorization on the duplicated element and write authorization on the target directory
+        var requests = TestUtils.getRequestsWithBodyDone(3, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + readElementUuid + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + writeElementUuid + "&targetDirectoryUuid")));
     }
 }

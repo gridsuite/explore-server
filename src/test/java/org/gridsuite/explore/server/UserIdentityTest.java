@@ -77,7 +77,7 @@ class UserIdentityTest {
         wireMockServer.start();
         userIdentityService.setUserIdentityServerBaseUri(wireMockServer.baseUrl());
 
-        when(directoryService.getElementsInfos(List.of(ELEMENT_UUID), null)).thenReturn(List.of(new ElementAttributes(
+        when(directoryService.getElementsInfos(List.of(ELEMENT_UUID), null, SUB)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_UUID,
             ELEMENT_NAME,
             "SOME TYPE",
@@ -85,7 +85,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
+        when(directoryService.getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null, UNKNOWN_SUB)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_UNKNOWN_SUB_UUID,
             ELEMENT_UNKNOWN_SUB_NAME,
             "SOME TYPE",
@@ -93,7 +93,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
+        when(directoryService.getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null, EXCEPTION_SUB)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_EXCEPTION_SUB_UUID,
             "exception",
             "SOME TYPE",
@@ -101,7 +101,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null)).thenThrow(new ExploreException(NOT_FOUND));
+        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB)).thenThrow(new ExploreException(NOT_FOUND));
     }
 
     protected Map<String, StringValuePattern> handleQueryParams(List<String> subs) {
@@ -118,7 +118,8 @@ class UserIdentityTest {
         MvcResult mvcResult;
         String usersInfos;
         mvcResult = mockMvc.perform(get(BASE_URL)
-                    .param("ids", ELEMENT_UUID.toString()))
+                    .param("ids", ELEMENT_UUID.toString())
+                    .header("userId", SUB))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -126,17 +127,18 @@ class UserIdentityTest {
         assertTrue(usersInfos.contains("userFirstName"));
         assertTrue(usersInfos.contains("userLastName"));
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_UUID), null);
+        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_UUID), null, SUB);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(SUB)), false);
     }
 
     @Test
     void testGetSubIdentityNotFoundElement() throws Exception {
         mockMvc.perform(get(BASE_URL)
-                        .param("ids", ELEMENT_NOT_FOUND_UUID.toString()))
+                        .param("ids", ELEMENT_NOT_FOUND_UUID.toString())
+                        .header("userId", UNKNOWN_SUB))
                         .andExpect(status().isNotFound());
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null);
+        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB);
     }
 
     @Test
@@ -145,11 +147,12 @@ class UserIdentityTest {
                 .willReturn(WireMock.serverError())).getId();
 
         mockMvc.perform(get(BASE_URL)
-                .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString()))
+                .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString())
+                .header("userId", EXCEPTION_SUB))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertInstanceOf(ExploreException.class, result.getResolvedException()));
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null);
+        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null, EXCEPTION_SUB);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);
     }
 }

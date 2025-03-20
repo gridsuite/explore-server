@@ -19,6 +19,8 @@ import okhttp3.Headers;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
+import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -56,6 +59,9 @@ class SpreadsheetConfigCollectionTest {
     @Autowired
     private DirectoryService directoryService;
 
+    @Autowired
+    private UserAdminService userAdminService;
+
     private static final String BASE_URL = "/v1/explore/spreadsheet-config-collections";
     private static final String SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL = "/v1/spreadsheet-config-collections";
     private static final UUID COLLECTION_UUID = UUID.randomUUID();
@@ -70,6 +76,7 @@ class SpreadsheetConfigCollectionTest {
         String baseUrl = String.format("http://localhost:%s", mockWebServer.getPort());
         spreadsheetConfigCollectionService.setSpreadsheetConfigServerBaseUri(baseUrl);
         directoryService.setDirectoryServerBaseUri(baseUrl);
+        userAdminService.setUserAdminServerBaseUri(baseUrl);
 
         spreadsheetConfigCollectionJson = "{\"name\":\"" + COLLECTION_NAME + "\",\"description\":\"Test Description\",\"spreadsheetConfigs\":[{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Config 1\"},{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Config 2\"}]}";
 
@@ -92,6 +99,12 @@ class SpreadsheetConfigCollectionTest {
                     ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), COLLECTION_NAME + " (copy)", "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
                 } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
+                    return new MockResponse(200);
+                } else if (path.matches("/v1/elements\\?f=true&ids=.*")) {
+                    return new MockResponse(200);
+                } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
+                    return new MockResponse(200);
+                } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                     return new MockResponse(200);
                 }
                 return new MockResponse(404);
@@ -135,12 +148,32 @@ class SpreadsheetConfigCollectionTest {
     }
 
     @Test
-    void testDuplicateSpreadsheetConfigCollection() throws Exception {
+    void testDuplicateSpreadsheetConfigCollection(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", COLLECTION_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
+
+        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
+        // check read authorization on the duplicated element and write authorization on the target directory
+        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")));
+    }
+
+    @Test
+    void testDuplicateSpreadsheetConfigCollectionInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post(BASE_URL)
+                        .param("duplicateFrom", COLLECTION_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isCreated());
+
+        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
+        // check read authorization on the duplicated element and write authorization on the target directory
+        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
     }
 
     @Test

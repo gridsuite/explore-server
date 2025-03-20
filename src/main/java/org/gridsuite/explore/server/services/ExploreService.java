@@ -144,9 +144,6 @@ public class ExploreService {
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!userId.equals(elementAttribute.getOwner())) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -195,9 +192,6 @@ public class ExploreService {
     }
 
     public void deleteElement(UUID id, String userId) {
-        // Verify if the user is allowed to delete the element.
-        // FIXME: to be deleted when it's properly handled by the gateway
-        directoryService.areDirectoryElementsDeletable(List.of(id), userId);
         try {
             directoryService.deleteElement(id, userId);
             directoryService.deleteDirectoryElement(id, userId);
@@ -210,9 +204,6 @@ public class ExploreService {
 
     public void deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuids, String userId) {
 
-        // Verify if the user is allowed to delete the elements.
-        // FIXME: to be deleted when it's properly handled by the gateway
-        directoryService.areDirectoryElementsDeletable(uuids, userId);
         try {
             uuids.forEach(id -> directoryService.deleteElement(id, userId));
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
@@ -225,7 +216,6 @@ public class ExploreService {
 
     public void updateFilter(UUID id, String filter, String userId, String name, String description) {
         // check if the  user have the right to update the filter
-        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         filterService.updateFilter(id, filter, userId);
 
         ElementAttributes elementAttributes = new ElementAttributes();
@@ -238,7 +228,6 @@ public class ExploreService {
 
     public void updateContingencyList(UUID id, String content, String userId, String name, String description, ContingencyListType contingencyListType) {
         // check if the  user have the right to update the contingency
-        directoryService.areDirectoryElementsUpdatable(List.of(id), userId);
         contingencyListService.updateContingencyList(id, content, userId, getProperPath(contingencyListType));
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setDescription(description);
@@ -392,7 +381,7 @@ public class ExploreService {
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
         directoryService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
         //send notification to all studies
-        List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null);
+        List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null, userId);
         elementsAttributes.forEach(elementAttributes -> notifyStudyUpdate(elementAttributes, userId));
 
     }
@@ -403,10 +392,10 @@ public class ExploreService {
         }
     }
 
-    public String getUsersIdentities(List<UUID> elementsUuids) {
+    public String getUsersIdentities(List<UUID> elementsUuids, String userId) {
         // this returns names for owner and lastmodifiedby,
         // if we need it in the future, we can do separate requests.
-        List<String> subs = directoryService.getElementsInfos(elementsUuids, null).stream()
+        List<String> subs = directoryService.getElementsInfos(elementsUuids, null, userId).stream()
                 .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
         return userIdentityService.getUsersIdentities(subs);
     }
