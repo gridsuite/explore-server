@@ -163,6 +163,20 @@ class SpreadsheetConfigCollectionTest {
     }
 
     @Test
+    void testDuplicateSpreadsheetConfigCollectionInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post(BASE_URL)
+                        .param("duplicateFrom", COLLECTION_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isCreated());
+
+        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
+        // check read authorization on the duplicated element and write authorization on the target directory
+        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+    }
+
+    @Test
     void testDuplicateSpreadsheetConfigCollectionWithInvalidUUID() throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", "invalid-uuid")
