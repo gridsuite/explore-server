@@ -72,9 +72,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies", params = "duplicateFrom")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #studyId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #studyId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #studyId, #targetDirectoryId != null ? #targetDirectoryId : #studyId)")
     public ResponseEntity<Void> duplicateStudy(@RequestParam("duplicateFrom") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -100,9 +98,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases", params = "duplicateFrom")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #caseId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #caseId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #caseId, #targetDirectoryId != null ? #targetDirectoryId : #caseId)")
     public ResponseEntity<Void> duplicateCase(
             @RequestParam("duplicateFrom") UUID caseId,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
@@ -128,9 +124,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/contingency-lists", params = "duplicateFrom")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #contingencyListUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #contingencyListUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #contingencyListUuid, #targetDirectoryId != null ? #targetDirectoryId : #contingencyListUuid)")
     public ResponseEntity<Void> duplicateContingencyList(
             @RequestParam("duplicateFrom") UUID contingencyListUuid,
             @RequestParam(name = QUERY_PARAM_TYPE) ContingencyListType contingencyListType,
@@ -204,9 +198,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/filters", params = "duplicateFrom")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #filterId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #filterId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #filterId, #targetDirectoryId != null ? #targetDirectoryId : #filterId)")
     public ResponseEntity<Void> duplicateFilter(
                                              @RequestParam("duplicateFrom") UUID filterId,
                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
@@ -354,9 +346,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/diagram-config", params = "duplicateFrom")
     @Operation(summary = "Duplicate a diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #caseId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #sourceId, #targetDirectoryId != null ? #targetDirectoryId : #sourceId)")
     public ResponseEntity<Void> duplicateDiagramConfig(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -380,9 +370,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/parameters", params = "duplicateFrom")
     @Operation(summary = "Duplicate parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parametersId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #parametersId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #parametersId, #targetDirectoryId != null ? #targetDirectoryId : #parametersId)")
     public ResponseEntity<Void> duplicateParameters(@RequestParam("duplicateFrom") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                     @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType,
@@ -457,9 +445,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-configs", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #sourceId, #targetDirectoryId != null ? #targetDirectoryId : #sourceId)")
     public ResponseEntity<Void> duplicateSpreadsheetConfig(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -470,9 +456,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/spreadsheet-config-collections", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #sourceId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #sourceId, #targetDirectoryId != null ? #targetDirectoryId : #sourceId)")
     public ResponseEntity<Void> duplicateSpreadsheetConfigCollection(@RequestParam("duplicateFrom") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
@@ -496,9 +480,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/composite-modifications", params = "duplicateFrom")
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Composite modification has been duplicated and corresponding element created in the directory")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #networkModificationId, null, T(org.gridsuite.explore.server.dto.PermissionType).READ) and " +
-            "#targetDirectoryId != null ? " + "@authorizationService.isAuthorized(#userId, #targetDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE) : " +
-            "@authorizationService.isAuthorized(#userId, #networkModificationId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #networkModificationId, #targetDirectoryId != null ? #targetDirectoryId : #networkModificationId)")
     public ResponseEntity<Void> duplicateCompositeNetworkModification(@RequestParam("duplicateFrom") UUID networkModificationId,
                                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {

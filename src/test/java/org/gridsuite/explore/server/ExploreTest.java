@@ -74,6 +74,7 @@ class ExploreTest {
     private static final UUID PARENT_DIRECTORY_UUID2 = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
+    private static final UUID NO_CONTENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
     private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
@@ -413,6 +414,8 @@ class ExploreTest {
                 } else if ("HEAD".equals(request.getMethod())) {
                     if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")) {
                         return new MockResponse(200);
+                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + NO_CONTENT_DIRECTORY_UUID + "&targetDirectoryUuid")) {
+                        return new MockResponse(204);
                     } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid")) {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")) {
@@ -775,6 +778,14 @@ class ExploreTest {
         ).andExpect(status().isOk());
 
         checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PUBLIC_STUDY_UUID);
+    }
+
+    @Test
+    void testDuplicateStudyInSameDirectoryNotAllowed() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
+                NO_CONTENT_DIRECTORY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isForbidden());
     }
 
     @Test
