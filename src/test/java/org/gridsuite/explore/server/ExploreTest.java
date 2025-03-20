@@ -671,12 +671,30 @@ class ExploreTest {
     }
 
     @Test
+    void testDuplicateCaseInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}",
+                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
+                .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CASE_UUID, CASE_UUID);
+    }
+
+    @Test
     void testDuplicateFilter(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
 
         checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, PARENT_DIRECTORY_UUID);
+    }
+
+    @Test
+    void testDuplicateFilterInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}",
+                FILTER_UUID, PARENT_DIRECTORY_UUID)
+                .header("userId", USER1)).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, FILTER_UUID);
     }
 
     @Test
@@ -690,6 +708,16 @@ class ExploreTest {
     }
 
     @Test
+    void testDuplicateScriptContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}",
+                        CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
     void testDuplicateFormContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.FORM, PARENT_DIRECTORY_UUID)
@@ -697,6 +725,16 @@ class ExploreTest {
         ).andExpect(status().isOk());
 
         checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
+    }
+
+    @Test
+    void testDuplicateFormContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}",
+                CONTINGENCY_LIST_UUID, ContingencyListType.FORM)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
     }
 
     @Test
@@ -710,6 +748,16 @@ class ExploreTest {
     }
 
     @Test
+    void testDuplicateIdentifierContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}",
+                CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
     void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
@@ -720,6 +768,16 @@ class ExploreTest {
     }
 
     @Test
+    void testDuplicateStudyInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
+                PUBLIC_STUDY_UUID)
+                .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PUBLIC_STUDY_UUID);
+    }
+
+    @Test
     void testDuplicateParameters(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
@@ -727,6 +785,16 @@ class ExploreTest {
             .andExpect(status().isOk());
 
         checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARENT_DIRECTORY_UUID);
+    }
+
+    @Test
+    void testDuplicateParametersInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}",
+                        PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS)
+                        .header("userId", USER1))
+                .andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARAMETERS_UUID);
     }
 
     @Test
