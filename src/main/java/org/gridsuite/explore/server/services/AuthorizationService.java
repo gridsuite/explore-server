@@ -33,4 +33,13 @@ public class AuthorizationService {
         }
         return true;
     }
+
+    //This method should only be called inside of @PreAuthorize to centralize permission checks
+    public boolean isAuthorizedForDuplication(String userId, UUID elementToDuplicate, UUID targetDirectoryUuid) {
+        if (!directoryService.hasPermission(List.of(elementToDuplicate), null, userId, PermissionType.READ) ||
+                !directoryService.hasPermission(List.of(targetDirectoryUuid != null ? targetDirectoryUuid : elementToDuplicate), null, userId, PermissionType.WRITE)) {
+            throw new ExploreException(ExploreException.Type.NOT_ALLOWED);
+        }
+        return true;
+    }
 }
