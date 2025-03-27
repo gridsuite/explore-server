@@ -108,6 +108,23 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
+    public void replaceAllSpreadsheetConfigsInCollection(UUID collectionId, List<UUID> configIds) {
+        Objects.requireNonNull(collectionId);
+        Objects.requireNonNull(configIds);
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + DELIMITER + collectionId + "/spreadsheet-configs/replace-all")
+                .buildAndExpand()
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
+
+        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
     @Override
     public void delete(UUID configUuid, String userId) {
         Objects.requireNonNull(configUuid);
