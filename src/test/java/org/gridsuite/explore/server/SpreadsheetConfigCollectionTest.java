@@ -143,6 +143,7 @@ class SpreadsheetConfigCollectionTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
+                        .param("description", "Test Description")
                         .header("userId", USER_ID))
                 .andExpect(status().isNoContent());
     }

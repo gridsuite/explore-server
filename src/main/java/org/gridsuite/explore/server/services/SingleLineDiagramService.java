@@ -70,4 +70,21 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
         return restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
             .getBody();
     }
+
+    public void updateDiagramConfig(UUID configUuid, String diagramConfig) {
+        Objects.requireNonNull(configUuid);
+        Objects.requireNonNull(diagramConfig);
+
+        var path = UriComponentsBuilder
+            .fromPath(SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH + DELIMITER + configUuid)
+            .buildAndExpand()
+            .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> httpEntity = new HttpEntity<>(diagramConfig, headers);
+
+        restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
 }
