@@ -246,15 +246,6 @@ public class ExploreService {
         return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }
 
-    private void updateElementName(UUID id, String name, String userId) {
-        // if the name is empty, no need to call directory-server
-        if (StringUtils.isNotBlank(name)) {
-            ElementAttributes elementAttributes = new ElementAttributes();
-            elementAttributes.setElementName(name);
-            directoryService.updateElement(id, elementAttributes, userId);
-        }
-    }
-
     private void updateElementNameAndDescription(UUID id, String name, String description, String userId) {
         if (StringUtils.isBlank(name) && StringUtils.isBlank(description)) {
             return;
