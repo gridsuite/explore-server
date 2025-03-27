@@ -327,6 +327,11 @@ public class ExploreService {
         updateElementNameAndDescription(id, name, description, userId);
     }
 
+    public void replaceAllSpreadsheetConfigsInCollection(UUID id, List<UUID> configIds, String userId, String name, String description) {
+        spreadsheetConfigCollectionService.replaceAllSpreadsheetConfigsInCollection(id, configIds);
+        updateElementNameAndDescription(id, name, description, userId);
+    }
+
     public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigService.duplicateSpreadsheetConfig(sourceId);
         directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
