@@ -236,7 +236,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "Directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for the directory/element")
     })
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #elementUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isRecursivelyAuthorized(#userId, #elementUuid, null)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
                                               @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.deleteElement(elementUuid, userId);
@@ -508,8 +508,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "The elements or the targeted directory was not found"),
         @ApiResponse(responseCode = "403", description = "Not authorized execute this update")
     })
-    @PreAuthorize(
-            "@authorizationService.isAuthorized(#userId, #elementsUuids, #targetDirectoryUuid, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isRecursivelyAuthorized(#userId, #elementsUuids, #targetDirectoryUuid)")
     public ResponseEntity<Void> moveElementsDirectory(
             @RequestParam UUID targetDirectoryUuid,
             @RequestBody List<UUID> elementsUuids,
