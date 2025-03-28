@@ -51,6 +51,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_ELEMENT_TYPES = "elementTypes";
     private static final String PARAM_RECURSIVE = "recursive";
     private static final String PARAM_DIRECTORY_NAME = "directoryName";
+    private static final String PARAM_RECURSIVE_CHECK = "recursiveCheck";
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
@@ -393,8 +394,12 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    //This method should only be called inside of AuthorizationService to centralize permission checks
     public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
+        return hasPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
+    }
+
+    //This method should only be called inside of AuthorizationService to centralize permission checks
+    public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
@@ -403,6 +408,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .queryParam(PARAM_ACCESS_TYPE, permissionType)
                 .queryParam(PARAM_IDS, ids)
                 .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+                .queryParam(PARAM_RECURSIVE_CHECK, recursiveCheck)
                 .buildAndExpand()
                 .toUriString();
 
