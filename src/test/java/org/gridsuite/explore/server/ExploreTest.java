@@ -425,7 +425,7 @@ class ExploreTest {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + DIRECTORY_NOT_OWNED_SUBELEMENT_UUID + "&targetDirectoryUuid&recursiveCheck=true")) {
+                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + DIRECTORY_NOT_OWNED_SUBELEMENT_UUID + "&targetDirectoryUuid.*&recursiveCheck=true")) {
                         return new MockResponse(409);
                     } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
