@@ -645,7 +645,6 @@ class ExploreTest {
         deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
         deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 409);
-
     }
 
     @Test
