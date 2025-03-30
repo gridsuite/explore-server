@@ -348,7 +348,7 @@ public class ExploreController {
     public ResponseEntity<Void> updateDiagramConfig(@PathVariable UUID id,
                                                     @RequestBody String diagramConfig,
                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                                    @RequestParam("name") String name,
+                                                    @RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
         exploreService.updateDiagramConfig(id, diagramConfig, userId, name, description);
         return ResponseEntity.noContent().build();
@@ -362,7 +362,7 @@ public class ExploreController {
                                              @RequestBody String parameters,
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                             @RequestParam("name") String name,
+                                             @RequestParam(QUERY_PARAM_NAME) String name,
                                              @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
         exploreService.updateParameters(id, parameters, parametersType, userId, name, description);
         return ResponseEntity.ok().build();
@@ -426,7 +426,7 @@ public class ExploreController {
     public ResponseEntity<Void> updateSpreadsheetConfig(@PathVariable UUID id,
                                                         @RequestBody String spreadsheetConfigDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                                        @RequestParam("name") String name,
+                                                        @RequestParam(QUERY_PARAM_NAME) String name,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
         exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, userId, name, description);
         return ResponseEntity.noContent().build();
@@ -439,7 +439,7 @@ public class ExploreController {
     public ResponseEntity<Void> updateSpreadsheetConfigCollection(@PathVariable UUID id,
                                                         @RequestBody String spreadsheetConfigCollectionDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                                        @RequestParam("name") String name,
+                                                        @RequestParam(QUERY_PARAM_NAME) String name,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
         exploreService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, userId, name, description);
         return ResponseEntity.noContent().build();
@@ -485,11 +485,11 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateCompositeNetworkModification(@PathVariable UUID id,
-                                                                   @RequestBody List<UUID> modificationAttributes,
+                                                                   @RequestBody List<UUID> modificationUuids,
                                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                                    @RequestParam(QUERY_PARAM_NAME) String name,
                                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        exploreService.updateCompositeModification(id, modificationAttributes, userId, name, description);
+        exploreService.updateCompositeModification(id, modificationUuids, userId, name, description);
         return ResponseEntity.ok().build();
     }
 
