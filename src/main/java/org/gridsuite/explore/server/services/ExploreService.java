@@ -237,8 +237,8 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes, userId);
     }
 
-    public void updateCompositeModification(UUID id, List<UUID> modificationAttributes, String userId, String name, String description) {
-        networkModificationService.updateCompositeModification(id, modificationAttributes);
+    public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String userId, String name, String description) {
+        networkModificationService.updateCompositeModification(id, modificationUuids);
         updateElementNameAndDescription(id, name, description, userId);
     }
 
@@ -247,7 +247,7 @@ public class ExploreService {
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description, String userId) {
-        if (StringUtils.isBlank(name) && StringUtils.isBlank(description)) {
+        if (StringUtils.isBlank(name)) {
             return;
         }
         ElementAttributes elementAttributes = new ElementAttributes();
