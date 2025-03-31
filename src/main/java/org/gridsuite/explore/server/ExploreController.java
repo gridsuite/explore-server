@@ -445,6 +445,19 @@ public class ExploreController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping(value = "/explore/spreadsheet-config-collections/{id}/spreadsheet-configs/replace-all", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Replace all spreadsheet configurations in a collection")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config collection has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> replaceAllSpreadsheetConfigsInCollection(@PathVariable UUID id,
+                                                                        @RequestBody List<UUID> configUuids,
+                                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                                        @RequestParam(QUERY_PARAM_NAME) String name,
+                                                                        @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.replaceAllSpreadsheetConfigsInCollection(id, configUuids, userId, name, description);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping(value = "/explore/spreadsheet-configs", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
