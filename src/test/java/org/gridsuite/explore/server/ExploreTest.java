@@ -324,6 +324,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if (path.matches("/v1/root-directories") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                } else if (path.matches("/v1/network-composite-modifications/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
@@ -353,8 +355,6 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 mapper.writeValueAsString(compositeModificationMetadata));
-                    } else if (path.matches("/v1/network-composite-modification/.*") && "PUT".equals(request.getMethod())) {
-                        return new MockResponse(200);
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
@@ -572,8 +572,8 @@ class ExploreTest {
 
     @Test
     void testUpdateParameters() throws Exception {
-        mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
-                PARAMETERS_UUID, "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+        mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&description={description}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+                PARAMETERS_UUID, "", "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"new Parameters content\"")
@@ -936,9 +936,11 @@ class ExploreTest {
     void testModifyCompositeModifications(final MockWebServer server) throws Exception {
         final String name = "script name";
         mockMvc.perform(
-                put("/v1/explore/composite-modification/{id}", COMPOSITE_MODIFICATION_UUID)
+                put("/v1/explore/composite-modifications/{id}", COMPOSITE_MODIFICATION_UUID)
                         .contentType(APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(List.of(MODIFICATION_UUID, UUID.randomUUID())))
                         .param("name", name)
+                        .param("description", "description")
                         .header("userId", USER1)
         ).andExpect(status().isOk());
     }

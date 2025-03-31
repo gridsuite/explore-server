@@ -303,19 +303,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "/explore/composite-modification/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Modify a composite modification")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> updateCompositeModification(
-            @PathVariable UUID id,
-            @RequestParam(name = "name") String name,
-            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-
-        exploreService.updateCompositeModification(id, userId, name);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping(value = "/explore/parameters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
@@ -354,6 +341,19 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping(value = "/explore/diagram-config/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Diagram config has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> updateDiagramConfig(@PathVariable UUID id,
+                                                    @RequestBody String diagramConfig,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                    @RequestParam(QUERY_PARAM_NAME) String name,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.updateDiagramConfig(id, diagramConfig, userId, name, description);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping(value = "/explore/parameters/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully modified")})
@@ -362,8 +362,9 @@ public class ExploreController {
                                              @RequestBody String parameters,
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                             @RequestParam("name") String name) {
-        exploreService.updateParameters(id, parameters, parametersType, userId, name);
+                                             @RequestParam(QUERY_PARAM_NAME) String name,
+                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.updateParameters(id, parameters, parametersType, userId, name, description);
         return ResponseEntity.ok().build();
     }
 
@@ -425,8 +426,9 @@ public class ExploreController {
     public ResponseEntity<Void> updateSpreadsheetConfig(@PathVariable UUID id,
                                                         @RequestBody String spreadsheetConfigDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                                        @RequestParam("name") String name) {
-        exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, userId, name);
+                                                        @RequestParam(QUERY_PARAM_NAME) String name,
+                                                        @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, userId, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -437,8 +439,9 @@ public class ExploreController {
     public ResponseEntity<Void> updateSpreadsheetConfigCollection(@PathVariable UUID id,
                                                         @RequestBody String spreadsheetConfigCollectionDto,
                                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                                        @RequestParam("name") String name) {
-        exploreService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, userId, name);
+                                                        @RequestParam(QUERY_PARAM_NAME) String name,
+                                                        @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, userId, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -474,6 +477,19 @@ public class ExploreController {
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.createCompositeModification(modificationAttributes, userId, name, description, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/composite-modifications/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> updateCompositeNetworkModification(@PathVariable UUID id,
+                                                                   @RequestBody List<UUID> modificationUuids,
+                                                                   @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                                   @RequestParam(QUERY_PARAM_NAME) String name,
+                                                                   @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.updateCompositeModification(id, modificationUuids, userId, name, description);
         return ResponseEntity.ok().build();
     }
 

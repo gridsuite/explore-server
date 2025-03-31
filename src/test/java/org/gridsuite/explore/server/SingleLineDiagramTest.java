@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -94,6 +95,31 @@ class SingleLineDiagramTest {
         verify(directoryService, times(1)).hasPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE);
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
+    }
+
+    @Test
+    void testUpdateDiagramConfig() throws Exception {
+        UUID stubId = wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
+                )).getId();
+
+        when(directoryService.hasPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.WRITE)).thenReturn(true);
+
+        mockMvc.perform(put(BASE_URL + "/" + NAD_CONFIG_UUID)
+                    .param("name", "diagram config name")
+                    .param("type", "DIAGRAM_CONFIG")
+                    .param("description", "the config description")
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content("{\"depth\": 1}")
+                    .header("userId", USER1))
+                    .andExpect(status().isNoContent())
+                    .andReturn();
+
+        verify(directoryService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture(), eq(USER1));
+        verify(directoryService, times(1)).hasPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.WRITE);
+        wireMockUtils.verifyPutRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID, Map.of(), false);
     }
 
     @Test
