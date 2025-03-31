@@ -445,10 +445,10 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         restTemplate.exchange(
-        directoryServerBaseUri + path,
-            HttpMethod.PUT,
-            new HttpEntity<>(permissions, headers),
-            Void.class
+            directoryServerBaseUri + path,
+                HttpMethod.PUT,
+                new HttpEntity<>(permissions, headers),
+                Void.class
         );
     }
 

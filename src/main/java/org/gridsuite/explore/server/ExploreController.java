@@ -667,9 +667,9 @@ public class ExploreController {
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get permissions for a directory")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The permissions for the directory"),
-            @ApiResponse(responseCode = "403", description = "Not authorized to view permissions for this directory"),
-            @ApiResponse(responseCode = "404", description = "The directory was not found")
+        @ApiResponse(responseCode = "200", description = "The permissions for the directory"),
+        @ApiResponse(responseCode = "403", description = "Not authorized to view permissions for this directory"),
+        @ApiResponse(responseCode = "404", description = "The directory was not found")
     })
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #directoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).READ)")
     public ResponseEntity<List<PermissionDTO>> getDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,
@@ -681,9 +681,9 @@ public class ExploreController {
     @PutMapping(value = "/explore/directories/{directoryUuid}/permissions", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Set permissions for a directory")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Permissions were successfully updated"),
-            @ApiResponse(responseCode = "403", description = "Not authorized to update permissions for this directory"),
-            @ApiResponse(responseCode = "404", description = "The directory was not found")
+        @ApiResponse(responseCode = "200", description = "Permissions were successfully updated"),
+        @ApiResponse(responseCode = "403", description = "Not authorized to update permissions for this directory"),
+        @ApiResponse(responseCode = "404", description = "The directory was not found")
     })
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #directoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).MANAGE)")
     public ResponseEntity<Void> setDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,

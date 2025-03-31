@@ -966,12 +966,12 @@ class ExploreTest {
 
     @Test
     void testGetDirectoryPermissions() throws Exception {
-        MvcResult result =mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
                         .header("userId", USER1))
                 .andExpect(status().isOk())
                 .andReturn();
         String responseJson = result.getResponse().getContentAsString();
-        List<PermissionDTO> returnedPermissions = mapper.readValue(responseJson, new TypeReference<List<PermissionDTO>>() {});
+        List<PermissionDTO> returnedPermissions = mapper.readValue(responseJson, new TypeReference<List<PermissionDTO>>() { });
         assertEquals(3, returnedPermissions.size());
 
         // Execute the test with a forbidden directory ID
