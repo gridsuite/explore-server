@@ -20,6 +20,8 @@ import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionDTO;
+import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -205,6 +207,11 @@ class ExploreTest {
         String newElementUuidAsString = mapper.writeValueAsString(ELEMENT_COPY_UUID);
         String newElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", USER1, 0, null));
         String listElementsAsString = "[" + newElementAttributesAsString + "," + publicStudyAttributesAsString + "]";
+        String parentDirectoryPermissions = mapper.writeValueAsString(List.of(
+                new PermissionDTO(false, List.of(UUID.randomUUID(), UUID.randomUUID()), PermissionType.READ),
+                new PermissionDTO(false, List.of(UUID.randomUUID()), PermissionType.WRITE),
+                new PermissionDTO(false, List.of(), PermissionType.MANAGE)
+        ));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -381,6 +388,18 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), invalidElementAsString);
                     } else if (path.matches("/v1/cases-alert-threshold")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "40");
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parentDirectoryPermissions);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
+                            USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                        return new MockResponse(403);
+                    }
+                } else if ("PUT".equals(request.getMethod())) {
+                    if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
+                            USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                        return new MockResponse(403);
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -943,6 +962,45 @@ class ExploreTest {
                         .param("description", "description")
                         .header("userId", USER1)
         ).andExpect(status().isOk());
+    }
+
+    @Test
+    void testGetDirectoryPermissions() throws Exception {
+        MvcResult result =mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1))
+                .andExpect(status().isOk())
+                .andReturn();
+        String responseJson = result.getResponse().getContentAsString();
+        List<PermissionDTO> returnedPermissions = mapper.readValue(responseJson, new TypeReference<List<PermissionDTO>>() {});
+        assertEquals(3, returnedPermissions.size());
+
+        // Execute the test with a forbidden directory ID
+        mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID_FORBIDDEN)
+                        .header("userId", USER_NOT_ALLOWED))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testSetDirectoryPermissions() throws Exception {
+        List<PermissionDTO> permissions = List.of(
+                new PermissionDTO(false, List.of(UUID.randomUUID(), UUID.randomUUID()), PermissionType.READ),
+                new PermissionDTO(false, List.of(UUID.randomUUID()), PermissionType.WRITE),
+                new PermissionDTO(false, List.of(), PermissionType.MANAGE)
+        );
+        String permissionsJson = mapper.writeValueAsString(permissions);
+
+        mockMvc.perform(put("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(permissionsJson))
+                .andExpect(status().isOk());
+
+        // Execute the test with a forbidden directory ID
+        mockMvc.perform(put("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID_FORBIDDEN)
+                        .header("userId", USER_NOT_ALLOWED)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(permissionsJson))
+                .andExpect(status().isForbidden());
     }
 
     @Test
