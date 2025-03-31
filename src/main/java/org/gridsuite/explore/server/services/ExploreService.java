@@ -237,21 +237,23 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes, userId);
     }
 
-    public void updateCompositeModification(UUID id, String userId, String name) {
-        updateElementName(id, name, userId);
+    public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String userId, String name, String description) {
+        networkModificationService.updateCompositeModification(id, modificationUuids);
+        updateElementNameAndDescription(id, name, description, userId);
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }
 
-    private void updateElementName(UUID id, String name, String userId) {
-        // if the name is empty, no need to call directory-server
-        if (StringUtils.isNotBlank(name)) {
-            ElementAttributes elementAttributes = new ElementAttributes();
-            elementAttributes.setElementName(name);
-            directoryService.updateElement(id, elementAttributes, userId);
+    private void updateElementNameAndDescription(UUID id, String name, String description, String userId) {
+        if (StringUtils.isBlank(name)) {
+            return;
         }
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementName(name);
+        elementAttributes.setDescription(description);
+        directoryService.updateElement(id, elementAttributes, userId);
     }
 
     private String getProperPath(ContingencyListType contingencyListType) {
@@ -268,9 +270,9 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name) {
+    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name, String description) {
         parametersService.updateParameters(id, parameters, parametersType);
-        updateElementName(id, name, userId);
+        updateElementNameAndDescription(id, name, description, userId);
     }
 
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
@@ -287,6 +289,11 @@ public class ExploreService {
     public void duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
         UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
         directoryService.duplicateElement(sourceId, newConfigUuid, targetDirectoryId, userId);
+    }
+
+    public void updateDiagramConfig(UUID id, String diagramConfig, String userId, String name, String description) {
+        singleLineDiagramService.updateDiagramConfig(id, diagramConfig);
+        updateElementNameAndDescription(id, name, description, userId);
     }
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid, String userId) {
@@ -310,14 +317,19 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String userId, String name) {
+    public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String userId, String name, String description) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
-        updateElementName(id, name, userId);
+        updateElementNameAndDescription(id, name, description, userId);
     }
 
-    public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String userId, String name) {
+    public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String userId, String name, String description) {
         spreadsheetConfigCollectionService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto);
-        updateElementName(id, name, userId);
+        updateElementNameAndDescription(id, name, description, userId);
+    }
+
+    public void replaceAllSpreadsheetConfigsInCollection(UUID id, List<UUID> configIds, String userId, String name, String description) {
+        spreadsheetConfigCollectionService.replaceAllSpreadsheetConfigsInCollection(id, configIds);
+        updateElementNameAndDescription(id, name, description, userId);
     }
 
     public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId, String userId) {

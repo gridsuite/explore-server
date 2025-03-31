@@ -90,6 +90,8 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(COLLECTION_UUID));
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID)) {
                     return new MockResponse(204);
+                } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID + "/spreadsheet-configs/replace-all")) {
+                    return new MockResponse(204);
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "\\?duplicateFrom=" + COLLECTION_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod()) || path.matches("/v1/elements/" + COLLECTION_UUID)) {
@@ -138,11 +140,24 @@ class SpreadsheetConfigCollectionTest {
     }
 
     @Test
+    void testReplaceAllSpreadsheetConfigsInCollection() throws Exception {
+        String configIds = "[\"" + UUID.randomUUID() + "\", \"" + UUID.randomUUID() + "\"]";
+        ResultActions perform = mockMvc.perform(put(BASE_URL + "/{id}/spreadsheet-configs/replace-all", COLLECTION_UUID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(configIds)
+                .param("name", COLLECTION_NAME)
+                .param("description", "Test Description")
+                .header("userId", USER_ID));
+        perform.andExpect(status().isNoContent());
+    }
+
+    @Test
     void testUpdateSpreadsheetConfigCollection() throws Exception {
         mockMvc.perform(put(BASE_URL + "/{id}", COLLECTION_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
+                        .param("description", "Test Description")
                         .header("userId", USER_ID))
                 .andExpect(status().isNoContent());
     }
