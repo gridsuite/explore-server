@@ -12,4 +12,5 @@ package org.gridsuite.explore.server.dto;
 public enum PermissionType {
     READ,
     WRITE,
+    MANAGE,
 }

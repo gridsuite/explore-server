@@ -663,4 +663,33 @@ public class ExploreController {
             return ResponseEntity.noContent().build();
         }
     }
+
+    @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get permissions for a directory")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The permissions for the directory"),
+        @ApiResponse(responseCode = "403", description = "Not authorized to view permissions for this directory"),
+        @ApiResponse(responseCode = "404", description = "The directory was not found")
+    })
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #directoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).READ)")
+    public ResponseEntity<List<PermissionDTO>> getDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,
+                                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(directoryService.getDirectoryPermissions(directoryUuid, userId));
+    }
+
+    @PutMapping(value = "/explore/directories/{directoryUuid}/permissions", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Set permissions for a directory")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Permissions were successfully updated"),
+        @ApiResponse(responseCode = "403", description = "Not authorized to update permissions for this directory"),
+        @ApiResponse(responseCode = "404", description = "The directory was not found")
+    })
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #directoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).MANAGE)")
+    public ResponseEntity<Void> setDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,
+                                                        @RequestBody List<PermissionDTO> permissions,
+                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        directoryService.setDirectoryPermissions(directoryUuid, permissions, userId);
+        return ResponseEntity.ok().build();
+    }
 }
