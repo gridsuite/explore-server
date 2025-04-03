@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
@@ -55,6 +56,8 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
+
+    private static final String HEADER_PERMISION_ERROR = "X-Permission-Error";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -394,12 +397,12 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
-        return hasPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
+    public PermissionResponse checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
+        return checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
     }
 
     //This method should only be called inside of AuthorizationService to centralize permission checks
-    public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
+    public PermissionResponse checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
@@ -412,19 +415,24 @@ public class DirectoryService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
 
-        ResponseEntity<Void> response = null;
         try {
-            response = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
+            restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            handleException(e);
+            if (!HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
+                handleException(e);
+            }
+
+            String permissionCheckResult = null;
+            if (e.getResponseHeaders() != null && e.getResponseHeaders().getFirst(HEADER_PERMISION_ERROR) != null) {
+                permissionCheckResult = e.getResponseHeaders().getFirst(HEADER_PERMISION_ERROR);
+            }
+            return new PermissionResponse(false, permissionCheckResult);
         }
-        return !HttpStatus.NO_CONTENT.equals(response.getStatusCode());
+        return new PermissionResponse(true, null);
     }
 
     private void handleException(HttpStatusCodeException e) {
-        if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
-            throw new ExploreException(NOT_ALLOWED);
-        } else if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+        if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
             throw new ExploreException(NOT_FOUND);
         } else {
             throw e;

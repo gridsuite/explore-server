@@ -653,13 +653,14 @@ public class ExploreController {
         @ApiResponse(responseCode = "200", description = "The user has the right on the directory"),
         @ApiResponse(responseCode = "204", description = "The user has not the right on the directory"),
     })
-    public ResponseEntity<Void> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
+    public ResponseEntity<String> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
                                          @RequestParam(name = "permission") PermissionType permission,
                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        if (directoryService.hasPermission(List.of(directoryUuid), null, userId, permission)) {
+        PermissionResponse permissionResponse = directoryService.checkPermission(List.of(directoryUuid), null, userId, permission);
+        if (permissionResponse.hasPermission()) {
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(permissionResponse.permissionCheckResult());
         }
     }
 }
