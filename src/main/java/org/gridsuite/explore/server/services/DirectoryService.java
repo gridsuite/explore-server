@@ -424,8 +424,9 @@ public class DirectoryService implements IDirectoryElementsService {
             }
 
             String permissionCheckResult = null;
-            if (e.getResponseHeaders() != null && e.getResponseHeaders().getFirst(HEADER_PERMISION_ERROR) != null) {
-                permissionCheckResult = e.getResponseHeaders().getFirst(HEADER_PERMISION_ERROR);
+            HttpHeaders responseHeader = e.getResponseHeaders();
+            if (responseHeader != null && responseHeader.getFirst(HEADER_PERMISION_ERROR) != null) {
+                permissionCheckResult = responseHeader.getFirst(HEADER_PERMISION_ERROR);
             }
             return new PermissionResponse(false, permissionCheckResult);
         }
