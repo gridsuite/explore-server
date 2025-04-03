@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.services;
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionResponse;
+import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
@@ -429,6 +430,42 @@ public class DirectoryService implements IDirectoryElementsService {
             return new PermissionResponse(false, permissionCheckResult);
         }
         return new PermissionResponse(true, null);
+    }
+
+    public List<PermissionDTO> getDirectoryPermissions(UUID directoryUuid, String userId) {
+        String path = UriComponentsBuilder
+                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")
+                .buildAndExpand(directoryUuid)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<List<PermissionDTO>> response = restTemplate.exchange(
+            directoryServerBaseUri + path,
+            HttpMethod.GET,
+            new HttpEntity<>(headers),
+            new ParameterizedTypeReference<List<PermissionDTO>>() { }
+        );
+
+        return response.getBody();
+    }
+
+    public void setDirectoryPermissions(UUID directoryUuid, List<PermissionDTO> permissions, String userId) {
+        String path = UriComponentsBuilder
+                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")
+                .buildAndExpand(directoryUuid)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.exchange(
+            directoryServerBaseUri + path,
+                HttpMethod.PUT,
+                new HttpEntity<>(permissions, headers),
+                Void.class
+        );
     }
 
     private void handleException(HttpStatusCodeException e) {
