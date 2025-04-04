@@ -35,7 +35,7 @@ public class RestResponseEntityExceptionHandler {
             case NOT_FOUND:
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             case NOT_ALLOWED:
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(NOT_ALLOWED);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.getMessage());
             case REMOTE_ERROR:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
             case INCORRECT_CASE_FILE:

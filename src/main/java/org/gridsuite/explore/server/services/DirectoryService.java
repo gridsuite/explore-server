@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -52,9 +53,12 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_ELEMENT_TYPES = "elementTypes";
     private static final String PARAM_RECURSIVE = "recursive";
     private static final String PARAM_DIRECTORY_NAME = "directoryName";
+    private static final String PARAM_RECURSIVE_CHECK = "recursiveCheck";
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
+
+    private static final String HEADER_PERMISION_ERROR = "X-Permission-Error";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -394,8 +398,12 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
+    public PermissionResponse checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
+        return checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
+    }
+
     //This method should only be called inside of AuthorizationService to centralize permission checks
-    public boolean hasPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
+    public PermissionResponse checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
@@ -404,16 +412,25 @@ public class DirectoryService implements IDirectoryElementsService {
                 .queryParam(PARAM_ACCESS_TYPE, permissionType)
                 .queryParam(PARAM_IDS, ids)
                 .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+                .queryParam(PARAM_RECURSIVE_CHECK, recursiveCheck)
                 .buildAndExpand()
                 .toUriString();
 
-        ResponseEntity<Void> response = null;
         try {
-            response = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
+            restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            handleException(e);
+            if (!HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
+                handleException(e);
+            }
+
+            String permissionCheckResult = null;
+            HttpHeaders responseHeader = e.getResponseHeaders();
+            if (responseHeader != null && responseHeader.getFirst(HEADER_PERMISION_ERROR) != null) {
+                permissionCheckResult = responseHeader.getFirst(HEADER_PERMISION_ERROR);
+            }
+            return new PermissionResponse(false, permissionCheckResult);
         }
-        return !HttpStatus.NO_CONTENT.equals(response.getStatusCode());
+        return new PermissionResponse(true, null);
     }
 
     public List<PermissionDTO> getDirectoryPermissions(UUID directoryUuid, String userId) {
@@ -453,9 +470,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     private void handleException(HttpStatusCodeException e) {
-        if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
-            throw new ExploreException(NOT_ALLOWED);
-        } else if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+        if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
             throw new ExploreException(NOT_FOUND);
         } else {
             throw e;

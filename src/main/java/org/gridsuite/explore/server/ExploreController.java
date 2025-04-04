@@ -236,7 +236,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "Directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for the directory/element")
     })
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #elementUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isRecursivelyAuthorized(#userId, #elementUuid, null)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid,
                                               @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.deleteElement(elementUuid, userId);
@@ -537,8 +537,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "The elements or the targeted directory was not found"),
         @ApiResponse(responseCode = "403", description = "Not authorized execute this update")
     })
-    @PreAuthorize(
-            "@authorizationService.isAuthorized(#userId, #elementsUuids, #targetDirectoryUuid, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    @PreAuthorize("@authorizationService.isRecursivelyAuthorized(#userId, #elementsUuids, #targetDirectoryUuid)")
     public ResponseEntity<Void> moveElementsDirectory(
             @RequestParam UUID targetDirectoryUuid,
             @RequestBody List<UUID> elementsUuids,
@@ -654,13 +653,14 @@ public class ExploreController {
         @ApiResponse(responseCode = "200", description = "The user has the right on the directory"),
         @ApiResponse(responseCode = "204", description = "The user has not the right on the directory"),
     })
-    public ResponseEntity<Void> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
+    public ResponseEntity<String> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
                                          @RequestParam(name = "permission") PermissionType permission,
                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        if (directoryService.hasPermission(List.of(directoryUuid), null, userId, permission)) {
+        PermissionResponse permissionResponse = directoryService.checkPermission(List.of(directoryUuid), null, userId, permission);
+        if (permissionResponse.hasPermission()) {
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(permissionResponse.permissionCheckResult());
         }
     }
 
