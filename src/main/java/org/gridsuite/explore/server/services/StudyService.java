@@ -37,12 +37,13 @@ public class StudyService implements IDirectoryElementsService {
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, String caseFormat,
-            Map<String, Object> importParams, Boolean duplicateCase) {
+            Map<String, Object> importParams, Boolean duplicateCase, String caseName) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                 "/studies/cases/{caseUuid}")
                 .queryParam("studyUuid", studyUuid)
                 .queryParam("duplicateCase", duplicateCase)
                 .queryParam("caseFormat", caseFormat)
+                .queryParam("caseName", caseName)
                 .buildAndExpand(caseUuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
