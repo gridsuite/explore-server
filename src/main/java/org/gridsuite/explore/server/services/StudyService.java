@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -37,15 +38,17 @@ public class StudyService implements IDirectoryElementsService {
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, String userId, UUID caseUuid, String caseFormat,
-            Map<String, Object> importParams, Boolean duplicateCase, String caseName) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+            Map<String, Object> importParams, Boolean duplicateCase, String firstRootNetworkName) {
+        var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                 "/studies/cases/{caseUuid}")
                 .queryParam("studyUuid", studyUuid)
                 .queryParam("duplicateCase", duplicateCase)
-                .queryParam("caseFormat", caseFormat)
-                .queryParam("caseName", caseName)
-                .buildAndExpand(caseUuid)
-                .toUriString();
+                .queryParam("caseFormat", caseFormat);
+
+        if (!StringUtils.isBlank(firstRootNetworkName)) {
+            uriComponentsBuilder.queryParam("firstRootNetworkName", firstRootNetworkName);
+        }
+        String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(HEADER_USER_ID, userId);

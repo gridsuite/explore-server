@@ -14,6 +14,7 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -90,7 +91,18 @@ public class ExploreService {
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, userId, 0L, description);
-        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementAttributes.getElementName());
+        // Two scenarios to handle.
+        // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
+        // Scenario 2: the study is not created from an existing case, in which case the directory throws exception because no element with the given uuid.
+        ElementAttributes caseAttributes = null;
+        try {
+            caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
+
+        } catch (HttpClientErrorException e) {
+            LOGGER.error(e.toString(), e);
+        }
+        String elementName = caseAttributes != null ? elementAttributes.getElementName() : null;
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
