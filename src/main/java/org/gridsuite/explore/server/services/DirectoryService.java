@@ -12,6 +12,8 @@ import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -59,6 +61,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_USER_INPUT = "userInput";
 
     private static final String HEADER_PERMISION_ERROR = "X-Permission-Error";
+    private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryService.class);
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -271,8 +274,14 @@ public class DirectoryService implements IDirectoryElementsService {
                 .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
                 .buildAndExpand(elementUuid)
                 .toUriString();
-        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class)
-                .getBody();
+        ElementAttributes elementAttributes = null;
+        try {
+            elementAttributes = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody();
+        } catch (HttpStatusCodeException e) {
+            LOGGER.error(e.toString(), e);
+        }
+        return elementAttributes;
+
     }
 
     public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {

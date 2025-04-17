@@ -94,13 +94,7 @@ public class ExploreService {
         // Two scenarios to handle.
         // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
         // Scenario 2: the study is not created from an existing case, in which case the directory throws exception because no element with the given uuid.
-        ElementAttributes caseAttributes = null;
-        try {
-            caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
-
-        } catch (HttpClientErrorException e) {
-            LOGGER.error(e.toString(), e);
-        }
+        ElementAttributes caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
         String elementName = caseAttributes != null ? caseAttributes.getElementName() : null;
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
@@ -145,7 +139,7 @@ public class ExploreService {
 
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+        if (elementAttribute != null && !elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
@@ -156,7 +150,7 @@ public class ExploreService {
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+        if (elementAttribute != null && !elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         contingencyListService.replaceFormContingencyListWithScript(id, userId);
@@ -182,7 +176,7 @@ public class ExploreService {
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(filterId);
-        if (!elementAttribute.getType().equals(FILTER)) {
+        if (elementAttribute != null && !elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
@@ -193,7 +187,7 @@ public class ExploreService {
 
     public void replaceFilterWithScript(UUID id, String userId) {
         ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (!userId.equals(elementAttribute.getOwner())) {
+        if (elementAttribute != null && !userId.equals(elementAttribute.getOwner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
         if (!elementAttribute.getType().equals(FILTER)) {
@@ -411,7 +405,7 @@ public class ExploreService {
     }
 
     private void notifyStudyUpdate(ElementAttributes element, String userId) {
-        if (STUDY.equals(element.getType())) {
+        if (element != null && STUDY.equals(element.getType())) {
             studyService.notifyStudyUpdate(element.getElementUuid(), userId);
         }
     }
