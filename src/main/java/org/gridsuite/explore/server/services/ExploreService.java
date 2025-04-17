@@ -190,7 +190,7 @@ public class ExploreService {
         if (elementAttribute != null && !userId.equals(elementAttribute.getOwner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
-        if (!elementAttribute.getType().equals(FILTER)) {
+        if (elementAttribute != null && !elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         filterService.replaceFilterWithScript(id, userId);
