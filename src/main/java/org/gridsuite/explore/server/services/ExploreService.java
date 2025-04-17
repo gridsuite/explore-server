@@ -101,7 +101,7 @@ public class ExploreService {
         } catch (HttpClientErrorException e) {
             LOGGER.error(e.toString(), e);
         }
-        String elementName = caseAttributes != null ? elementAttributes.getElementName() : null;
+        String elementName = caseAttributes != null ? caseAttributes.getElementName() : null;
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
