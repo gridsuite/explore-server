@@ -269,18 +269,17 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
-    public ElementAttributes getElementInfos(UUID elementUuid) {
+    public Optional<ElementAttributes> getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
                 .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
                 .buildAndExpand(elementUuid)
                 .toUriString();
-        ElementAttributes elementAttributes = null;
         try {
-            elementAttributes = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody();
+            return Optional.ofNullable(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
         } catch (HttpStatusCodeException e) {
             LOGGER.error(e.toString(), e);
         }
-        return elementAttributes;
+        return Optional.empty();
 
     }
 
@@ -340,7 +339,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public void deleteElement(UUID id, String userId) {
-        ElementAttributes elementAttribute = getElementInfos(id);
+        ElementAttributes elementAttribute = getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
         IDirectoryElementsService service = getGenericService(elementAttribute.getType());
         service.delete(elementAttribute.getElementUuid(), userId);
     }

@@ -14,13 +14,9 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.ExploreException.Type.*;
@@ -94,8 +90,8 @@ public class ExploreService {
         // Two scenarios to handle.
         // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
         // Scenario 2: the study is not created from an existing case, in which case the directory throws exception because no element with the given uuid.
-        ElementAttributes caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
-        String elementName = caseAttributes != null ? caseAttributes.getElementName() : null;
+        Optional<ElementAttributes> caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
+        String elementName = caseAttributes.map(ElementAttributes::getElementName).orElse(null);
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
@@ -138,8 +134,8 @@ public class ExploreService {
     }
 
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (elementAttribute != null && !elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
@@ -149,8 +145,8 @@ public class ExploreService {
     }
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (elementAttribute != null && !elementAttribute.getType().equals(CONTINGENCY_LIST)) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         contingencyListService.replaceFormContingencyListWithScript(id, userId);
@@ -175,8 +171,8 @@ public class ExploreService {
     }
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(filterId);
-        if (elementAttribute != null && !elementAttribute.getType().equals(FILTER)) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(filterId).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        if (!elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
@@ -186,11 +182,11 @@ public class ExploreService {
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        if (elementAttribute != null && !userId.equals(elementAttribute.getOwner())) {
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        if (!userId.equals(elementAttribute.getOwner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
-        if (elementAttribute != null && !elementAttribute.getType().equals(FILTER)) {
+        if (!elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
         filterService.replaceFilterWithScript(id, userId);
@@ -391,7 +387,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }
@@ -405,7 +401,7 @@ public class ExploreService {
     }
 
     private void notifyStudyUpdate(ElementAttributes element, String userId) {
-        if (element != null && STUDY.equals(element.getType())) {
+        if (STUDY.equals(element.getType())) {
             studyService.notifyStudyUpdate(element.getElementUuid(), userId);
         }
     }
