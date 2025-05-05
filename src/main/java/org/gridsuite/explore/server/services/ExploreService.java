@@ -16,10 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.ExploreException.Type.*;
@@ -90,7 +87,12 @@ public class ExploreService {
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, userId, 0L, description);
-        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase);
+        // Two scenarios to handle.
+        // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
+        // Scenario 2: the study is not created from an existing case, in which case the directory throws exception because no element with the given uuid.
+        Optional<ElementAttributes> caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
+        String elementName = caseAttributes.map(ElementAttributes::getElementName).orElse(null);
+        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
@@ -132,7 +134,7 @@ public class ExploreService {
     }
 
     public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -143,7 +145,7 @@ public class ExploreService {
     }
 
     public void replaceFormContingencyListWithScript(UUID id, String userId) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
         if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -169,7 +171,7 @@ public class ExploreService {
     }
 
     public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(filterId);
+        ElementAttributes elementAttribute = directoryService.getElementInfos(filterId).orElseThrow(() -> new ExploreException(NOT_FOUND));
         if (!elementAttribute.getType().equals(FILTER)) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -180,7 +182,7 @@ public class ExploreService {
     }
 
     public void replaceFilterWithScript(UUID id, String userId) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
         if (!userId.equals(elementAttribute.getOwner())) {
             throw new ExploreException(NOT_ALLOWED);
         }
@@ -385,7 +387,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }

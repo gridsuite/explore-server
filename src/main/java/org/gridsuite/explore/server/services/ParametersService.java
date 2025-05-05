@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.context.annotation.Lazy;
@@ -19,6 +20,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.gridsuite.explore.server.ExploreException.Type.NOT_FOUND;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -113,7 +116,7 @@ public class ParametersService implements IDirectoryElementsService {
 
     @Override
     public void delete(UUID parametersUuid, String userId) {
-        ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
+        ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid).orElseThrow(() -> new ExploreException(NOT_FOUND));
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
