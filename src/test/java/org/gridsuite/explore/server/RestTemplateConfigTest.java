@@ -68,7 +68,7 @@ class RestTemplateConfigTest {
         restTemplate.getForObject(TEST_ENDPOINT, String.class);
 
         // Verify the request was made correctly
-            mockServer.verify();
+        mockServer.verify();
     }
 
     @Test
