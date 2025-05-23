@@ -22,6 +22,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -196,17 +197,17 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public String searchElements(String userInput, String directoryUuid, String userId) {
-        String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/indexation-infos")
-                .queryParam(PARAM_DIRECTORY_UUID, directoryUuid)
-                .queryParam(PARAM_USER_INPUT, userInput)
-                .toUriString();
+        URI uri = UriComponentsBuilder
+                .fromUriString(directoryServerBaseUri + DIRECTORIES_SERVER_ROOT_PATH + "/elements/indexation-infos")
+                .queryParam(PARAM_DIRECTORY_UUID, "{directoryUuid}")
+                .queryParam(PARAM_USER_INPUT, "{userInput}")
+                .build(directoryUuid, userInput);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
+                .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class)
                 .getBody();
     }
 
