@@ -112,7 +112,7 @@ class ExploreTest {
     private static final String FILTER_CONTINGENCY_LIST = "filterContingencyList";
     private static final String FILTER_CONTINGENCY_LIST_2 = "filterContingencyList2";
     private static final String FILTER = "FILTER";
-    private final Map<String, Object> specificMetadata = Map.of("id", FILTER_UUID);
+    private final Map<String, Object> specificMetadata = Map.of("equipmentType", "GENERATOR", "id", FILTER_UUID);
     private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
     private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
@@ -272,6 +272,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parametersElementAttributesAsString);
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "]");
+                } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&elementTypes=FILTER,CASE") && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "," + caseElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + caseElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
@@ -674,6 +676,7 @@ class ExploreTest {
 
         ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0L, null, specificMetadata);
         ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, USER1, 0L, null, specificMetadata2);
+        ElementAttributes caseElement = new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null, caseSpecificMetadata);
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
             .header("userId", USER1))
@@ -686,7 +689,7 @@ class ExploreTest {
             .header("userId", USER1))
             .andExpectAll(
                 status().isOk(),
-                content().string(mapper.writeValueAsString(List.of()))
+                content().string(mapper.writeValueAsString(List.of(filter1)))
             );
 
         mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER")
@@ -694,6 +697,20 @@ class ExploreTest {
             .andExpectAll(
                 status().isOk(),
                 content().string(mapper.writeValueAsString(List.of(filter2)))
+            );
+
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR,LINE&elementTypes=FILTER")
+            .header("userId", USER1))
+            .andExpectAll(
+                status().isOk(),
+                content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
+            );
+
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&equipmentTypes=GENERATOR&elementTypes=FILTER,CASE")
+            .header("userId", USER1))
+            .andExpectAll(
+                status().isOk(),
+                content().string(mapper.writeValueAsString(List.of(filter1, caseElement)))
             );
     }
 
