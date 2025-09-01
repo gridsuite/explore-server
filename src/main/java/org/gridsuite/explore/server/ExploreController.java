@@ -182,6 +182,19 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/filter-based-contingency-lists/{listName}")
+    @Operation(summary = "create an identifier contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> createFilterBasedContingencyList(@PathVariable("listName") String listName,
+                                                                @RequestBody(required = false) String content,
+                                                                @RequestParam("description") String description,
+                                                                @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createFilterBasedContingencyList(listName, content, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})

@@ -159,6 +159,12 @@ public class ExploreService {
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
+    public void createFilterBasedContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
+        contingencyListService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, userId, 0, description);
         filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);

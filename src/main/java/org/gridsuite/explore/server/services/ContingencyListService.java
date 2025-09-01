@@ -90,6 +90,16 @@ public class ContingencyListService implements IDirectoryElementsService {
         restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
     }
 
+    public void insertFilterBasedContingencyList(UUID id, String content) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filter-based-contingency-lists?id={id}")
+            .buildAndExpand(id)
+            .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+    }
+
     public UUID duplicateFormContingencyList(UUID formContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
                 .queryParam(HEADER_DUPLICATE_FROM, formContingencyListsId)
