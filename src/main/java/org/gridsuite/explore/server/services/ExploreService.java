@@ -123,6 +123,7 @@ public class ExploreService {
             case SCRIPT -> contingencyListService.duplicateScriptContingencyList(contingencyListsId);
             case FORM -> contingencyListService.duplicateFormContingencyList(contingencyListsId);
             case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
+            case FILTERS -> contingencyListService.duplicateFilterBasedContingencyList(contingencyListsId);
         };
         directoryService.duplicateElement(contingencyListsId, newId, targetDirectoryId, userId);
     }
@@ -269,6 +270,7 @@ public class ExploreService {
             case SCRIPT -> "/script-contingency-lists/{id}";
             case FORM -> "/form-contingency-lists/{id}";
             case IDENTIFIERS -> "/identifier-contingency-lists/{id}";
+            case FILTERS -> "/filters-contingency-lists/{id}";
         };
     }
 

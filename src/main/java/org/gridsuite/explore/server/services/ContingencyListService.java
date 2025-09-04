@@ -91,7 +91,7 @@ public class ContingencyListService implements IDirectoryElementsService {
     }
 
     public void insertFilterBasedContingencyList(UUID id, String content) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filter-based-contingency-lists?id={id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists?id={id}")
             .buildAndExpand(id)
             .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -113,6 +113,14 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .queryParam(HEADER_DUPLICATE_FROM, identifierContingencyListsId)
                 .buildAndExpand()
                 .toUriString();
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
+    }
+
+    public UUID duplicateFilterBasedContingencyList(UUID filterContingencyListsId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists")
+            .queryParam(HEADER_DUPLICATE_FROM, filterContingencyListsId)
+            .buildAndExpand()
+            .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 

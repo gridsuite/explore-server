@@ -13,5 +13,6 @@ public enum ContingencyListType {
 
     SCRIPT,
     FORM,
-    IDENTIFIERS
+    IDENTIFIERS,
+    FILTERS
 }
