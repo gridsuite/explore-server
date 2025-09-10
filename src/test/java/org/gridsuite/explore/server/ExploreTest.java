@@ -326,6 +326,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/filters-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/parameters\\?duplicateFrom=" + PARAMETERS_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
                 } else if (path.matches("/v1/parameters.*")) {
@@ -974,20 +976,20 @@ class ExploreTest {
 
     @Test
     void testModifyFilterContingencyList(final MockWebServer server) throws Exception {
-        final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
-        final String name = "filter contingencyList name";
-        final String description = "filter contingencyList description";
+        final String filters = "{\"filters\":[{\"id\":\"uuid1\",\"name\":\"TD_Sensi\",\"equipmentType\":\"TWO_WINDINGS_TRANSFORMER\"},{\"id\":\"uuid2\",\"name\":\"Ligne ARGIA\",\"equipmentType\":\"LINE\"}]}";
+        final String name = "filter based contingencyList name";
+        final String description = "filter based contingencyList description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
             SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
             .contentType(APPLICATION_JSON)
-            .content(identifierContingencyList)
+            .content(filters)
             .param("name", name)
             .param("contingencyListType", ContingencyListType.FILTERS.name())
             .param("description", description)
             .header("userId", USER1)
         ).andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters-contingency-lists/", USER1);
     }
 
     private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath, String user) {
