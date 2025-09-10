@@ -559,6 +559,16 @@ class ExploreTest {
     }
 
     @Test
+    void testCreateFilterBasedContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/filters-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+            "filterBasedContingencyListName", PARENT_DIRECTORY_UUID, null)
+            .header("userId", USER1)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("\"Contingency list content\"")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     void testNewScriptFromFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)

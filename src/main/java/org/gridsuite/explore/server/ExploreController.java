@@ -183,8 +183,8 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/filters-contingency-lists/{listName}")
-    @Operation(summary = "create an identifier contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
+    @Operation(summary = "create a filter based contingency list")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter based contingency list has been created")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> createFilterBasedContingencyList(@PathVariable("listName") String listName,
                                                                 @RequestBody(required = false) String content,
