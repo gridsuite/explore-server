@@ -821,6 +821,26 @@ class ExploreTest {
     }
 
     @Test
+    void testDuplicateFilterBasedContingencyList(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={contingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID)
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
+    }
+
+    @Test
+    void testDuplicateFilterBasedContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={contingencyListUuid}&type={contingencyListsType}",
+            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS)
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
     void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
@@ -947,6 +967,24 @@ class ExploreTest {
                 .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
                 .param("description", description)
                 .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
+    }
+
+    @Test
+    void testModifyFilterContingencyList(final MockWebServer server) throws Exception {
+        final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
+        final String name = "filter contingencyList name";
+        final String description = "filter contingencyList description";
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
+            SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+            .contentType(APPLICATION_JSON)
+            .content(identifierContingencyList)
+            .param("name", name)
+            .param("contingencyListType", ContingencyListType.FILTERS.name())
+            .param("description", description)
+            .header("userId", USER1)
         ).andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
