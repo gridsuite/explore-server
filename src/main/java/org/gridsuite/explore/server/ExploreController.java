@@ -108,19 +108,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/script-contingency-lists/{listName}")
-    @Operation(summary = "create a script contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Script contingency list has been created")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> createScriptContingencyList(@PathVariable("listName") String listName,
-                                                            @RequestBody(required = false) String content,
-                                                            @RequestParam("description") String description,
-                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createScriptContingencyList(listName, content, description, userId, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping(value = "/explore/contingency-lists", params = "duplicateFrom")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created")})
@@ -144,28 +131,6 @@ public class ExploreController {
                                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.createFormContingencyList(listName, content, description, userId, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/form-contingency-lists/{id}/new-script/{scriptName}")
-    @Operation(summary = "Create a new script contingency list from a form contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script contingency list have been created successfully")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> newScriptFromFormContingencyList(@PathVariable("id") UUID id,
-                                                                 @PathVariable("scriptName") String scriptName,
-                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                 @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.newScriptFromFormContingencyList(id, scriptName, userId, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/form-contingency-lists/{id}/replace-with-script")
-    @Operation(summary = "Replace a form contingency list with a script contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The form contingency list has been replaced successfully")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> replaceFilterContingencyListWithScript(@PathVariable("id") UUID id,
-                                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.replaceFormContingencyListWithScript(id, userId);
         return ResponseEntity.ok().build();
     }
 
@@ -204,28 +169,6 @@ public class ExploreController {
                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateFilter(filterId, targetDirectoryId, userId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/filters/{id}/new-script/{scriptName}")
-    @Operation(summary = "Create a new script from a filter")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> newScriptFromFilter(@PathVariable("id") UUID filterId,
-                                                    @PathVariable("scriptName") String scriptName,
-                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.newScriptFromFilter(filterId, scriptName, userId, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping(value = "/explore/filters/{id}/replace-with-script")
-    @Operation(summary = "Replace a filter with a script")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter has been replaced successfully")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> replaceFilterWithScript(@PathVariable("id") UUID id,
-                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.replaceFilterWithScript(id, userId);
         return ResponseEntity.ok().build();
     }
 

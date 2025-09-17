@@ -43,24 +43,6 @@ public class FilterService implements IDirectoryElementsService {
         this.filterServerBaseUri = filterServerBaseUri;
     }
 
-    public void replaceFilterWithScript(UUID id, String userId) {
-        String path = UriComponentsBuilder
-                .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/replace-with-script")
-                .buildAndExpand(id)
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HEADER_USER_ID, userId);
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
-    }
-
-    public void insertNewScriptFromFilter(UUID id, UUID newId) {
-        String path = UriComponentsBuilder
-                .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}/new-script?newId={newId}")
-                .buildAndExpand(id, newId)
-                .toUriString();
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, null, Void.class);
-    }
-
     @Override
     public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
