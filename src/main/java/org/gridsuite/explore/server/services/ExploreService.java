@@ -112,15 +112,8 @@ public class ExploreService {
         directoryService.duplicateElement(sourceCaseUuid, newCaseId, targetDirectoryId, userId);
     }
 
-    public void createScriptContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
-        contingencyListService.insertScriptContingencyList(elementAttributes.getElementUuid(), content);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-    }
-
     public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, String userId, ContingencyListType contingencyListType) {
         UUID newId = switch (contingencyListType) {
-            case SCRIPT -> contingencyListService.duplicateScriptContingencyList(contingencyListsId);
             case FORM -> contingencyListService.duplicateFormContingencyList(contingencyListsId);
             case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
         };
@@ -131,26 +124,6 @@ public class ExploreService {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
         contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-    }
-
-    public void newScriptFromFormContingencyList(UUID id, String scriptName, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
-        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
-        ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                CONTINGENCY_LIST, userId, 0L, null);
-        contingencyListService.newScriptFromFormContingencyList(id, newElementAttributes.getElementUuid());
-        directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
-    }
-
-    public void replaceFormContingencyListWithScript(UUID id, String userId) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
-        if (!elementAttribute.getType().equals(CONTINGENCY_LIST)) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
-        contingencyListService.replaceFormContingencyListWithScript(id, userId);
-        directoryService.notifyDirectoryChanged(id, userId);
     }
 
     public void createIdentifierContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
@@ -168,29 +141,6 @@ public class ExploreService {
     public void duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId, String userId) {
         UUID newFilterId = filterService.duplicateFilter(sourceFilterId);
         directoryService.duplicateElement(sourceFilterId, newFilterId, targetDirectoryId, userId);
-    }
-
-    public void newScriptFromFilter(UUID filterId, String scriptName, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(filterId).orElseThrow(() -> new ExploreException(NOT_FOUND));
-        if (!elementAttribute.getType().equals(FILTER)) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
-        ElementAttributes newElementAttributes = new ElementAttributes(UUID.randomUUID(), scriptName,
-                FILTER, userId, 0, null);
-        filterService.insertNewScriptFromFilter(filterId, newElementAttributes.getElementUuid());
-        directoryService.createElement(newElementAttributes, parentDirectoryUuid, userId);
-    }
-
-    public void replaceFilterWithScript(UUID id, String userId) {
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
-        if (!userId.equals(elementAttribute.getOwner())) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
-        if (!elementAttribute.getType().equals(FILTER)) {
-            throw new ExploreException(NOT_ALLOWED);
-        }
-        filterService.replaceFilterWithScript(id, userId);
-        directoryService.notifyDirectoryChanged(id, userId);
     }
 
     public void deleteElement(UUID id, String userId) {
@@ -260,7 +210,6 @@ public class ExploreService {
 
     private String getProperPath(ContingencyListType contingencyListType) {
         return switch (contingencyListType) {
-            case SCRIPT -> "/script-contingency-lists/{id}";
             case FORM -> "/form-contingency-lists/{id}";
             case IDENTIFIERS -> "/identifier-contingency-lists/{id}";
         };
