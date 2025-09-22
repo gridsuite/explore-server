@@ -535,7 +535,6 @@ public class DirectoryService implements IDirectoryElementsService {
             return NOT_FOUND;
         }
         if ("NOT_ALLOWED".equals(errorCode)
-                || "IS_DIRECTORY".equals(errorCode)
                 || "NOT_DIRECTORY".equals(errorCode)
                 || "MOVE_IN_DESCENDANT_NOT_ALLOWED".equals(errorCode)) {
             return NOT_ALLOWED;
@@ -551,12 +550,9 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     private String extractMessage(HttpStatusCodeException exception) {
-        return Optional.ofNullable(exception.getResponseBodyAsString())
+        return Optional.of(exception.getResponseBodyAsString())
                 .filter(body -> !body.isBlank())
-                .orElseGet(() -> {
-                    String statusText = exception.getStatusText();
-                    return statusText != null ? statusText : "Directory request failed";
-                });
+                .orElseGet(exception::getStatusText);
     }
 
     private ErrorResponse normalizeRemoteError(ErrorResponse error, HttpStatusCodeException exception) {
