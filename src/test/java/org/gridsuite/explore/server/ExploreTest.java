@@ -298,17 +298,9 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfFormContingencyListAttributesAsString.replace("elementUuid", "id"));
                 } else if (path.matches("/v1/.*contingency-lists\\?duplicateFrom=" + CONTINGENCY_LIST_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newContingencyUuidAsString);
-                } else if (path.matches("/v1/script-contingency-lists\\?id=" + PARENT_DIRECTORY_WITH_ERROR_UUID) && "POST".equals(request.getMethod())) {
-                    return new MockResponse(500);
-                } else if (path.matches("/v1/script-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/form-contingency-lists/.*/new-script/.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/filters/.*/new-script.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/filters\\?duplicateFrom=" + FILTER_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newFilterUuidAsString);
@@ -316,11 +308,7 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/filters/.*/replace-with-script") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
                 } else if (path.matches("/v1/filters/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/script-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/form-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
@@ -521,26 +509,6 @@ class ExploreTest {
     }
 
     @Test
-    void testCreateScriptContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                "contingencyListScriptName", PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("\"Contingency list content\"")
-        ).andExpect(status().isOk());
-    }
-
-    @Test
-    void testCreateScriptContingencyListError() throws Exception {
-        mockMvc.perform(post("/v1/explore/script-contingency-lists/{listName}?&parentDirectoryUuid={parentDirectoryUuid}&description={description}}",
-                "contingencyListScriptName", PARENT_DIRECTORY_WITH_ERROR_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("\"Contingency list content\"")
-        ).andExpect(status().isInternalServerError());
-    }
-
-    @Test
     void testCreateFormContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
@@ -571,22 +539,6 @@ class ExploreTest {
     }
 
     @Test
-    void testNewScriptFromFormContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, "scriptName", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-    }
-
-    @Test
-    void testReplaceFormContingencyListWithScript() throws Exception {
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{id}/replace-with-script",
-                CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-    }
-
-    @Test
     void testCreateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
@@ -613,22 +565,6 @@ class ExploreTest {
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"new Parameters content\"")
-        ).andExpect(status().isOk());
-    }
-
-    @Test
-    void testNewScriptFromFilter() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{id}/new-script/{scriptName}?parentDirectoryUuid={parentDirectoryUuid}",
-                FILTER_UUID, "scriptName", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-    }
-
-    @Test
-    void testReplaceFilterWithScript() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{id}/replace-with-script",
-                FILTER_UUID)
-                .header("userId", USER1)
         ).andExpect(status().isOk());
     }
 
@@ -760,26 +696,6 @@ class ExploreTest {
                 .header("userId", USER1)).andExpect(status().isOk());
 
         checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, FILTER_UUID);
-    }
-
-    @Test
-    void testDuplicateScriptContingencyList(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
-                        CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT, PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
-    }
-
-    @Test
-    void testDuplicateScriptContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={scriptContingencyListUuid}&type={contingencyListsType}",
-                        CONTINGENCY_LIST_UUID, ContingencyListType.SCRIPT)
-                        .header("userId", USER1))
-                .andExpect(status().isOk());
-
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
     }
 
     @Test
@@ -918,24 +834,6 @@ class ExploreTest {
         ).andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/", USER1);
-    }
-
-    @Test
-    void testModifyScriptContingencyList(final MockWebServer server) throws Exception {
-        final String scriptContingency = "{\"script\":\"alert(\\\"script contingency\\\")\"}";
-        final String name = "script name";
-        final String description = "description";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(scriptContingency)
-                .param("name", name)
-                .param("description", description)
-                .param("contingencyListType", ContingencyListType.SCRIPT.name())
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/script-contingency-lists", USER1);
     }
 
     @Test
