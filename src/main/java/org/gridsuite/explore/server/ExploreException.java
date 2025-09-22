@@ -6,7 +6,10 @@
  */
 package org.gridsuite.explore.server;
 
+import com.powsybl.ws.commons.error.ErrorResponse;
+
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -24,18 +27,31 @@ public class ExploreException extends RuntimeException {
     }
 
     private final Type type;
-
-    public ExploreException(Type type) {
-        super(Objects.requireNonNull(type.name()));
-        this.type = type;
-    }
+    private final ErrorResponse remoteError;
 
     public ExploreException(Type type, String message) {
-        super(message);
-        this.type = type;
+        this(type, message, null);
+    }
+
+    public ExploreException(Type type, String message, ErrorResponse remoteError) {
+        super(Objects.requireNonNull(message, "message must not be null"));
+        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.remoteError = remoteError;
+    }
+
+    public static ExploreException of(Type type, String message, Object... args) {
+        return new ExploreException(type, args.length == 0 ? message : String.format(message, args));
+    }
+
+    public static ExploreException remote(Type type, ErrorResponse remoteError) {
+        return new ExploreException(type, Objects.requireNonNull(remoteError, "remoteError must not be null").message(), remoteError);
     }
 
     Type getType() {
         return type;
+    }
+
+    Optional<ErrorResponse> getRemoteError() {
+        return Optional.ofNullable(remoteError);
     }
 }

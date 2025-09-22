@@ -116,7 +116,8 @@ public class ParametersService implements IDirectoryElementsService {
 
     @Override
     public void delete(UUID parametersUuid, String userId) {
-        ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid)
+                .orElseThrow(() -> ExploreException.of(NOT_FOUND, "Parameters '%s' not found", parametersUuid));
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")

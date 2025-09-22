@@ -101,7 +101,8 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB)).thenThrow(new ExploreException(NOT_FOUND));
+        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB))
+                .thenThrow(ExploreException.of(NOT_FOUND, "Element '%s' not found", ELEMENT_NOT_FOUND_UUID));
     }
 
     protected Map<String, StringValuePattern> handleQueryParams(List<String> subs) {

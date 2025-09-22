@@ -336,7 +336,8 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id)
+                .orElseThrow(() -> ExploreException.of(NOT_FOUND, "Element '%s' not found", id));
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }
