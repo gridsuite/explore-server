@@ -314,6 +314,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/filters-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/parameters\\?duplicateFrom=" + PARAMETERS_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
                 } else if (path.matches("/v1/parameters.*")) {
@@ -527,6 +529,16 @@ class ExploreTest {
     }
 
     @Test
+    void testCreateFilterBasedContingencyList() throws Exception {
+        mockMvc.perform(post("/v1/explore/filters-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+            "filterBasedContingencyListName", PARENT_DIRECTORY_UUID, null)
+            .header("userId", USER1)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("\"Contingency list content\"")
+        ).andExpect(status().isOk());
+    }
+
+    @Test
     void testCreateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
@@ -727,6 +739,26 @@ class ExploreTest {
     }
 
     @Test
+    void testDuplicateFilterBasedContingencyList(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={contingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID)
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
+    }
+
+    @Test
+    void testDuplicateFilterBasedContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={contingencyListUuid}&type={contingencyListsType}",
+            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS)
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+    }
+
+    @Test
     void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
@@ -838,6 +870,24 @@ class ExploreTest {
         ).andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
+    }
+
+    @Test
+    void testModifyFilterContingencyList(final MockWebServer server) throws Exception {
+        final String filters = "{\"filters\":[{\"id\":\"uuid1\",\"name\":\"TD_Sensi\",\"equipmentType\":\"TWO_WINDINGS_TRANSFORMER\"},{\"id\":\"uuid2\",\"name\":\"Ligne ARGIA\",\"equipmentType\":\"LINE\"}]}";
+        final String name = "filter based contingencyList name";
+        final String description = "filter based contingencyList description";
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
+            SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+            .contentType(APPLICATION_JSON)
+            .content(filters)
+            .param("name", name)
+            .param("contingencyListType", ContingencyListType.FILTERS.name())
+            .param("description", description)
+            .header("userId", USER1)
+        ).andExpect(status().isOk());
+
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters-contingency-lists/", USER1);
     }
 
     private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath, String user) {

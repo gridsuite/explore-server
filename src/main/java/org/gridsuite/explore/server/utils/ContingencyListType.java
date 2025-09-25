@@ -11,5 +11,6 @@ package org.gridsuite.explore.server.utils;
  */
 public enum ContingencyListType {
     FORM,
-    IDENTIFIERS
+    IDENTIFIERS,
+    FILTERS
 }
