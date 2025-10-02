@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreException.Type.INCORRECT_CASE_FILE;
-import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
+import static org.gridsuite.explore.server.utils.ErrorHandlingUtils.wrapRemoteError;
 
 @Service
 public class CaseService implements IDirectoryElementsService {

@@ -13,7 +13,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
+import static org.gridsuite.explore.server.utils.ErrorHandlingUtils.wrapRemoteError;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>

@@ -43,8 +43,8 @@ public class ExploreException extends RuntimeException {
         return new ExploreException(type, args.length == 0 ? message : String.format(message, args));
     }
 
-    public static ExploreException remote(Type type, ErrorResponse remoteError) {
-        return new ExploreException(type, Objects.requireNonNull(remoteError, "remoteError must not be null").message(), remoteError);
+    public static ExploreException remote(ErrorResponse remoteError) {
+        return new ExploreException(Type.REMOTE_ERROR, Objects.requireNonNull(remoteError, "remoteError must not be null").message(), remoteError);
     }
 
     Type getType() {

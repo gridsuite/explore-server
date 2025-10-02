@@ -49,21 +49,22 @@ public class RestResponseEntityExceptionHandler {
         String errorCode = remoteError != null ? remoteError.errorCode() : exception.getType().name();
         String message = remoteError != null ? remoteError.message() : exception.getMessage();
         String service = remoteError != null ? remoteError.service() : SERVICE_NAME;
-        return buildErrorResponse(request, status, service, errorCode, message);
+        String path = remoteError != null ? request.getRequestURI() + "-->" + remoteError.path() : request.getRequestURI();
+        return buildErrorResponse(request, status, service, errorCode, message, path);
     }
 
     private ErrorResponse buildErrorResponse(HttpServletRequest request, HttpStatus status, String errorCode, String message) {
-        return buildErrorResponse(request, status, SERVICE_NAME, errorCode, message);
+        return buildErrorResponse(request, status, SERVICE_NAME, errorCode, message, request.getRequestURI());
     }
 
-    private ErrorResponse buildErrorResponse(HttpServletRequest request, HttpStatus status, String service, String errorCode, String message) {
+    private ErrorResponse buildErrorResponse(HttpServletRequest request, HttpStatus status, String service, String errorCode, String message, String path) {
         return new ErrorResponse(
             service,
             errorCode,
             message,
             status.value(),
             Instant.now(),
-            request.getRequestURI(),
+            path,
             request.getHeader(CORRELATION_ID_HEADER)
         );
     }

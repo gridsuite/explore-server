@@ -6,7 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
-import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
+import static org.gridsuite.explore.server.utils.ErrorHandlingUtils.wrapRemoteError;
 
 import java.util.List;
 
