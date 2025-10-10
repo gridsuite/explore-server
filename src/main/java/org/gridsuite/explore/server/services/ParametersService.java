@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_FOUND;
+import static org.gridsuite.explore.server.ExploreBusinessErrorCode.EXPLORE_ELEMENT_NOT_FOUND;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -117,7 +117,7 @@ public class ParametersService implements IDirectoryElementsService {
     @Override
     public void delete(UUID parametersUuid, String userId) {
         ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid)
-                .orElseThrow(() -> ExploreException.of(NOT_FOUND, "Parameters '%s' not found", parametersUuid));
+                .orElseThrow(() -> ExploreException.of(EXPLORE_ELEMENT_NOT_FOUND, "Parameters '%s' not found", parametersUuid));
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")

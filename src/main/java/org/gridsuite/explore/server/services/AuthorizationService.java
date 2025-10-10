@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.ExploreBusinessErrorCode.EXPLORE_PERMISSION_DENIED;
+
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
@@ -31,7 +33,7 @@ public class AuthorizationService {
     public boolean isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
         PermissionResponse permissionResponse = directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType);
         if (!permissionResponse.hasPermission()) {
-            throw new ExploreException(ExploreException.Type.NOT_ALLOWED, permissionResponse.permissionCheckResult());
+            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, permissionResponse.permissionCheckResult());
         }
         return true;
     }
@@ -40,11 +42,11 @@ public class AuthorizationService {
     public boolean isAuthorizedForDuplication(String userId, UUID elementToDuplicate, UUID targetDirectoryUuid) {
         PermissionResponse readCheck = directoryService.checkPermission(List.of(elementToDuplicate), null, userId, PermissionType.READ);
         if (!readCheck.hasPermission()) {
-            throw new ExploreException(ExploreException.Type.NOT_ALLOWED, readCheck.permissionCheckResult());
+            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, readCheck.permissionCheckResult());
         }
         PermissionResponse writeCheck = directoryService.checkPermission(List.of(targetDirectoryUuid != null ? targetDirectoryUuid : elementToDuplicate), null, userId, PermissionType.WRITE);
         if (!writeCheck.hasPermission()) {
-            throw new ExploreException(ExploreException.Type.NOT_ALLOWED, writeCheck.permissionCheckResult());
+            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, writeCheck.permissionCheckResult());
         }
         return true;
     }
@@ -52,7 +54,7 @@ public class AuthorizationService {
     public boolean isRecursivelyAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid) {
         PermissionResponse permissionResponse = directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, PermissionType.WRITE, true);
         if (!permissionResponse.hasPermission()) {
-            throw new ExploreException(ExploreException.Type.NOT_ALLOWED, permissionResponse.permissionCheckResult());
+            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, permissionResponse.permissionCheckResult());
         }
         return true;
     }

@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) 2021, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -7,94 +6,60 @@
  */
 package org.gridsuite.explore.server;
 
-import com.powsybl.ws.commons.error.ErrorResponse;
-import jakarta.servlet.http.HttpServletRequest;
+import com.powsybl.ws.commons.error.AbstractBaseRestExceptionHandler;
+import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
+import com.powsybl.ws.commons.error.ServerNameProvider;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.springframework.web.bind.ServletRequestBindingException;
 
-import java.time.Instant;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+
+import java.util.Optional;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
  */
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler {
+public class RestResponseEntityExceptionHandler
+    extends AbstractBaseRestExceptionHandler<ExploreException, ExploreBusinessErrorCode> {
 
-    private static final String SERVICE_NAME = "explore-server";
-    private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
-
-    @ExceptionHandler(ExploreException.class)
-    protected ResponseEntity<ErrorResponse> handleExploreException(ExploreException exception, HttpServletRequest request) {
-        HttpStatus status = resolveStatus(exception);
-        return ResponseEntity.status(status)
-            .body(buildErrorResponse(request, status, exception));
+    public RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
+        super(serverNameProvider);
     }
 
-    @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorResponse> handleAllException(Exception exception, HttpServletRequest request) {
-        HttpStatus status = resolveStatus(exception);
-        String message = exception.getMessage() != null ? exception.getMessage() : status.getReasonPhrase();
-        return ResponseEntity.status(status)
-            .body(buildErrorResponse(request, status, status.name(), message));
+    @Override
+    protected Optional<PowsyblWsProblemDetail> getRemoteError(ExploreException ex) {
+        return ex.getRemoteError();
     }
 
-    private ErrorResponse buildErrorResponse(HttpServletRequest request, HttpStatus status, ExploreException exception) {
-        ErrorResponse remoteError = exception.getRemoteError().orElse(null);
-        String errorCode = remoteError != null ? remoteError.errorCode() : exception.getType().name();
-        String message = remoteError != null ? remoteError.message() : exception.getMessage();
-        String service = remoteError != null ? remoteError.service() : SERVICE_NAME;
-        String path = remoteError != null ? request.getRequestURI() + "-->" + remoteError.path() : request.getRequestURI();
-        return buildErrorResponse(request, status, service, errorCode, message, path);
+    @Override
+    protected Optional<ExploreBusinessErrorCode> getBusinessCode(ExploreException ex) {
+        return ex.getErrorCode();
     }
 
-    private ErrorResponse buildErrorResponse(HttpServletRequest request, HttpStatus status, String errorCode, String message) {
-        return buildErrorResponse(request, status, SERVICE_NAME, errorCode, message, request.getRequestURI());
+    @Override
+    protected HttpStatus mapStatus(ExploreBusinessErrorCode errorCode) {
+        return switch (errorCode) {
+            case EXPLORE_ELEMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case EXPLORE_PERMISSION_DENIED, EXPLORE_MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
+            case EXPLORE_INCORRECT_CASE_FILE -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case EXPLORE_CASE_COUNT_UNAVAILABLE -> HttpStatus.BAD_REQUEST;
+            case EXPLORE_UNKNOWN_ELEMENT_TYPE, EXPLORE_IMPORT_CASE_FAILED, EXPLORE_REMOTE_ERROR ->
+                HttpStatus.INTERNAL_SERVER_ERROR;
+        };
     }
 
-    private ErrorResponse buildErrorResponse(HttpServletRequest request, HttpStatus status, String service, String errorCode, String message, String path) {
-        return new ErrorResponse(
-            service,
-            errorCode,
-            message,
-            status.value(),
-            Instant.now(),
-            path,
-            request.getHeader(CORRELATION_ID_HEADER)
+    @Override
+    protected ExploreBusinessErrorCode defaultRemoteErrorCode() {
+        return ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR;
+    }
+
+    @Override
+    protected ExploreException wrapRemote(PowsyblWsProblemDetail remoteError) {
+        return new ExploreException(
+            ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR,
+            remoteError.getDetail(),
+            remoteError
         );
-    }
-
-    private HttpStatus resolveStatus(ExploreException exception) {
-        return exception.getRemoteError()
-            .map(ErrorResponse::status)
-            .map(HttpStatus::resolve)
-            .orElseGet(() -> switch (exception.getType()) {
-                case NOT_FOUND -> HttpStatus.NOT_FOUND;
-                case NOT_ALLOWED, MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
-                case REMOTE_ERROR -> HttpStatus.BAD_REQUEST;
-                case INCORRECT_CASE_FILE -> HttpStatus.UNPROCESSABLE_ENTITY;
-                case UNKNOWN_ELEMENT_TYPE, IMPORT_CASE_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR;
-            });
-    }
-
-    private HttpStatus resolveStatus(Exception exception) {
-        if (exception instanceof ResponseStatusException responseStatusException) {
-            return HttpStatus.valueOf(responseStatusException.getStatusCode().value());
-        }
-        if (exception instanceof HttpStatusCodeException httpStatusCodeException) {
-            return HttpStatus.valueOf(httpStatusCodeException.getStatusCode().value());
-        }
-        if (exception instanceof ServletRequestBindingException) {
-            return HttpStatus.BAD_REQUEST;
-        }
-        if (exception instanceof NoResourceFoundException) {
-            return HttpStatus.NOT_FOUND;
-        }
-        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

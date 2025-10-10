@@ -6,52 +6,47 @@
  */
 package org.gridsuite.explore.server;
 
-import com.powsybl.ws.commons.error.ErrorResponse;
+import com.powsybl.ws.commons.error.AbstractPowsyblWsException;
+import com.powsybl.ws.commons.error.BusinessErrorCode;
+import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 
 import java.util.Objects;
 import java.util.Optional;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
  */
-public class ExploreException extends RuntimeException {
+public class ExploreException extends AbstractPowsyblWsException {
 
-    public enum Type {
-        NOT_FOUND,
-        NOT_ALLOWED,
-        UNKNOWN_ELEMENT_TYPE,
-        REMOTE_ERROR,
-        IMPORT_CASE_FAILED,
-        INCORRECT_CASE_FILE,
-        MAX_ELEMENTS_EXCEEDED,
+    private final ExploreBusinessErrorCode errorCode;
+    private final PowsyblWsProblemDetail remoteError;
+
+    public ExploreException(ExploreBusinessErrorCode errorCode, String message) {
+        this(errorCode, message, null);
     }
 
-    private final Type type;
-    private final ErrorResponse remoteError;
-
-    public ExploreException(Type type, String message) {
-        this(type, message, null);
-    }
-
-    public ExploreException(Type type, String message, ErrorResponse remoteError) {
+    public ExploreException(ExploreBusinessErrorCode errorCode, String message, PowsyblWsProblemDetail remoteError) {
         super(Objects.requireNonNull(message, "message must not be null"));
-        this.type = Objects.requireNonNull(type, "type must not be null");
+        this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
         this.remoteError = remoteError;
     }
 
-    public static ExploreException of(Type type, String message, Object... args) {
-        return new ExploreException(type, args.length == 0 ? message : String.format(message, args));
+    public static ExploreException of(ExploreBusinessErrorCode errorCode, String message, Object... args) {
+        return new ExploreException(errorCode, args.length == 0 ? message : String.format(message, args));
     }
 
-    public static ExploreException remote(ErrorResponse remoteError) {
-        return new ExploreException(Type.REMOTE_ERROR, Objects.requireNonNull(remoteError, "remoteError must not be null").message(), remoteError);
+    public Optional<ExploreBusinessErrorCode> getErrorCode() {
+        return Optional.of(errorCode);
     }
 
-    Type getType() {
-        return type;
+    @Override
+    public Optional<BusinessErrorCode> getBusinessErrorCode() {
+        return Optional.ofNullable(errorCode);
     }
 
-    Optional<ErrorResponse> getRemoteError() {
+    public Optional<PowsyblWsProblemDetail> getRemoteError() {
         return Optional.ofNullable(remoteError);
     }
+
 }

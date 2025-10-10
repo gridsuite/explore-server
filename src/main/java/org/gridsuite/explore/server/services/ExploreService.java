@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.ExploreBusinessErrorCode.*;
 
 
 /**
@@ -324,7 +324,7 @@ public class ExploreService {
         if (userMaxAllowedStudiesAndCases != null) {
             int userCasesCount = directoryService.getUserCasesCount(userId);
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
-                throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+                throw ExploreException.of(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
             }
             notifyCasesThresholdReached(userCasesCount, userMaxAllowedStudiesAndCases, userId);
         }
@@ -345,7 +345,7 @@ public class ExploreService {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id)
-                .orElseThrow(() -> ExploreException.of(NOT_FOUND, "Element '%s' not found", id));
+                .orElseThrow(() -> ExploreException.of(EXPLORE_ELEMENT_NOT_FOUND, "Element '%s' not found", id));
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }

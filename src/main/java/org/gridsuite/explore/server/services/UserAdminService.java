@@ -13,8 +13,6 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static org.gridsuite.explore.server.utils.ErrorHandlingUtils.wrapRemoteError;
-
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
@@ -37,14 +35,14 @@ public class UserAdminService {
 
     public Integer getUserMaxAllowedCases(String sub) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_MAX_ALLOWED_CASES_URI)
-                .buildAndExpand(sub).toUriString();
+            .buildAndExpand(sub).toUriString();
         try {
             return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().value() == 404) {
                 return null; // no profile == unlimited import
             }
-            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
+            throw e;
 
         }
     }
@@ -52,10 +50,7 @@ public class UserAdminService {
     public Integer getCasesAlertThreshold() {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + CASES_ALERT_THRESHOLD_URI)
             .buildAndExpand().toUriString();
-        try {
-            return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
-        } catch (HttpStatusCodeException e) {
-            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
-        }
+        return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
+
     }
 }

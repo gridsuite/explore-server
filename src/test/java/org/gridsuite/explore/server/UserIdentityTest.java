@@ -27,7 +27,7 @@ import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_FOUND;
+import static org.gridsuite.explore.server.ExploreBusinessErrorCode.EXPLORE_ELEMENT_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -102,7 +102,7 @@ class UserIdentityTest {
             null
         )));
         when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB))
-                .thenThrow(ExploreException.of(NOT_FOUND, "Element '%s' not found", ELEMENT_NOT_FOUND_UUID));
+                .thenThrow(ExploreException.of(EXPLORE_ELEMENT_NOT_FOUND, "Element '%s' not found", ELEMENT_NOT_FOUND_UUID));
     }
 
     protected Map<String, StringValuePattern> handleQueryParams(List<String> subs) {
