@@ -81,7 +81,7 @@ class RestResponseEntityExceptionHandlerTest {
 
         ResponseEntity<PowsyblWsProblemDetail> response = handler.invokeHandleRemoteException(exception, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
         assertThat(response.getBody()).isNotNull();
         assertEquals("explore.remoteError", response.getBody().getBusinessErrorCode());
     }

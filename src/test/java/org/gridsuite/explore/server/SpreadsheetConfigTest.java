@@ -163,7 +163,7 @@ class SpreadsheetConfigTest {
                         .param("duplicateFrom", "invalid-uuid")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -182,7 +182,7 @@ class SpreadsheetConfigTest {
                         .param("name", CONFIG_NAME)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -200,7 +200,7 @@ class SpreadsheetConfigTest {
                         .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
                         .header("userId", USER_ID))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

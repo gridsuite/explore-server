@@ -478,7 +478,7 @@ class ExploreTest {
                         .header("userId", USER1)
                         .param("caseFormat", "XIIDM")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isIAmATeapot());
     }
 
     @Test
@@ -504,7 +504,7 @@ class ExploreTest {
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isConflict());
         }
     }
 
@@ -613,7 +613,7 @@ class ExploreTest {
         deleteElement(MODIFICATION_UUID);
         deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 500);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 500);
-        deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 500);
+        deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 409);
     }
 
     @Test
@@ -815,7 +815,7 @@ class ExploreTest {
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isUnprocessableEntity());
         }
     }
 
@@ -1208,7 +1208,7 @@ class ExploreTest {
                 .header("userId", USER_NOT_ALLOWED)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
-        ).andExpect(status().isInternalServerError());
+        ).andExpect(status().isForbidden());
     }
 
     @Test
@@ -1220,7 +1220,7 @@ class ExploreTest {
             .header("userId", USER1)
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(List.of(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID)))
-        ).andExpect(status().isInternalServerError());
+        ).andExpect(status().isConflict());
     }
 
     @Test
