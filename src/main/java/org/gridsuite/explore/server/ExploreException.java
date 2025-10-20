@@ -6,8 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
-import com.powsybl.ws.commons.error.AbstractPowsyblWsException;
-import com.powsybl.ws.commons.error.BusinessErrorCode;
+import com.powsybl.ws.commons.error.AbstractBusinessException;
 import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 
 import java.util.Objects;
@@ -17,7 +16,7 @@ import java.util.Optional;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
  */
-public class ExploreException extends AbstractPowsyblWsException {
+public class ExploreException extends AbstractBusinessException {
 
     private final ExploreBusinessErrorCode errorCode;
     private final PowsyblWsProblemDetail remoteError;
@@ -36,13 +35,9 @@ public class ExploreException extends AbstractPowsyblWsException {
         return new ExploreException(errorCode, args.length == 0 ? message : String.format(message, args));
     }
 
-    public Optional<ExploreBusinessErrorCode> getErrorCode() {
-        return Optional.of(errorCode);
-    }
-
     @Override
-    public Optional<BusinessErrorCode> getBusinessErrorCode() {
-        return Optional.ofNullable(errorCode);
+    public ExploreBusinessErrorCode getBusinessErrorCode() {
+        return errorCode;
     }
 
     public Optional<PowsyblWsProblemDetail> getRemoteError() {

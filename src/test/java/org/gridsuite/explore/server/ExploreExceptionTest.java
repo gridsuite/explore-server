@@ -25,7 +25,7 @@ class ExploreExceptionTest {
             "Case %s failed", "demo");
 
         assertThat(exception.getMessage()).isEqualTo("Case demo failed");
-        assertThat(exception.getBusinessErrorCode()).contains(ExploreBusinessErrorCode.EXPLORE_IMPORT_CASE_FAILED);
+        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_IMPORT_CASE_FAILED);
     }
 
     @Test
@@ -41,6 +41,6 @@ class ExploreExceptionTest {
             "wrapped", remote);
 
         assertThat(exception.getRemoteError()).contains(remote);
-        assertThat(exception.getErrorCode()).contains(ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR);
+        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR);
     }
 }

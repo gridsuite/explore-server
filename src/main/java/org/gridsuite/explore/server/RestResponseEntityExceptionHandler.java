@@ -33,8 +33,8 @@ public class RestResponseEntityExceptionHandler
     }
 
     @Override
-    protected Optional<ExploreBusinessErrorCode> getBusinessCode(ExploreException ex) {
-        return ex.getErrorCode();
+    protected ExploreBusinessErrorCode getBusinessCode(ExploreException ex) {
+        return ex.getBusinessErrorCode();
     }
 
     @Override
