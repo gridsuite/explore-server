@@ -55,7 +55,6 @@ class RestResponseEntityExceptionHandlerTest {
         PowsyblWsProblemDetail remote = PowsyblWsProblemDetail.builder(HttpStatus.BAD_GATEWAY)
             .server("directory")
             .detail("failure")
-            .timestamp(Instant.parse("2025-11-01T00:00:00Z"))
             .path("/directory")
             .build();
         ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR, "wrap", remote);
@@ -93,7 +92,6 @@ class RestResponseEntityExceptionHandlerTest {
             .server("directory")
             .businessErrorCode("directory.permissionDenied")
             .detail("denied")
-            .timestamp(Instant.parse("2025-11-02T00:00:00Z"))
             .path("/directory")
             .build();
 

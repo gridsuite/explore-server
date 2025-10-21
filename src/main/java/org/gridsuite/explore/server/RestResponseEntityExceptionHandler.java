@@ -7,13 +7,11 @@
 package org.gridsuite.explore.server;
 
 import com.powsybl.ws.commons.error.AbstractBaseRestExceptionHandler;
-import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 import com.powsybl.ws.commons.error.ServerNameProvider;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
-
-import java.util.Optional;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -27,11 +25,7 @@ public class RestResponseEntityExceptionHandler
         super(serverNameProvider);
     }
 
-    @Override
-    protected Optional<PowsyblWsProblemDetail> getRemoteError(ExploreException ex) {
-        return ex.getRemoteError();
-    }
-
+    @NotNull
     @Override
     protected ExploreBusinessErrorCode getBusinessCode(ExploreException ex) {
         return ex.getBusinessErrorCode();
@@ -47,19 +41,5 @@ public class RestResponseEntityExceptionHandler
             case EXPLORE_UNKNOWN_ELEMENT_TYPE, EXPLORE_IMPORT_CASE_FAILED, EXPLORE_REMOTE_ERROR ->
                 HttpStatus.INTERNAL_SERVER_ERROR;
         };
-    }
-
-    @Override
-    protected ExploreBusinessErrorCode defaultRemoteErrorCode() {
-        return ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR;
-    }
-
-    @Override
-    protected ExploreException wrapRemote(PowsyblWsProblemDetail remoteError) {
-        return new ExploreException(
-            ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR,
-            remoteError.getDetail(),
-            remoteError
-        );
     }
 }

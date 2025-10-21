@@ -7,10 +7,9 @@
 package org.gridsuite.explore.server;
 
 import com.powsybl.ws.commons.error.AbstractBusinessException;
-import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -19,29 +18,20 @@ import java.util.Optional;
 public class ExploreException extends AbstractBusinessException {
 
     private final ExploreBusinessErrorCode errorCode;
-    private final PowsyblWsProblemDetail remoteError;
 
     public ExploreException(ExploreBusinessErrorCode errorCode, String message) {
-        this(errorCode, message, null);
-    }
-
-    public ExploreException(ExploreBusinessErrorCode errorCode, String message, PowsyblWsProblemDetail remoteError) {
         super(Objects.requireNonNull(message, "message must not be null"));
         this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
-        this.remoteError = remoteError;
     }
 
     public static ExploreException of(ExploreBusinessErrorCode errorCode, String message, Object... args) {
         return new ExploreException(errorCode, args.length == 0 ? message : String.format(message, args));
     }
 
+    @NotNull
     @Override
     public ExploreBusinessErrorCode getBusinessErrorCode() {
         return errorCode;
-    }
-
-    public Optional<PowsyblWsProblemDetail> getRemoteError() {
-        return Optional.ofNullable(remoteError);
     }
 
 }

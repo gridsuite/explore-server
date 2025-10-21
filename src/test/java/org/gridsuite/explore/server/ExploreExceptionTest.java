@@ -6,11 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
-import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,21 +22,5 @@ class ExploreExceptionTest {
 
         assertThat(exception.getMessage()).isEqualTo("Case demo failed");
         assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_IMPORT_CASE_FAILED);
-    }
-
-    @Test
-    void exposesRemoteErrorWhenPresent() {
-        PowsyblWsProblemDetail remote = PowsyblWsProblemDetail.builder(HttpStatus.BAD_GATEWAY)
-            .server("downstream")
-            .detail("failure")
-            .timestamp(Instant.parse("2025-10-01T00:00:00Z"))
-            .path("/remote")
-            .build();
-
-        ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR,
-            "wrapped", remote);
-
-        assertThat(exception.getRemoteError()).contains(remote);
-        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR);
     }
 }
