@@ -364,7 +364,7 @@ class ExploreTest {
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/profile/max-cases")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
                     } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/profile/max-cases")) {
-                        return new MockResponse(404);
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
                     } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/profile/max-cases")) {
                         return new MockResponse(500);
                     } else if (path.matches("/v1/users/.*/profile/max-cases")) {
