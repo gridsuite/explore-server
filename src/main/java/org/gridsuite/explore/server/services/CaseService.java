@@ -7,8 +7,8 @@
 
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.ExploreBusinessErrorCode;
-import org.gridsuite.explore.server.ExploreException;
+import org.gridsuite.explore.server.error.ExploreBusinessErrorCode;
+import org.gridsuite.explore.server.error.ExploreException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;

@@ -6,7 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.ExploreException;
+import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.ExploreBusinessErrorCode.EXPLORE_PERMISSION_DENIED;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_PERMISSION_DENIED;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>

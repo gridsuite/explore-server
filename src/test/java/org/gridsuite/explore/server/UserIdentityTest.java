@@ -28,7 +28,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreBusinessErrorCode.EXPLORE_ELEMENT_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -103,7 +102,7 @@ class UserIdentityTest {
             null
         )));
         when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB))
-                .thenThrow(ExploreException.of(EXPLORE_ELEMENT_NOT_FOUND, "Element '%s' not found", ELEMENT_NOT_FOUND_UUID));
+                .thenThrow(new RuntimeException(String.format("Element '%s' not found", ELEMENT_NOT_FOUND_UUID)));
     }
 
     protected Map<String, StringValuePattern> handleQueryParams(List<String> subs) {
@@ -138,7 +137,7 @@ class UserIdentityTest {
         mockMvc.perform(get(BASE_URL)
                         .param("ids", ELEMENT_NOT_FOUND_UUID.toString())
                         .header("userId", UNKNOWN_SUB))
-                        .andExpect(status().isNotFound());
+                        .andExpect(status().isInternalServerError());
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB);
     }

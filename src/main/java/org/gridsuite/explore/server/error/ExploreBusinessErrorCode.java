@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.error;
 
 import com.powsybl.ws.commons.error.BusinessErrorCode;
 
@@ -15,7 +15,6 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
  */
 public enum ExploreBusinessErrorCode implements BusinessErrorCode {
     EXPLORE_PERMISSION_DENIED("explore.permissionDenied"),
-    EXPLORE_ELEMENT_NOT_FOUND("explore.elementNotFound"),
     EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded"),
     EXPLORE_INCORRECT_CASE_FILE("explore.incorrectCaseFile");
 

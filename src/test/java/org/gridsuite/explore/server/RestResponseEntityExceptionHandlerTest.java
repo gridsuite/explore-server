@@ -10,6 +10,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
+import org.gridsuite.explore.server.error.ExploreBusinessErrorCode;
+import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.error.RestResponseEntityExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -41,14 +44,14 @@ class RestResponseEntityExceptionHandlerTest {
     @Test
     void mapsElementNotFoundToNotFoundStatus() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/explore");
-        ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_ELEMENT_NOT_FOUND,
-            "missing");
+        ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_PERMISSION_DENIED,
+            "denied");
 
         ResponseEntity<PowsyblWsProblemDetail> response = handler.invokeHandleDomainException(exception, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("explore.elementNotFound", response.getBody().getBusinessErrorCode());
+        assertEquals("explore.permissionDenied", response.getBody().getBusinessErrorCode());
     }
 
     @Test

@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionResponse;
@@ -24,7 +23,6 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreBusinessErrorCode.*;
 import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
@@ -267,12 +265,12 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
-    public Optional<ElementAttributes> getElementInfos(UUID elementUuid) {
+    public ElementAttributes getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
             .buildAndExpand(elementUuid)
             .toUriString();
-        return Optional.ofNullable(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
+        return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
     }
 
     public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
@@ -327,8 +325,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public void deleteElement(UUID id, String userId) {
-        ElementAttributes elementAttribute = getElementInfos(id)
-            .orElseThrow(() -> ExploreException.of(EXPLORE_ELEMENT_NOT_FOUND, "Directory element '%s' not found", id));
+        ElementAttributes elementAttribute = getElementInfos(id);
         IDirectoryElementsService service = getGenericService(elementAttribute.getType());
         service.delete(elementAttribute.getElementUuid(), userId);
     }

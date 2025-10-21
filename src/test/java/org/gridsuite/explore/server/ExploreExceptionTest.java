@@ -6,6 +6,8 @@
  */
 package org.gridsuite.explore.server;
 
+import org.gridsuite.explore.server.error.ExploreBusinessErrorCode;
+import org.gridsuite.explore.server.error.ExploreException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

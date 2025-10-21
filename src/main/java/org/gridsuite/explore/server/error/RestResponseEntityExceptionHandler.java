@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.error;
 
 import com.powsybl.ws.commons.error.AbstractBaseRestExceptionHandler;
 import com.powsybl.ws.commons.error.ServerNameProvider;
@@ -34,7 +34,6 @@ public class RestResponseEntityExceptionHandler
     @Override
     protected HttpStatus mapStatus(ExploreBusinessErrorCode errorCode) {
         return switch (errorCode) {
-            case EXPLORE_ELEMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case EXPLORE_PERMISSION_DENIED, EXPLORE_MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
             case EXPLORE_INCORRECT_CASE_FILE -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
