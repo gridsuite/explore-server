@@ -298,11 +298,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .buildAndExpand(userId)
             .toUriString();
 
-        Integer casesCount = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, Integer.class).getBody();
-        if (casesCount == null) {
-            throw ExploreException.of(EXPLORE_CASE_COUNT_UNAVAILABLE, "Could not get cases count");
-        }
-        return casesCount;
+        return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, Integer.class).getBody());
     }
 
     public void notifyDirectoryChanged(UUID elementUuid, String userId) {
@@ -340,7 +336,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private IDirectoryElementsService getGenericService(String type) {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
         if (iDirectoryElementsService == null) {
-            throw ExploreException.of(EXPLORE_UNKNOWN_ELEMENT_TYPE, "Unknown element type " + type);
+            throw new RuntimeException("Unknown element type " + type);
         }
         return iDirectoryElementsService;
     }

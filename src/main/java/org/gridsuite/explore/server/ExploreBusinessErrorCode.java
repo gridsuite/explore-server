@@ -16,11 +16,8 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
 public enum ExploreBusinessErrorCode implements BusinessErrorCode {
     EXPLORE_PERMISSION_DENIED("explore.permissionDenied"),
     EXPLORE_ELEMENT_NOT_FOUND("explore.elementNotFound"),
-    EXPLORE_UNKNOWN_ELEMENT_TYPE("explore.unknownElementType"),
-    EXPLORE_IMPORT_CASE_FAILED("explore.importCaseFailed"),
-    EXPLORE_INCORRECT_CASE_FILE("explore.incorrectCaseFile"),
     EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded"),
-    EXPLORE_CASE_COUNT_UNAVAILABLE("explore.caseCountUnavailable");
+    EXPLORE_INCORRECT_CASE_FILE("explore.incorrectCaseFile");
 
     private final String code;
 

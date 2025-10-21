@@ -17,11 +17,11 @@ class ExploreExceptionTest {
 
     @Test
     void staticFactoryFormatsMessage() {
-        ExploreException exception = ExploreException.of(ExploreBusinessErrorCode.EXPLORE_IMPORT_CASE_FAILED,
+        ExploreException exception = ExploreException.of(ExploreBusinessErrorCode.EXPLORE_INCORRECT_CASE_FILE,
             "Case %s failed", "demo");
 
         assertThat(exception.getMessage()).isEqualTo("Case demo failed");
-        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_IMPORT_CASE_FAILED);
+        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_INCORRECT_CASE_FILE);
     }
 
 }
