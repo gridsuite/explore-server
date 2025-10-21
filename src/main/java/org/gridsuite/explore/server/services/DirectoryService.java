@@ -333,7 +333,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private IDirectoryElementsService getGenericService(String type) {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
         if (iDirectoryElementsService == null) {
-            throw new RuntimeException("Unknown element type " + type);
+            throw new IllegalArgumentException("Unknown element type " + type);
         }
         return iDirectoryElementsService;
     }
