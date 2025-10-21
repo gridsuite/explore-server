@@ -6,21 +6,23 @@
  */
 package org.gridsuite.explore.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
@@ -50,29 +52,37 @@ class RestResponseEntityExceptionHandlerTest {
     }
 
     @Test
-    void usesRemoteStatusAndChainWhenAvailable() {
+    void usesRemoteStatusAndChainWhenAvailable() throws JsonProcessingException {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/explore/call");
-        PowsyblWsProblemDetail remote = PowsyblWsProblemDetail.builder(HttpStatus.BAD_GATEWAY)
+        PowsyblWsProblemDetail remote = PowsyblWsProblemDetail.builder(HttpStatus.INTERNAL_SERVER_ERROR)
             .server("directory")
-            .detail("failure")
+            .businessErrorCode("directory.remoteError")
+            .detail("Directory failure")
             .path("/directory")
             .build();
-        ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_REMOTE_ERROR, "wrap", remote);
 
-        ResponseEntity<PowsyblWsProblemDetail> response = handler.invokeHandleDomainException(exception, request);
+        HttpClientErrorException exception = HttpClientErrorException.create(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "coucou",
+            HttpHeaders.EMPTY,
+            OBJECT_MAPPER.writeValueAsBytes(remote),
+            null
+        );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+        ResponseEntity<PowsyblWsProblemDetail> response = handler.invokeHandleRemoteException(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
+        assertEquals("directory.remoteError", response.getBody().getBusinessErrorCode());
         assertThat(response.getBody().getChain()).hasSize(1);
-        assertEquals("explore-server", response.getBody().getChain().getFirst().getFromServer());
     }
 
     @Test
-    void wrapsInvalidRemotePayloadWithDefaultExploreCode() {
+    void wrapsInvalidRemotePayload() {
         MockHttpServletRequest request = new MockHttpServletRequest("DELETE", "/explore/remote");
         HttpClientErrorException exception = HttpClientErrorException.create(
             HttpStatus.BAD_GATEWAY,
-            "bad gateway",
+            "coucou",
             null,
             "oops".getBytes(StandardCharsets.UTF_8),
             StandardCharsets.UTF_8
@@ -82,28 +92,28 @@ class RestResponseEntityExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("explore.remoteError", response.getBody().getBusinessErrorCode());
+        assertNull(response.getBody().getBusinessErrorCode());
     }
 
     @Test
     void keepsRemoteStatusFromPayload() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/explore/remote");
-        PowsyblWsProblemDetail remote = PowsyblWsProblemDetail.builder(HttpStatus.FORBIDDEN)
+        PowsyblWsProblemDetail remote = PowsyblWsProblemDetail.builder(HttpStatus.BAD_GATEWAY)
             .server("directory")
-            .businessErrorCode("directory.permissionDenied")
-            .detail("denied")
+            .businessErrorCode("directory.remoteError")
+            .detail("bad gateway")
             .path("/directory")
             .build();
 
         byte[] payload = OBJECT_MAPPER.writeValueAsBytes(remote);
-        HttpClientErrorException exception = HttpClientErrorException.create(HttpStatus.FORBIDDEN, "forbidden",
+        HttpClientErrorException exception = HttpClientErrorException.create(HttpStatus.BAD_GATEWAY, "bad gateway",
             null, payload, StandardCharsets.UTF_8);
 
         ResponseEntity<PowsyblWsProblemDetail> response = handler.invokeHandleRemoteException(exception, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("directory.permissionDenied", response.getBody().getBusinessErrorCode());
+        assertThat(response.getBody().getChain()).hasSize(1);
     }
 
     private static final class TestRestResponseEntityExceptionHandler extends RestResponseEntityExceptionHandler {

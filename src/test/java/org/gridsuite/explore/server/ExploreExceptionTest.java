@@ -23,4 +23,5 @@ class ExploreExceptionTest {
         assertThat(exception.getMessage()).isEqualTo("Case demo failed");
         assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_IMPORT_CASE_FAILED);
     }
+
 }

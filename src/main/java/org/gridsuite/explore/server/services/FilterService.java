@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

@@ -20,8 +20,7 @@ public enum ExploreBusinessErrorCode implements BusinessErrorCode {
     EXPLORE_IMPORT_CASE_FAILED("explore.importCaseFailed"),
     EXPLORE_INCORRECT_CASE_FILE("explore.incorrectCaseFile"),
     EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded"),
-    EXPLORE_CASE_COUNT_UNAVAILABLE("explore.caseCountUnavailable"),
-    EXPLORE_REMOTE_ERROR("explore.remoteError");
+    EXPLORE_CASE_COUNT_UNAVAILABLE("explore.caseCountUnavailable");
 
     private final String code;
 
