@@ -35,7 +35,7 @@ public class UserAdminService {
     public Integer getUserMaxAllowedCases(String sub) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_MAX_ALLOWED_CASES_URI)
             .buildAndExpand(sub).toUriString();
-            return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
+        return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
     }
 
     public Integer getCasesAlertThreshold() {
