@@ -41,9 +41,6 @@ public class UserAdminService {
         try {
             return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 404) {
-                return null; // no profile == unlimited import
-            }
             throw wrapRemoteError(e.getMessage(), e.getStatusCode());
 
         }
