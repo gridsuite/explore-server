@@ -6,10 +6,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class DirectoryServiceTest {
 
-    @MockBean
+    @MockitoBean
     private RestTemplate restTemplate;
 
     @Mock
