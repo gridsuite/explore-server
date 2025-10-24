@@ -7,7 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.ExploreException;
+import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.*;
 
 
 /**
@@ -90,8 +90,8 @@ public class ExploreService {
         // Two scenarios to handle.
         // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
         // Scenario 2: the study is not created from an existing case, in which case the directory throws exception because no element with the given uuid.
-        Optional<ElementAttributes> caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
-        String elementName = caseAttributes.map(ElementAttributes::getElementName).orElse(null);
+        ElementAttributes caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
+        String elementName = caseAttributes.getElementName();
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
@@ -324,7 +324,7 @@ public class ExploreService {
         if (userMaxAllowedStudiesAndCases != null) {
             int userCasesCount = directoryService.getUserCasesCount(userId);
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
-                throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+                throw ExploreException.of(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
             }
             notifyCasesThresholdReached(userCasesCount, userMaxAllowedStudiesAndCases, userId);
         }
@@ -344,7 +344,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }
