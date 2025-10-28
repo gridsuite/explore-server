@@ -6,20 +6,23 @@
  */
 package org.gridsuite.explore.server.services;
 
+import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.ExploreException;
+import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.*;
 
 
 /**
@@ -87,13 +90,28 @@ public class ExploreService {
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, userId, 0L, description);
-        // Two scenarios to handle.
-        // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
-        // Scenario 2: the study is not created from an existing case, in which case the directory throws exception because no element with the given uuid.
-        Optional<ElementAttributes> caseAttributes = directoryService.getElementInfos(caseInfo.caseUuid());
-        String elementName = caseAttributes.map(ElementAttributes::getElementName).orElse(null);
+
+        String elementName = getElementName(caseInfo.caseUuid());
+
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    private @Nullable String getElementName(UUID elementUuid) {
+        String elementName = null;
+        // Two scenarios to handle.
+        try {
+            // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
+            ElementAttributes caseAttributes = directoryService.getElementInfos(elementUuid);
+            elementName = caseAttributes.getElementName();
+        } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
+                throw e;
+            }
+            // Scenario 2: the study is not created from an existing case, in which case the directory throws exception
+            // because no element with the given uuid. Then, do nothing and keep elementName as null
+        }
+        return elementName;
     }
 
     public void duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId, String userId) {
@@ -324,7 +342,7 @@ public class ExploreService {
         if (userMaxAllowedStudiesAndCases != null) {
             int userCasesCount = directoryService.getUserCasesCount(userId);
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
-                throw new ExploreException(MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+                throw ExploreException.of(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
             }
             notifyCasesThresholdReached(userCasesCount, userMaxAllowedStudiesAndCases, userId);
         }
@@ -344,7 +362,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes elementAttributes, String userId) {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }

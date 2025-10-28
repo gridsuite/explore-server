@@ -23,11 +23,11 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.StringValuePattern;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -101,7 +101,8 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB)).thenThrow(new ExploreException(NOT_FOUND));
+        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB))
+                .thenThrow(new RuntimeException(String.format("Element '%s' not found", ELEMENT_NOT_FOUND_UUID)));
     }
 
     protected Map<String, StringValuePattern> handleQueryParams(List<String> subs) {
@@ -136,7 +137,7 @@ class UserIdentityTest {
         mockMvc.perform(get(BASE_URL)
                         .param("ids", ELEMENT_NOT_FOUND_UUID.toString())
                         .header("userId", UNKNOWN_SUB))
-                        .andExpect(status().isNotFound());
+                        .andExpect(status().isInternalServerError());
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB);
     }
@@ -149,8 +150,8 @@ class UserIdentityTest {
         mockMvc.perform(get(BASE_URL)
                 .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString())
                 .header("userId", EXCEPTION_SUB))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertInstanceOf(ExploreException.class, result.getResolvedException()));
+                .andExpect(status().isInternalServerError())
+                .andExpect(result -> assertInstanceOf(HttpServerErrorException.class, result.getResolvedException()));
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null, EXCEPTION_SUB);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);

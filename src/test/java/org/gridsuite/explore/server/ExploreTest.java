@@ -49,7 +49,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.MAX_ELEMENTS_EXCEEDED;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -364,7 +364,7 @@ class ExploreTest {
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/profile/max-cases")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
                     } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/profile/max-cases")) {
-                        return new MockResponse(404);
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
                     } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/profile/max-cases")) {
                         return new MockResponse(500);
                     } else if (path.matches("/v1/users/.*/profile/max-cases")) {
@@ -478,7 +478,7 @@ class ExploreTest {
                         .header("userId", USER1)
                         .param("caseFormat", "XIIDM")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isIAmATeapot());
     }
 
     @Test
@@ -504,7 +504,7 @@ class ExploreTest {
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
                             .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isConflict());
         }
     }
 
@@ -611,8 +611,8 @@ class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
-        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
-        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
+        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 500);
+        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 500);
         deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 409);
     }
 
@@ -783,7 +783,7 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
                 NO_CONTENT_DIRECTORY_UUID)
                 .header("userId", USER1)
-        ).andExpect(status().isForbidden());
+        ).andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -946,7 +946,7 @@ class ExploreTest {
         // Execute the test with a forbidden directory ID
         mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID_FORBIDDEN)
                         .header("userId", USER_NOT_ALLOWED))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -969,7 +969,7 @@ class ExploreTest {
                         .header("userId", USER_NOT_ALLOWED)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(permissionsJson))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -1006,7 +1006,7 @@ class ExploreTest {
                         .contentType(APPLICATION_JSON)
                 ).andExpect(status().isForbidden())
                 .andReturn();
-        assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
+        assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a study with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
@@ -1014,14 +1014,14 @@ class ExploreTest {
                 .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
         ).andExpect(status().isForbidden())
                 .andReturn();
-        assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
+        assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a case with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_EXCEEDED))
                 .andExpect(status().isForbidden())
                 .andReturn();
-        assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
+        assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test create a case with a user that already exceeded his cases limit
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
@@ -1034,7 +1034,7 @@ class ExploreTest {
                     )
                     .andExpect(status().isForbidden())
                     .andReturn();
-            assertTrue(result.getResponse().getContentAsString().contains(MAX_ELEMENTS_EXCEEDED.name()));
+            assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
             assertTrue(result.getResponse().getContentAsString().contains("max allowed cases : 3"));
         }
     }
@@ -1117,18 +1117,18 @@ class ExploreTest {
                 .header("userId", USER_UNEXPECTED_ERROR)
                 .param("caseFormat", "XIIDM")
                 .contentType(APPLICATION_JSON)
-        ).andExpect(status().isBadRequest());
+        ).andExpect(status().isInternalServerError());
 
         //test duplicate a study with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER_UNEXPECTED_ERROR)
-        ).andExpect(status().isBadRequest());
+        ).andExpect(status().isInternalServerError());
 
         //test duplicate a case with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_UNEXPECTED_ERROR))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
 
         //test create a case with a remote unexpected exception
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
@@ -1139,7 +1139,7 @@ class ExploreTest {
                             .header("userId", USER_UNEXPECTED_ERROR)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isInternalServerError());
         }
     }
 

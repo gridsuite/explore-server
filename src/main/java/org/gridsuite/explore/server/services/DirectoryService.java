@@ -6,14 +6,11 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.ExploreException;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionDTO;
+import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -26,7 +23,6 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.*;
 import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
@@ -42,13 +38,13 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String DIRECTORIES_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION;
 
     private static final String DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH = DIRECTORIES_SERVER_ROOT_PATH + DELIMITER
-            + "directories";
+        + "directories";
 
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER
-            + "elements";
+        + "elements";
 
     private static final String ELEMENTS_SERVER_ELEMENT_PATH = ELEMENTS_SERVER_ROOT_PATH + DELIMITER
-            + "{elementUuid}";
+        + "{elementUuid}";
 
     private static final String PARAM_IDS = "ids";
     private static final String PARAM_ACCESS_TYPE = "accessType";
@@ -62,16 +58,15 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_USER_INPUT = "userInput";
 
     private static final String HEADER_PERMISION_ERROR = "X-Permission-Error";
-    private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryService.class);
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
     private String directoryServerBaseUri;
 
     public DirectoryService(
-            FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-            CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
-            SingleLineDiagramService singleLineDiagramService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+        FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
+        CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
+        SingleLineDiagramService singleLineDiagramService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restTemplate = restTemplate;
         this.genericServices = Map.ofEntries(
@@ -99,116 +94,116 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public String getRootDirectories(List<String> types, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/root-directories")
-                .queryParam(PARAM_ELEMENT_TYPES, types)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/root-directories")
+            .queryParam(PARAM_ELEMENT_TYPES, types)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
+            .getBody();
     }
 
     public String createRootDirectory(String rootDirectoryAttributes, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/root-directories")
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/root-directories")
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(rootDirectoryAttributes, headers), String.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(rootDirectoryAttributes, headers), String.class)
+            .getBody();
     }
 
     public String getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
-                .queryParam(PARAM_ELEMENT_TYPES, types)
-                .queryParam(PARAM_RECURSIVE, recursive)
-                .buildAndExpand(directoryUuid)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
+            .queryParam(PARAM_ELEMENT_TYPES, types)
+            .queryParam(PARAM_RECURSIVE, recursive)
+            .buildAndExpand(directoryUuid)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
+            .getBody();
     }
 
     public String getPath(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
-                .buildAndExpand(elementUuid)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
+            .buildAndExpand(elementUuid)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
+            .getBody();
     }
 
     public HttpStatusCode elementExists(UUID directoryUuid, String elementName, String type, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements/{elementName}/types/{type}")
-                .buildAndExpand(directoryUuid, elementName, type)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements/{elementName}/types/{type}")
+            .buildAndExpand(directoryUuid, elementName, type)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class)
-                .getStatusCode();
+            .exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class)
+            .getStatusCode();
     }
 
     public HttpStatusCode rootDirectoryExists(String directoryName, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/root-directories")
-                .queryParam(PARAM_DIRECTORY_NAME, directoryName)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/root-directories")
+            .queryParam(PARAM_DIRECTORY_NAME, directoryName)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class)
-                .getStatusCode();
+            .exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class)
+            .getStatusCode();
     }
 
     public String getNameCandidate(UUID directoryUuid, String elementName, String type, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/{elementName}/newNameCandidate")
-                .queryParam(PARAM_TYPE, type)
-                .buildAndExpand(directoryUuid, elementName)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/{elementName}/newNameCandidate")
+            .queryParam(PARAM_TYPE, type)
+            .buildAndExpand(directoryUuid, elementName)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), String.class)
+            .getBody();
     }
 
     public String searchElements(String userInput, String directoryUuid, String userId) {
         URI uri = UriComponentsBuilder
-                .fromUriString(directoryServerBaseUri + DIRECTORIES_SERVER_ROOT_PATH + "/elements/indexation-infos")
-                .queryParam(PARAM_DIRECTORY_UUID, "{directoryUuid}")
-                .queryParam(PARAM_USER_INPUT, "{userInput}")
-                .build(directoryUuid, userInput);
+            .fromUriString(directoryServerBaseUri + DIRECTORIES_SERVER_ROOT_PATH + "/elements/indexation-infos")
+            .queryParam(PARAM_DIRECTORY_UUID, "{directoryUuid}")
+            .queryParam(PARAM_USER_INPUT, "{userInput}")
+            .build(directoryUuid, userInput);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class)
-                .getBody();
+            .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), String.class)
+            .getBody();
     }
 
     public ElementAttributes createElement(ElementAttributes elementAttributes, UUID directoryUuid, String userId) {
@@ -217,41 +212,41 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes createElementWithNewName(ElementAttributes elementAttributes, UUID directoryUuid, String userId, boolean allowNewName) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements?allowNewName={allowNewName}")
-                .buildAndExpand(directoryUuid, allowNewName)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements?allowNewName={allowNewName}")
+            .buildAndExpand(directoryUuid, allowNewName)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(elementAttributes, headers);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.POST, httpEntity, ElementAttributes.class)
+            .getBody();
     }
 
     public ElementAttributes duplicateElement(UUID elementUuid, UUID newElementUuid, UUID targetDirectoryId, String userId) {
         UriComponentsBuilder uri = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam("duplicateFrom", elementUuid)
-                .queryParam("newElementUuid", newElementUuid);
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+            .queryParam("duplicateFrom", elementUuid)
+            .queryParam("newElementUuid", newElementUuid);
         if (targetDirectoryId != null) {
             uri.queryParam("targetDirectoryId", targetDirectoryId);
         }
         String path = uri.buildAndExpand()
-                .toUriString();
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate
-                .exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), ElementAttributes.class)
-                .getBody();
+            .exchange(directoryServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), ElementAttributes.class)
+            .getBody();
     }
 
     public void deleteDirectoryElement(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
-                .buildAndExpand(elementUuid)
-                .toUriString();
+            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
+            .buildAndExpand(elementUuid)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
@@ -260,28 +255,22 @@ public class DirectoryService implements IDirectoryElementsService {
     public void deleteElementsFromDirectory(List<UUID> elementUuids, UUID parentDirectoryUuid, String userId) {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam(PARAM_IDS, ids)
-                .queryParam("parentDirectoryUuid", parentDirectoryUuid)
-                .buildAndExpand()
-                .toUriString();
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+            .queryParam(PARAM_IDS, ids)
+            .queryParam("parentDirectoryUuid", parentDirectoryUuid)
+            .buildAndExpand()
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
-    public Optional<ElementAttributes> getElementInfos(UUID elementUuid) {
+    public ElementAttributes getElementInfos(UUID elementUuid) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
-                .buildAndExpand(elementUuid)
-                .toUriString();
-        try {
-            return Optional.ofNullable(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
-        } catch (HttpStatusCodeException e) {
-            LOGGER.error(e.toString(), e);
-        }
-        return Optional.empty();
-
+            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
+            .buildAndExpand(elementUuid)
+            .toUriString();
+        return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
     }
 
     public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
@@ -296,29 +285,25 @@ public class DirectoryService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers),
-                new ParameterizedTypeReference<List<ElementAttributes>>() {
-                }).getBody();
+            new ParameterizedTypeReference<List<ElementAttributes>>() {
+            }).getBody();
         return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
     }
 
     public int getUserCasesCount(String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "users/{userId}/cases/count")
-                .buildAndExpand(userId)
-                .toUriString();
+            .fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "users/{userId}/cases/count")
+            .buildAndExpand(userId)
+            .toUriString();
 
-        Integer casesCount = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, Integer.class).getBody();
-        if (casesCount == null) {
-            throw new ExploreException(REMOTE_ERROR, "Could not get cases count");
-        }
-        return casesCount;
+        return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, Integer.class).getBody());
     }
 
     public void notifyDirectoryChanged(UUID elementUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/notification?type={update_directory}")
-                .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
-                .toUriString();
+            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/notification?type={update_directory}")
+            .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
@@ -327,20 +312,20 @@ public class DirectoryService implements IDirectoryElementsService {
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid, String userId) {
         String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
-                .buildAndExpand(directoryUuid)
-                .toUriString();
+            .buildAndExpand(directoryUuid)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         List<ElementAttributes> elementAttributesList;
         elementAttributesList = restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET,
-                new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
-                }).getBody();
+            new HttpEntity<>(headers), new ParameterizedTypeReference<List<ElementAttributes>>() {
+            }).getBody();
 
         return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
     }
 
     public void deleteElement(UUID id, String userId) {
-        ElementAttributes elementAttribute = getElementInfos(id).orElseThrow(() -> new ExploreException(NOT_FOUND));
+        ElementAttributes elementAttribute = getElementInfos(id);
         IDirectoryElementsService service = getGenericService(elementAttribute.getType());
         service.delete(elementAttribute.getElementUuid(), userId);
     }
@@ -348,16 +333,16 @@ public class DirectoryService implements IDirectoryElementsService {
     private IDirectoryElementsService getGenericService(String type) {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
         if (iDirectoryElementsService == null) {
-            throw new ExploreException(UNKNOWN_ELEMENT_TYPE, "Unknown element type " + type);
+            throw new IllegalArgumentException("Unknown element type " + type);
         }
         return iDirectoryElementsService;
     }
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
-            List<String> equipmentTypes, String userId) {
+                                                       List<String> equipmentTypes, String userId) {
         Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes, userId)
-                .stream()
-                .collect(Collectors.groupingBy(ElementAttributes::getType));
+            .stream()
+            .collect(Collectors.groupingBy(ElementAttributes::getType));
         List<ElementAttributes> listOfElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
@@ -366,14 +351,14 @@ public class DirectoryService implements IDirectoryElementsService {
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
-                    .filter(element -> {
-                        Object equipmentType = element.getSpecificMetadata().get("equipmentType");
-                        if (equipmentType != null) { // could be null for some elements
-                            return equipmentTypes.contains(equipmentType);
-                        }
-                        return true; // keep other elements
-                    })
-                    .collect(Collectors.toList());
+                .filter(element -> {
+                    Object equipmentType = element.getSpecificMetadata().get("equipmentType");
+                    if (equipmentType != null) { // could be null for some elements
+                        return equipmentTypes.contains(equipmentType);
+                    }
+                    return true; // keep other elements
+                })
+                .collect(Collectors.toList());
         }
 
         return listOfElements;
@@ -381,9 +366,9 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
-                .buildAndExpand(elementUuid)
-                .toUriString();
+            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
+            .buildAndExpand(elementUuid)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.set(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -401,9 +386,9 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
-                .toUriString();
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+            .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.set(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -423,35 +408,35 @@ public class DirectoryService implements IDirectoryElementsService {
         headers.add(HEADER_USER_ID, userId);
 
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH)
-                .queryParam(PARAM_ACCESS_TYPE, permissionType)
-                .queryParam(PARAM_IDS, ids)
-                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
-                .queryParam(PARAM_RECURSIVE_CHECK, recursiveCheck)
-                .buildAndExpand()
-                .toUriString();
+            .queryParam(PARAM_ACCESS_TYPE, permissionType)
+            .queryParam(PARAM_IDS, ids)
+            .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+            .queryParam(PARAM_RECURSIVE_CHECK, recursiveCheck)
+            .buildAndExpand()
+            .toUriString();
 
         try {
             restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
         } catch (HttpStatusCodeException e) {
-            if (!HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
-                handleException(e);
+            if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
+                String permissionCheckResult = null;
+                HttpHeaders responseHeader = e.getResponseHeaders();
+                if (responseHeader != null && responseHeader.getFirst(HEADER_PERMISION_ERROR) != null) {
+                    permissionCheckResult = responseHeader.getFirst(HEADER_PERMISION_ERROR);
+                }
+                return new PermissionResponse(false, permissionCheckResult);
+            } else {
+                throw e;
             }
-
-            String permissionCheckResult = null;
-            HttpHeaders responseHeader = e.getResponseHeaders();
-            if (responseHeader != null && responseHeader.getFirst(HEADER_PERMISION_ERROR) != null) {
-                permissionCheckResult = responseHeader.getFirst(HEADER_PERMISION_ERROR);
-            }
-            return new PermissionResponse(false, permissionCheckResult);
         }
         return new PermissionResponse(true, null);
     }
 
     public List<PermissionDTO> getDirectoryPermissions(UUID directoryUuid, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")
-                .buildAndExpand(directoryUuid)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")
+            .buildAndExpand(directoryUuid)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
@@ -460,7 +445,8 @@ public class DirectoryService implements IDirectoryElementsService {
             directoryServerBaseUri + path,
             HttpMethod.GET,
             new HttpEntity<>(headers),
-            new ParameterizedTypeReference<List<PermissionDTO>>() { }
+            new ParameterizedTypeReference<List<PermissionDTO>>() {
+            }
         );
 
         return response.getBody();
@@ -468,26 +454,18 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void setDirectoryPermissions(UUID directoryUuid, List<PermissionDTO> permissions, String userId) {
         String path = UriComponentsBuilder
-                .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")
-                .buildAndExpand(directoryUuid)
-                .toUriString();
+            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")
+            .buildAndExpand(directoryUuid)
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
         restTemplate.exchange(
             directoryServerBaseUri + path,
-                HttpMethod.PUT,
-                new HttpEntity<>(permissions, headers),
-                Void.class
+            HttpMethod.PUT,
+            new HttpEntity<>(permissions, headers),
+            Void.class
         );
-    }
-
-    private void handleException(HttpStatusCodeException e) {
-        if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-            throw new ExploreException(NOT_FOUND);
-        } else {
-            throw e;
-        }
     }
 }

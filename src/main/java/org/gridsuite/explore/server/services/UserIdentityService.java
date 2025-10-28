@@ -6,13 +6,10 @@
  */
 package org.gridsuite.explore.server.services;
 
-import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
-
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,12 +38,8 @@ public class UserIdentityService {
 
     public String getUsersIdentities(List<String> subs) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_IDENTITY_API_VERSION + USERS_IDENTITY_PATH)
-                .buildAndExpand(String.join(",", subs)).toUriString();
-        try {
-            return restTemplate.getForObject(userIdentityServerBaseUri + path, String.class);
-        } catch (HttpStatusCodeException e) {
-            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
-        }
+            .buildAndExpand(String.join(",", subs)).toUriString();
+        return restTemplate.getForObject(userIdentityServerBaseUri + path, String.class);
     }
 
 }

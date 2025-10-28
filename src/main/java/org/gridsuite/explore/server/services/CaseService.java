@@ -7,7 +7,8 @@
 
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.ExploreException;
+import org.gridsuite.explore.server.error.ExploreBusinessErrorCode;
+import org.gridsuite.explore.server.error.ExploreException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -25,9 +26,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.ExploreException.Type.INCORRECT_CASE_FILE;
-import static org.gridsuite.explore.server.utils.ExploreUtils.wrapRemoteError;
-
 @Service
 public class CaseService implements IDirectoryElementsService {
     private static final String CASE_SERVER_API_VERSION = "v1";
@@ -37,7 +35,7 @@ public class CaseService implements IDirectoryElementsService {
     private String caseServerBaseUri;
 
     public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String studyServerBaseUri,
-            RestTemplate restTemplate) {
+                       RestTemplate restTemplate) {
         this.caseServerBaseUri = studyServerBaseUri;
         this.restTemplate = restTemplate;
     }
@@ -56,35 +54,35 @@ public class CaseService implements IDirectoryElementsService {
             body.add("file", multipartFile.getResource());
         }
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(
-                body, headers);
+            body, headers);
         try {
             caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
-                    UUID.class);
+                UUID.class);
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
-                throw new ExploreException(INCORRECT_CASE_FILE, e.getMessage());
+            if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
+                throw ExploreException.of(ExploreBusinessErrorCode.EXPLORE_INCORRECT_CASE_FILE, e.getMessage());
             }
-            throw wrapRemoteError(e.getMessage(), e.getStatusCode());
+            throw e;
         }
         return caseUuid;
     }
 
     UUID duplicateCase(UUID caseId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
-                .queryParam("duplicateFrom", caseId)
-                .buildAndExpand()
-                .toUriString();
+            .queryParam("duplicateFrom", caseId)
+            .buildAndExpand()
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
-                .getBody();
+            .getBody();
     }
 
     @Override
     public void delete(UUID id, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{id}")
-                .buildAndExpand(id)
-                .toUriString();
+            .buildAndExpand(id)
+            .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
@@ -94,11 +92,11 @@ public class CaseService implements IDirectoryElementsService {
     public List<Map<String, Object>> getMetadata(List<UUID> casesUuids) {
         var ids = casesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-                .fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/metadata" + "?ids=" + ids)
-                .buildAndExpand()
-                .toUriString();
+            .fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/metadata" + "?ids=" + ids)
+            .buildAndExpand()
+            .toUriString();
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            }).getBody();
     }
 }
