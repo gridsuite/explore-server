@@ -7,7 +7,7 @@
 package org.gridsuite.explore.server.error;
 
 import com.powsybl.ws.commons.error.AbstractBusinessException;
-import org.jetbrains.annotations.NotNull;
+import lombok.NonNull;
 
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ public class ExploreException extends AbstractBusinessException {
         return new ExploreException(errorCode, args.length == 0 ? message : String.format(message, args));
     }
 
-    @NotNull
+    @NonNull
     @Override
     public ExploreBusinessErrorCode getBusinessErrorCode() {
         return errorCode;
