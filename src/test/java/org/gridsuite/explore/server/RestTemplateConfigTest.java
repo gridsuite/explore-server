@@ -11,6 +11,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -29,7 +32,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
  * @author Achour Berrahma <achour.berrahma at rte-france.com>
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {RestTemplateConfig.class})
+@ContextConfiguration(classes = {RestTemplateConfig.class, RestTemplateConfigTest.TestConfig.class})
 class RestTemplateConfigTest {
 
     @Autowired
@@ -39,6 +42,16 @@ class RestTemplateConfigTest {
     private static final String ROLES_HEADER = "roles";
     private static final String TEST_ROLES = "ADMIN|USER";
     private static final String TEST_ENDPOINT = "http://test-service/api/resource";
+
+    // Needed for the RestTemplateBuilder since the test doesn't load
+    // the full springboot auto-configuration with @SpringBootTest
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public RestTemplateBuilder restTemplateBuilder() {
+            return new RestTemplateBuilder();
+        }
+    }
 
     @BeforeEach
     void setUp() {
