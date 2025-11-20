@@ -35,7 +35,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 // it's also resttemplatebuilder that we need.
 // And other builders are also registered but without consequences, they're just unused.
 // In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
-@AutoConfigureWebClient@ContextConfiguration(classes = {RestTemplateConfig.class})
+@AutoConfigureWebClient
+@ContextConfiguration(classes = {RestTemplateConfig.class})
 class RestTemplateConfigTest {
 
     @Autowired
