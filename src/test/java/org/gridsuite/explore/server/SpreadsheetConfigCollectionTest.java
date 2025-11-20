@@ -216,7 +216,7 @@ class SpreadsheetConfigCollectionTest {
                         .param("name", COLLECTION_NAME)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -234,7 +234,7 @@ class SpreadsheetConfigCollectionTest {
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
                         .header("userId", USER_ID))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -251,7 +251,7 @@ class SpreadsheetConfigCollectionTest {
                         .param("duplicateFrom", COLLECTION_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isMethodNotAllowed());
     }
 
     @Test
