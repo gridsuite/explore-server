@@ -11,9 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -32,7 +30,12 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
  * @author Achour Berrahma <achour.berrahma at rte-france.com>
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {RestTemplateConfig.class, RestTemplateConfigTest.TestConfig.class})
+//NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
+// it is builders for webclients, and it's not just webflux webclient,
+// it's also resttemplatebuilder that we need.
+// And other builders are also registered but without consequences, they're just unused.
+// In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
+@AutoConfigureWebClient@ContextConfiguration(classes = {RestTemplateConfig.class})
 class RestTemplateConfigTest {
 
     @Autowired
@@ -42,16 +45,6 @@ class RestTemplateConfigTest {
     private static final String ROLES_HEADER = "roles";
     private static final String TEST_ROLES = "ADMIN|USER";
     private static final String TEST_ENDPOINT = "http://test-service/api/resource";
-
-    // Needed for the RestTemplateBuilder since the test doesn't load
-    // the full springboot auto-configuration with @SpringBootTest
-    @Configuration
-    static class TestConfig {
-        @Bean
-        public RestTemplateBuilder restTemplateBuilder() {
-            return new RestTemplateBuilder().detectRequestFactory(false);
-        }
-    }
 
     @BeforeEach
     void setUp() {
