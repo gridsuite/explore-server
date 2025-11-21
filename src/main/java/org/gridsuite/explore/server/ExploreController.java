@@ -603,16 +603,16 @@ public class ExploreController {
                 .body(directoryService.searchElements(userInput, directoryUuid, userId));
     }
 
-    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/directories/{directoryUuid}")
-    @Operation(summary = "Check if user has a right on a directory")
+    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/elements/{elementUuid}")
+    @Operation(summary = "Check if user has a given right on a directory, or a single element by checking its parent")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "The user has the right on the directory"),
-        @ApiResponse(responseCode = "204", description = "The user has not the right on the directory"),
+        @ApiResponse(responseCode = "200", description = "The user has the right on the element"),
+        @ApiResponse(responseCode = "204", description = "The user has not the right on the element"),
     })
-    public ResponseEntity<String> hasRight(@PathVariable("directoryUuid") UUID directoryUuid,
+    public ResponseEntity<String> hasRight(@PathVariable("elementUuid") UUID elementUuid,
                                          @RequestParam(name = "permission") PermissionType permission,
                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        PermissionResponse permissionResponse = directoryService.checkPermission(List.of(directoryUuid), null, userId, permission);
+        PermissionResponse permissionResponse = directoryService.checkPermission(List.of(elementUuid), null, userId, permission);
         if (permissionResponse.hasPermission()) {
             return ResponseEntity.ok().build();
         } else {
