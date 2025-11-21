@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -29,6 +30,12 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
  * @author Achour Berrahma <achour.berrahma at rte-france.com>
  */
 @ExtendWith(SpringExtension.class)
+//NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
+// it is builders for webclients, and it's not just webflux webclient,
+// it's also resttemplatebuilder that we need.
+// And other builders are also registered but without consequences, they're just unused.
+// In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
+@AutoConfigureWebClient
 @ContextConfiguration(classes = {RestTemplateConfig.class})
 class RestTemplateConfigTest {
 
