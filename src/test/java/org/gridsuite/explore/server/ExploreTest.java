@@ -1035,7 +1035,8 @@ class ExploreTest {
                     .andExpect(status().isForbidden())
                     .andReturn();
             assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
-            assertTrue(result.getResponse().getContentAsString().contains("max allowed cases : 3"));
+            assertTrue(result.getResponse().getContentAsString().contains("\"businessErrorValues\":{\"limit\":3}"));
+            assertTrue(result.getResponse().getContentAsString().contains("\"detail\":\"max allowed cases reached\""));
         }
     }
 
