@@ -342,7 +342,7 @@ public class ExploreService {
         if (userMaxAllowedStudiesAndCases != null) {
             int userCasesCount = directoryService.getUserCasesCount(userId);
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
-                throw ExploreException.of(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases : " + userMaxAllowedStudiesAndCases);
+                throw new ExploreException(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases reached", Map.of("limit", userMaxAllowedStudiesAndCases));
             }
             notifyCasesThresholdReached(userCasesCount, userMaxAllowedStudiesAndCases, userId);
         }
