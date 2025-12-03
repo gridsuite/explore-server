@@ -1330,7 +1330,7 @@ class ExploreTest {
     @Test
     void testHasRights(final MockWebServer server) throws Exception {
         // test read access allowed
-        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=READ")
+        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=READ")
                 .header("userId", NOT_ADMIN_USER)
             ).andExpect(status().isOk());
 
@@ -1338,7 +1338,7 @@ class ExploreTest {
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
 
         // test read access forbidden
-        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
+        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
             .header("userId", NOT_ADMIN_USER)
         ).andExpect(status().isForbidden());
 
@@ -1346,7 +1346,7 @@ class ExploreTest {
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
 
         // test write access forbidden
-        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
+        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
             .header("userId", NOT_ADMIN_USER)
         ).andExpect(status().isForbidden());
 
@@ -1354,7 +1354,7 @@ class ExploreTest {
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
 
         // test write access allowed (admin)
-        mockMvc.perform(head("/v1/explore/directories/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
+        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
             .header("userId", USER1)
         ).andExpect(status().isOk());
 
