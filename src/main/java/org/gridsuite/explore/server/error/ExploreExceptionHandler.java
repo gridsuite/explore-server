@@ -6,22 +6,26 @@
  */
 package org.gridsuite.explore.server.error;
 
-import com.powsybl.ws.commons.error.AbstractBaseRestExceptionHandler;
+import com.powsybl.ws.commons.error.AbstractBusinessExceptionHandler;
+import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 import com.powsybl.ws.commons.error.ServerNameProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
  */
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler
-    extends AbstractBaseRestExceptionHandler<ExploreException, ExploreBusinessErrorCode> {
+public class ExploreExceptionHandler
+    extends AbstractBusinessExceptionHandler<ExploreException, ExploreBusinessErrorCode> {
 
-    public RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
+    public ExploreExceptionHandler(ServerNameProvider serverNameProvider) {
         super(serverNameProvider);
     }
 
@@ -37,5 +41,11 @@ public class RestResponseEntityExceptionHandler
             case EXPLORE_PERMISSION_DENIED, EXPLORE_MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
             case EXPLORE_INCORRECT_CASE_FILE -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
+    }
+
+    @ExceptionHandler(ExploreException.class)
+    protected ResponseEntity<PowsyblWsProblemDetail> handleExploreException(
+        ExploreException exception, HttpServletRequest request) {
+        return super.handleDomainException(exception, request);
     }
 }
