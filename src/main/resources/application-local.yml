@@ -54,4 +54,7 @@ gridsuite:
     -
       name: single-line-diagram-server
       base-uri: http://localhost:5005
+    -
+      name: pcc-min-server
+      base-uri: http://localhost:6042
 

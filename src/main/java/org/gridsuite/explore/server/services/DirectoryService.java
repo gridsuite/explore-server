@@ -84,6 +84,7 @@ public class DirectoryService implements IDirectoryElementsService {
             Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService),
+            Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), parametersService),
             Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), parametersService)
         );
     }
