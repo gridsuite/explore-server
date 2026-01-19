@@ -14,7 +14,6 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
  * Business error codes emitted by the explore service.
  */
 public enum ExploreBusinessErrorCode implements BusinessErrorCode {
-    EXPLORE_PERMISSION_DENIED("explore.permissionDenied"),
     EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded"),
     EXPLORE_INCORRECT_CASE_FILE("explore.incorrectCaseFile");
 

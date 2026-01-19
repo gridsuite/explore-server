@@ -6,20 +6,15 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.error.ExploreException;
-import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_PERMISSION_DENIED;
-
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
-
 @Service
 public class AuthorizationService {
 
@@ -30,32 +25,17 @@ public class AuthorizationService {
     }
 
     //This method should only be called inside of @PreAuthorize to centralize permission checks
-    public boolean isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
-        PermissionResponse permissionResponse = directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType);
-        if (!permissionResponse.hasPermission()) {
-            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, permissionResponse.permissionCheckResult());
-        }
-        return true;
+    public void isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
+        directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType);
     }
 
     //This method should only be called inside of @PreAuthorize to centralize permission checks
-    public boolean isAuthorizedForDuplication(String userId, UUID elementToDuplicate, UUID targetDirectoryUuid) {
-        PermissionResponse readCheck = directoryService.checkPermission(List.of(elementToDuplicate), null, userId, PermissionType.READ);
-        if (!readCheck.hasPermission()) {
-            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, readCheck.permissionCheckResult());
-        }
-        PermissionResponse writeCheck = directoryService.checkPermission(List.of(targetDirectoryUuid != null ? targetDirectoryUuid : elementToDuplicate), null, userId, PermissionType.WRITE);
-        if (!writeCheck.hasPermission()) {
-            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, writeCheck.permissionCheckResult());
-        }
-        return true;
+    public void isAuthorizedForDuplication(String userId, UUID elementToDuplicate, UUID targetDirectoryUuid) {
+        directoryService.checkPermission(List.of(elementToDuplicate), null, userId, PermissionType.READ);
+        directoryService.checkPermission(List.of(targetDirectoryUuid != null ? targetDirectoryUuid : elementToDuplicate), null, userId, PermissionType.WRITE);
     }
 
-    public boolean isRecursivelyAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid) {
-        PermissionResponse permissionResponse = directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, PermissionType.WRITE, true);
-        if (!permissionResponse.hasPermission()) {
-            throw ExploreException.of(EXPLORE_PERMISSION_DENIED, permissionResponse.permissionCheckResult());
-        }
-        return true;
+    public void isRecursivelyAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid) {
+        directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, PermissionType.WRITE, true);
     }
 }

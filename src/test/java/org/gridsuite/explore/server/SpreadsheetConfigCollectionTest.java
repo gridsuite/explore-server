@@ -106,7 +106,7 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
+                } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
                     return new MockResponse(200);
                 }
                 return new MockResponse(404);
@@ -173,8 +173,8 @@ class SpreadsheetConfigCollectionTest {
         // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
         // check read authorization on the duplicated element and write authorization on the target directory
         var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")));
     }
 
     @Test
@@ -187,8 +187,8 @@ class SpreadsheetConfigCollectionTest {
         // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
         // check read authorization on the duplicated element and write authorization on the target directory
         var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
     }
 
     @Test
