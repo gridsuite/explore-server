@@ -386,6 +386,30 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + NO_CONTENT_DIRECTORY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + DIRECTORY_NOT_OWNED_SUBELEMENT_UUID + "&targetDirectoryUuid.*&recursiveCheck=true")) {
+                        return new MockResponse(409);
+                    } else if (path.matches("/v1/elements/authorized\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
+                        return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*&recursiveCheck=.*")) {
+                        return new MockResponse(200);
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
@@ -425,35 +449,10 @@ class ExploreTest {
                         return new MockResponse(200);
                     }
                     return new MockResponse(404);
-                } else if ("HEAD".equals(request.getMethod())) {
-                    if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + NO_CONTENT_DIRECTORY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + DIRECTORY_NOT_OWNED_SUBELEMENT_UUID + "&targetDirectoryUuid.*&recursiveCheck=true")) {
-                        return new MockResponse(409);
-                    } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements\\?accessType=.*&ids=.*&targetDirectoryUuid.*&recursiveCheck=.*")) {
+                } else if ("HEAD".equals(request.getMethod()) && path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
                         return new MockResponse(200);
                     }
-                }
+
                 return new MockResponse(418);
             }
         };
@@ -611,8 +610,8 @@ class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
-        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 500);
-        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 500);
+        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
+        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
         deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 409);
     }
 
@@ -783,7 +782,7 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
                 NO_CONTENT_DIRECTORY_UUID)
                 .header("userId", USER1)
-        ).andExpect(status().isInternalServerError());
+        ).andExpect(status().isForbidden());
     }
 
     @Test
@@ -946,7 +945,7 @@ class ExploreTest {
         // Execute the test with a forbidden directory ID
         mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID_FORBIDDEN)
                         .header("userId", USER_NOT_ALLOWED))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -969,7 +968,7 @@ class ExploreTest {
                         .header("userId", USER_NOT_ALLOWED)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(permissionsJson))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -1335,7 +1334,7 @@ class ExploreTest {
             ).andExpect(status().isOk());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
 
         // test read access forbidden
         mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
@@ -1343,7 +1342,7 @@ class ExploreTest {
         ).andExpect(status().isForbidden());
 
         requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
 
         // test write access forbidden
         mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
@@ -1351,22 +1350,22 @@ class ExploreTest {
         ).andExpect(status().isForbidden());
 
         requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
 
         // test write access allowed (admin)
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
+        mockMvc.perform(get("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
             .header("userId", USER1)
         ).andExpect(status().isOk());
 
         requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
         // check that we called 2 times the directory server to checks authorization and 1 time the server to duplicate
         // check read authorization on the duplicated element and write authorization on the target directory
         var requests = TestUtils.getRequestsWithBodyDone(3, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=READ&ids=" + readElementUuid + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements?accessType=WRITE&ids=" + writeElementUuid + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + readElementUuid + "&targetDirectoryUuid")));
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + writeElementUuid + "&targetDirectoryUuid")));
     }
 }

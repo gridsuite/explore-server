@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SingleLineDiagramService;
@@ -63,8 +62,6 @@ class SingleLineDiagramTest {
     private static final UUID DUPLICATE_NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
 
-    private static final PermissionResponse ALLOWED_PERMISSION = new PermissionResponse(true, null);
-
     @BeforeEach
     void setUp() {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
@@ -80,8 +77,6 @@ class SingleLineDiagramTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
                 )).getId();
-
-        when(directoryService.checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
 
         mockMvc.perform(post(BASE_URL)
                     .param("name", "diagram config name")
@@ -108,8 +103,6 @@ class SingleLineDiagramTest {
                         .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
                 )).getId();
 
-        when(directoryService.checkPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-
         mockMvc.perform(put(BASE_URL + "/" + NAD_CONFIG_UUID)
                     .param("name", "diagram config name")
                     .param("type", "DIAGRAM_CONFIG")
@@ -132,9 +125,6 @@ class SingleLineDiagramTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(mapper.writeValueAsString(DUPLICATE_NAD_CONFIG_UUID.toString()))
                 )).getId();
-
-        when(directoryService.checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-        when(directoryService.checkPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.READ)).thenReturn(ALLOWED_PERMISSION);
 
         mockMvc.perform(post(BASE_URL)
                     .param("duplicateFrom", NAD_CONFIG_UUID.toString())
