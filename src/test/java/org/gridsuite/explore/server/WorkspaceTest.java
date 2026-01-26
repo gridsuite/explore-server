@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.WorkspaceService;
@@ -70,8 +69,6 @@ class WorkspaceTest {
     private static final String USER_ID = "testUser";
     private static final String WORKSPACE_NAME = "Test Workspace";
 
-    private static final PermissionResponse ALLOWED_PERMISSION = new PermissionResponse(true, null);
-
     @BeforeEach
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
@@ -98,8 +95,6 @@ class WorkspaceTest {
 
     @Test
     void testCreateWorkspace() throws Exception {
-        when(directoryService.checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-
         mockMvc.perform(post(BASE_URL)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
@@ -115,8 +110,6 @@ class WorkspaceTest {
 
     @Test
     void testReplaceWorkspace() throws Exception {
-        when(directoryService.checkPermission(List.of(WORKSPACE_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-
         mockMvc.perform(put(BASE_URL + "/{id}", WORKSPACE_UUID)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
@@ -130,9 +123,6 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspace() throws Exception {
-        when(directoryService.checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-        when(directoryService.checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.READ)).thenReturn(ALLOWED_PERMISSION);
-
         mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", SOURCE_WORKSPACE_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
@@ -146,9 +136,6 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspaceInSameDirectory() throws Exception {
-        when(directoryService.checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.READ)).thenReturn(ALLOWED_PERMISSION);
-        when(directoryService.checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-
         mockMvc.perform(post(BASE_URL)
                         .param("duplicateFrom", SOURCE_WORKSPACE_UUID.toString())
                         .header("userId", USER_ID))
@@ -168,8 +155,6 @@ class WorkspaceTest {
 
     @Test
     void testCreateWorkspaceServiceError() throws Exception {
-        when(directoryService.checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-
         wireMockServer.resetAll();
         wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL))
                 .willReturn(WireMock.serverError()));
@@ -185,8 +170,6 @@ class WorkspaceTest {
 
     @Test
     void testReplaceWorkspaceServiceError() throws Exception {
-        when(directoryService.checkPermission(List.of(WORKSPACE_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-
         wireMockServer.resetAll();
         wireMockServer.stubFor(WireMock.put(WireMock.urlPathMatching(STUDY_CONFIG_SERVER_BASE_URL + "/.*/replace"))
                 .willReturn(WireMock.serverError()));
@@ -201,9 +184,6 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspaceServiceError() throws Exception {
-        when(directoryService.checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE)).thenReturn(ALLOWED_PERMISSION);
-        when(directoryService.checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.READ)).thenReturn(ALLOWED_PERMISSION);
-
         wireMockServer.resetAll();
         wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL))
                 .willReturn(WireMock.serverError()));
