@@ -8,14 +8,12 @@ package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
-import org.gridsuite.explore.server.dto.PermissionResponse;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -56,8 +54,6 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
-
-    private static final String HEADER_PERMISION_ERROR = "X-Permission-Error";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -398,17 +394,17 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    public PermissionResponse checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
-        return checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
+    public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
+        checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
     }
 
     //This method should only be called inside of AuthorizationService to centralize permission checks
-    public PermissionResponse checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
+    public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
 
-        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH)
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/authorized")
             .queryParam(PARAM_ACCESS_TYPE, permissionType)
             .queryParam(PARAM_IDS, ids)
             .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
@@ -416,21 +412,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .buildAndExpand()
             .toUriString();
 
-        try {
-            restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
-        } catch (HttpStatusCodeException e) {
-            if (HttpStatus.FORBIDDEN.equals(e.getStatusCode())) {
-                String permissionCheckResult = null;
-                HttpHeaders responseHeader = e.getResponseHeaders();
-                if (responseHeader != null && responseHeader.getFirst(HEADER_PERMISION_ERROR) != null) {
-                    permissionCheckResult = responseHeader.getFirst(HEADER_PERMISION_ERROR);
-                }
-                return new PermissionResponse(false, permissionCheckResult);
-            } else {
-                throw e;
-            }
-        }
-        return new PermissionResponse(true, null);
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), Void.class);
     }
 
     public List<PermissionDTO> getDirectoryPermissions(UUID directoryUuid, String userId) {

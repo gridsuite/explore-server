@@ -34,14 +34,14 @@ class ExploreExceptionHandlerTest {
     @Test
     void mapsElementNotFoundToNotFoundStatus() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/explore");
-        ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_PERMISSION_DENIED,
+        ExploreException exception = new ExploreException(ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED,
             "denied");
 
         ResponseEntity<PowsyblWsProblemDetail> response = handler.invokeHandleDomainException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("explore.permissionDenied", response.getBody().getBusinessErrorCode());
+        assertEquals("explore.maxElementsExceeded", response.getBody().getBusinessErrorCode());
     }
 
     private static final class TestExploreExceptionHandler extends ExploreExceptionHandler {

@@ -603,21 +603,17 @@ public class ExploreController {
                 .body(directoryService.searchElements(userInput, directoryUuid, userId));
     }
 
-    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/elements/{elementUuid}")
+    @GetMapping(value = "/explore/elements/{elementUuid}")
     @Operation(summary = "Check if user has a given right on a directory, or a single element by checking its parent")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The user has the right on the element"),
         @ApiResponse(responseCode = "204", description = "The user has not the right on the element"),
     })
-    public ResponseEntity<String> hasRight(@PathVariable("elementUuid") UUID elementUuid,
+    public ResponseEntity<Void> hasRight(@PathVariable("elementUuid") UUID elementUuid,
                                          @RequestParam(name = "permission") PermissionType permission,
                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        PermissionResponse permissionResponse = directoryService.checkPermission(List.of(elementUuid), null, userId, permission);
-        if (permissionResponse.hasPermission()) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(permissionResponse.permissionCheckResult());
-        }
+        directoryService.checkPermission(List.of(elementUuid), null, userId, permission);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
