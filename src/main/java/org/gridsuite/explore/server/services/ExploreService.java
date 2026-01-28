@@ -41,6 +41,7 @@ public class ExploreService {
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
     static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
+    static final String WORKSPACE = "WORKSPACE";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -51,6 +52,7 @@ public class ExploreService {
     private final ParametersService parametersService;
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
+    private final WorkspaceService workspaceService;
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
 
@@ -69,6 +71,7 @@ public class ExploreService {
         UserAdminService userAdminService,
         SpreadsheetConfigService spreadsheetConfigService,
         SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
+        WorkspaceService workspaceService,
         UserIdentityService userIdentityService,
         NotificationService notificationService,
         SingleLineDiagramService singleLineDiagramService) {
@@ -83,6 +86,7 @@ public class ExploreService {
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
+        this.workspaceService = workspaceService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
@@ -317,6 +321,22 @@ public class ExploreService {
     public void duplicateSpreadsheetConfigCollection(UUID sourceId, UUID targetDirectoryId, String userId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigCollectionService.duplicateSpreadsheetConfigCollection(sourceId);
         directoryService.duplicateElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, userId);
+    }
+
+    public void createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid, String userId) {
+        UUID newWorkspaceId = workspaceService.duplicateWorkspace(workspaceId);
+        ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, userId, 0, description);
+        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+    }
+
+    public void replaceWorkspace(UUID id, UUID workspaceId, String userId, String name, String description) {
+        workspaceService.replaceWorkspace(id, workspaceId);
+        updateElementNameAndDescription(id, name, description, userId);
+    }
+
+    public void duplicateWorkspace(UUID sourceId, UUID targetDirectoryId, String userId) {
+        UUID newWorkspaceId = workspaceService.duplicateWorkspace(sourceId);
+        directoryService.duplicateElement(sourceId, newWorkspaceId, targetDirectoryId, userId);
     }
 
     public void createCompositeModification(List<UUID> modificationUuids, String userId, String name,

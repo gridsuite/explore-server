@@ -425,6 +425,43 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PostMapping(value = "/explore/workspaces", params = "workspaceId")
+    @Operation(summary = "Create a workspace by duplicating an existing workspace")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Workspace created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> createWorkspace(@RequestParam("workspaceId") UUID workspaceId,
+                                                @RequestParam("name") String workspaceName,
+                                                @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.createWorkspace(workspaceId, workspaceName, description, parentDirectoryUuid, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PutMapping(value = "/explore/workspaces/{id}", params = "workspaceId")
+    @Operation(summary = "Replace a workspace with another workspace")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Workspace has been successfully replaced")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> replaceWorkspace(@PathVariable UUID id,
+                                                 @RequestParam("workspaceId") UUID workspaceId,
+                                                 @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                 @RequestParam(QUERY_PARAM_NAME) String name,
+                                                 @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.replaceWorkspace(id, workspaceId, userId, name, description);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/explore/workspaces", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a workspace")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Workspace has been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #sourceId, #targetDirectoryId)")
+    public ResponseEntity<Void> duplicateWorkspace(@RequestParam("duplicateFrom") UUID sourceId,
+                                                   @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                   @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateWorkspace(sourceId, targetDirectoryId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @PostMapping(value = "/explore/spreadsheet-config-collections", params = "duplicateFrom")
     @Operation(summary = "Duplicate a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
