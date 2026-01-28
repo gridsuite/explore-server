@@ -351,7 +351,7 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 modificationInfosAttributesAsString);
-                    } else if (path.matches("/v1/network-composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications")) {
+                    } else if (path.matches("/v1/network-composite-modifications/network-modifications[?]uuids=" + COMPOSITE_MODIFICATION_UUID)) {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 mapper.writeValueAsString(compositeModificationMetadata));
