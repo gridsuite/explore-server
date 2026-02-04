@@ -100,9 +100,10 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .fromPath(DELIMITER +
                         NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER +
-                        "/network-composite-modification/" +
-                        compositeModificationId +
-                        "/network-modifications")
+                        NETWORK_COMPOSITE_MODIFICATIONS_PATH +
+                        DELIMITER +
+                        NETWORK_MODIFICATIONS_PATH)
+                .queryParam(UUIDS, List.of(compositeModificationId))
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
