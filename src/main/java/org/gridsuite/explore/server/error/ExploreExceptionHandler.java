@@ -39,7 +39,6 @@ public class ExploreExceptionHandler
     protected HttpStatus mapStatus(ExploreBusinessErrorCode errorCode) {
         return switch (errorCode) {
             case EXPLORE_MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
-            case EXPLORE_INCORRECT_CASE_FILE -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
     }
 
