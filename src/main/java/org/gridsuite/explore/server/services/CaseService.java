@@ -7,15 +7,12 @@
 
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.error.ExploreBusinessErrorCode;
-import org.gridsuite.explore.server.error.ExploreException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -55,15 +52,8 @@ public class CaseService implements IDirectoryElementsService {
         }
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(
             body, headers);
-        try {
-            caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
-                UUID.class);
-        } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
-                throw ExploreException.of(ExploreBusinessErrorCode.EXPLORE_INCORRECT_CASE_FILE, e.getMessage());
-            }
-            throw e;
-        }
+        caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
+            UUID.class);
         return caseUuid;
     }
 
