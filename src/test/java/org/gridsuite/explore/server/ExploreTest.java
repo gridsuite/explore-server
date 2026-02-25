@@ -235,6 +235,8 @@ class ExploreTest {
                     } else {
                         return new MockResponse(200);
                     }
+                } else if (path.matches("/v1/cases/" + CASE_UUID + "/disableExpiration") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/cases\\?duplicateFrom=" + CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newCaseUuidAsString);
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
@@ -492,6 +494,16 @@ class ExploreTest {
                     )
                     .andExpect(status().isOk());
         }
+    }
+
+    @Test
+    void testPersistCase() throws Exception {
+        mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -1037,6 +1049,16 @@ class ExploreTest {
             assertTrue(result.getResponse().getContentAsString().contains("\"businessErrorValues\":{\"limit\":3}"));
             assertTrue(result.getResponse().getContentAsString().contains("\"detail\":\"max allowed cases reached\""));
         }
+
+        //test persist a case with a user that already exceeded his cases limit
+        result = mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
+                        .contentType(APPLICATION_JSON)
+                )
+                .andExpect(status().isForbidden())
+                .andReturn();
+        assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
     }
 
     @Test
@@ -1072,6 +1094,14 @@ class ExploreTest {
                     .andExpect(status().isOk())
                     .andReturn();
         }
+
+        //test persist a case with a user that hasn't already exceeded his cases limit
+        mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
+                        .contentType(APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -1107,6 +1137,14 @@ class ExploreTest {
                     .andExpect(status().isOk())
                     .andReturn();
         }
+
+        //test persist a case with a user that has no profile to limit his case creation
+        mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER_NOT_FOUND)
+                        .contentType(APPLICATION_JSON)
+                )
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -1141,6 +1179,14 @@ class ExploreTest {
                     )
                     .andExpect(status().isInternalServerError());
         }
+
+        //test persist a case with a remote unexpected exception
+        mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+                        STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .header("userId", USER_UNEXPECTED_ERROR)
+                        .contentType(APPLICATION_JSON)
+                )
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

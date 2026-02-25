@@ -8,8 +8,10 @@ package org.gridsuite.explore.server.services;
 
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
+import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
@@ -19,10 +21,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.*;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
 
 /**
@@ -127,6 +132,12 @@ public class ExploreService {
         UUID uuid = caseService.importCase(caseFile);
         directoryService.createElement(new ElementAttributes(uuid, caseName, CASE, userId, 0L, description),
                 parentDirectoryUuid, userId);
+    }
+
+    public void persistCase(String caseName, UUID caseUuid, String description, String userId, UUID parentDirectoryUuid) {
+        caseService.persistCase(caseUuid);
+        directoryService.createElement(new ElementAttributes(caseUuid, caseName, CASE, userId, 0L, description),
+            parentDirectoryUuid, userId);
     }
 
     public void duplicateCase(UUID sourceCaseUuid, UUID targetDirectoryId, String userId) {

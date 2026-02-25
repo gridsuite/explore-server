@@ -95,6 +95,20 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/cases/{caseName}/persist", params = {"caseUuid", "description", QUERY_PARAM_PARENT_DIRECTORY_ID})
+    @Operation(summary = "persist an existing case")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case persist request delegated to case server")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).READ)")
+    public ResponseEntity<Void> persistCase(@PathVariable("caseName") String caseName,
+                                           @RequestParam("caseUuid") UUID caseUuid,
+                                           @RequestParam("description") String description,
+                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.assertCanCreateCase(userId);
+        exploreService.persistCase(caseName, caseUuid, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/explore/cases", params = "duplicateFrom")
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
