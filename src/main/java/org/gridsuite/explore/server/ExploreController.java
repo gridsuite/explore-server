@@ -98,7 +98,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/cases/{caseName}/persist", params = {"caseUuid", "description", QUERY_PARAM_PARENT_DIRECTORY_ID})
     @Operation(summary = "persist an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case persist request delegated to case server")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).READ)")
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> persistCase(@PathVariable("caseName") String caseName,
                                            @RequestParam("caseUuid") UUID caseUuid,
                                            @RequestParam("description") String description,
