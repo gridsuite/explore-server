@@ -57,6 +57,13 @@ public class CaseService implements IDirectoryElementsService {
         return caseUuid;
     }
 
+    void persistCase(UUID caseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/" + caseUuid + "/disableExpiration")
+            .buildAndExpand()
+            .toUriString();
+        restTemplate.exchange(caseServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(new HttpHeaders()), void.class);
+    }
+
     UUID duplicateCase(UUID caseId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
             .queryParam("duplicateFrom", caseId)
