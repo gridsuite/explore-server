@@ -19,11 +19,11 @@ class ExploreExceptionTest {
 
     @Test
     void staticFactoryFormatsMessage() {
-        ExploreException exception = ExploreException.of(ExploreBusinessErrorCode.EXPLORE_INCORRECT_CASE_FILE,
+        ExploreException exception = ExploreException.of(ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED,
             "Case %s failed", "demo");
 
         assertThat(exception.getMessage()).isEqualTo("Case demo failed");
-        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_INCORRECT_CASE_FILE);
+        assertThat(exception.getBusinessErrorCode()).isEqualTo(ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED);
     }
 
 }
