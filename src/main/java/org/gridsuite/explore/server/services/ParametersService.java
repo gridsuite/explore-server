@@ -6,9 +6,15 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.parameters.securityanalysis.SecurityAnalysisParameters;
+import org.gridsuite.explore.server.dto.parameters.securityanalysis.SecurityAnalysisParametersInfos;
+import org.gridsuite.explore.server.dto.parameters.sensianalysis.SensitivityAnalysisParameters;
+import org.gridsuite.explore.server.dto.parameters.sensianalysis.SensitivityAnalysisParametersInfos;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
@@ -34,8 +40,13 @@ public class ParametersService implements IDirectoryElementsService {
     private static final String NETWORK_VISU_PARAMETERS = "/network-visualizations-params";
 
     private final RestTemplate restTemplate;
+    ObjectMapper mapper = new ObjectMapper();
 
     private final DirectoryService directoryService;
+
+    private final SensitivityAnalysisParametersMapper sensitivityAnalysisParametersMapper;
+
+    private final SecurityAnalysisParametersMapper securityAnalysisParametersMapper;
 
     @Getter
     @AllArgsConstructor
@@ -55,13 +66,17 @@ public class ParametersService implements IDirectoryElementsService {
 
     private final RemoteServicesProperties remoteServicesProperties;
 
-    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestTemplate restTemplate) {
+    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService,
+                             RestTemplate restTemplate, SensitivityAnalysisParametersMapper sensitivityAnalysisParametersMapper,
+                             SecurityAnalysisParametersMapper securityAnalysisParametersMapper) {
         this.restTemplate = restTemplate;
         this.remoteServicesProperties = remoteServicesProperties;
         this.directoryService = directoryService;
+        this.sensitivityAnalysisParametersMapper = sensitivityAnalysisParametersMapper;
+        this.securityAnalysisParametersMapper = securityAnalysisParametersMapper;
     }
 
-    public UUID createParameters(String parameters, ParametersType parametersType) {
+    public UUID createParameters(String parameters, ParametersType parametersType) throws JsonProcessingException {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(parameters);
 
@@ -73,16 +88,44 @@ public class ParametersService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> httpEntity = new HttpEntity<>(parameters, headers);
-
         UUID parametersUuid;
 
-        parametersUuid = restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+        switch (parametersType) {
+            case SENSITIVITY_PARAMETERS:
+                SensitivityAnalysisParametersInfos mappedSensiParametersInfos = mapper.readValue(parameters, SensitivityAnalysisParametersInfos.class); // here
+                SensitivityAnalysisParameters mappedSensiParameters = sensitivityAnalysisParametersMapper.getParameters(mappedSensiParametersInfos);
+
+                parametersUuid = restTemplate.exchange(
+                        parametersServerBaseUri + path,
+                        HttpMethod.POST,
+                        new HttpEntity<>(mappedSensiParameters, headers),
+                        UUID.class).getBody();
+                break;
+
+            case SECURITY_ANALYSIS_PARAMETERS:
+                SecurityAnalysisParametersInfos mappedSAParametersInfos = mapper.readValue(parameters, SecurityAnalysisParametersInfos.class);
+                SecurityAnalysisParameters mappedSAParameters = securityAnalysisParametersMapper.getParameters(mappedSAParametersInfos);
+
+                parametersUuid = restTemplate.exchange(
+                        parametersServerBaseUri + path,
+                        HttpMethod.POST,
+                        new HttpEntity<>(mappedSAParameters, headers),
+                        UUID.class).getBody();
+                break;
+
+            default:
+                parametersUuid = restTemplate.exchange(
+                        parametersServerBaseUri + path,
+                        HttpMethod.POST,
+                        new HttpEntity<>(parameters, headers),
+                        UUID.class).getBody();
+                break;
+        }
 
         return parametersUuid;
     }
 
-    public void updateParameters(UUID parametersUuid, String parameters, ParametersType parametersType) {
+    public void updateParameters(UUID parametersUuid, String parameters, ParametersType parametersType) throws JsonProcessingException {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(parameters);
 
@@ -94,9 +137,36 @@ public class ParametersService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> httpEntity = new HttpEntity<>(parameters, headers);
+        switch (parametersType) {
+            case SENSITIVITY_PARAMETERS:
+                SensitivityAnalysisParametersInfos mappedSensiParametersInfos = mapper.readValue(parameters, SensitivityAnalysisParametersInfos.class); // here
+                SensitivityAnalysisParameters mappedSensiParameters = sensitivityAnalysisParametersMapper.getParameters(mappedSensiParametersInfos);
 
-        restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.PUT, httpEntity, UUID.class);
+                restTemplate.exchange(
+                        parametersServerBaseUri + path,
+                        HttpMethod.PUT,
+                        new HttpEntity<>(mappedSensiParameters, headers),
+                        UUID.class);
+                break;
+
+            case SECURITY_ANALYSIS_PARAMETERS:
+                SecurityAnalysisParametersInfos mappedSAParametersInfos = mapper.readValue(parameters, SecurityAnalysisParametersInfos.class);
+                SecurityAnalysisParameters mappedSAParameters = securityAnalysisParametersMapper.getParameters(mappedSAParametersInfos);
+
+                restTemplate.exchange(parametersServerBaseUri + path,
+                        HttpMethod.PUT,
+                        new HttpEntity<>(mappedSAParameters, headers),
+                        UUID.class);
+                break;
+
+            default:
+                restTemplate.exchange(
+                        parametersServerBaseUri + path,
+                        HttpMethod.PUT,
+                        new HttpEntity<>(parameters, headers),
+                        UUID.class);
+                break;
+        }
     }
 
     public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {

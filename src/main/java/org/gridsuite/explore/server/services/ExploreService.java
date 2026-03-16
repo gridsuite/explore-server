@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
@@ -256,13 +257,13 @@ public class ExploreService {
         };
     }
 
-    public void createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid, String userId) {
+    public void createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid, String userId) throws JsonProcessingException {
         UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), userId, 0, description);
         directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
     }
 
-    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name, String description) {
+    public void updateParameters(UUID id, String parameters, ParametersType parametersType, String userId, String name, String description) throws JsonProcessingException {
         parametersService.updateParameters(id, parameters, parametersType);
         updateElementNameAndDescription(id, name, description, userId);
     }

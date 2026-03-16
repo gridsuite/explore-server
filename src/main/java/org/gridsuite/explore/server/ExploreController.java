@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -282,7 +283,7 @@ public class ExploreController {
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) throws JsonProcessingException {
         exploreService.createParameters(parameters, parametersType, parametersName, description, parentDirectoryUuid, userId);
         return ResponseEntity.ok().build();
     }
@@ -333,7 +334,7 @@ public class ExploreController {
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                              @RequestParam(QUERY_PARAM_NAME) String name,
-                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description) throws JsonProcessingException {
         exploreService.updateParameters(id, parameters, parametersType, userId, name, description);
         return ResponseEntity.ok().build();
     }
