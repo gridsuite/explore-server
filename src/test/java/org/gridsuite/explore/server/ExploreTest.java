@@ -151,6 +151,8 @@ class ExploreTest {
     @Autowired
     private CaseService caseService;
     @Autowired
+    private MonitorService monitorService;
+    @Autowired
     private RemoteServicesProperties remoteServicesProperties;
     @Autowired
     private ObjectMapper mapper;
@@ -179,6 +181,7 @@ class ExploreTest {
         contingencyListService.setActionsServerBaseUri(baseUrl);
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
+        monitorService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
 
