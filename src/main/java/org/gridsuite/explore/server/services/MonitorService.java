@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -25,7 +28,7 @@ public class MonitorService implements IDirectoryElementsService {
 
     private static final String MONITOR_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    public static final String PROCESS_CONFIGS_PATH = "process-configs";
+    public static final String PROCESS_CONFIGS_PATH = DELIMITER + MONITOR_API_VERSION + DELIMITER + "process-configs";
 
     @Setter
     private String monitorServerBaseUri;
@@ -38,7 +41,7 @@ public class MonitorService implements IDirectoryElementsService {
     }
 
     public UUID createProcessConfig(String processConfig) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + MONITOR_API_VERSION + DELIMITER + PROCESS_CONFIGS_PATH)
+        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -47,7 +50,7 @@ public class MonitorService implements IDirectoryElementsService {
     }
 
     public void updateProcessConfig(UUID uuid, String processConfig) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + MONITOR_API_VERSION + DELIMITER + PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}")
+        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}")
                 .buildAndExpand(uuid)
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -56,7 +59,7 @@ public class MonitorService implements IDirectoryElementsService {
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + MONITOR_API_VERSION + DELIMITER + PROCESS_CONFIGS_PATH + DELIMITER + "duplication")
+        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "duplication")
                 .queryParam("duplicateFrom", sourceProcessConfigUuid)
                 .buildAndExpand()
                 .toUriString();
@@ -67,10 +70,22 @@ public class MonitorService implements IDirectoryElementsService {
 
     @Override
     public void delete(UUID id, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + MONITOR_API_VERSION + DELIMITER + PROCESS_CONFIGS_PATH + DELIMITER + "{id}")
+        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "{id}")
             .buildAndExpand(id)
             .toUriString();
         HttpHeaders headers = new HttpHeaders();
         restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+    }
+
+    @Override
+    public List<Map<String, Object>> getMetadata(List<UUID> processConfigUuids) {
+        String path = UriComponentsBuilder
+            .fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "metadata")
+            .queryParam("ids", processConfigUuids)
+            .build()
+            .toUriString();
+        return restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.GET, null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {
+            }).getBody();
     }
 }

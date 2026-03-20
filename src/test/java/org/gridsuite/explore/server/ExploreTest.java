@@ -131,6 +131,7 @@ class ExploreTest {
             "messageValues", "{\"equipmentId\":\"equipmentId2\"}",
             "activated", true)
     );
+    private final Map<String, Object> processConfigSprecificMetadata = Map.of("id", PROCESS_CONFIG_UUID, "type", "SECURITY_ANALYSIS");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
@@ -199,7 +200,7 @@ class ExploreTest {
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
         String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1, 0, null));
-        String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null));
+        String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null, processConfigSprecificMetadata));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
@@ -293,6 +294,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listElementsAttributesAsString);
                 } else if (path.matches("/v1/elements\\?ids=" + ELEMENT_UUID + "," + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listElementsAsString);
+                } else if (path.matches("/v1/elements\\?ids=" + PROCESS_CONFIG_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + processConfigElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements/" + ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?targetDirectoryUuid=" + PARENT_DIRECTORY_UUID) && "PUT".equals(request.getMethod())) {
@@ -366,6 +369,8 @@ class ExploreTest {
                                 mapper.writeValueAsString(compositeModificationMetadata));
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
+                    } else if (path.matches("/v1/process-configs/metadata[?]ids=" + PROCESS_CONFIG_UUID)) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(List.of(processConfigSprecificMetadata)));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "3");
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/profile/max-cases")) {
@@ -1415,6 +1420,20 @@ class ExploreTest {
 
         requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+    }
+
+    @Test
+    void testGetProcessConfigsMetadata() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + PROCESS_CONFIG_UUID)
+                .header("userId", USER1))
+            .andExpect(status().isOk())
+            .andReturn();
+        String response = result.getResponse().getContentAsString();
+        List<ElementAttributes> elementsMetadata = mapper.readValue(response, new TypeReference<>() { });
+        assertEquals(1, elementsMetadata.size());
+        assertEquals(
+            mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null, processConfigSprecificMetadata)),
+            mapper.writeValueAsString(elementsMetadata.getFirst()));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
