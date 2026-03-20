@@ -40,7 +40,7 @@ public class MonitorController {
         this.exploreService = exploreService;
     }
 
-@PostMapping(value = "/process-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/process-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
