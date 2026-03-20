@@ -8,6 +8,7 @@ import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SingleLineDiagramService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -68,6 +69,11 @@ class SingleLineDiagramTest {
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
         singleLineDiagramService.setSingleLineDiagramServerBaseUri(wireMockServer.baseUrl());
+    }
+
+    @AfterEach
+    void tearDown() {
+        wireMockServer.stop();
     }
 
     @Test

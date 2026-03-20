@@ -96,6 +96,7 @@ class ExploreTest {
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final UUID TEST_ACCESS_DIRECTORY_UUID_ALLOWED = UUID.randomUUID();
     private static final UUID TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
+    private static final UUID PROCESS_CONFIG_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
@@ -198,6 +199,7 @@ class ExploreTest {
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
         String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1, 0, null));
+        String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
@@ -275,6 +277,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), publicStudyAttributesAsString);
                 } else if (path.matches("/v1/elements/" + PARAMETERS_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parametersElementAttributesAsString);
+                } else if (path.matches("/v1/elements/" + PROCESS_CONFIG_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), processConfigElementAttributesAsString);
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&elementTypes=FILTER,CASE") && "GET".equals(request.getMethod())) {
@@ -445,6 +449,8 @@ class ExploreTest {
                     } else if (path.matches("/v1/elements/" + PARAMETERS_UUID)) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/elements/" + MODIFICATION_UUID)) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/(process-configs|elements)/" + PROCESS_CONFIG_UUID)) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
                         return new MockResponse(200);
@@ -625,6 +631,7 @@ class ExploreTest {
         deleteElement(CASE_UUID);
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
+        deleteElement(PROCESS_CONFIG_UUID);
         deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
         deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
         deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 409);

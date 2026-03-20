@@ -14,6 +14,7 @@ import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.MonitorService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -91,6 +92,11 @@ class MonitorTest {
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
         monitorService.setMonitorServerBaseUri(wireMockServer.baseUrl());
+    }
+
+    @AfterEach
+    void tearDown() {
+        wireMockServer.stop();
     }
 
     @Test
