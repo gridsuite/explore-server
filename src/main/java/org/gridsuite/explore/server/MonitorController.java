@@ -23,7 +23,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION + "/explore/monitor")
-@Tag(name = "Explore server - Monitor")
+@Tag(name = "explore-server - Monitor")
 public class MonitorController {
 
     // /!\ This query parameter is used by the gateway to control access
