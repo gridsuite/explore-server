@@ -69,7 +69,7 @@ class MonitorTest {
     @MockitoBean
     private DirectoryService directoryService;
 
-    private static final String URL_EXPLORE_MONITOR_PROCESS_CONFIGS = "/v1/explore/monitor/process-configs";
+    private static final String URL_EXPLORE_MONITOR_PROCESS_CONFIGS = "/v1/explore/process-configs";
     private static final String URL_PROCESS_CONFIGS = "/v1/process-configs";
 
     private static final String QUERY_PARAM_NAME = "name";
