@@ -22,7 +22,7 @@ import java.util.UUID;
  * @author Caroline Jeandat {@literal <caroline.jeandat at rte-france.com>}
  */
 @RestController
-@RequestMapping(value = "/" + ExploreApi.API_VERSION + "/explore/monitor")
+@RequestMapping(value = "/" + ExploreApi.API_VERSION + "/explore")
 @Tag(name = "explore-server - Monitor")
 public class MonitorController {
 
