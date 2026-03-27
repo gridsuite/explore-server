@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.services;
 
-import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -26,13 +25,20 @@ public class MonitorService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     public static final String PROCESS_CONFIGS_PATH = DELIMITER + "process-configs";
 
-    @Setter
     private String monitorServerBaseUri;
 
-    private final RestClient restClient;
+    private final RestClient.Builder restClientBuilder;
+
+    private RestClient restClient;
 
     public MonitorService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
+        this.restClientBuilder = restClientBuilder;
         this.monitorServerBaseUri = remoteServicesProperties.getServiceUri("monitor-server");
+        this.restClient = restClientBuilder.baseUrl(monitorServerBaseUri + DELIMITER + MONITOR_API_VERSION).build();
+    }
+
+    public void setMonitorServerBaseUri(String monitorServerBaseUri) {
+        this.monitorServerBaseUri = monitorServerBaseUri;
         this.restClient = restClientBuilder.baseUrl(monitorServerBaseUri + DELIMITER + MONITOR_API_VERSION).build();
     }
 
