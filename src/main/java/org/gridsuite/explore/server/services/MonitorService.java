@@ -8,13 +8,9 @@ package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
@@ -28,64 +24,63 @@ public class MonitorService implements IDirectoryElementsService {
 
     private static final String MONITOR_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    public static final String PROCESS_CONFIGS_PATH = DELIMITER + MONITOR_API_VERSION + DELIMITER + "process-configs";
+    public static final String PROCESS_CONFIGS_PATH = DELIMITER + "process-configs";
 
     @Setter
     private String monitorServerBaseUri;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public MonitorService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public MonitorService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
         this.monitorServerBaseUri = remoteServicesProperties.getServiceUri("monitor-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClientBuilder.baseUrl(monitorServerBaseUri + DELIMITER + MONITOR_API_VERSION).build();
     }
 
     public UUID createProcessConfig(String processConfig) {
-        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH)
-                .buildAndExpand()
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(processConfig, headers), UUID.class).getBody();
+        return restClient.post()
+            .uri(PROCESS_CONFIGS_PATH)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(processConfig)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void updateProcessConfig(UUID uuid, String processConfig) {
-        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}")
-                .buildAndExpand(uuid)
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(processConfig, headers), void.class);
+        restClient.put()
+            .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}", uuid)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(processConfig)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid) {
-        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "duplication")
-                .queryParam("duplicateFrom", sourceProcessConfigUuid)
-                .buildAndExpand()
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
+        return restClient.post()
+            .uri(uriBuilder ->
+                uriBuilder.path(PROCESS_CONFIGS_PATH + DELIMITER + "duplication")
+                    .queryParam("duplicateFrom", sourceProcessConfigUuid)
+                    .build())
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .body(UUID.class);
     }
 
     @Override
     public void delete(UUID id, String userId) {
-        String path = UriComponentsBuilder.fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "{id}")
-            .buildAndExpand(id)
-            .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restClient.delete()
+            .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{id}", id)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
     public List<Map<String, Object>> getMetadata(List<UUID> processConfigUuids) {
-        String path = UriComponentsBuilder
-            .fromPath(PROCESS_CONFIGS_PATH + DELIMITER + "metadata")
-            .queryParam("ids", processConfigUuids)
-            .build()
-            .toUriString();
-        return restTemplate.exchange(monitorServerBaseUri + path, HttpMethod.GET, null,
-            new ParameterizedTypeReference<List<Map<String, Object>>>() {
-            }).getBody();
+        return restClient.get()
+            .uri(uriBuilder ->
+                uriBuilder.path(PROCESS_CONFIGS_PATH + DELIMITER + "metadata")
+                    .queryParam("ids", processConfigUuids)
+                    .build())
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 }
