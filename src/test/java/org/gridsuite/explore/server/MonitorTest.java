@@ -95,8 +95,10 @@ class MonitorTest {
     }
 
     @AfterEach
-    void tearDown() {
-        wireMockServer.stop();
+    void teardown() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
     }
 
     @Test
