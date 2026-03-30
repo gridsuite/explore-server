@@ -233,10 +233,11 @@ public class ExploreService {
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         Map<UUID, List<Object>> compositeContent = networkModificationService.getCompositeModificationContent(compositeModificationId);
-        if (compositeContent != null) {
-            return compositeContent.values().stream().flatMap(Collection::stream).toList();
+        if (compositeContent == null) {
+            return List.of();
         }
-        return List.of();
+        List<Object> requestedContent = compositeContent.get(compositeModificationId);
+        return requestedContent != null ? requestedContent : List.of();
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description, String userId) {
