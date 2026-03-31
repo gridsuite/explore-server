@@ -9,6 +9,7 @@ package org.gridsuite.explore.server;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.WireMockUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +104,13 @@ class UserIdentityTest {
         )));
         when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB))
                 .thenThrow(new RuntimeException(String.format("Element '%s' not found", ELEMENT_NOT_FOUND_UUID)));
+    }
+
+    @AfterEach
+    void teardown() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
     }
 
     protected Map<String, StringValuePattern> handleQueryParams(List<String> subs) {

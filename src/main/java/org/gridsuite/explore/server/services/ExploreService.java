@@ -47,6 +47,7 @@ public class ExploreService {
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
     static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
     static final String WORKSPACE = "WORKSPACE";
+    static final String PROCESS_CONFIG = "PROCESS_CONFIG";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -60,6 +61,7 @@ public class ExploreService {
     private final WorkspaceService workspaceService;
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
+    private final MonitorService monitorService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -79,7 +81,8 @@ public class ExploreService {
         WorkspaceService workspaceService,
         UserIdentityService userIdentityService,
         NotificationService notificationService,
-        SingleLineDiagramService singleLineDiagramService) {
+        SingleLineDiagramService singleLineDiagramService,
+        MonitorService monitorService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -95,6 +98,7 @@ public class ExploreService {
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
+        this.monitorService = monitorService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -418,5 +422,22 @@ public class ExploreService {
         List<String> subs = directoryService.getElementsInfos(elementsUuids, null, userId).stream()
                 .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
         return userIdentityService.getUsersIdentities(subs);
+    }
+
+    public void createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
+        UUID processConfigUuid = monitorService.createProcessConfig(processConfig);
+        ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG,
+                userId, 0L, description);
+        directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true);
+    }
+
+    public void updateProcessConfig(UUID uuid, String name, String processConfig, String description, String userId) {
+        monitorService.updateProcessConfig(uuid, processConfig);
+        updateElementNameAndDescription(uuid, name, description, userId);
+    }
+
+    public void duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId, String userId) {
+        UUID newProcessConfigUuid = monitorService.duplicateProcessConfig(sourceProcessConfigUuid);
+        directoryService.duplicateElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, userId);
     }
 }
