@@ -21,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
@@ -239,7 +236,9 @@ public class ExploreService {
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
-        return networkModificationService.getCompositeModificationContent(compositeModificationId);
+        Map<UUID, List<Object>> compositeContent = networkModificationService.getCompositeModificationContent(compositeModificationId);
+        List<Object> requestedContent = compositeContent.get(compositeModificationId);
+        return requestedContent != null ? requestedContent : List.of();
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description, String userId) {
