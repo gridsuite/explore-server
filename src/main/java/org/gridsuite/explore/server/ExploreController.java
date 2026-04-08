@@ -696,4 +696,41 @@ public class ExploreController {
         directoryService.setDirectoryPermissions(directoryUuid, permissions, userId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping(value = "/explore/process-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a process config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> createProcessConfig(@RequestParam(QUERY_PARAM_NAME) String name,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                    @RequestBody(required = false) String processConfig) {
+        exploreService.createProcessConfig(name, processConfig, description, userId, parentDirectoryId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/process-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a process config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> updateProcessConfig(@PathVariable UUID id,
+                                                    @RequestParam(QUERY_PARAM_NAME) String name,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                    @RequestBody(required = false) String processConfig) {
+        exploreService.updateProcessConfig(id, name, processConfig, description, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/process-configs/duplication")
+    @Operation(summary = "Duplicate a process config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #id, #targetDirectoryId)")
+    public ResponseEntity<Void> duplicateProcessConfig(@RequestParam("duplicateFrom") UUID id,
+                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.duplicateProcessConfig(id, targetDirectoryId, userId);
+        return ResponseEntity.ok().build();
+    }
 }
