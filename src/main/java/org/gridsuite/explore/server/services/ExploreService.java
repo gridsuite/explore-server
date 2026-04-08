@@ -107,7 +107,12 @@ public class ExploreService {
         String elementName = getElementName(caseInfo.caseUuid());
 
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), userId, caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
-        directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+        try {
+            directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+        } catch (Exception e) {
+            studyService.delete(elementAttributes.getElementUuid(), userId);
+            throw e;
+        }
     }
 
     private @Nullable String getElementName(UUID elementUuid) {
