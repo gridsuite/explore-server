@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, RTE (http://www.rte-france.com)
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -80,7 +80,7 @@ public class StudyService implements IDirectoryElementsService {
     public List<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
         var ids = studiesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-                .fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
+                .fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/supervision/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,

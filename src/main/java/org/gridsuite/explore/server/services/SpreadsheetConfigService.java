@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024, RTE (http://www.rte-france.com)
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -32,6 +32,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
     private static final String SPREADSHEET_CONFIG_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String SPREADSHEET_CONFIG_SERVER_ROOT_PATH = DELIMITER + SPREADSHEET_CONFIG_API_VERSION + DELIMITER + "spreadsheet-configs";
+    private static final String SPREADSHEET_SUPERVISION_CONFIG_SERVER_ROOT_PATH = DELIMITER + SPREADSHEET_CONFIG_API_VERSION + DELIMITER + "supervision" + DELIMITER + "spreadsheet-configs";
     private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
 
     private final RestTemplate restTemplate;
@@ -117,7 +118,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         var ids = configsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
 
         var path = UriComponentsBuilder
-                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH + "/metadata" + "?ids=" + ids)
+                .fromPath(SPREADSHEET_SUPERVISION_CONFIG_SERVER_ROOT_PATH + "/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
 
