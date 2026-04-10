@@ -272,7 +272,7 @@ public class ExploreService {
     }
 
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType, String userId) {
-        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
+        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType, userId);
         directoryService.duplicateElement(sourceId, newParametersUuid, targetDirectoryId, userId);
     }
 
