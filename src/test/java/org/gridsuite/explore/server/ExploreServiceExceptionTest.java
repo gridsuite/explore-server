@@ -82,9 +82,9 @@ class ExploreServiceExceptionTest {
         UUID createdCompositeModificationId = UUID.randomUUID();
         when(networkModificationService.createCompositeModification(anyList())).thenReturn(createdCompositeModificationId);
 
-        UUID modificationUuid = UUID.randomUUID();
+        List<UUID> modificationUuids = List.of(UUID.randomUUID());
         UUID parentDirectoryUuid = UUID.randomUUID();
-        String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(List.of(modificationUuid),
+        String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(modificationUuids,
                 "userId", "name", "description", parentDirectoryUuid))
                 .getMessage();
         verify(networkModificationService, times(1)).createCompositeModification(any());
