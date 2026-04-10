@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-public class ExploreServiceExceptionTest {
+class ExploreServiceExceptionTest {
 
     @MockitoBean
     private DirectoryService directoryService;
@@ -50,13 +50,13 @@ public class ExploreServiceExceptionTest {
         when(directoryService.createElement(any(), any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
         doNothing().when(filterService).insertFilter(any(), any(), any());
         doNothing().when(filterService).delete(any(), any());
-
+        UUID parentDirectoryUuid = UUID.randomUUID();
         String message = assertThrows(RuntimeException.class, () -> exploreService.createFilter("filterId",
-                "filterName", "description", UUID.randomUUID(), "userId"))
+                "filterName", "description", parentDirectoryUuid, "userId"))
                 .getMessage();
         ArgumentCaptor<UUID> createdFilterId = ArgumentCaptor.forClass(UUID.class);
         verify(filterService, times(1)).insertFilter(any(), createdFilterId.capture(), eq("userId"));
-        verify(filterService, times(1)).delete(eq(createdFilterId.getValue()), eq("userId"));
+        verify(filterService, times(1)).delete(createdFilterId.getValue(), "userId");
         assertEquals(creatingErrorMessage, message);
         reset(filterService);
 
@@ -66,7 +66,9 @@ public class ExploreServiceExceptionTest {
         UUID duplicatedFilterId = UUID.randomUUID();
         when(filterService.duplicateFilter(any())).thenReturn(duplicatedFilterId);
 
-        message = assertThrows(RuntimeException.class, () -> exploreService.duplicateFilter(UUID.randomUUID(), UUID.randomUUID(), "userId"))
+        UUID sourceFilterId = UUID.randomUUID();
+        UUID targetDirectoryId = UUID.randomUUID();
+        message = assertThrows(RuntimeException.class, () -> exploreService.duplicateFilter(sourceFilterId, targetDirectoryId, "userId"))
                 .getMessage();
         verify(filterService, times(1)).duplicateFilter(any());
         verify(filterService, times(1)).delete(eq(duplicatedFilterId), any());
@@ -80,8 +82,10 @@ public class ExploreServiceExceptionTest {
         UUID createdCompositeModificationId = UUID.randomUUID();
         when(networkModificationService.createCompositeModification(anyList())).thenReturn(createdCompositeModificationId);
 
-        String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(List.of(UUID.randomUUID()),
-                "userId", "name", "description", UUID.randomUUID()))
+        UUID modificationUuid = UUID.randomUUID();
+        UUID parentDirectoryUuid = UUID.randomUUID();
+        String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(List.of(modificationUuid),
+                "userId", "name", "description", parentDirectoryUuid))
                 .getMessage();
         verify(networkModificationService, times(1)).createCompositeModification(any());
         verify(networkModificationService, times(1)).delete(eq(createdCompositeModificationId), any());
