@@ -91,4 +91,26 @@ class ExploreServiceExceptionTest {
         verify(networkModificationService, times(1)).delete(eq(createdCompositeModificationId), any());
         assertEquals(creatingErrorMessage, message);
     }
+
+    @Test
+    void testDirectoryServerCrashesAndDeleteElementToo() {
+        // creation
+        String creatingErrorMessage = "error when creating element from directory server";
+        String deletingErrorMessage = "error when deleting filter element";
+        when(directoryService.createElement(any(), any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
+        doNothing().when(filterService).insertFilter(any(), any(), any());
+        doThrow(new RuntimeException(deletingErrorMessage)).when(filterService).delete(any(), any());
+        UUID parentDirectoryUuid = UUID.randomUUID();
+        Throwable throwable = assertThrows(RuntimeException.class, () -> exploreService.createFilter("filterId",
+                "filterName", "description", parentDirectoryUuid, "userId"));
+        String message = throwable.getMessage();
+        assertEquals(creatingErrorMessage, message);
+        assertEquals(1, throwable.getSuppressed().length);
+        assertEquals(deletingErrorMessage, throwable.getSuppressed()[0].getMessage());
+
+        ArgumentCaptor<UUID> createdFilterId = ArgumentCaptor.forClass(UUID.class);
+        verify(filterService, times(1)).insertFilter(any(), createdFilterId.capture(), eq("userId"));
+        verify(filterService, times(1)).delete(createdFilterId.getValue(), "userId");
+        reset(filterService);
+    }
 }
