@@ -91,7 +91,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
 
-    public void updateSpreadsheetConfigCollection(UUID collectionId, String collection) {
+    public void updateSpreadsheetConfigCollection(UUID collectionId, String collection, String userId) {
         Objects.requireNonNull(collectionId);
         Objects.requireNonNull(collection);
 
@@ -101,6 +101,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
+        headers.set(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> httpEntity = new HttpEntity<>(collection, headers);

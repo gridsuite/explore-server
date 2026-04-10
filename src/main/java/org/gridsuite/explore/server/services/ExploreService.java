@@ -319,7 +319,7 @@ public class ExploreService {
     }
 
     public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String userId, String name, String description) {
-        spreadsheetConfigCollectionService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto);
+        spreadsheetConfigCollectionService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, userId);
         updateElementNameAndDescription(id, name, description, userId);
     }
 
