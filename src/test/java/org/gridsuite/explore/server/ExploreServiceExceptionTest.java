@@ -11,6 +11,7 @@ import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.FilterService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -53,20 +54,22 @@ public class ExploreServiceExceptionTest {
         String message = assertThrows(RuntimeException.class, () -> exploreService.createFilter("filterId",
                 "filterName", "description", UUID.randomUUID(), "userId"))
                 .getMessage();
-        verify(filterService, times(1)).insertFilter(any(), any(), any());
-        verify(filterService, times(1)).delete(any(), any());
+        ArgumentCaptor<UUID> createdFilterId = ArgumentCaptor.forClass(UUID.class);
+        verify(filterService, times(1)).insertFilter(any(), createdFilterId.capture(), eq("userId"));
+        verify(filterService, times(1)).delete(eq(createdFilterId.getValue()), eq("userId"));
         assertEquals(creatingErrorMessage, message);
         reset(filterService);
 
         // duplication
         String duplicateErrorMessage = "error when duplicating element from directory server";
         when(directoryService.duplicateElement(any(), any(), any(), any())).thenThrow(new RuntimeException(duplicateErrorMessage));
-        when(filterService.duplicateFilter(any())).thenReturn(UUID.randomUUID());
+        UUID duplicatedFilterId = UUID.randomUUID();
+        when(filterService.duplicateFilter(any())).thenReturn(duplicatedFilterId);
 
         message = assertThrows(RuntimeException.class, () -> exploreService.duplicateFilter(UUID.randomUUID(), UUID.randomUUID(), "userId"))
                 .getMessage();
         verify(filterService, times(1)).duplicateFilter(any());
-        verify(filterService, times(1)).delete(any(), any());
+        verify(filterService, times(1)).delete(eq(duplicatedFilterId), any());
         assertEquals(duplicateErrorMessage, message);
     }
 
@@ -74,13 +77,14 @@ public class ExploreServiceExceptionTest {
     void testDirectoryServerCrashesWithNetworkModification() {
         String creatingErrorMessage = "error when creating element from directory server";
         when(directoryService.createElementWithNewName(any(), any(), any(), anyBoolean())).thenThrow(new RuntimeException(creatingErrorMessage));
-        when(networkModificationService.createCompositeModification(anyList())).thenReturn(UUID.randomUUID());
+        UUID createdCompositeModificationId = UUID.randomUUID();
+        when(networkModificationService.createCompositeModification(anyList())).thenReturn(createdCompositeModificationId);
 
         String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(List.of(UUID.randomUUID()),
                 "userId", "name", "description", UUID.randomUUID()))
                 .getMessage();
         verify(networkModificationService, times(1)).createCompositeModification(any());
-        verify(networkModificationService, times(1)).delete(any(), any());
+        verify(networkModificationService, times(1)).delete(eq(createdCompositeModificationId), any());
         assertEquals(creatingErrorMessage, message);
     }
 }
