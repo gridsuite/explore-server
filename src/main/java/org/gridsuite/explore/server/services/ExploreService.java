@@ -442,21 +442,20 @@ public class ExploreService {
         duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, userId, monitorService::delete);
     }
 
-    private void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> deleteCreatedElement) {
-        manageFailingOfDirectory(elementAttributes, parentDirectoryUuid, userId, deleteCreatedElement, directoryService::createElement);
+    private void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
+        executeWithRollback(() -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId), elementAttributes.getElementUuid(), userId, rollback);
     }
 
-    private void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> deleteCreatedElement) {
-        manageFailingOfDirectory(elementAttributes, parentDirectoryUuid, userId, deleteCreatedElement,
-                (element, directoryUuid, user) -> directoryService.createElementWithNewName(element, directoryUuid, user, true));
+    private void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
+        executeWithRollback(() -> directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true), elementAttributes.getElementUuid(), userId, rollback);
     }
 
-    private void manageFailingOfDirectory(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> deleteCreatedElement, TriConsumer<ElementAttributes, UUID, String> triConsumer) {
+    private void executeWithRollback(Runnable directoryAction, UUID elementId, String userId, BiConsumer<UUID, String> rollback) {
         try {
-            triConsumer.accept(elementAttributes, parentDirectoryUuid, userId);
+            directoryAction.run();
         } catch (Exception directoryException) {
             try {
-                deleteCreatedElement.accept(elementAttributes.getElementUuid(), userId);
+                rollback.accept(elementId, userId);
             } catch (Exception rollbackException) {
                 directoryException.addSuppressed(rollbackException);
             }
@@ -464,21 +463,7 @@ public class ExploreService {
         }
     }
 
-    private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId, String userId, BiConsumer<UUID, String> deleteCreatedElement) {
-        try {
-            directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, userId);
-        } catch (Exception directoryException) {
-            try {
-                deleteCreatedElement.accept(elementDuplicated, userId);
-            } catch (Exception rollbackException) {
-                directoryException.addSuppressed(rollbackException);
-            }
-            throw directoryException;
-        }
-    }
-
-    @FunctionalInterface
-    public interface TriConsumer<T, U, V> {
-        void accept(T var1, U var2, V var3);
+    private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId, String userId, BiConsumer<UUID, String> rollback) {
+        executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, userId), elementDuplicated, userId, rollback);
     }
 }
