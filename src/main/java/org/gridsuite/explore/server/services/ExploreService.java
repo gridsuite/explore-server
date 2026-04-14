@@ -328,6 +328,7 @@ public class ExploreService {
     public void replaceAllSpreadsheetConfigsInCollection(UUID id, List<UUID> configIds, String userId, String name, String description) {
         spreadsheetConfigCollectionService.replaceAllSpreadsheetConfigsInCollection(id, configIds);
         updateElementNameAndDescription(id, name, description, userId);
+        notificationService.emitElementUpdated(id, userId);
     }
 
     public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId, String userId) {
