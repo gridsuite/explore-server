@@ -95,7 +95,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-    public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
+    public Map<UUID, List<Object>> getCompositeModificationContent(UUID compositeModificationId) {
         String path = UriComponentsBuilder
                 .fromPath(DELIMITER +
                         NETWORK_MODIFICATION_API_VERSION +
@@ -107,7 +107,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Object>>() {
+                new ParameterizedTypeReference<Map<UUID, List<Object>>>() {
                 }).getBody();
     }
 }

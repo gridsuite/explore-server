@@ -240,7 +240,9 @@ public class ExploreService {
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
-        return networkModificationService.getCompositeModificationContent(compositeModificationId);
+        Map<UUID, List<Object>> compositeContent = networkModificationService.getCompositeModificationContent(compositeModificationId);
+        List<Object> requestedContent = compositeContent.get(compositeModificationId);
+        return requestedContent != null ? requestedContent : List.of();
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description, String userId) {
