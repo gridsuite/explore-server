@@ -117,7 +117,7 @@ class ExploreTest {
     private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
     private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
-    private final List<Map<String, Object>> compositeModificationMetadata = List.of(
+    private final Map<UUID, List<Map<String, Object>>> compositeModificationMetadata = Map.of(COMPOSITE_MODIFICATION_UUID, List.of(
             Map.of(
             "uuid", MODIFICATION_UUID,
             "type", "LOAD_MODIFICATION",
@@ -130,7 +130,7 @@ class ExploreTest {
             "messageType", "SHUNT_COMPENSATOR_MODIFICATION",
             "messageValues", "{\"equipmentId\":\"equipmentId2\"}",
             "activated", true)
-    );
+    ));
     private final Map<String, Object> processConfigSprecificMetadata = Map.of("id", PROCESS_CONFIG_UUID, "type", "SECURITY_ANALYSIS");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
