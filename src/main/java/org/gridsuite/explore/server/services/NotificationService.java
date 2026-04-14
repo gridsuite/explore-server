@@ -8,6 +8,10 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.time.Instant;
+import java.util.UUID;
+
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +29,8 @@ public class NotificationService {
 
     public static final String DIRECTORY_UPDATE_BINDING = "publishDirectoryUpdate-out-0";
 
+    public static final String ELEMENT_UPDATE_BINDING = "publishElementUpdate-out-0";
+
     public static final String HEADER_USER_MESSAGE = "userMessage";
 
     public static final String HEADER_UPDATE_TYPE = "updateType";
@@ -36,6 +42,12 @@ public class NotificationService {
     public static final String MESSAGE_LOG = "Sending message : {}";
 
     private static final String CATEGORY_BROKER_OUTPUT = NotificationService.class.getName() + ".output-broker-messages";
+
+    public static final String HEADER_MODIFIED_BY = "modifiedBy";
+
+    public static final String HEADER_MODIFICATION_DATE = "modificationDate";
+
+    public static final String HEADER_ELEMENT_UUID = "elementUuid";
 
     private static final Logger MESSAGE_OUTPUT_LOGGER = LoggerFactory.getLogger(CATEGORY_BROKER_OUTPUT);
 
@@ -65,5 +77,14 @@ public class NotificationService {
         } catch (JsonProcessingException e) {
             MESSAGE_OUTPUT_LOGGER.error("Fail to send message to user !!!");
         }
+    }
+
+    public void emitElementUpdated(UUID elementUuid, String modifiedBy) {
+        sendMessage(MessageBuilder.withPayload("")
+            .setHeader(HEADER_ELEMENT_UUID, elementUuid)
+            .setHeader(HEADER_MODIFIED_BY, modifiedBy)
+            .setHeader(HEADER_MODIFICATION_DATE, Instant.now())
+            .build(), ELEMENT_UPDATE_BINDING
+        );
     }
 }
