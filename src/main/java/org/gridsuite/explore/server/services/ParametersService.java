@@ -99,7 +99,7 @@ public class ParametersService implements IDirectoryElementsService {
         restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.PUT, httpEntity, UUID.class);
     }
 
-    public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {
+    public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType, String userId) {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(sourceParametersUuid);
         var path = UriComponentsBuilder
@@ -108,6 +108,7 @@ public class ParametersService implements IDirectoryElementsService {
                     .buildAndExpand()
                     .toUriString();
         HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
         return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
