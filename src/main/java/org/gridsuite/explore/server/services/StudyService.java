@@ -105,4 +105,15 @@ public class StudyService implements IDirectoryElementsService {
         headers.set(HEADER_USER_ID, userId);
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
+
+    public ResponseEntity<Void> notifyStudiesUpdate(List<UUID> studiesUuid, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                "/studies/notification")
+            .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set(HEADER_USER_ID, userId);
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(studiesUuid, headers), Void.class);
+    }
 }

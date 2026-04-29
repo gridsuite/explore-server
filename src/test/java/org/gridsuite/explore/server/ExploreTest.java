@@ -232,6 +232,8 @@ class ExploreTest {
                     return new MockResponse(404);
                 } else if (path.matches("/v1/studies/.*/notification?type=metadata_updated") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/studies/notification") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newStudyUuidAsString);
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
