@@ -363,6 +363,21 @@ public class DirectoryService implements IDirectoryElementsService {
         return listOfElements;
     }
 
+    public Map<UUID, String> getElementsName(List<UUID> ids) {
+        String path = UriComponentsBuilder
+            .fromPath("/v1/elements/names")
+            .queryParam(PARAM_IDS, ids)
+            .queryParam("strictMode", false)
+            .buildAndExpand()
+            .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ElementAttributes> httpEntity = new HttpEntity<>(headers);
+        return restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<Map<UUID, String>>() {
+        }).getBody();
+    }
+
     public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, String userId) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ELEMENT_PATH)
