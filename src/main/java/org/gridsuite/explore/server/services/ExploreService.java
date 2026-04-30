@@ -411,13 +411,19 @@ public class ExploreService {
         directoryService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
         //send notification to all studies
         List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null, userId);
-        elementsAttributes.forEach(elementAttributes -> notifyStudyUpdate(elementAttributes, userId));
-
+        notifyStudiesUpdate(elementsAttributes, userId);
     }
 
     private void notifyStudyUpdate(ElementAttributes element, String userId) {
         if (STUDY.equals(element.getType())) {
             studyService.notifyStudyUpdate(element.getElementUuid(), userId);
+        }
+    }
+
+    private void notifyStudiesUpdate(List<ElementAttributes> elements, String userId) {
+        List<UUID> studiesUuids = elements.stream().filter(e -> STUDY.equals(e.getType())).map(ElementAttributes::getElementUuid).toList();
+        if (!studiesUuids.isEmpty()) {
+            studyService.notifyStudiesUpdate(studiesUuids, userId);
         }
     }
 
