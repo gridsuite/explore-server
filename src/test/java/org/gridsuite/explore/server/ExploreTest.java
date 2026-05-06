@@ -135,8 +135,16 @@ class ExploreTest {
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
+    private static final String ELEMENT_NAME = "elementName";
+    private static final UUID ELEMENT_UUID_2 = UUID.randomUUID();
+    private static final String ELEMENT_NAME_2 = "elementName2";
     private static final UUID FORBIDDEN_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID DIRECTORY_NOT_OWNED_SUBELEMENT_UUID = UUID.randomUUID();
+
+    private final Map<UUID, String> elementNames = Map.of(
+        ELEMENT_UUID, ELEMENT_NAME,
+        ELEMENT_UUID_2, ELEMENT_NAME_2
+    );
 
     @Autowired
     private MockMvc mockMvc;
@@ -219,6 +227,7 @@ class ExploreTest {
                 new PermissionDTO(false, List.of(UUID.randomUUID()), PermissionType.WRITE),
                 new PermissionDTO(false, List.of(), PermissionType.MANAGE)
         ));
+        String elementNamesAsString = mapper.writeValueAsString(elementNames);
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -306,6 +315,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementUuidAsString);
                 } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/elements/names\\?ids=" + ELEMENT_UUID + "&ids=" + ELEMENT_UUID_2 + "&strictMode=false") && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementNamesAsString);
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfFormContingencyListAttributesAsString.replace("elementUuid", "id"));
                 } else if (path.matches("/v1/.*contingency-lists\\?duplicateFrom=" + CONTINGENCY_LIST_UUID) && "POST".equals(request.getMethod())) {
@@ -933,6 +944,15 @@ class ExploreTest {
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null, caseSpecificMetadata));
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), caseAttributesAsString);
+    }
+
+    @Test
+    void testGetElementsName() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/name?ids=" + ELEMENT_UUID + "&ids=" + ELEMENT_UUID_2))
+            .andExpect(status().isOk())
+            .andReturn();
+        String res = result.getResponse().getContentAsString();
+        assertEquals(res, mapper.writeValueAsString(elementNames));
     }
 
     @Test
