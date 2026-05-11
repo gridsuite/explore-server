@@ -112,6 +112,6 @@ public class StudyService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set(HEADER_USER_ID, userId);
-        return restTemplate.exchange(studyServerBaseUri + "/" + path, HttpMethod.POST, new HttpEntity<>(studyUuids, headers), Void.class);
+        return restTemplate.exchange(studyServerBaseUri + DELIMITER + path, HttpMethod.POST, new HttpEntity<>(studyUuids, headers), Void.class);
     }
 }
