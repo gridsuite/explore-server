@@ -238,6 +238,13 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes, userId));
     }
 
+    @GetMapping(value = "/explore/elements/name", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "get element names from ids given as parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements names")})
+    public ResponseEntity<Map<UUID, String>> getElementsName(@RequestParam("ids") List<UUID> ids) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsName(ids));
+    }
+
     @GetMapping(value = "/explore/composite-modification/{id}/network-modifications", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get the basic information of the network modifications contained in a composite modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Basic infos from all the contained network modifications")})
