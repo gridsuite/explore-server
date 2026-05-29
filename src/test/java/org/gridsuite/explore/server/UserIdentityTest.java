@@ -6,6 +6,9 @@
  */
 package org.gridsuite.explore.server;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -20,22 +23,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 import org.springframework.web.client.HttpServerErrorException;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 /**
  * @author Sylvain BOUZOLS <sylvain.bouzols at rte-france.com>
