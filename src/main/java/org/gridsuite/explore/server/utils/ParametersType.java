@@ -7,7 +7,7 @@
 package org.gridsuite.explore.server.utils;
 
 /**
- * @author Ayoub LABIDI <ayoub.labidi@rte-france.com>
+ * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
 public enum ParametersType {
     VOLTAGE_INIT_PARAMETERS,

@@ -179,6 +179,7 @@ class ExploreTest {
 
     private static final long TIMEOUT = 1000;
 
+    @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
     void setup(final MockWebServer server) throws Exception {
         // Ask the server for its URL. You'll need this to make HTTP requests.
@@ -201,14 +202,17 @@ class ExploreTest {
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", USER1, 0, null));
         String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0, null));
-        String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0, null)));
+        String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0,
+                null)));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null));
         String filter2AttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, USER1, 0, null));
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
-        String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1, 0, null));
-        String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null, processConfigSprecificMetadata));
+        String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1,
+                0, null));
+        String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null,
+                processConfigSprecificMetadata));
         String listElementsAttributesAsString = "[" + filterAttributesAsString + "," + privateStudyAttributesAsString + "," + formContingencyListAttributesAsString + "]";
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
@@ -227,6 +231,7 @@ class ExploreTest {
                 new PermissionDTO(false, List.of(UUID.randomUUID()), PermissionType.WRITE),
                 new PermissionDTO(false, List.of(), PermissionType.MANAGE)
         ));
+        @SuppressWarnings("checkstyle:MethodLength")
         String elementNamesAsString = mapper.writeValueAsString(elementNames);
 
         final Dispatcher dispatcher = new Dispatcher() {
@@ -271,11 +276,11 @@ class ExploreTest {
                     return new MockResponse(500);
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), formContingencyListAttributesAsString);
-                } else if (path.equals("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY")) {
+                } else if (("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY").equals(path)) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), formContingencyListAttributesAsString);
                 } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), filterAttributesAsString);
-                } else if (path.equals("/v1/elements/" + FILTER_UUID + "/notification?type=UPDATE_DIRECTORY")) {
+                } else if (("/v1/elements/" + FILTER_UUID + "/notification?type=UPDATE_DIRECTORY").equals(path)) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), filterAttributesAsString);
                 } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), caseElementAttributesAsString);
@@ -292,13 +297,15 @@ class ExploreTest {
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&elementTypes=FILTER,CASE") && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "," + caseElementAttributesAsString + "]");
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                            "[" + filterAttributesAsString + "," + filter2AttributesAsString + "," + caseElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + caseElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + modificationElementAttributesAsString + "]");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]");
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                            "[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listElementsAttributesAsString);
                 } else if (path.matches("/v1/elements\\?ids=" + ELEMENT_UUID + "," + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
@@ -858,7 +865,9 @@ class ExploreTest {
 
     @Test
     void testChangeFilter(final MockWebServer server) throws Exception {
-        final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"],\"tso\":[\"ceps\"]}}}";
+        final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test "
+                + "bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"]"
+                        + ",\"tso\":[\"ceps\"]}}}";
         final String name = "filter name";
         final String description = "new filter description";
         mockMvc.perform(put("/v1/explore/filters/{id}",
@@ -875,7 +884,9 @@ class ExploreTest {
 
     @Test
     void testModifyFormContingencyList(final MockWebServer server) throws Exception {
-        final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{},\"freeProperties2\":{}}";
+        final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN "
+                + "update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{}"
+                        + ",\"freeProperties2\":{}}";
         final String name = "form contingency name";
         final String description = "form contingency description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
@@ -893,7 +904,9 @@ class ExploreTest {
 
     @Test
     void testModifyIdentifierContingencyList(final MockWebServer server) throws Exception {
-        final String identifierContingencyList = "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\",\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
+        final String identifierContingencyList =
+                "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\","
+                        + "\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
         final String description = "identifier contingencyList description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
@@ -911,7 +924,8 @@ class ExploreTest {
 
     @Test
     void testModifyFilterContingencyList(final MockWebServer server) throws Exception {
-        final String filters = "{\"filters\":[{\"id\":\"uuid1\",\"name\":\"TD_Sensi\",\"equipmentType\":\"TWO_WINDINGS_TRANSFORMER\"},{\"id\":\"uuid2\",\"name\":\"Ligne ARGIA\",\"equipmentType\":\"LINE\"}]}";
+        final String filters = "{\"filters\":[{\"id\":\"uuid1\",\"name\":\"TD_Sensi\",\"equipmentType\":\"TWO_WINDINGS_TRANSFORMER\"},{\"id\":\"uuid2\",\"name\":\"Ligne "
+                + "ARGIA\",\"equipmentType\":\"LINE\"}]}";
         final String name = "filter based contingencyList name";
         final String description = "filter based contingencyList description";
         mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
