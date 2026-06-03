@@ -63,7 +63,7 @@ public class MonitorService implements IDirectoryElementsService {
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid) {
         return restClient.post()
             .uri(uriBuilder ->
-                uriBuilder.path(PROCESS_CONFIGS_PATH + DELIMITER + "duplication")
+                uriBuilder.path(PROCESS_CONFIGS_PATH)
                     .queryParam("duplicateFrom", sourceProcessConfigUuid)
                     .build())
             .contentType(MediaType.APPLICATION_JSON)
