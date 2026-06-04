@@ -200,7 +200,8 @@ class ExploreTest {
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", USER1, 0, null));
         String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0, null));
-        String contingencyListMetadataErrorAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_METADATA_ERROR_UUID, "contingencyListInError", "CONTINGENCY_LIST", USER1, 0, null));
+        String contingencyListMetadataErrorAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_METADATA_ERROR_UUID, "contingencyListInError",
+                "CONTINGENCY_LIST", USER1, 0, null));
         String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0,
                 null)));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null));
