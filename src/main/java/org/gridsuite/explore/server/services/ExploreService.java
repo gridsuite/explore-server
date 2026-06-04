@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>

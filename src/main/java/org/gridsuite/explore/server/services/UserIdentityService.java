@@ -6,14 +6,12 @@
  */
 package org.gridsuite.explore.server.services;
 
-import java.util.List;
-
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import lombok.Setter;
+import java.util.List;
 
 /**
  * @author Jon Schuhmacher <jon.harper at rte-france.com>
