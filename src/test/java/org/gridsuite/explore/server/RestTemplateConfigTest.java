@@ -25,7 +25,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 
-
 /**
  * @author Achour Berrahma <achour.berrahma at rte-france.com>
  */

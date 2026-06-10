@@ -7,7 +7,6 @@
 package org.gridsuite.explore.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.SneakyThrows;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
@@ -15,7 +14,6 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
-
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
@@ -33,7 +31,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -79,7 +76,8 @@ class SpreadsheetConfigCollectionTest {
         directoryService.setDirectoryServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
 
-        spreadsheetConfigCollectionJson = "{\"name\":\"" + COLLECTION_NAME + "\",\"description\":\"Test Description\",\"spreadsheetConfigs\":[{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Config 1\"},{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Config 2\"}]}";
+        spreadsheetConfigCollectionJson = "{\"name\":\"" + COLLECTION_NAME + "\",\"description\":\"Test Description\",\"spreadsheetConfigs\":[{\"id\":\"" + UUID.randomUUID() +
+                "\",\"name\":\"Config 1\"},{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Config 2\"}]}";
 
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull

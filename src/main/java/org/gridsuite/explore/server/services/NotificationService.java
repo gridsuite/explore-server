@@ -8,10 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.time.Instant;
-import java.util.UUID;
-
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +16,11 @@ import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com
+ * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
 @Service
 public class NotificationService {
