@@ -729,11 +729,11 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/process-configs", params = "duplicateFrom")
+    @PostMapping(value = "/explore/process-configs/{id}/duplicate")
     @Operation(summary = "Duplicate a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
     @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #id, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateProcessConfig(@RequestParam("duplicateFrom") UUID id,
+    public ResponseEntity<Void> duplicateProcessConfig(@PathVariable("id") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateProcessConfig(id, targetDirectoryId, userId);
