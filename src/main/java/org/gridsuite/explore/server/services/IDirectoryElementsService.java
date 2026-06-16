@@ -48,7 +48,7 @@ interface IDirectoryElementsService {
             }).collect(Collectors.toList());
         } catch (ResourceAccessException e) {
             String elementType = lstElementAttribute.isEmpty() ? "UNKNOWN" : lstElementAttribute.getFirst().getType();
-            LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType, e);
+            LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
             return lstElementAttribute.stream()
                     .map(elementAttributes -> populateMedataItem(elementAttributes, Map.of()))
                     .collect(Collectors.toList());
