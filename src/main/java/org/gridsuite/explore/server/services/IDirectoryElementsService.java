@@ -7,6 +7,9 @@
 package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 
 interface IDirectoryElementsService {
     String HEADER_USER_ID = "userId";
+    Logger LOGGER = LoggerFactory.getLogger(IDirectoryElementsService.class);
 
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
@@ -32,15 +36,23 @@ interface IDirectoryElementsService {
         Map<String, ElementAttributes> mapElementAttribute = lstElementAttribute.stream()
                 .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
         /* getting metadata from services */
-        List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()));
-        return metadata.stream().map(metadataItem -> {
-            Object item = metadataItem.get("id");
-            if (item == null) {
-                item = metadataItem.getOrDefault("uuid", "");
-            }
-            ElementAttributes e = mapElementAttribute.get(item.toString());
-            return populateMedataItem(e, metadataItem);
-        }).collect(Collectors.toList());
+        try {
+            List<Map<String, Object>> metadata = getMetadata(lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList()));
+            return metadata.stream().map(metadataItem -> {
+                Object item = metadataItem.get("id");
+                if (item == null) {
+                    item = metadataItem.getOrDefault("uuid", "");
+                }
+                ElementAttributes e = mapElementAttribute.get(item.toString());
+                return populateMedataItem(e, metadataItem);
+            }).collect(Collectors.toList());
+        } catch (ResourceAccessException e) {
+            String elementType = lstElementAttribute.isEmpty() ? "UNKNOWN" : lstElementAttribute.getFirst().getType();
+            LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
+            return lstElementAttribute.stream()
+                    .map(elementAttributes -> populateMedataItem(elementAttributes, Map.of()))
+                    .collect(Collectors.toList());
+        }
     }
 
     private ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {

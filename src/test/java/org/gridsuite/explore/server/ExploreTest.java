@@ -10,10 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import mockwebserver3.Dispatcher;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.RecordedRequest;
+import mockwebserver3.*;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -83,6 +80,7 @@ class ExploreTest {
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();
+    private static final UUID CONTINGENCY_LIST_METADATA_ERROR_UUID = UUID.randomUUID();
     private static final UUID INVALID_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID PARAMETERS_UUID = UUID.randomUUID();
     private static final UUID MODIFICATION_UUID = UUID.randomUUID();
@@ -202,6 +200,8 @@ class ExploreTest {
         String publicStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PUBLIC_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String invalidElementAsString = mapper.writeValueAsString(new ElementAttributes(INVALID_ELEMENT_UUID, "invalidElementName", "INVALID", USER1, 0, null));
         String formContingencyListAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0, null));
+        String contingencyListMetadataErrorAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CONTINGENCY_LIST_METADATA_ERROR_UUID, "contingencyListInError",
+                "CONTINGENCY_LIST", USER1, 0, null));
         String listOfFormContingencyListAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(CONTINGENCY_LIST_UUID, FILTER_CONTINGENCY_LIST, "CONTINGENCY_LIST", USER1, 0,
                 null)));
         String filterAttributesAsString = mapper.writeValueAsString(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null));
@@ -303,6 +303,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + caseElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + modificationElementAttributesAsString + "]");
+                } else if (path.matches("/v1/elements\\?ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + contingencyListMetadataErrorAttributesAsString + "]");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                             "[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]");
@@ -326,6 +328,10 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementNamesAsString);
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfFormContingencyListAttributesAsString.replace("elementUuid", "id"));
+                } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse.Builder()
+                            .socketPolicy(SocketPolicy.DisconnectAfterRequest.INSTANCE)
+                            .build();
                 } else if (path.matches("/v1/.*contingency-lists\\?duplicateFrom=" + CONTINGENCY_LIST_UUID) && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newContingencyUuidAsString);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
@@ -958,6 +964,20 @@ class ExploreTest {
         String caseAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null, caseSpecificMetadata));
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.get(0)), caseAttributesAsString);
+    }
+
+    @Test
+    void testGetMetadataReturnsPartialResponseWhenSpecificMetadataLoadingFails() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID)
+                .header("userId", USER1))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        List<ElementAttributes> elementsMetadata = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() { });
+        assertEquals(1, elementsMetadata.size());
+        assertEquals(CONTINGENCY_LIST_METADATA_ERROR_UUID, elementsMetadata.getFirst().getElementUuid());
+        assertEquals("contingencyListInError", elementsMetadata.getFirst().getElementName());
+        assertTrue(elementsMetadata.getFirst().getSpecificMetadata().isEmpty());
     }
 
     @Test
