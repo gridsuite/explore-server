@@ -234,7 +234,7 @@ public class ExploreService {
     }
 
     public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String userId, String name, String description) {
-        networkModificationService.updateCompositeModification(id, modificationUuids);
+        networkModificationService.updateCompositeModification(id, name, modificationUuids);
         updateElementNameAndDescription(id, name, description, userId);
     }
 
@@ -402,6 +402,11 @@ public class ExploreService {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        // if the element points to a MODIFICATION, the modification name has to be updated in order to match the new element name :
+        if (Objects.equals(elementsInfos.getType(), MODIFICATION)) {
+            networkModificationService.updateCompositeModification(id, elementAttributes.getElementName(), null);
+        }
+
         // send notification if the study name was updated
         notifyStudyUpdate(elementsInfos, userId);
     }
