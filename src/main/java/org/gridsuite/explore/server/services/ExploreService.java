@@ -362,7 +362,7 @@ public class ExploreService {
                                             String description, UUID parentDirectoryUuid) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, networkModificationService::delete);

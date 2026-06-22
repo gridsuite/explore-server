@@ -29,6 +29,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
     public static final String UUIDS = "uuids";
+    public static final String NAME = "name";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private String networkModificationServerBaseUri;
@@ -53,8 +54,9 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
-    public UUID createCompositeModification(List<UUID> modificationUuids) {
+    public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH)
+                .queryParam(NAME, compositeModificationName)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
