@@ -356,12 +356,14 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/network-composite-modifications")) {
+                } else if (path.matches("/v1/network-composite-modifications.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if (path.matches("/v1/root-directories") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                 } else if (path.matches("/v1/network-composite-modifications/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/network-composite-modifications")) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
