@@ -48,6 +48,7 @@ public class ExploreService {
     static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
     static final String WORKSPACE = "WORKSPACE";
     static final String PROCESS_CONFIG = "PROCESS_CONFIG";
+    static final String DYNAMIC_MAPPING = "DYNAMIC_MAPPING";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -448,11 +449,12 @@ public class ExploreService {
         duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, userId, monitorService::delete);
     }
 
-    public void createDynamicMapping(String name, String dynamicMapping, String description, String userId, UUID parentDirectoryUuid) {
+    public UUID createDynamicMapping(String name, String dynamicMapping, String description, String userId, UUID parentDirectoryUuid) {
         UUID dynamicMappingUuid = dynamicMappingService.createMapping(dynamicMapping);
-        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, PROCESS_CONFIG,
+        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING,
                 userId, 0L, description);
-        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, monitorService::delete);
+        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, dynamicMappingService::delete);
+        return dynamicMappingUuid;
     }
 
     public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description, String userId) {
@@ -460,9 +462,10 @@ public class ExploreService {
         updateElementNameAndDescription(uuid, name, description, userId);
     }
 
-    public void duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId, String userId) {
+    public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId, String userId) {
         UUID newDynamicMappingUuid = dynamicMappingService.duplicateMapping(sourceDynamicMappingUuid);
-        duplicateDirectoryElementOrDeleteElement(sourceDynamicMappingUuid, newDynamicMappingUuid, targetDirectoryId, userId, monitorService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceDynamicMappingUuid, newDynamicMappingUuid, targetDirectoryId, userId, dynamicMappingService::delete);
+        return newDynamicMappingUuid;
     }
 
     private void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {

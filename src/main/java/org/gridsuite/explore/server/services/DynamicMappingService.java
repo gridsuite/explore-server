@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 public class DynamicMappingService implements IDirectoryElementsService {
 
-    private static final String DYNAMIC_MAPPING_API_VERSION = "v1";
+    private static final String DYNAMIC_MAPPING_API_VERSION = "";
     private static final String DELIMITER = "/";
     public static final String MAPPING_PATH = DELIMITER + "mappings";
 
@@ -41,7 +41,7 @@ public class DynamicMappingService implements IDirectoryElementsService {
 
     public UUID createMapping(String mapping) {
         return restClient.post()
-            .uri(MAPPING_PATH)
+            .uri(MAPPING_PATH + DELIMITER)
             .contentType(MediaType.APPLICATION_JSON)
             .body(mapping)
             .retrieve()

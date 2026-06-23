@@ -747,13 +747,13 @@ public class ExploreController {
     @Operation(summary = "Create a dynamic mapping")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully created")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> createDynamicMapping(@RequestParam(QUERY_PARAM_NAME) String name,
+    public ResponseEntity<UUID> createDynamicMapping(@RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                     @RequestBody(required = false) String dynamicMapping) {
-        exploreService.createDynamicMapping(name, dynamicMapping, description, userId, parentDirectoryId);
-        return ResponseEntity.ok().build();
+        UUID newDynamicMappingUuid = exploreService.createDynamicMapping(name, dynamicMapping, description, userId, parentDirectoryId);
+        return ResponseEntity.ofNullable(newDynamicMappingUuid);
     }
 
     @PutMapping(value = "/explore/dynamic-mappings/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -773,10 +773,10 @@ public class ExploreController {
     @Operation(summary = "Duplicate a dynamic mapping")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully created")})
     @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #id, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateDynamicMapping(@RequestParam("duplicateFrom") UUID id,
+    public ResponseEntity<UUID> duplicateDynamicMapping(@RequestParam("duplicateFrom") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.duplicateDynamicMapping(id, targetDirectoryId, userId);
-        return ResponseEntity.ok().build();
+        UUID newDynamicMappingUuid = exploreService.duplicateDynamicMapping(id, targetDirectoryId, userId);
+        return ResponseEntity.ofNullable(newDynamicMappingUuid);
     }
 }
