@@ -380,7 +380,7 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementAttributesAsString);
-                    }  else if (path.matches("/v1/elements/" + ELEMENT_COMPOSITE_UUID)) {
+                    } else if (path.matches("/v1/elements/" + ELEMENT_COMPOSITE_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeAttributesAsString);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
                         return new MockResponse(200);
