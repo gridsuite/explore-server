@@ -41,7 +41,7 @@ public class DynamicMappingService implements IDirectoryElementsService {
 
     public UUID createMapping(String mapping) {
         return restClient.post()
-            .uri(MAPPING_PATH + DELIMITER)
+            .uri(MAPPING_PATH)
             .contentType(MediaType.APPLICATION_JSON)
             .body(mapping)
             .retrieve()
