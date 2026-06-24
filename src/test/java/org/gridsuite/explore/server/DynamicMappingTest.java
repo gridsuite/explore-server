@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -101,7 +101,6 @@ class DynamicMappingTest {
 
     @Test
     void createDynamicMapping() throws Exception {
-        // DynamicMappingService.createMapping() calls POST /mappings/
         UUID stubId = wireMockServer.stubFor(WireMock.post(urlPathEqualTo(URL_MAPPINGS))
             .willReturn(WireMock.ok()
                 .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -145,7 +144,6 @@ class DynamicMappingTest {
 
     @Test
     void updateDynamicMapping() throws Exception {
-        // DynamicMappingService.updateMapping() calls PUT /mappings/{uuid}
         UUID stubId = wireMockServer.stubFor(WireMock.put(urlPathEqualTo(URL_MAPPINGS + "/" + ID))
             .willReturn(WireMock.ok()))
             .getId();
@@ -184,7 +182,6 @@ class DynamicMappingTest {
 
     @Test
     void duplicateDynamicMapping() throws Exception {
-        // DynamicMappingService.duplicateMapping() calls POST /mappings/{uuid}/duplicate
         UUID stubId = wireMockServer.stubFor(WireMock.post(urlPathEqualTo(URL_MAPPINGS + "/" + ID + "/duplicate"))
                 .willReturn(WireMock.ok()
                     .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
