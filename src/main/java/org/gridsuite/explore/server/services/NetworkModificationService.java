@@ -63,19 +63,25 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .getBody();
     }
 
+    public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId + "/replace")
+                .queryParam(NAME, newName)
+                .buildAndExpand()
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(modificationUuids, headers), Void.class);
+    }
+
     /**
      * @param newName null if the name shouldn't be updated
-     * @param modificationUuids ordered modifications to be updated, null in order to ignore
      */
-    public void updateCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
+    public void updateCompositeModification(UUID compositeModificationId, String newName) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
                 DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId
                 );
         if (newName != null) {
             uriComponentsBuilder.queryParam(NAME, newName);
-        }
-        if (modificationUuids != null) {
-            uriComponentsBuilder.queryParam("modifications_uuids", modificationUuids);
         }
 
         String path = uriComponentsBuilder.buildAndExpand().toUriString();

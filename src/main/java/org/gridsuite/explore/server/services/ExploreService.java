@@ -234,7 +234,7 @@ public class ExploreService {
     }
 
     public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String userId, String name, String description) {
-        networkModificationService.updateCompositeModification(id, name, modificationUuids);
+        networkModificationService.replaceCompositeModification(id, name, modificationUuids);
         updateElementNameAndDescription(id, name, description, userId);
     }
 
@@ -413,7 +413,7 @@ public class ExploreService {
 
         // the composite modification name has to be updated in order to match the new element name
         if (MODIFICATION.equals(element.getType())) {
-            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName(), null);
+            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName());
         }
     }
 
