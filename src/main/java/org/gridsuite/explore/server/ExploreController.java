@@ -771,7 +771,7 @@ public class ExploreController {
 
     @PostMapping(value = "/explore/dynamic-mappings", params = "duplicateFrom")
     @Operation(summary = "Duplicate a dynamic mapping")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully created")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully duplicated")})
     @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #id, #targetDirectoryId)")
     public ResponseEntity<UUID> duplicateDynamicMapping(@RequestParam("duplicateFrom") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
