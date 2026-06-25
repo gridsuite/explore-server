@@ -402,27 +402,33 @@ public class ExploreService {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        // if the element points to a MODIFICATION, the modification name has to be updated in order to match the new element name :
-        if (Objects.equals(elementsInfos.getType(), MODIFICATION)) {
-            networkModificationService.updateCompositeModification(id, elementAttributes.getElementName(), null);
+        notifyElementUpdated(elementsInfos, userId);
+    }
+
+    private void notifyElementUpdated(ElementAttributes element, String userId) {
+        // send notification if the study name was updated
+        if (STUDY.equals(element.getType())) {
+            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
         }
 
+        // the composite modification name has to be updated in order to match the new element name
+        if (MODIFICATION.equals(element.getType())) {
+            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName(), null);
+        }
+    }
+
+    private void notifyElementMoved(ElementAttributes element, String userId) {
         // send notification if the study name was updated
-        notifyStudyUpdate(elementsInfos, userId);
+        if (STUDY.equals(element.getType())) {
+            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
+        }
     }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
         directoryService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
-        //send notification to all studies
         List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null, userId);
-        elementsAttributes.forEach(elementAttributes -> notifyStudyUpdate(elementAttributes, userId));
+        elementsAttributes.forEach(elementAttributes -> notifyElementMoved(elementAttributes, userId));
 
-    }
-
-    private void notifyStudyUpdate(ElementAttributes element, String userId) {
-        if (STUDY.equals(element.getType())) {
-            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
-        }
     }
 
     public String getUsersIdentities(List<UUID> elementsUuids, String userId) {
