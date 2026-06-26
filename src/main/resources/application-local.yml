@@ -60,4 +60,7 @@ gridsuite:
     -
       name: monitor-server
       base-uri: http://localhost:5043
+    -
+      name: dynamic-mapping-server
+      base-uri: http://localhost:5036
 
