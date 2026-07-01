@@ -47,6 +47,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
+import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -133,6 +134,7 @@ class ExploreTest {
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_UUID = UUID.randomUUID();
+    private static final UUID ELEMENT_COMPOSITE_UUID = UUID.randomUUID();
     private static final String ELEMENT_NAME = "elementName";
     private static final UUID ELEMENT_UUID_2 = UUID.randomUUID();
     private static final String ELEMENT_NAME_2 = "elementName2";
@@ -225,6 +227,7 @@ class ExploreTest {
         String newParametersUuidAsString = mapper.writeValueAsString(PARAMETER_COPY_UUID);
         String newElementUuidAsString = mapper.writeValueAsString(ELEMENT_COPY_UUID);
         String newElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", USER1, 0, null));
+        String compositeAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_COMPOSITE_UUID, "a composite", MODIFICATION, USER1, 0, null));
         String listElementsAsString = "[" + newElementAttributesAsString + "," + publicStudyAttributesAsString + "]";
         String parentDirectoryPermissions = mapper.writeValueAsString(List.of(
                 new PermissionDTO(false, List.of(UUID.randomUUID(), UUID.randomUUID()), PermissionType.READ),
@@ -356,12 +359,14 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/network-composite-modifications")) {
+                } else if (path.matches("/v1/network-composite-modifications.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if (path.matches("/v1/root-directories") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                 } else if (path.matches("/v1/network-composite-modifications/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/network-composite-modifications")) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
@@ -375,6 +380,8 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementAttributesAsString);
+                    } else if (path.matches("/v1/elements/" + ELEMENT_COMPOSITE_UUID)) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeAttributesAsString);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
@@ -1296,6 +1303,18 @@ class ExploreTest {
         elementAttributes.setElementName(STUDY1);
         mockMvc.perform(put("/v1/explore/elements/{id}",
                 ELEMENT_UUID)
+                .header("userId", USER1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(elementAttributes))
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void testUpdateCompositeName() throws Exception {
+        ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementName("new Name");
+        mockMvc.perform(put("/v1/explore/elements/{id}",
+                ELEMENT_COMPOSITE_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
