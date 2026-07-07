@@ -204,10 +204,11 @@ class SpreadsheetConfigTest {
             }
         });
 
-        mockMvc.perform(post(BASE_URL + "/" + CONFIG_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
-                .andExpect(status().isMethodNotAllowed());
+        mockMvc.perform(post(BASE_URL + "/duplicate")
+                .param("duplicateFrom", CONFIG_UUID.toString())
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                .header("userId", USER_ID))
+            .andExpect(status().isMethodNotAllowed());
     }
 
     @Test

@@ -235,7 +235,8 @@ class SpreadsheetConfigCollectionTest {
             }
         });
 
-        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
+        mockMvc.perform(post(BASE_URL + "/duplicate")
+                        .param("duplicateFrom", COLLECTION_UUID.toString())
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isMethodNotAllowed());
