@@ -48,6 +48,7 @@ public class ExploreService {
     static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
     static final String WORKSPACE = "WORKSPACE";
     static final String PROCESS_CONFIG = "PROCESS_CONFIG";
+    static final String DYNAMIC_MAPPING = "DYNAMIC_MAPPING";
 
     private final DirectoryService directoryService;
     private final StudyService studyService;
@@ -62,6 +63,7 @@ public class ExploreService {
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
     private final MonitorService monitorService;
+    private final DynamicMappingService dynamicMappingService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -82,7 +84,8 @@ public class ExploreService {
         UserIdentityService userIdentityService,
         NotificationService notificationService,
         SingleLineDiagramService singleLineDiagramService,
-        MonitorService monitorService) {
+        MonitorService monitorService,
+        DynamicMappingService dynamicMappingService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -99,6 +102,7 @@ public class ExploreService {
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
         this.monitorService = monitorService;
+        this.dynamicMappingService = dynamicMappingService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -443,6 +447,25 @@ public class ExploreService {
     public void duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId, String userId) {
         UUID newProcessConfigUuid = monitorService.duplicateProcessConfig(sourceProcessConfigUuid);
         duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, userId, monitorService::delete);
+    }
+
+    public UUID createDynamicMapping(String name, String dynamicMapping, String description, String userId, UUID parentDirectoryUuid) {
+        UUID dynamicMappingUuid = dynamicMappingService.createMapping(dynamicMapping);
+        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING,
+                userId, 0L, description);
+        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, dynamicMappingService::delete);
+        return dynamicMappingUuid;
+    }
+
+    public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description, String userId) {
+        dynamicMappingService.updateMapping(uuid, dynamicMapping);
+        updateElementNameAndDescription(uuid, name, description, userId);
+    }
+
+    public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId, String userId) {
+        UUID newDynamicMappingUuid = dynamicMappingService.duplicateMapping(sourceDynamicMappingUuid);
+        duplicateDirectoryElementOrDeleteElement(sourceDynamicMappingUuid, newDynamicMappingUuid, targetDirectoryId, userId, dynamicMappingService::delete);
+        return newDynamicMappingUuid;
     }
 
     private void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
