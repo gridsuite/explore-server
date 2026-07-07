@@ -246,7 +246,7 @@ class ExploreTest {
                     return new MockResponse(404);
                 } else if (path.matches("/v1/studies/.*/notification?type=metadata_updated") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/studies\\?duplicateFrom=" + PUBLIC_STUDY_UUID + ".*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/studies/" + PUBLIC_STUDY_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newStudyUuidAsString);
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
@@ -257,7 +257,7 @@ class ExploreTest {
                     }
                 } else if (path.matches("/v1/cases/" + CASE_UUID + "/disableExpiration") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/cases\\?duplicateFrom=" + CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/cases/" + CASE_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newCaseUuidAsString);
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
@@ -322,7 +322,7 @@ class ExploreTest {
                     return new MockResponse(403);
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementUuidAsString);
-                } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements/names\\?ids=" + ELEMENT_UUID + "&ids=" + ELEMENT_UUID_2 + "&strictMode=false") && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementNamesAsString);
@@ -332,13 +332,13 @@ class ExploreTest {
                     return new MockResponse.Builder()
                             .socketPolicy(SocketPolicy.DisconnectAfterRequest.INSTANCE)
                             .build();
-                } else if (path.matches("/v1/.*contingency-lists\\?duplicateFrom=" + CONTINGENCY_LIST_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/.*contingency-lists/" + CONTINGENCY_LIST_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newContingencyUuidAsString);
                 } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/filters\\?duplicateFrom=" + FILTER_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/filters/" + FILTER_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newFilterUuidAsString);
                 } else if (path.matches("/v1/filters.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
@@ -352,7 +352,7 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/filters-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/parameters\\?duplicateFrom=" + PARAMETERS_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse(200);
@@ -714,7 +714,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateCase(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
                 .andExpect(status().isOk());
 
@@ -723,7 +723,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateCaseInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}",
+        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
                 .andExpect(status().isOk());
 
@@ -732,7 +732,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateFilter(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
 
@@ -741,7 +741,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateFilterInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/filters?duplicateFrom={filterUuid}",
+        mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate",
                 FILTER_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)).andExpect(status().isOk());
 
@@ -750,7 +750,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateFormContingencyList(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/contingency-lists/{formContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.FORM, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -760,7 +760,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateFormContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={formContingencyListUuid}&type={contingencyListsType}",
+        mockMvc.perform(post("/v1/explore/contingency-lists/{formContingencyListUuid}/duplicate?type={contingencyListsType}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.FORM)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -770,7 +770,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateIdentifierContingencyList(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -780,7 +780,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateIdentifierContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={identifierContingencyListUuid}&type={contingencyListsType}",
+        mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -790,7 +790,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateFilterBasedContingencyList(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={contingencyListUuid}&type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
             CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID)
             .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -800,7 +800,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateFilterBasedContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists?duplicateFrom={contingencyListUuid}&type={contingencyListsType}",
+        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}",
             CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS)
             .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -810,7 +810,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -820,7 +820,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateStudyInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate",
                 PUBLIC_STUDY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isOk());
@@ -830,7 +830,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateStudyInSameDirectoryNotAllowed() throws Exception {
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}",
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate",
                 NO_CONTENT_DIRECTORY_UUID)
                 .header("userId", USER1)
         ).andExpect(status().isForbidden());
@@ -838,7 +838,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateParameters(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
                 .header("userId", USER1))
             .andExpect(status().isOk());
@@ -848,7 +848,7 @@ class ExploreTest {
 
     @Test
     void testDuplicateParametersInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters?duplicateFrom={parameterUuid}&type={type}",
+        mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS)
                         .header("userId", USER1))
                 .andExpect(status().isOk());
@@ -1089,7 +1089,7 @@ class ExploreTest {
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a study with a user that already exceeded his cases limit
-        result = mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        result = mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
         ).andExpect(status().isForbidden())
@@ -1097,7 +1097,7 @@ class ExploreTest {
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a case with a user that already exceeded his cases limit
-        result = mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        result = mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_EXCEEDED))
                 .andExpect(status().isForbidden())
                 .andReturn();
@@ -1141,13 +1141,13 @@ class ExploreTest {
                 ).andExpect(status().isOk());
 
         //test duplicate a study with a user that hasn't already exceeded his cases limit
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                         .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
                 ).andExpect(status().isOk());
 
         //test duplicate a case with a user that hasn't already exceeded his cases limit
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
                 .andExpect(status().isOk());
 
@@ -1184,13 +1184,13 @@ class ExploreTest {
         ).andExpect(status().isOk());
 
         //test duplicate a study with a user that has no profile to limit his case creation
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER_NOT_FOUND)
         ).andExpect(status().isOk());
 
         //test duplicate a case with a user that has no profile to limit his case creation
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_NOT_FOUND))
                 .andExpect(status().isOk());
 
@@ -1227,13 +1227,13 @@ class ExploreTest {
         ).andExpect(status().isInternalServerError());
 
         //test duplicate a study with a remote unexpected exception
-        mockMvc.perform(post("/v1/explore/studies?duplicateFrom={studyUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
                 .header("userId", USER_UNEXPECTED_ERROR)
         ).andExpect(status().isInternalServerError());
 
         //test duplicate a case with a remote unexpected exception
-        mockMvc.perform(post("/v1/explore/cases?duplicateFrom={caseUuid}&parentDirectoryUuid={parentDirectoryUuid}",
+        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_UNEXPECTED_ERROR))
                 .andExpect(status().isInternalServerError());
 

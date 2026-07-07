@@ -91,12 +91,12 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(204);
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID + "/spreadsheet-configs/replace-all")) {
                     return new MockResponse(204);
-                } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "\\?duplicateFrom=" + COLLECTION_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod()) || path.matches("/v1/elements/" + COLLECTION_UUID)) {
                     ElementAttributes elementAttributes = new ElementAttributes(COLLECTION_UUID, COLLECTION_NAME, "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(elementAttributes));
-                } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*")) {
+                } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*")) {
                     ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), COLLECTION_NAME + " (copy)", "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
                 } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
@@ -163,8 +163,7 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollection(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", COLLECTION_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
@@ -178,8 +177,7 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollectionInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", COLLECTION_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
@@ -188,15 +186,6 @@ class SpreadsheetConfigCollectionTest {
         var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-    }
-
-    @Test
-    void testDuplicateSpreadsheetConfigCollectionWithInvalidUUID() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", "invalid-uuid")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
-                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -246,8 +235,7 @@ class SpreadsheetConfigCollectionTest {
             }
         });
 
-        mockMvc.perform(post(BASE_URL + "/duplicate")
-                        .param("duplicateFrom", COLLECTION_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isMethodNotAllowed());

@@ -28,7 +28,6 @@ public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
-    private static final String HEADER_DUPLICATE_FROM = "duplicateFrom";
     private String actionsServerBaseUri;
     private final RestTemplate restTemplate;
 
@@ -82,25 +81,22 @@ public class ContingencyListService implements IDirectoryElementsService {
     }
 
     public UUID duplicateFormContingencyList(UUID formContingencyListsId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists")
-                .queryParam(HEADER_DUPLICATE_FROM, formContingencyListsId)
-                .buildAndExpand()
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/form-contingency-lists/{uuid}/duplicate")
+                .buildAndExpand(formContingencyListsId)
                 .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
     public UUID duplicateIdentifierContingencyList(UUID identifierContingencyListsId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists")
-                .queryParam(HEADER_DUPLICATE_FROM, identifierContingencyListsId)
-                .buildAndExpand()
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{uuid}/duplicate")
+                .buildAndExpand(identifierContingencyListsId)
                 .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
     public UUID duplicateFilterBasedContingencyList(UUID filterContingencyListsId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists")
-            .queryParam(HEADER_DUPLICATE_FROM, filterContingencyListsId)
-            .buildAndExpand()
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{uuid}/duplicate")
+            .buildAndExpand(filterContingencyListsId)
             .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
