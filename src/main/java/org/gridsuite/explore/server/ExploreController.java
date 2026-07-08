@@ -11,7 +11,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionDTO;
+import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -738,5 +741,42 @@ public class ExploreController {
                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.duplicateProcessConfig(id, targetDirectoryId, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/dynamic-mappings", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a dynamic mapping")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully created")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<UUID> createDynamicMapping(@RequestParam(QUERY_PARAM_NAME) String name,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                    @RequestBody(required = false) String dynamicMapping) {
+        UUID newDynamicMappingUuid = exploreService.createDynamicMapping(name, dynamicMapping, description, userId, parentDirectoryId);
+        return ResponseEntity.ofNullable(newDynamicMappingUuid);
+    }
+
+    @PutMapping(value = "/explore/dynamic-mappings/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Modify a dynamic mapping")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully modified")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> updateDynamicMapping(@PathVariable UUID id,
+                                                    @RequestParam(QUERY_PARAM_NAME) String name,
+                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
+                                                    @RequestBody(required = false) String dynamicMapping) {
+        exploreService.updateDynamicMapping(id, name, dynamicMapping, description, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/dynamic-mappings", params = "duplicateFrom")
+    @Operation(summary = "Duplicate a dynamic mapping")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Dynamic mapping has been successfully duplicated")})
+    @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #id, #targetDirectoryId)")
+    public ResponseEntity<UUID> duplicateDynamicMapping(@RequestParam("duplicateFrom") UUID id,
+                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
+                                                       @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        UUID newDynamicMappingUuid = exploreService.duplicateDynamicMapping(id, targetDirectoryId, userId);
+        return ResponseEntity.ofNullable(newDynamicMappingUuid);
     }
 }
