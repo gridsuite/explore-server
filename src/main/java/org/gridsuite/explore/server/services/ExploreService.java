@@ -443,11 +443,12 @@ public class ExploreService {
         return userIdentityService.getUsersIdentities(subs);
     }
 
-    public void createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
+    public UUID createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
         UUID processConfigUuid = monitorService.createProcessConfig(processConfig);
         ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG,
                 userId, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, monitorService::delete);
+        return processConfigUuid;
     }
 
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description, String userId) {
@@ -455,9 +456,10 @@ public class ExploreService {
         updateElementNameAndDescription(uuid, name, description, userId);
     }
 
-    public void duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId, String userId) {
+    public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId, String userId) {
         UUID newProcessConfigUuid = monitorService.duplicateProcessConfig(sourceProcessConfigUuid);
         duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, userId, monitorService::delete);
+        return newProcessConfigUuid;
     }
 
     public UUID createDynamicMapping(String name, String dynamicMapping, String description, String userId, UUID parentDirectoryUuid) {
