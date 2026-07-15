@@ -202,12 +202,7 @@ public class ExploreService {
                 // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
             } catch (Exception e) {
                 LOGGER.error(e.toString(), e);
-                try {
-                    directoryService.deleteDirectoryElement(id, userId);
-                } catch (Exception e2) {
-                    LOGGER.error("Failed to delete directory element {}", id, e2);
-                    directoryService.updateElementsStatus(List.of(id), "ACTIVE", userId);
-                }
+                directoryService.deleteDirectoryElement(id, userId);
             }
         });
     }
@@ -217,22 +212,17 @@ public class ExploreService {
 
         return exploreServerExecutionService.runAsync(() -> {
             List<UUID> deletedIds = new ArrayList<>();
-            List<UUID> failedIds = new ArrayList<>();
-
             for (UUID id : uuids) {
                 try {
                     directoryService.deleteElement(id, userId);
                     deletedIds.add(id);
                 } catch (Exception e) {
                     LOGGER.error("Failed to delete element {}", id, e);
-                    failedIds.add(id);
                 }
             }
-
             if (!deletedIds.isEmpty()) {
                 directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
             }
-            directoryService.updateElementsStatus(failedIds, "ACTIVE", userId);
         });
     }
 
