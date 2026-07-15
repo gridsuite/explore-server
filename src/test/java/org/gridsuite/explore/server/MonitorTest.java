@@ -105,15 +105,18 @@ class MonitorTest {
                 .withBody(objectMapper.writeValueAsString(ID))))
             .getId();
 
-        mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS)
+        String result = mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS)
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(PROCESS_CONFIG))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        UUID createdProcessConfigId = objectMapper.readValue(result, UUID.class);
 
+        assertEquals(ID, createdProcessConfigId);
         verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(USER_ID), eq(true));
         assertEquals(ID, elementAttributesCaptor.getValue().getElementUuid());
@@ -186,11 +189,15 @@ class MonitorTest {
                     .withBody(objectMapper.writeValueAsString(NEW_ID))))
             .getId();
 
-        mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
+        String result = mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
+                .queryParam(QUERY_PARAM_DUPLICATE_FROM, ID.toString())
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        UUID duplicatedProcessConfigId = objectMapper.readValue(result, UUID.class);
 
+        assertEquals(NEW_ID, duplicatedProcessConfigId);
         verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
         verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, USER_ID);

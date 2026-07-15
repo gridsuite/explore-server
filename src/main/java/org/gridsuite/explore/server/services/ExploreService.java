@@ -41,7 +41,7 @@ public class ExploreService {
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
-    static final String MODIFICATION = "MODIFICATION";
+    public static final String MODIFICATION = "MODIFICATION";
     static final String DIRECTORY = "DIRECTORY";
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
@@ -238,7 +238,7 @@ public class ExploreService {
     }
 
     public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String userId, String name, String description) {
-        networkModificationService.updateCompositeModification(id, modificationUuids);
+        networkModificationService.replaceCompositeModification(id, name, modificationUuids);
         updateElementNameAndDescription(id, name, description, userId);
     }
 
@@ -366,7 +366,7 @@ public class ExploreService {
                                             String description, UUID parentDirectoryUuid) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, networkModificationService::delete);
@@ -406,22 +406,33 @@ public class ExploreService {
         // The check to know if the  user have the right to update the element is done in the directory-server
         directoryService.updateElement(id, elementAttributes, userId);
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        notifyElementUpdated(elementsInfos, userId);
+    }
+
+    private void notifyElementUpdated(ElementAttributes element, String userId) {
         // send notification if the study name was updated
-        notifyStudyUpdate(elementsInfos, userId);
+        if (STUDY.equals(element.getType())) {
+            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
+        }
+
+        // the composite modification name has to be updated in order to match the new element name
+        if (MODIFICATION.equals(element.getType())) {
+            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName());
+        }
+    }
+
+    private void notifyElementMoved(ElementAttributes element, String userId) {
+        // send notification if the study name was updated
+        if (STUDY.equals(element.getType())) {
+            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
+        }
     }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid, String userId) {
         directoryService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
-        //send notification to all studies
         List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null, userId);
-        elementsAttributes.forEach(elementAttributes -> notifyStudyUpdate(elementAttributes, userId));
+        elementsAttributes.forEach(elementAttributes -> notifyElementMoved(elementAttributes, userId));
 
-    }
-
-    private void notifyStudyUpdate(ElementAttributes element, String userId) {
-        if (STUDY.equals(element.getType())) {
-            studyService.notifyStudyUpdate(element.getElementUuid(), userId);
-        }
     }
 
     public String getUsersIdentities(List<UUID> elementsUuids, String userId) {
@@ -432,11 +443,12 @@ public class ExploreService {
         return userIdentityService.getUsersIdentities(subs);
     }
 
-    public void createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
+    public UUID createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
         UUID processConfigUuid = monitorService.createProcessConfig(processConfig);
         ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG,
                 userId, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, monitorService::delete);
+        return processConfigUuid;
     }
 
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description, String userId) {
@@ -444,9 +456,10 @@ public class ExploreService {
         updateElementNameAndDescription(uuid, name, description, userId);
     }
 
-    public void duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId, String userId) {
+    public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId, String userId) {
         UUID newProcessConfigUuid = monitorService.duplicateProcessConfig(sourceProcessConfigUuid);
         duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, userId, monitorService::delete);
+        return newProcessConfigUuid;
     }
 
     public UUID createDynamicMapping(String name, String dynamicMapping, String description, String userId, UUID parentDirectoryUuid) {

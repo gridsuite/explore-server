@@ -80,14 +80,14 @@ class ExploreServiceExceptionTest {
         String creatingErrorMessage = "error when creating element from directory server";
         when(directoryService.createElementWithNewName(any(), any(), any(), anyBoolean())).thenThrow(new RuntimeException(creatingErrorMessage));
         UUID createdCompositeModificationId = UUID.randomUUID();
-        when(networkModificationService.createCompositeModification(anyList())).thenReturn(createdCompositeModificationId);
+        when(networkModificationService.createCompositeModification(anyList(), any())).thenReturn(createdCompositeModificationId);
 
         List<UUID> modificationUuids = List.of(UUID.randomUUID());
         UUID parentDirectoryUuid = UUID.randomUUID();
         String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(modificationUuids,
                 "userId", "name", "description", parentDirectoryUuid))
                 .getMessage();
-        verify(networkModificationService, times(1)).createCompositeModification(any());
+        verify(networkModificationService, times(1)).createCompositeModification(any(), any());
         verify(networkModificationService, times(1)).delete(eq(createdCompositeModificationId), any());
         assertEquals(creatingErrorMessage, message);
     }

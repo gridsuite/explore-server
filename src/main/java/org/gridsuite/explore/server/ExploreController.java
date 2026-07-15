@@ -710,13 +710,12 @@ public class ExploreController {
     @Operation(summary = "Create a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryId, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> createProcessConfig(@RequestParam(QUERY_PARAM_NAME) String name,
+    public ResponseEntity<UUID> createProcessConfig(@RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
                                                     @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                     @RequestBody(required = false) String processConfig) {
-        exploreService.createProcessConfig(name, processConfig, description, userId, parentDirectoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createProcessConfig(name, processConfig, description, userId, parentDirectoryId));
     }
 
     @PutMapping(value = "/explore/process-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -736,11 +735,10 @@ public class ExploreController {
     @Operation(summary = "Duplicate a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
     @PreAuthorize("@authorizationService.isAuthorizedForDuplication(#userId, #id, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateProcessConfig(@PathVariable("id") UUID id,
+    public ResponseEntity<UUID> duplicateProcessConfig(@PathVariable("id") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.duplicateProcessConfig(id, targetDirectoryId, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateProcessConfig(id, targetDirectoryId, userId));
     }
 
     @PostMapping(value = "/explore/dynamic-mappings", consumes = MediaType.APPLICATION_JSON_VALUE)
