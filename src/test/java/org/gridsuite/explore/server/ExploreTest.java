@@ -37,6 +37,7 @@ import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.ResourceUtils;
@@ -44,14 +45,15 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -148,7 +150,7 @@ class ExploreTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
+    @MockitoSpyBean
     private DirectoryService directoryService;
     @Autowired
     private ContingencyListService contingencyListService;
@@ -318,6 +320,8 @@ class ExploreTest {
                 } else if (path.matches("/v1/elements\\?ids=" + PROCESS_CONFIG_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + processConfigElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements/" + ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(200);
+                } else if (path.matches("/v1/elements\\?ids=.*&status=.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?targetDirectoryUuid=" + PARENT_DIRECTORY_UUID) && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
@@ -1507,6 +1511,32 @@ class ExploreTest {
         assertEquals(
             mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null, processConfigSprecificMetadata)),
             mapper.writeValueAsString(elementsMetadata.getFirst()));
+    }
+
+    @Test
+    void testDeleteElementSpawnsDeletionThread() throws Exception {
+        CountDownLatch deletionStarted = new CountDownLatch(1);
+        CountDownLatch deletionFinished = new CountDownLatch(1);
+        AtomicReference<Thread> deletionThread = new AtomicReference<>();
+
+        doAnswer(invocation -> {
+            deletionThread.set(Thread.currentThread());
+            deletionStarted.countDown();
+            return invocation.callRealMethod();
+        }).when(directoryService).deleteElement(FILTER_UUID, USER1);
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            deletionFinished.countDown();
+            return null;
+        }).when(directoryService).deleteDirectoryElement(FILTER_UUID, USER1);
+
+        deleteElement(FILTER_UUID);
+
+        assertTrue(deletionStarted.await(TIMEOUT, TimeUnit.MILLISECONDS), "deletion was never started");
+        assertNotSame(Thread.currentThread(), deletionThread.get(), "deletion ran on the caller thread instead of a spawned one");
+
+        // wait for the async chain to finish so pending requests don't bleed into other tests
+        assertTrue(deletionFinished.await(TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
