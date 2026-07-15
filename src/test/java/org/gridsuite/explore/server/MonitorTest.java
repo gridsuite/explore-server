@@ -190,7 +190,6 @@ class MonitorTest {
             .getId();
 
         String result = mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
-                .queryParam(QUERY_PARAM_DUPLICATE_FROM, ID.toString())
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isOk())
