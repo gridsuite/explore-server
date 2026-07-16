@@ -149,6 +149,26 @@ public class DirectoryService implements IDirectoryElementsService {
             .getBody();
     }
 
+    /**
+     * @return the element and its parents, ordered from the root directory to the element itself
+     */
+    public List<ElementAttributes> getElementPath(UUID elementUuid, String userId) {
+        String path = UriComponentsBuilder
+            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
+            .buildAndExpand(elementUuid)
+            .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<ElementAttributes> elementPath = restTemplate
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers),
+                new ParameterizedTypeReference<List<ElementAttributes>>() {
+                })
+            .getBody();
+        return Objects.requireNonNullElse(elementPath, Collections.emptyList());
+    }
+
     public HttpStatusCode elementExists(UUID directoryUuid, String elementName, String type, String userId) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements/{elementName}/types/{type}")
@@ -274,9 +294,25 @@ public class DirectoryService implements IDirectoryElementsService {
         return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
     }
 
+    /**
+     * Same as {@link #getElementsInfos(List, List, String)} but tolerates missing elements: those the user cannot
+     * read, or that no longer exist, are absent from the result instead of failing the whole call.
+     */
+    public List<ElementAttributes> getElementsInfosNotStrict(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
+        return getElementsInfos(elementsUuids, elementTypes, userId, false);
+    }
+
     public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
+        return getElementsInfos(elementsUuids, elementTypes, userId, true);
+    }
+
+    private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId, boolean strictMode) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
+
+        if (!strictMode) {
+            path += "&strictMode=false";
+        }
 
         if (!CollectionUtils.isEmpty(elementTypes)) {
             path += "&elementTypes=" + elementTypes.stream().collect(Collectors.joining(","));

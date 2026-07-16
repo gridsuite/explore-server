@@ -11,6 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.NodeInfos;
+import org.gridsuite.explore.server.dto.ReferenceAttributes;
+import org.gridsuite.explore.server.dto.SharedElementInfos;
+import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -21,11 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
@@ -441,6 +448,85 @@ public class ExploreService {
         List<String> subs = directoryService.getElementsInfos(elementsUuids, null, userId).stream()
                 .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
         return userIdentityService.getUsersIdentities(subs);
+    }
+
+    /**
+     * Lists the elements using a shared element. There is one result per reference of the shared element, so an
+     * element referencing it from several nodes appears once per node. Elements the user cannot read are omitted.
+     */
+    public List<SharedElementInfos> getSharedElementInfos(UUID elementUuid, String userId) {
+        List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
+                .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
+                .map(ReferenceAttributes::getReferenceId)
+                .toList();
+        if (referencedNodeUuids.isEmpty()) {
+            return List.of();
+        }
+
+        // a node can be referenced several times, and several nodes often belong to the same study: query each only once
+        Map<UUID, NodeInfos> nodeInfosByUuid = studyService.getNodesInfos(referencedNodeUuids.stream().distinct().toList())
+                .stream().collect(Collectors.toMap(NodeInfos::nodeUuid, Function.identity()));
+        List<UUID> studyUuids = nodeInfosByUuid.values().stream().map(NodeInfos::studyUuid).distinct().toList();
+
+        Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfosNotStrict(studyUuids, null, userId)
+                .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
+        Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = studyByUuid.keySet().stream()
+                .collect(Collectors.toMap(Function.identity(), studyUuid -> getParentDirectoryNames(studyUuid, userId)));
+        Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());
+
+        return referencedNodeUuids.stream()
+                .map(nodeInfosByUuid::get)
+                .filter(Objects::nonNull)
+                .map(nodeInfos -> toSharedElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
+                        parentDirectoryNamesByStudyUuid, identityBySub))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private SharedElementInfos toSharedElementInfos(NodeInfos nodeInfos, ElementAttributes study,
+                                                    Map<UUID, List<String>> parentDirectoryNamesByStudyUuid,
+                                                    Map<String, UsersIdentities.UserIdentity> identityBySub) {
+        if (study == null) {
+            // the user cannot read this study, or it no longer exists
+            return null;
+        }
+        return SharedElementInfos.builder()
+                .node(nodeInfos.nodeName())
+                .elementName(study.getElementName())
+                .type(study.getType())
+                .subtype(getSubtype(study))
+                .pathName(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
+                .ownerLabel(toLabel(study.getOwner(), identityBySub))
+                .lastModificationDate(study.getLastModificationDate())
+                .lastModifiedByLabel(toLabel(study.getLastModifiedBy(), identityBySub))
+                .build();
+    }
+
+    private List<String> getParentDirectoryNames(UUID studyUuid, String userId) {
+        List<ElementAttributes> elementPath = directoryService.getElementPath(studyUuid, userId);
+        // the path ends with the element itself, which already has its own column
+        return elementPath.stream()
+                .limit(Math.max(0, elementPath.size() - 1L))
+                .map(ElementAttributes::getElementName)
+                .toList();
+    }
+
+    private Map<String, UsersIdentities.UserIdentity> getIdentityBySub(Collection<ElementAttributes> elements) {
+        List<String> subs = elements.stream()
+                .flatMap(element -> Stream.of(element.getOwner(), element.getLastModifiedBy()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        return userIdentityService.getUsersIdentitiesMap(subs);
+    }
+
+    private String toLabel(String sub, Map<String, UsersIdentities.UserIdentity> identityBySub) {
+        return sub == null ? null : UsersIdentities.UserIdentity.toLabel(identityBySub.get(sub), sub);
+    }
+
+    private String getSubtype(ElementAttributes element) {
+        Object subtype = element.getSpecificMetadata() == null ? null : element.getSpecificMetadata().get("type");
+        return subtype == null ? null : subtype.toString();
     }
 
     public UUID createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
