@@ -473,7 +473,7 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public void updateElementsStatus(List<UUID> elementUuids, String status, String userId) {
-        if (elementUuids.isEmpty()) {
+        if (elementUuids == null || elementUuids.isEmpty()) {
             return;
         }
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
