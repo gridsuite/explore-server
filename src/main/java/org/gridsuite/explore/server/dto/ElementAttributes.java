@@ -35,9 +35,9 @@ public class ElementAttributes {
 
     private String description;
 
-    private String lastModifiedBy;
-
     private Instant lastModificationDate;
+
+    private String lastModifiedBy;
 
     private Map<String, Object> specificMetadata = new HashMap<>();
 
