@@ -495,9 +495,9 @@ public class ExploreService {
                 .type(study.getType())
                 .pathName(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
                 .node(nodeInfos.nodeName())
-                .ownerLabel(toLabel(study.getOwner(), identityBySub))
+                .ownerLabel(UsersIdentities.toLabel(study.getOwner(), identityBySub))
                 .lastModificationDate(study.getLastModificationDate())
-                .lastModifiedByLabel(toLabel(study.getLastModifiedBy(), identityBySub))
+                .lastModifiedByLabel(UsersIdentities.toLabel(study.getLastModifiedBy(), identityBySub))
                 .build();
     }
 
@@ -517,10 +517,6 @@ public class ExploreService {
                 .distinct()
                 .toList();
         return userIdentityService.getUsersIdentitiesMap(subs);
-    }
-
-    private String toLabel(String sub, Map<String, UsersIdentities.UserIdentity> identityBySub) {
-        return sub == null ? null : UsersIdentities.UserIdentity.toLabel(identityBySub.get(sub), sub);
     }
 
     public UUID createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {

@@ -6,6 +6,8 @@
  */
 package org.gridsuite.explore.server.dto;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Map;
 
 /**
@@ -15,30 +17,32 @@ import java.util.Map;
  */
 public record UsersIdentities(Map<String, UserIdentity> data) {
 
-    public record UserIdentity(String firstName, String lastName) {
-        /**
-         * @return the displayable name of the user, falling back to its sub when unknown or incomplete
-         */
-        public static String toLabel(UserIdentity identity, String sub) {
-            if (identity == null) {
-                return sub;
-            }
-            String firstName = identity.firstName();
-            String lastName = identity.lastName();
-            if (!isBlank(firstName) && !isBlank(lastName)) {
-                return firstName + " " + lastName;
-            }
-            if (!isBlank(firstName)) {
-                return firstName;
-            }
-            if (!isBlank(lastName)) {
-                return lastName;
-            }
+    /**
+     * @return the displayable name of the given sub, falling back to the sub itself when its identity is unknown
+     * or incomplete. A null sub has no name.
+     */
+    public static String toLabel(String sub, Map<String, UserIdentity> identityBySub) {
+        if (sub == null) {
+            return null;
+        }
+        UserIdentity identity = identityBySub.get(sub);
+        if (identity == null) {
             return sub;
         }
-
-        private static boolean isBlank(String value) {
-            return value == null || value.isBlank();
+        String firstName = identity.firstName();
+        String lastName = identity.lastName();
+        if (StringUtils.isNoneBlank(firstName, lastName)) {
+            return firstName + " " + lastName;
         }
+        if (StringUtils.isNotBlank(firstName)) {
+            return firstName;
+        }
+        if (StringUtils.isNotBlank(lastName)) {
+            return lastName;
+        }
+        return sub;
+    }
+
+    public record UserIdentity(String firstName, String lastName) {
     }
 }
