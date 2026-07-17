@@ -451,11 +451,12 @@ public class ExploreService {
     }
 
     /**
-     * Lists the elements using a shared element. There is one result per reference of the shared element, so an
-     * element referencing it from several nodes appears once per node. Elements the user cannot read are omitted.
+     * Lists the elements using a shared element. There is one result per reference of the shared element.
+     * Elements the user cannot read are omitted.
      */
     public List<SharedElementInfos> getSharedElementInfos(UUID elementUuid, String userId) {
         List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
+                // a STUDY_NODE reference holds the uuid of the node using the shared element, and is the only kind created so far
                 .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
                 .map(ReferenceAttributes::getReferenceId)
                 .toList();
