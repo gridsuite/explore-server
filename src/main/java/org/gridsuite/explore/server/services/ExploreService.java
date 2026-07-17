@@ -493,7 +493,7 @@ public class ExploreService {
         return SharedElementInfos.builder()
                 .elementName(study.getElementName())
                 .type(study.getType())
-                .pathName(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
+                .path(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
                 .node(nodeInfos.nodeName())
                 .ownerLabel(UsersIdentities.toLabel(study.getOwner(), identityBySub))
                 .lastModificationDate(study.getLastModificationDate())

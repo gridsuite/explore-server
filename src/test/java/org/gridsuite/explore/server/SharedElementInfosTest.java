@@ -159,13 +159,13 @@ class SharedElementInfosTest {
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
         // the study itself is excluded from its path, it already has its own column
-        assertEquals(List.of("root", "folder"), first.pathName());
+        assertEquals(List.of("root", "folder"), first.path());
         assertEquals(LAST_MODIFICATION_DATE, first.lastModificationDate());
         assertEquals("John Doe", first.ownerLabel());
         // unknown identities fall back to the sub itself
         assertEquals(MODIFIER_SUB, first.lastModifiedByLabel());
         assertEquals("node2", infos.get(1).node());
-        assertEquals(List.of("root"), infos.get(1).pathName());
+        assertEquals(List.of("root"), infos.get(1).path());
 
         // the studies are fetched in a single call
         verify(directoryService, times(1)).getElementsInfosNotStrict(any(), eq(null), eq(USER_ID));

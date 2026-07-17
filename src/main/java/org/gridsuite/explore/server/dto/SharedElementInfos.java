@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Builder
 public record SharedElementInfos(String elementName, String type,
-                                 List<String> pathName,
+                                 List<String> path,
                                  // only relevant when sharing a network modification within a study
                                  String node,
                                  String ownerLabel, Instant lastModificationDate, String lastModifiedByLabel) {
