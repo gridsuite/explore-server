@@ -470,8 +470,7 @@ public class ExploreService {
 
         Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfosNotStrict(studyUuids, null, userId)
                 .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
-        Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = studyByUuid.keySet().stream()
-                .collect(Collectors.toMap(Function.identity(), studyUuid -> getParentDirectoryNames(studyUuid, userId)));
+        Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = getParentDirectoryNames(studyByUuid.keySet(), userId);
         Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());
 
         return referencedNodeUuids.stream()
@@ -501,13 +500,16 @@ public class ExploreService {
                 .build();
     }
 
-    private List<String> getParentDirectoryNames(UUID studyUuid, String userId) {
-        List<ElementAttributes> elementPath = directoryService.getElementPath(studyUuid, userId);
-        // the path ends with the element itself, which already has its own column
-        return elementPath.stream()
-                .limit(Math.max(0, elementPath.size() - 1L))
-                .map(ElementAttributes::getElementName)
-                .toList();
+    private Map<UUID, List<String>> getParentDirectoryNames(Collection<UUID> elementUuids, String userId) {
+        return directoryService.getElementsPaths(List.copyOf(elementUuids), userId).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    // a path ends with the element itself, which already has its own column
+                    List<ElementAttributes> elementPath = entry.getValue();
+                    return elementPath.stream()
+                            .limit(Math.max(0, elementPath.size() - 1L))
+                            .map(ElementAttributes::getElementName)
+                            .toList();
+                }));
     }
 
     private Map<String, UsersIdentities.UserIdentity> getIdentityBySub(Collection<ElementAttributes> elements) {

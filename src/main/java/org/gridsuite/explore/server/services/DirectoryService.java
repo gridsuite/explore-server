@@ -150,23 +150,22 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     /**
-     * @return the element and its parents, ordered from the root directory to the element itself
+     * @return the path of each element, indexed by element uuid. Each path is ordered from the root directory to the
+     * element itself, and unknown elements are absent from the result.
      */
-    public List<ElementAttributes> getElementPath(UUID elementUuid, String userId) {
-        String path = UriComponentsBuilder
-            .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
-            .buildAndExpand(elementUuid)
-            .toUriString();
+    public Map<UUID, List<ElementAttributes>> getElementsPaths(List<UUID> elementUuids, String userId) {
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/paths").toUriString() + "?ids=" + ids;
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        List<ElementAttributes> elementPath = restTemplate
+        Map<UUID, List<ElementAttributes>> elementsPaths = restTemplate
             .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers),
-                new ParameterizedTypeReference<List<ElementAttributes>>() {
+                new ParameterizedTypeReference<Map<UUID, List<ElementAttributes>>>() {
                 })
             .getBody();
-        return Objects.requireNonNullElse(elementPath, Collections.emptyList());
+        return Objects.requireNonNullElse(elementsPaths, Collections.emptyMap());
     }
 
     public HttpStatusCode elementExists(UUID directoryUuid, String elementName, String type, String userId) {

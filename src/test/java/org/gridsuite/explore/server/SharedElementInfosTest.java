@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -117,13 +118,17 @@ class SharedElementInfosTest {
         return study;
     }
 
-    private void stubStudyPath(UUID studyUuid, String studyName, String... parentDirectoryNames) {
+    private List<ElementAttributes> path(UUID studyUuid, String studyName, String... parentDirectoryNames) {
         List<ElementAttributes> path = new java.util.ArrayList<>(java.util.Arrays.stream(parentDirectoryNames)
                 .map(directoryName -> new ElementAttributes(UUID.randomUUID(), directoryName, "DIRECTORY", OWNER_SUB, 0L, null))
                 .toList());
         // the directory-server returns the element itself as the last segment of its path
         path.add(study(studyUuid, studyName));
-        when(directoryService.getElementPath(eq(studyUuid), any())).thenReturn(path);
+        return path;
+    }
+
+    private void stubStudiesPaths(Map<UUID, List<ElementAttributes>> pathByStudyUuid) {
+        when(directoryService.getElementsPaths(any(), eq(USER_ID))).thenReturn(pathByStudyUuid);
     }
 
     private List<SharedElementInfos> getSharedElementInfos() throws Exception {
@@ -142,8 +147,9 @@ class SharedElementInfosTest {
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
         when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1"), study(STUDY_2_UUID, "study2")));
-        stubStudyPath(STUDY_1_UUID, "study1", "root", "folder");
-        stubStudyPath(STUDY_2_UUID, "study2", "root");
+        stubStudiesPaths(Map.of(
+                STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root", "folder"),
+                STUDY_2_UUID, path(STUDY_2_UUID, "study2", "root")));
 
         List<SharedElementInfos> infos = getSharedElementInfos();
 
@@ -173,7 +179,7 @@ class SharedElementInfosTest {
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID)));
         when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
-        stubStudyPath(STUDY_1_UUID, "study1", "root");
+        stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
         List<SharedElementInfos> infos = getSharedElementInfos();
 
@@ -183,8 +189,8 @@ class SharedElementInfosTest {
         assertEquals("study1", infos.get(1).elementName());
         assertEquals("node1", infos.get(0).node());
         assertEquals("node2", infos.get(1).node());
-        // the study path is resolved only once
-        verify(directoryService, times(1)).getElementPath(eq(STUDY_1_UUID), any());
+        // the paths are resolved in a single call
+        verify(directoryService, times(1)).getElementsPaths(any(), eq(USER_ID));
     }
 
     @Test
@@ -194,7 +200,7 @@ class SharedElementInfosTest {
                 .thenReturn(List.of(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID)));
         when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
-        stubStudyPath(STUDY_1_UUID, "study1", "root");
+        stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
         List<SharedElementInfos> infos = getSharedElementInfos();
 
@@ -212,7 +218,7 @@ class SharedElementInfosTest {
         // the directory-server filters out the studies the user cannot read
         when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
-        stubStudyPath(STUDY_1_UUID, "study1", "root");
+        stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
         List<SharedElementInfos> infos = getSharedElementInfos();
 
