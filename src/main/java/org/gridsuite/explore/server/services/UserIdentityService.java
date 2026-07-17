@@ -48,8 +48,7 @@ public class UserIdentityService {
     }
 
     /**
-     * @return the identity of each sub, indexed by sub. Subs without a known identity are absent from the map,
-     * and an unreachable server yields an empty map: callers fall back to the sub itself.
+     * @return the identity of each sub, indexed by sub. Subs without a known identity are absent from the map.
      */
     public Map<String, UsersIdentities.UserIdentity> getUsersIdentitiesMap(List<String> subs) {
         if (subs.isEmpty()) {

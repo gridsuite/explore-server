@@ -678,8 +678,8 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/explore/elements/{elementUuid}/shared-elements-infos", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get the elements using the given shared element, one by reference")
+    @GetMapping(value = "/explore/elements/{elementUuid}/shared-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get the elements using the given shared element")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The infos of the elements using the shared element"),
         @ApiResponse(responseCode = "404", description = "The shared element was not found"),

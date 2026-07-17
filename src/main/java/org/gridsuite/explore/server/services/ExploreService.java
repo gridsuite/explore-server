@@ -456,7 +456,7 @@ public class ExploreService {
      */
     public List<SharedElementInfos> getSharedElementInfos(UUID elementUuid, String userId) {
         List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                // a STUDY_NODE reference holds the uuid of the node using the shared element, and is the only kind created so far
+                // for now only STUDY_NODE references
                 .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
                 .map(ReferenceAttributes::getReferenceId)
                 .toList();
@@ -504,7 +504,7 @@ public class ExploreService {
     private Map<UUID, List<String>> getParentDirectoryNames(Collection<UUID> elementUuids, String userId) {
         return directoryService.getElementsPaths(List.copyOf(elementUuids), userId).entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                    // a path ends with the element itself, which already has its own column
+                    // a path ends with the element itself
                     List<ElementAttributes> elementPath = entry.getValue();
                     return elementPath.stream()
                             .limit(Math.max(0, elementPath.size() - 1L))

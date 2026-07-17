@@ -132,7 +132,7 @@ class SharedElementInfosTest {
     }
 
     private List<SharedElementInfos> getSharedElementInfos() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/shared-elements-infos", SHARED_ELEMENT_UUID)
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/shared-element-infos", SHARED_ELEMENT_UUID)
                         .header("userId", USER_ID))
                 .andExpect(status().isOk())
                 .andReturn();
