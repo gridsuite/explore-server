@@ -491,11 +491,10 @@ public class ExploreService {
             return null;
         }
         return SharedElementInfos.builder()
-                .node(nodeInfos.nodeName())
                 .elementName(study.getElementName())
                 .type(study.getType())
-                .subtype(getSubtype(study))
                 .pathName(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
+                .node(nodeInfos.nodeName())
                 .ownerLabel(toLabel(study.getOwner(), identityBySub))
                 .lastModificationDate(study.getLastModificationDate())
                 .lastModifiedByLabel(toLabel(study.getLastModifiedBy(), identityBySub))
@@ -522,11 +521,6 @@ public class ExploreService {
 
     private String toLabel(String sub, Map<String, UsersIdentities.UserIdentity> identityBySub) {
         return sub == null ? null : UsersIdentities.UserIdentity.toLabel(identityBySub.get(sub), sub);
-    }
-
-    private String getSubtype(ElementAttributes element) {
-        Object subtype = element.getSpecificMetadata() == null ? null : element.getSpecificMetadata().get("type");
-        return subtype == null ? null : subtype.toString();
     }
 
     public UUID createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {

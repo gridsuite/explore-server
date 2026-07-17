@@ -12,13 +12,14 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * One element using a shared element. There is one instance per reference of the shared element,
- * so a same element can appear several times, once per node referencing it.
+ * Information representing a usage of a shared element in the application.
  *
  * @author Florent MILLOT {@literal <florent.millot_externe at rte-france.com>}
  */
 @Builder
-public record SharedElementInfos(String node, String elementName, String type, String subtype,
+public record SharedElementInfos(String elementName, String type,
                                  List<String> pathName,
+                                 // only relevant when sharing a network modification within a study
+                                 String node,
                                  String ownerLabel, Instant lastModificationDate, String lastModifiedByLabel) {
 }

@@ -14,8 +14,6 @@ import lombok.Setter;
 import java.util.UUID;
 
 /**
- * attributes of the references to a shared element stored in directory server
- *
  * @author Florent MILLOT {@literal <florent.millot_externe at rte-france.com>}
  */
 @Getter

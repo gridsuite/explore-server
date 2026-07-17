@@ -9,8 +9,6 @@ package org.gridsuite.explore.server.dto;
 import java.util.UUID;
 
 /**
- * a study node, as returned by study-server
- *
  * @author Florent MILLOT {@literal <florent.millot_externe at rte-france.com>}
  */
 public record NodeInfos(UUID nodeUuid, String nodeName, UUID studyUuid) {

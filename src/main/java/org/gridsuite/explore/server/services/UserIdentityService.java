@@ -61,7 +61,7 @@ public class UserIdentityService {
             UsersIdentities usersIdentities = restTemplate.getForObject(userIdentityServerBaseUri + path, UsersIdentities.class);
             return usersIdentities == null || usersIdentities.data() == null ? Map.of() : usersIdentities.data();
         } catch (RestClientException e) {
-            LOGGER.error("Failed to fetch users identities, falling back to subs", e);
+            LOGGER.error("Failed to fetch users identities", e);
             return Map.of();
         }
     }
