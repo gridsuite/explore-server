@@ -39,10 +39,10 @@ public class ElementAttributes {
 
     private String lastModifiedBy;
 
-    private Map<String, Object> specificMetadata = new HashMap<>();
-
     // uses of the current element as a reference (shared element), empty when it is not referenced
     private List<ReferenceAttributes> references = new ArrayList<>();
+
+    private Map<String, Object> specificMetadata = new HashMap<>();
 
     // TODO do we need to pass lastModifiedBy like other attributes and remove null from this constructor, and
     // change all places calling the constructor to explicitly pass lastModifiedBy ? or is it like specificMetadata ?
@@ -52,7 +52,7 @@ public class ElementAttributes {
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, Map<String, Object> specificMetadata) {
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, specificMetadata, null);
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, specificMetadata);
     }
 
     // DTO in directory-server has another property : creationDate
