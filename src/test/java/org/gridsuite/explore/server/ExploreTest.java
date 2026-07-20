@@ -337,8 +337,6 @@ class ExploreTest {
                             .build();
                 } else if (path.matches("/v1/.*contingency-lists/" + CONTINGENCY_LIST_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newContingencyUuidAsString);
-                } else if (path.matches("/v1/form-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/filters/" + FILTER_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
@@ -348,8 +346,6 @@ class ExploreTest {
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/filters/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/form-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
@@ -565,16 +561,6 @@ class ExploreTest {
     }
 
     @Test
-    void testCreateFormContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/form-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
-                FILTER_CONTINGENCY_LIST, PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("\"Contingency list content\"")
-        ).andExpect(status().isOk());
-    }
-
-    @Test
     void testCreateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
@@ -756,26 +742,6 @@ class ExploreTest {
     }
 
     @Test
-    void testDuplicateFormContingencyList(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{formContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, ContingencyListType.FORM, PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
-    }
-
-    @Test
-    void testDuplicateFormContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{formContingencyListUuid}/duplicate?type={contingencyListsType}",
-                CONTINGENCY_LIST_UUID, ContingencyListType.FORM)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
-    }
-
-    @Test
     void testDuplicateIdentifierContingencyList(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID)
@@ -893,26 +859,6 @@ class ExploreTest {
         ).andExpect(status().isOk());
 
         verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/", USER1);
-    }
-
-    @Test
-    void testModifyFormContingencyList(final MockWebServer server) throws Exception {
-        final String formContingency = "{\"equipmentType\":\"LINE\",\"name\":\"contingency EN "
-                + "update1\",\"countries1\":[\"AL\"],\"countries2\":[],\"nominalVoltage1\":{\"type\":\"EQUALITY\",\"value1\":45340,\"value2\":null},\"nominalVoltage2\":null,\"freeProperties1\":{}"
-                        + ",\"freeProperties2\":{}}";
-        final String name = "form contingency name";
-        final String description = "form contingency description";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(formContingency)
-                .param("name", name)
-                .param("description", description)
-                .param("contingencyListType", ContingencyListType.FORM.name())
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
-
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/form-contingency-lists/", USER1);
     }
 
     @Test

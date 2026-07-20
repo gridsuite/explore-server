@@ -138,19 +138,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/form-contingency-lists/{listName}")
-    @Operation(summary = "create a form contingency list")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Form contingency list has been created")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> createFormContingencyList(@PathVariable("listName") String listName,
-                                                          @RequestBody(required = false) String content,
-                                                          @RequestParam("description") String description,
-                                                          @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createFormContingencyList(listName, content, description, userId, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping(value = "/explore/identifier-contingency-lists/{listName}")
     @Operation(summary = "create an identifier contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
