@@ -12,8 +12,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Information about an element consuming a shared element. There is one instance per reference,
- * so a same element appears once per usage it makes of the shared element.
+ * Information about an element consuming a shared element (a usage of a shared element in the application)
  *
  * @author Florent MILLOT {@literal <florent.millot_externe at rte-france.com>}
  */
