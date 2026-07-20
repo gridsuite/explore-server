@@ -10,10 +10,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import org.gridsuite.explore.server.dto.ConsumerElementInfos;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;
-import org.gridsuite.explore.server.dto.SharedElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserIdentityService;
@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-class SharedElementInfosTest {
+class ConsumerElementInfosTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -131,8 +131,8 @@ class SharedElementInfosTest {
         when(directoryService.getElementsPaths(any(), eq(USER_ID))).thenReturn(pathByStudyUuid);
     }
 
-    private List<SharedElementInfos> getSharedElementInfos() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/shared-element-infos", SHARED_ELEMENT_UUID)
+    private List<ConsumerElementInfos> getConsumerElementInfos() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/consumer-element-infos", SHARED_ELEMENT_UUID)
                         .header("userId", USER_ID))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -151,10 +151,10 @@ class SharedElementInfosTest {
                 STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root", "folder"),
                 STUDY_2_UUID, path(STUDY_2_UUID, "study2", "root")));
 
-        List<SharedElementInfos> infos = getSharedElementInfos();
+        List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
         assertEquals(2, infos.size());
-        SharedElementInfos first = infos.get(0);
+        ConsumerElementInfos first = infos.get(0);
         assertEquals("node1", first.node());
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
@@ -181,7 +181,7 @@ class SharedElementInfosTest {
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
         stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
-        List<SharedElementInfos> infos = getSharedElementInfos();
+        List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
         // one line per reference, the study is repeated
         assertEquals(2, infos.size());
@@ -202,7 +202,7 @@ class SharedElementInfosTest {
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
         stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
-        List<SharedElementInfos> infos = getSharedElementInfos();
+        List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
         // one line per reference, even when they point to the same node
         assertEquals(2, infos.size());
@@ -220,7 +220,7 @@ class SharedElementInfosTest {
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
         stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
-        List<SharedElementInfos> infos = getSharedElementInfos();
+        List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
         assertEquals(1, infos.size());
         assertEquals("study1", infos.get(0).elementName());
@@ -230,7 +230,7 @@ class SharedElementInfosTest {
     void testElementWithoutReferences() throws Exception {
         stubSharedElementReferences();
 
-        assertTrue(getSharedElementInfos().isEmpty());
+        assertTrue(getConsumerElementInfos().isEmpty());
         // no need to reach the other servers
         verify(studyService, times(0)).getNodesInfos(any());
     }

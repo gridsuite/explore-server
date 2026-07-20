@@ -12,10 +12,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ConsumerElementInfos;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
-import org.gridsuite.explore.server.dto.SharedElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -678,16 +678,16 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/explore/elements/{elementUuid}/shared-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/explore/elements/{elementUuid}/consumer-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get the elements using the given shared element")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The infos of the elements using the shared element"),
         @ApiResponse(responseCode = "404", description = "The shared element was not found"),
     })
-    public ResponseEntity<List<SharedElementInfos>> getSharedElementInfos(@PathVariable("elementUuid") UUID elementUuid,
-                                                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+    public ResponseEntity<List<ConsumerElementInfos>> getConsumerElementInfos(@PathVariable("elementUuid") UUID elementUuid,
+                                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(exploreService.getSharedElementInfos(elementUuid, userId));
+                .body(exploreService.getConsumerElementInfos(elementUuid, userId));
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)

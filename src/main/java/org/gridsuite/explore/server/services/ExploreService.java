@@ -10,10 +10,10 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ConsumerElementInfos;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;
-import org.gridsuite.explore.server.dto.SharedElementInfos;
 import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -454,7 +454,7 @@ public class ExploreService {
      * Lists the elements using a shared element. There is one result per reference of the shared element.
      * Elements the user cannot read are omitted.
      */
-    public List<SharedElementInfos> getSharedElementInfos(UUID elementUuid, String userId) {
+    public List<ConsumerElementInfos> getConsumerElementInfos(UUID elementUuid, String userId) {
         List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
                 // for now only STUDY_NODE references
                 .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
@@ -477,20 +477,20 @@ public class ExploreService {
         return referencedNodeUuids.stream()
                 .map(nodeInfosByUuid::get)
                 .filter(Objects::nonNull)
-                .map(nodeInfos -> toSharedElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
+                .map(nodeInfos -> toConsumerElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
                         parentDirectoryNamesByStudyUuid, identityBySub))
                 .filter(Objects::nonNull)
                 .toList();
     }
 
-    private SharedElementInfos toSharedElementInfos(NodeInfos nodeInfos, ElementAttributes study,
+    private ConsumerElementInfos toConsumerElementInfos(NodeInfos nodeInfos, ElementAttributes study,
                                                     Map<UUID, List<String>> parentDirectoryNamesByStudyUuid,
                                                     Map<String, UsersIdentities.UserIdentity> identityBySub) {
         if (study == null) {
             // the user cannot read this study, or it no longer exists
             return null;
         }
-        return SharedElementInfos.builder()
+        return ConsumerElementInfos.builder()
                 .elementName(study.getElementName())
                 .type(study.getType())
                 .path(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
