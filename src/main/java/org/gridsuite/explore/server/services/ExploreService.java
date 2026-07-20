@@ -455,8 +455,8 @@ public class ExploreService {
      * Elements the user cannot read are omitted.
      */
     public List<ConsumerElementInfos> getConsumerElementInfos(UUID elementUuid, String userId) {
+        // for now only STUDY_NODE references
         List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                // for now only STUDY_NODE references
                 .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
                 .map(ReferenceAttributes::getReferenceId)
                 .toList();

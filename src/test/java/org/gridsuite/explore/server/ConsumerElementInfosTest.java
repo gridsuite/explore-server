@@ -111,19 +111,19 @@ class ConsumerElementInfosTest {
         when(directoryService.getElementInfos(SHARED_ELEMENT_UUID)).thenReturn(sharedElement);
     }
 
-    private ElementAttributes study(UUID studyUuid, String name) {
+    private ElementAttributes studyStub(UUID studyUuid, String name) {
         ElementAttributes study = new ElementAttributes(studyUuid, name, "STUDY", OWNER_SUB, 0L, null);
         study.setLastModifiedBy(MODIFIER_SUB);
         study.setLastModificationDate(LAST_MODIFICATION_DATE);
         return study;
     }
 
-    private List<ElementAttributes> path(UUID studyUuid, String studyName, String... parentDirectoryNames) {
+    private List<ElementAttributes> pathStub(UUID studyUuid, String studyName, String... parentDirectoryNames) {
         List<ElementAttributes> path = new java.util.ArrayList<>(java.util.Arrays.stream(parentDirectoryNames)
                 .map(directoryName -> new ElementAttributes(UUID.randomUUID(), directoryName, "DIRECTORY", OWNER_SUB, 0L, null))
                 .toList());
         // the directory-server returns the element itself as the last segment of its path
-        path.add(study(studyUuid, studyName));
+        path.add(studyStub(studyUuid, studyName));
         return path;
     }
 
@@ -146,26 +146,35 @@ class ConsumerElementInfosTest {
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
         when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(study(STUDY_1_UUID, "study1"), study(STUDY_2_UUID, "study2")));
+                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1"), studyStub(STUDY_2_UUID, "study2")));
         stubStudiesPaths(Map.of(
-                STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root", "folder"),
-                STUDY_2_UUID, path(STUDY_2_UUID, "study2", "root")));
+                STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root", "folder"),
+                STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
         assertEquals(2, infos.size());
+
         ConsumerElementInfos first = infos.get(0);
         assertEquals("node1", first.node());
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
-        // the study itself is excluded from its path, it already has its own column
+        // the study itself is excluded from its path
         assertEquals(List.of("root", "folder"), first.path());
-        assertEquals(LAST_MODIFICATION_DATE, first.lastModificationDate());
         assertEquals("John Doe", first.ownerLabel());
+        assertEquals(LAST_MODIFICATION_DATE, first.lastModificationDate());
         // unknown identities fall back to the sub itself
         assertEquals(MODIFIER_SUB, first.lastModifiedByLabel());
-        assertEquals("node2", infos.get(1).node());
-        assertEquals(List.of("root"), infos.get(1).path());
+
+        ConsumerElementInfos second = infos.get(1);
+        assertEquals("node2", second.node());
+        assertEquals("study2", second.elementName());
+        assertEquals("STUDY", second.type());
+        // this study sits directly in the root directory
+        assertEquals(List.of("root"), second.path());
+        assertEquals("John Doe", second.ownerLabel());
+        assertEquals(LAST_MODIFICATION_DATE, second.lastModificationDate());
+        assertEquals(MODIFIER_SUB, second.lastModifiedByLabel());
 
         // the studies are fetched in a single call
         verify(directoryService, times(1)).getElementsInfos(any(), eq(null), eq(USER_ID), eq(false));
@@ -178,8 +187,8 @@ class ConsumerElementInfosTest {
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID)));
         when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
-        stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
+                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1")));
+        stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
@@ -199,8 +208,8 @@ class ConsumerElementInfosTest {
         when(studyService.getNodesInfos(List.of(NODE_1_UUID)))
                 .thenReturn(List.of(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID)));
         when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
-        stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
+                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1")));
+        stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
@@ -217,8 +226,8 @@ class ConsumerElementInfosTest {
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
         // the directory-server filters out the studies the user cannot read
         when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
-        stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
+                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1")));
+        stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
