@@ -189,6 +189,14 @@ class SpreadsheetConfigCollectionTest {
     }
 
     @Test
+    void testDuplicateSpreadsheetConfigCollectionWithInvalidUUID() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/invalid-uuid/duplicate")
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                .header("userId", USER_ID))
+            .andExpect(status().isInternalServerError());
+    }
+
+    @Test
     void testCreateSpreadsheetConfigCollectionServiceError(final MockWebServer mockWebServer) throws Exception {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
