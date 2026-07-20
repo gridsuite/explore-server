@@ -145,7 +145,7 @@ class ConsumerElementInfosTest {
         when(studyService.getNodesInfos(any())).thenReturn(List.of(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
-        when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
+        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1"), study(STUDY_2_UUID, "study2")));
         stubStudiesPaths(Map.of(
                 STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root", "folder"),
@@ -168,7 +168,7 @@ class ConsumerElementInfosTest {
         assertEquals(List.of("root"), infos.get(1).path());
 
         // the studies are fetched in a single call
-        verify(directoryService, times(1)).getElementsInfosNotStrict(any(), eq(null), eq(USER_ID));
+        verify(directoryService, times(1)).getElementsInfos(any(), eq(null), eq(USER_ID), eq(false));
     }
 
     @Test
@@ -177,7 +177,7 @@ class ConsumerElementInfosTest {
         when(studyService.getNodesInfos(any())).thenReturn(List.of(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID)));
-        when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
+        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
         stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
@@ -198,7 +198,7 @@ class ConsumerElementInfosTest {
         stubSharedElementReferences(NODE_1_UUID, NODE_1_UUID);
         when(studyService.getNodesInfos(List.of(NODE_1_UUID)))
                 .thenReturn(List.of(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID)));
-        when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
+        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
         stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 
@@ -216,7 +216,7 @@ class ConsumerElementInfosTest {
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
         // the directory-server filters out the studies the user cannot read
-        when(directoryService.getElementsInfosNotStrict(any(), eq(null), eq(USER_ID)))
+        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
                 .thenReturn(List.of(study(STUDY_1_UUID, "study1")));
         stubStudiesPaths(Map.of(STUDY_1_UUID, path(STUDY_1_UUID, "study1", "root")));
 

@@ -469,7 +469,7 @@ public class ExploreService {
                 .stream().collect(Collectors.toMap(NodeInfos::nodeUuid, Function.identity()));
         List<UUID> studyUuids = nodeInfosByUuid.values().stream().map(NodeInfos::studyUuid).distinct().toList();
 
-        Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfosNotStrict(studyUuids, null, userId)
+        Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfos(studyUuids, null, userId, false)
                 .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
         Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = getParentDirectoryNames(studyByUuid.keySet(), userId);
         Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());

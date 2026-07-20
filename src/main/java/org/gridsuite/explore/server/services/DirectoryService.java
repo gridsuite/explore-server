@@ -295,19 +295,15 @@ public class DirectoryService implements IDirectoryElementsService {
         return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, null, ElementAttributes.class).getBody());
     }
 
-    /**
-     * Same as {@link #getElementsInfos(List, List, String)} but tolerates missing elements: those the user cannot
-     * read, or that no longer exist, are absent from the result instead of failing the whole call.
-     */
-    public List<ElementAttributes> getElementsInfosNotStrict(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
-        return getElementsInfos(elementsUuids, elementTypes, userId, false);
-    }
-
     public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
         return getElementsInfos(elementsUuids, elementTypes, userId, true);
     }
 
-    private List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId, boolean strictMode) {
+    /**
+     * @param strictMode when false, elements the user cannot read or that no longer exist are absent from the result
+     *                   instead of failing the whole call
+     */
+    public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId, boolean strictMode) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
 
