@@ -154,8 +154,10 @@ public class DirectoryService implements IDirectoryElementsService {
      * element itself, and unknown elements are absent from the result.
      */
     public Map<UUID, List<ElementAttributes>> getElementsPaths(List<UUID> elementUuids, String userId) {
-        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/paths").toUriString() + "?ids=" + ids;
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/paths")
+            .queryParam(PARAM_IDS, elementUuids)
+            .buildAndExpand()
+            .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
