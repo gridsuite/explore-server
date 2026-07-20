@@ -468,6 +468,9 @@ public class ExploreService {
         Map<UUID, NodeInfos> nodeInfosByUuid = studyService.getNodesInfos(referencedNodeUuids.stream().distinct().toList())
                 .stream().collect(Collectors.toMap(NodeInfos::nodeUuid, Function.identity()));
         List<UUID> studyUuids = nodeInfosByUuid.values().stream().map(NodeInfos::studyUuid).distinct().toList();
+        if (studyUuids.isEmpty()) {
+            return List.of();
+        }
 
         Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfos(studyUuids, null, userId, false)
                 .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
@@ -493,7 +496,7 @@ public class ExploreService {
         return ConsumerElementInfos.builder()
                 .elementName(study.getElementName())
                 .type(study.getType())
-                .path(parentDirectoryNamesByStudyUuid.get(study.getElementUuid()))
+                .path(parentDirectoryNamesByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))
                 .node(nodeInfos.nodeName())
                 .ownerLabel(UsersIdentities.toLabel(study.getOwner(), identityBySub))
                 .lastModificationDate(study.getLastModificationDate())
