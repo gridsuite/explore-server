@@ -9,6 +9,7 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ConsumerElementInfos;
 import org.gridsuite.explore.server.dto.ElementAttributes;
@@ -24,11 +25,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,12 +38,6 @@ import java.util.UUID;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,13 +55,13 @@ class ConsumerElementInfosTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserIdentityService userIdentityService;
-
-    @MockitoBean
     private DirectoryService directoryService;
 
-    @MockitoBean
+    @Autowired
     private StudyService studyService;
+
+    @Autowired
+    private UserIdentityService userIdentityService;
 
     private WireMockServer wireMockServer;
 
@@ -80,10 +76,18 @@ class ConsumerElementInfosTest {
     private static final UUID STUDY_1_UUID = UUID.randomUUID();
     private static final UUID STUDY_2_UUID = UUID.randomUUID();
 
+    private static final String SHARED_ELEMENT_PATH = "/v1/elements/" + SHARED_ELEMENT_UUID;
+    private static final String ELEMENTS_PATH = "/v1/elements";
+    private static final String ELEMENTS_PATHS_PATH = "/v1/elements/paths";
+    private static final String NODES_INFOS_PATH = "/v1/nodes/infos";
+    private static final String USERS_IDENTITIES_PATH = "/v1/users/identities";
+
     @BeforeEach
     void setUp() {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
+        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
         userIdentityService.setUserIdentityServerBaseUri(wireMockServer.baseUrl());
         stubUsersIdentities();
     }
@@ -95,8 +99,13 @@ class ConsumerElementInfosTest {
         }
     }
 
+    private ResponseDefinitionBuilder jsonResponse(Object body) throws Exception {
+        return WireMock.ok(objectMapper.writeValueAsString(body))
+                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+    }
+
     private void stubUsersIdentities() {
-        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/users/identities"))
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(USERS_IDENTITIES_PATH))
                 .willReturn(WireMock.ok()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                         .withBody("""
@@ -104,12 +113,28 @@ class ConsumerElementInfosTest {
                                 """)));
     }
 
-    private void stubSharedElementReferences(UUID... referencedNodeUuids) {
+    private void stubSharedElementReferences(UUID... referencedNodeUuids) throws Exception {
         ElementAttributes sharedElement = new ElementAttributes(SHARED_ELEMENT_UUID, "sharedModification", "MODIFICATION", OWNER_SUB, 0L, null);
-        sharedElement.setReferences(java.util.Arrays.stream(referencedNodeUuids)
+        sharedElement.setReferences(Arrays.stream(referencedNodeUuids)
                 .map(nodeUuid -> new ReferenceAttributes(nodeUuid, ReferenceAttributes.ReferenceType.STUDY_NODE))
                 .toList());
-        when(directoryService.getElementInfos(SHARED_ELEMENT_UUID)).thenReturn(sharedElement);
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(SHARED_ELEMENT_PATH))
+                .willReturn(jsonResponse(sharedElement)));
+    }
+
+    private void stubNodesInfos(NodeInfos... nodesInfos) throws Exception {
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .willReturn(jsonResponse(List.of(nodesInfos))));
+    }
+
+    private void stubStudies(ElementAttributes... studies) throws Exception {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(ELEMENTS_PATH))
+                .willReturn(jsonResponse(List.of(studies))));
+    }
+
+    private void stubStudiesPaths(Map<UUID, List<ElementAttributes>> pathByStudyUuid) throws Exception {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(ELEMENTS_PATHS_PATH))
+                .willReturn(jsonResponse(pathByStudyUuid)));
     }
 
     private ElementAttributes studyStub(UUID studyUuid, String name) {
@@ -120,16 +145,12 @@ class ConsumerElementInfosTest {
     }
 
     private List<ElementAttributes> pathStub(UUID studyUuid, String studyName, String... parentDirectoryNames) {
-        List<ElementAttributes> path = new java.util.ArrayList<>(java.util.Arrays.stream(parentDirectoryNames)
+        List<ElementAttributes> path = new ArrayList<>(Arrays.stream(parentDirectoryNames)
                 .map(directoryName -> new ElementAttributes(UUID.randomUUID(), directoryName, "DIRECTORY", OWNER_SUB, 0L, null))
                 .toList());
         // the directory-server returns the element itself as the last segment of its path
         path.add(studyStub(studyUuid, studyName));
         return path;
-    }
-
-    private void stubStudiesPaths(Map<UUID, List<ElementAttributes>> pathByStudyUuid) {
-        when(directoryService.getElementsPaths(any(), eq(USER_ID))).thenReturn(pathByStudyUuid);
     }
 
     private List<ConsumerElementInfos> getConsumerElementInfos() throws Exception {
@@ -143,11 +164,10 @@ class ConsumerElementInfosTest {
     @Test
     void testTwoNodesInDistinctStudies() throws Exception {
         stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
-        when(studyService.getNodesInfos(any())).thenReturn(List.of(
+        stubNodesInfos(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
-                new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
-        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1"), studyStub(STUDY_2_UUID, "study2")));
+                new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"), studyStub(STUDY_2_UUID, "study2"));
         stubStudiesPaths(Map.of(
                 STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root", "folder"),
                 STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
@@ -177,18 +197,18 @@ class ConsumerElementInfosTest {
         assertEquals(LAST_MODIFICATION_DATE, second.lastModificationDate());
         assertEquals(MODIFIER_SUB, second.lastModifiedByLabel());
 
-        // the studies are fetched in a single call
-        verify(directoryService, times(1)).getElementsInfos(any(), eq(null), eq(USER_ID), eq(false));
+        // the studies are fetched in a single, non-strict call
+        wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH))
+                .withQueryParam("strictMode", WireMock.equalTo("false")));
     }
 
     @Test
     void testTwoNodesInSameStudy() throws Exception {
         stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
-        when(studyService.getNodesInfos(any())).thenReturn(List.of(
+        stubNodesInfos(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
-                new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID)));
-        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1")));
+                new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
@@ -200,16 +220,14 @@ class ConsumerElementInfosTest {
         assertEquals("node1", infos.get(0).node());
         assertEquals("node2", infos.get(1).node());
         // the paths are resolved in a single call
-        verify(directoryService, times(1)).getElementsPaths(any(), eq(USER_ID));
+        wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATHS_PATH)));
     }
 
     @Test
     void testSameNodeReferencedTwice() throws Exception {
         stubSharedElementReferences(NODE_1_UUID, NODE_1_UUID);
-        when(studyService.getNodesInfos(List.of(NODE_1_UUID)))
-                .thenReturn(List.of(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID)));
-        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1")));
+        stubNodesInfos(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
@@ -217,17 +235,19 @@ class ConsumerElementInfosTest {
         // one line per reference, even when they point to the same node
         assertEquals(2, infos.size());
         assertEquals(infos.get(0), infos.get(1));
+        // the node is queried only once: duplicate references are collapsed before hitting the study-server
+        wireMockServer.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .withRequestBody(WireMock.equalToJson(objectMapper.writeValueAsString(List.of(NODE_1_UUID)))));
     }
 
     @Test
     void testStudyNotReadableIsOmitted() throws Exception {
         stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
-        when(studyService.getNodesInfos(any())).thenReturn(List.of(
+        stubNodesInfos(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
-                new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID)));
+                new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
         // the directory-server filters out the studies the user cannot read
-        when(directoryService.getElementsInfos(any(), eq(null), eq(USER_ID), eq(false)))
-                .thenReturn(List.of(studyStub(STUDY_1_UUID, "study1")));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
@@ -248,15 +268,29 @@ class ConsumerElementInfosTest {
     }
 
     @Test
+    void testUnknownNodesLeaveNothingToDescribe() throws Exception {
+        stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
+        // the study-server knows none of the referenced nodes anymore
+        stubNodesInfos();
+
+        assertTrue(getConsumerElementInfos().isEmpty());
+
+        // with no resolved study, neither the directory elements/paths nor the user-identity server is queried
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATHS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(USERS_IDENTITIES_PATH)));
+    }
+
+    @Test
     void testElementWithoutReferences() throws Exception {
         stubSharedElementReferences();
 
         assertTrue(getConsumerElementInfos().isEmpty());
 
         // without any reference, nothing is left to describe: no other server is reached
-        verify(studyService, times(0)).getNodesInfos(any());
-        verify(directoryService, times(0)).getElementsInfos(any(), any(), any(), anyBoolean());
-        verify(directoryService, times(0)).getElementsPaths(any(), any());
-        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo("/v1/users/identities")));
+        wireMockServer.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATHS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(USERS_IDENTITIES_PATH)));
     }
 }
