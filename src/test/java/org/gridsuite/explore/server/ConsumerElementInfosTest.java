@@ -37,6 +37,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -231,8 +232,19 @@ class ConsumerElementInfosTest {
 
         List<ConsumerElementInfos> infos = getConsumerElementInfos();
 
+        // only the readable study is described, the other one is dropped along with the node referencing it
         assertEquals(1, infos.size());
-        assertEquals("study1", infos.get(0).elementName());
+        ConsumerElementInfos readable = infos.get(0);
+        assertEquals("node1", readable.node());
+        assertEquals("study1", readable.elementName());
+        assertEquals("STUDY", readable.type());
+        assertEquals(List.of("root"), readable.path());
+        assertEquals("John Doe", readable.ownerLabel());
+        assertEquals(LAST_MODIFICATION_DATE, readable.lastModificationDate());
+        assertEquals(MODIFIER_SUB, readable.lastModifiedByLabel());
+
+        // nothing of the unreadable study leaks, not even the name of the node referencing it
+        assertTrue(infos.stream().noneMatch(info -> "study2".equals(info.elementName()) || "node2".equals(info.node())));
     }
 
     @Test
@@ -240,7 +252,11 @@ class ConsumerElementInfosTest {
         stubSharedElementReferences();
 
         assertTrue(getConsumerElementInfos().isEmpty());
-        // no need to reach the other servers
+
+        // without any reference, nothing is left to describe: no other server is reached
         verify(studyService, times(0)).getNodesInfos(any());
+        verify(directoryService, times(0)).getElementsInfos(any(), any(), any(), anyBoolean());
+        verify(directoryService, times(0)).getElementsPaths(any(), any());
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo("/v1/users/identities")));
     }
 }
