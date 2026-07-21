@@ -7,10 +7,15 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.QuotaType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Map;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -19,7 +24,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class UserAdminService {
 
     private static final String USER_ADMIN_API_VERSION = "v1";
-    private static final String USERS_MAX_ALLOWED_CASES_URI = "/users/{sub}/profile/max-cases";
+    private static final String USERS_QUOTA_URI = "/users/{sub}/quota";
+    private static final String USERS_MAX_QUOTA_URI = USERS_QUOTA_URI + "/max";
     private static final String CASES_ALERT_THRESHOLD_URI = "/cases-alert-threshold";
     private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
@@ -32,10 +38,21 @@ public class UserAdminService {
         this.restTemplate = restTemplate;
     }
 
+    public Map<QuotaType, Integer> getUserMaxQuota(String sub) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_MAX_QUOTA_URI)
+                .buildAndExpand(sub).toUriString();
+        return restTemplate.exchange(
+                userAdminServerBaseUri + path,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Map<QuotaType, Integer>>() {
+                }).getBody();
+    }
+
     public Integer getUserMaxAllowedCases(String sub) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_MAX_ALLOWED_CASES_URI)
-            .buildAndExpand(sub).toUriString();
-        return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
+        Map<QuotaType, Integer> userMaxQuotas = getUserMaxQuota(sub);
+
+        return userMaxQuotas.getOrDefault(QuotaType.CASES, null);
     }
 
     public Integer getCasesAlertThreshold() {

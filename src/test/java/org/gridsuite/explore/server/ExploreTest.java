@@ -15,10 +15,7 @@ import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okio.Buffer;
-import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionDTO;
-import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -398,18 +395,18 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
                     } else if (path.matches("/v1/process-configs/metadata[?]ids=" + PROCESS_CONFIG_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(List.of(processConfigSprecificMetadata)));
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/profile/max-cases")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "3");
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/profile/max-cases")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/profile/max-cases")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
-                    } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/profile/max-cases")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "5");
-                    } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/profile/max-cases")) {
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/quota/max")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 3)));
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/quota/max")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 5)));
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/quota/max")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 5)));
+                    } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/quota/max")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 5)));
+                    } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/quota/max")) {
                         return new MockResponse(500);
-                    } else if (path.matches("/v1/users/.*/profile/max-cases")) {
-                        return new MockResponse(200);
+                    } else if (path.matches("/v1/users/.*/quota/max")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Collections.emptyMap()));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/cases/count")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "4");
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/cases/count")) {
