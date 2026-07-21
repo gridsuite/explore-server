@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -104,5 +105,35 @@ public class StudyService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HEADER_USER_ID, userId);
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+    }
+
+    public ResponseEntity<String> evaluateFiltersOnFirstRootNetwork(UUID studyUuid, String filters) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/filters/elements")
+                .buildAndExpand(studyUuid)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        try {
+            return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(filters, headers), String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .body(e.getResponseBodyAsString());
+        }
+    }
+
+    public ResponseEntity<String> getServersInfos(String view) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/servers/about")
+                .queryParam("view", view)
+                .buildAndExpand()
+                .toUriString();
+        try {
+            return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .body(e.getResponseBodyAsString());
+        }
     }
 }

@@ -7,11 +7,13 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -70,6 +72,22 @@ public class WorkspaceService implements IDirectoryElementsService {
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
 
         restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
+    public ResponseEntity<String> getWorkspace(UUID workspaceId) {
+        Objects.requireNonNull(workspaceId);
+
+        var path = UriComponentsBuilder
+                .fromPath(WORKSPACES_PATH + DELIMITER + workspaceId)
+                .buildAndExpand()
+                .toUriString();
+        try {
+            return restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .body(e.getResponseBodyAsString());
+        }
     }
 
     @Override

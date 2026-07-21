@@ -13,7 +13,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -93,6 +95,22 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         HttpEntity<String> httpEntity = new HttpEntity<>(config, headers);
 
         restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
+    public ResponseEntity<String> getSpreadsheetConfig(UUID configUuid) {
+        Objects.requireNonNull(configUuid);
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH + DELIMITER + configUuid)
+                .buildAndExpand()
+                .toUriString();
+        try {
+            return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .body(e.getResponseBodyAsString());
+        }
     }
 
     @Override

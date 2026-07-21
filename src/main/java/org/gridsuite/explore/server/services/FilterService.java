@@ -11,12 +11,15 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -93,6 +96,19 @@ public class FilterService implements IDirectoryElementsService {
 
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, getHttpEntityWithUserHeaderAndJsonMediaType(userId, filter), Void.class);
 
+    }
+
+    public ResponseEntity<String> getFilter(UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+                .buildAndExpand(id)
+                .toUriString();
+        try {
+            return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .body(e.getResponseBodyAsString());
+        }
     }
 
     private HttpHeaders getHeaders(String userId) {

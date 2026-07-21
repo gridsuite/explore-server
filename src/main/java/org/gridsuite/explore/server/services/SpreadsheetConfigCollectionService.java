@@ -12,7 +12,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -123,6 +125,46 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
 
         restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+    }
+
+    public ResponseEntity<String> getSpreadsheetConfigCollection(UUID collectionId) {
+        Objects.requireNonNull(collectionId);
+
+        var path = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + DELIMITER + collectionId)
+                .buildAndExpand()
+                .toUriString();
+        try {
+            return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .body(e.getResponseBodyAsString());
+        }
+    }
+
+    public ResponseEntity<Void> replaceAllSpreadsheetConfigsInCollection(UUID collectionId, String configIds, String name, String description) {
+        Objects.requireNonNull(collectionId);
+
+        var uriComponentsBuilder = UriComponentsBuilder
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + DELIMITER + collectionId + "/spreadsheet-configs/replace-all")
+                .queryParam("name", name)
+                .queryParam("description", description);
+
+        var path = uriComponentsBuilder
+                .buildAndExpand()
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> httpEntity = new HttpEntity<>(configIds, headers);
+        try {
+            return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                    .build();
+        }
     }
 
     @Override

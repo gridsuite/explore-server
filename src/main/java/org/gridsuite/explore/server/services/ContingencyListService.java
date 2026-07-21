@@ -11,7 +11,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -103,6 +105,27 @@ public class ContingencyListService implements IDirectoryElementsService {
             .buildAndExpand()
             .toUriString();
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
+    }
+
+    public ResponseEntity<String> getIdentifierContingencyList(UUID id) {
+        return getContingencyList("/identifier-contingency-lists/{id}", id);
+    }
+
+    public ResponseEntity<String> getFilterBasedContingencyList(UUID id) {
+        return getContingencyList("/filters-contingency-lists/{id}", id);
+    }
+
+    private ResponseEntity<String> getContingencyList(String endpoint, UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + endpoint)
+                .buildAndExpand(id)
+                .toUriString();
+        try {
+            return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .headers(e.getResponseHeaders())
+                    .body(e.getResponseBodyAsString());
+        }
     }
 
     @Override
