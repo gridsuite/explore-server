@@ -60,8 +60,7 @@ public class StudyService implements IDirectoryElementsService {
 
     public UUID duplicateStudy(UUID studyId, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies")
-                .queryParam("duplicateFrom", studyId)
+                "/studies/{uuid}/duplicate")
                 .buildAndExpand(studyId)
                 .toUriString();
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(getHeaders(userId)),

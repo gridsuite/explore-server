@@ -128,14 +128,13 @@ class SingleLineDiagramTest {
 
     @Test
     void testDuplicateDiagramConfig() throws Exception {
-        UUID stubId = wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL))
+        UUID stubId = wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate"))
                 .willReturn(WireMock.ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(mapper.writeValueAsString(DUPLICATE_NAD_CONFIG_UUID.toString()))
                 )).getId();
 
-        mockMvc.perform(post(BASE_URL)
-                    .param("duplicateFrom", NAD_CONFIG_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate")
                     .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                     .header("userId", USER1))
                     .andExpect(status().isOk())
@@ -144,6 +143,6 @@ class SingleLineDiagramTest {
         verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, USER1);
         verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE);
         verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.READ);
-        wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
+        wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate", Map.of(), false);
     }
 }

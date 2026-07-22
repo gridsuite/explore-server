@@ -75,7 +75,7 @@ class WorkspaceTest {
         wireMockServer.start();
         workspaceService.setStudyConfigServerBaseUri(wireMockServer.baseUrl());
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(201)
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -125,8 +125,7 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspace() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", SOURCE_WORKSPACE_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
@@ -138,8 +137,7 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspaceInSameDirectory() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", SOURCE_WORKSPACE_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
@@ -147,18 +145,9 @@ class WorkspaceTest {
     }
 
     @Test
-    void testDuplicateWorkspaceWithInvalidUUID() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", "invalid-uuid")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
     void testCreateWorkspaceServiceError() throws Exception {
         wireMockServer.resetAll();
-        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
                 .willReturn(WireMock.serverError()));
 
         mockMvc.perform(post(BASE_URL)
@@ -187,11 +176,10 @@ class WorkspaceTest {
     @Test
     void testDuplicateWorkspaceServiceError() throws Exception {
         wireMockServer.resetAll();
-        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
                 .willReturn(WireMock.serverError()));
 
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", SOURCE_WORKSPACE_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isInternalServerError());
