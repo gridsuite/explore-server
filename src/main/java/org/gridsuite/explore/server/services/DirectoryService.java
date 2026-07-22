@@ -149,6 +149,27 @@ public class DirectoryService implements IDirectoryElementsService {
             .getBody();
     }
 
+    /**
+     * @return the path of each element, indexed by element uuid. Each path is ordered from the root directory to the
+     * element itself, and unknown elements are absent from the result.
+     */
+    public Map<UUID, List<ElementAttributes>> getElementsPaths(List<UUID> elementUuids, String userId) {
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/paths")
+            .queryParam(PARAM_IDS, elementUuids)
+            .buildAndExpand()
+            .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<UUID, List<ElementAttributes>> elementsPaths = restTemplate
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers),
+                new ParameterizedTypeReference<Map<UUID, List<ElementAttributes>>>() {
+                })
+            .getBody();
+        return Objects.requireNonNullElse(elementsPaths, Collections.emptyMap());
+    }
+
     public HttpStatusCode elementExists(UUID directoryUuid, String elementName, String type, String userId) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements/{elementName}/types/{type}")
@@ -274,8 +295,20 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId) {
+        return getElementsInfos(elementsUuids, elementTypes, userId, true);
+    }
+
+    /**
+     * @param strictMode when false, elements the user cannot read or that no longer exist are absent from the result
+     *                   instead of failing the whole call
+     */
+    public List<ElementAttributes> getElementsInfos(List<UUID> elementsUuids, List<String> elementTypes, String userId, boolean strictMode) {
         var ids = elementsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH).toUriString() + "?ids=" + ids;
+
+        if (!strictMode) {
+            path += "&strictMode=false";
+        }
 
         if (!CollectionUtils.isEmpty(elementTypes)) {
             path += "&elementTypes=" + elementTypes.stream().collect(Collectors.joining(","));

@@ -10,7 +10,11 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ConsumerElementInfos;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.NodeInfos;
+import org.gridsuite.explore.server.dto.ReferenceAttributes;
+import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -21,11 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
@@ -433,6 +440,81 @@ public class ExploreService {
         List<String> subs = directoryService.getElementsInfos(elementsUuids, null, userId).stream()
                 .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
         return userIdentityService.getUsersIdentities(subs);
+    }
+
+    /**
+     * Lists the elements using a shared element. There is one result per reference of the shared element.
+     * Elements the user cannot read are omitted.
+     */
+    public List<ConsumerElementInfos> getConsumerElementInfos(UUID elementUuid, String userId) {
+        // for now only STUDY_NODE references
+        List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
+                .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
+                .map(ReferenceAttributes::getReferenceId)
+                .toList();
+        if (referencedNodeUuids.isEmpty()) {
+            return List.of();
+        }
+
+        // a node can be referenced several times, and several nodes often belong to the same study: query each only once
+        Map<UUID, NodeInfos> nodeInfosByUuid = studyService.getNodesInfos(referencedNodeUuids.stream().distinct().toList())
+                .stream().collect(Collectors.toMap(NodeInfos::nodeUuid, Function.identity()));
+        List<UUID> studyUuids = nodeInfosByUuid.values().stream().map(NodeInfos::studyUuid).distinct().toList();
+        if (studyUuids.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfos(studyUuids, null, userId, false)
+                .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
+        Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = getParentDirectoryNames(studyByUuid.keySet(), userId);
+        Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());
+
+        return referencedNodeUuids.stream()
+                .map(nodeInfosByUuid::get)
+                .filter(Objects::nonNull)
+                .map(nodeInfos -> toConsumerElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
+                        parentDirectoryNamesByStudyUuid, identityBySub))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private ConsumerElementInfos toConsumerElementInfos(NodeInfos nodeInfos, ElementAttributes study,
+                                                    Map<UUID, List<String>> parentDirectoryNamesByStudyUuid,
+                                                    Map<String, UsersIdentities.UserIdentity> identityBySub) {
+        if (study == null) {
+            // the user cannot read this study, or it no longer exists
+            return null;
+        }
+        return ConsumerElementInfos.builder()
+                .elementName(study.getElementName())
+                .type(study.getType())
+                .path(parentDirectoryNamesByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))
+                .node(nodeInfos.nodeName())
+                .ownerLabel(UsersIdentities.toLabel(study.getOwner(), identityBySub))
+                .lastModificationDate(study.getLastModificationDate())
+                .lastModifiedByLabel(UsersIdentities.toLabel(study.getLastModifiedBy(), identityBySub))
+                .build();
+    }
+
+    private Map<UUID, List<String>> getParentDirectoryNames(Collection<UUID> elementUuids, String userId) {
+        return directoryService.getElementsPaths(List.copyOf(elementUuids), userId).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    // a path ends with the element itself
+                    List<ElementAttributes> elementPath = entry.getValue();
+                    return elementPath.stream()
+                            .limit(Math.max(0, elementPath.size() - 1L))
+                            .map(ElementAttributes::getElementName)
+                            .toList();
+                }));
+    }
+
+    private Map<String, UsersIdentities.UserIdentity> getIdentityBySub(Collection<ElementAttributes> elements) {
+        List<String> subs = elements.stream()
+                .flatMap(element -> Stream.of(element.getOwner(), element.getLastModifiedBy()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        return userIdentityService.getUsersIdentitiesMap(subs);
     }
 
     public UUID createProcessConfig(String name, String processConfig, String description, String userId, UUID parentDirectoryUuid) {
