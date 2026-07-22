@@ -248,13 +248,12 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public ElementAttributes duplicateElement(UUID elementUuid, UUID newElementUuid, UUID targetDirectoryId, String userId) {
         UriComponentsBuilder uri = UriComponentsBuilder
-            .fromPath(ELEMENTS_SERVER_ROOT_PATH)
-            .queryParam("duplicateFrom", elementUuid)
+            .fromPath(ELEMENTS_SERVER_ROOT_PATH + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
             .queryParam("newElementUuid", newElementUuid);
         if (targetDirectoryId != null) {
             uri.queryParam("targetDirectoryId", targetDirectoryId);
         }
-        String path = uri.buildAndExpand()
+        String path = uri.buildAndExpand(elementUuid)
             .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);

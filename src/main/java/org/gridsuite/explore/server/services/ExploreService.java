@@ -162,17 +162,10 @@ public class ExploreService {
 
     public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, String userId, ContingencyListType contingencyListType) {
         UUID newId = switch (contingencyListType) {
-            case FORM -> contingencyListService.duplicateFormContingencyList(contingencyListsId);
             case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
             case FILTERS -> contingencyListService.duplicateFilterBasedContingencyList(contingencyListsId);
         };
         duplicateDirectoryElementOrDeleteElement(contingencyListsId, newId, targetDirectoryId, userId, contingencyListService::delete);
-    }
-
-    public void createFormContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
-        contingencyListService.insertFormContingencyList(elementAttributes.getElementUuid(), content);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, contingencyListService::delete);
     }
 
     public void createIdentifierContingencyList(String listName, String content, String description, String userId, UUID parentDirectoryUuid) {
@@ -267,7 +260,6 @@ public class ExploreService {
 
     private String getProperPath(ContingencyListType contingencyListType) {
         return switch (contingencyListType) {
-            case FORM -> "/form-contingency-lists/{id}";
             case IDENTIFIERS -> "/identifier-contingency-lists/{id}";
             case FILTERS -> "/filters-contingency-lists/{id}";
         };
