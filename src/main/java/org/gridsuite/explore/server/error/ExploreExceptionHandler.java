@@ -38,6 +38,7 @@ public class ExploreExceptionHandler
     protected HttpStatus mapStatus(ExploreBusinessErrorCode errorCode) {
         return switch (errorCode) {
             case EXPLORE_MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
+            case IMPORT_STUDY_FAILED -> null;
         };
     }
 

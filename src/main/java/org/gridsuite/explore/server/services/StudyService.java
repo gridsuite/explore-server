@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.explore.server.dto.StudyExportInfos;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -104,5 +105,18 @@ public class StudyService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HEADER_USER_ID, userId);
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+    }
+
+    public void importStudy(UUID studyUuid, String userId, StudyExportInfos studyExportInfos) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import")
+                .queryParam("studyUuid", studyUuid)
+                .buildAndExpand()
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HEADER_USER_ID, userId);
+        HttpEntity<StudyExportInfos> request = new HttpEntity<>(studyExportInfos, headers);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 }

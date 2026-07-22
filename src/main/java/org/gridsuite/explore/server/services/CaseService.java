@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +56,21 @@ public class CaseService implements IDirectoryElementsService {
         caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
             UUID.class);
         return caseUuid;
+    }
+
+    public UUID importCaseFromFile(File file) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        body.add("file", new org.springframework.core.io.FileSystemResource(file));
+
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+        return restTemplate.postForObject(
+            caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases",
+            request,
+            UUID.class
+        );
     }
 
     void persistCase(UUID caseUuid) {
