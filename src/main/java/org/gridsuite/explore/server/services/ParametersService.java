@@ -29,7 +29,6 @@ public class ParametersService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
-    private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
     private static final String COMPUTATION_PARAMETERS = "/parameters";
     private static final String NETWORK_VISU_PARAMETERS = "/network-visualizations-params";
 
@@ -103,9 +102,8 @@ public class ParametersService implements IDirectoryElementsService {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(sourceParametersUuid);
         var path = UriComponentsBuilder
-                    .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl())
-                    .queryParam(DUPLICATE_FROM_PARAMETER, sourceParametersUuid)
-                    .buildAndExpand()
+                    .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
+                    .buildAndExpand(sourceParametersUuid)
                     .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.add(HEADER_USER_ID, userId);
