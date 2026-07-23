@@ -54,6 +54,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_TYPE = "type";
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
+    private static final String PARAM_STATUS = "status";
 
     private final Map<String, IDirectoryElementsService> genericServices;
     private final RestTemplate restTemplate;
@@ -468,5 +469,21 @@ public class DirectoryService implements IDirectoryElementsService {
             new HttpEntity<>(permissions, headers),
             Void.class
         );
+    }
+
+    public void updateElementsStatus(List<UUID> elementUuids, String status, String userId) {
+        if (elementUuids == null || elementUuids.isEmpty()) {
+            return;
+        }
+        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        String path = UriComponentsBuilder
+                    .fromPath(ELEMENTS_SERVER_ROOT_PATH)
+                .queryParam(PARAM_IDS, ids)
+                .queryParam(PARAM_STATUS, status)
+                .buildAndExpand()
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
     }
 }
