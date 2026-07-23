@@ -7,9 +7,12 @@
 package org.gridsuite.explore.server.services;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,19 @@ public class MonitorService implements IDirectoryElementsService {
             .body(processConfig)
             .retrieve()
             .toBodilessEntity();
+    }
+
+    public ResponseEntity<String> getProcessConfig(UUID uuid) {
+        try {
+            return restClient.get()
+                .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}", uuid)
+                .retrieve()
+                .toEntity(String.class);
+        } catch (RestClientResponseException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .headers(e.getResponseHeaders() == null ? new HttpHeaders() : e.getResponseHeaders())
+                .body(e.getResponseBodyAsString());
+        }
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid) {

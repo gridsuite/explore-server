@@ -11,11 +11,17 @@ import org.gridsuite.explore.server.dto.QuotaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
+
+import java.util.Objects;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -60,5 +66,18 @@ public class UserAdminService {
             .buildAndExpand().toUriString();
         return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
 
+    }
+
+    public ResponseEntity<String> getGroups() {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + "/groups")
+            .buildAndExpand()
+            .toUriString();
+        try {
+            return restTemplate.exchange(userAdminServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                .body(e.getResponseBodyAsString());
+        }
     }
 }

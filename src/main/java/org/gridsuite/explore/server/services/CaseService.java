@@ -9,10 +9,12 @@ package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -55,6 +57,63 @@ public class CaseService implements IDirectoryElementsService {
         caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
             UUID.class);
         return caseUuid;
+    }
+
+    public ResponseEntity<UUID> importCaseWithoutDirectoryElementCreation(MultipartFile multipartFile, boolean withExpiration) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        if (multipartFile != null) {
+            Objects.requireNonNull(multipartFile.getOriginalFilename());
+            body.add("file", multipartFile.getResource());
+        }
+        body.add("withExpiration", withExpiration);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
+            .buildAndExpand()
+            .toUriString();
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, request, UUID.class);
+    }
+
+    public ResponseEntity<Resource> downloadCase(UUID caseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseUuid}")
+            .buildAndExpand(caseUuid)
+            .toUriString();
+        try {
+            return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, Resource.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                .build();
+        }
+    }
+
+    public ResponseEntity<Void> deleteCase(UUID caseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseUuid}")
+            .buildAndExpand(caseUuid)
+            .toUriString();
+        try {
+            return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, null, Void.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                .build();
+        }
+    }
+
+    public ResponseEntity<String> getBaseName(String caseName) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/caseBaseName")
+            .queryParam("caseName", caseName)
+            .buildAndExpand()
+            .toUriString();
+        try {
+            return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, String.class);
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
+                .body(e.getResponseBodyAsString());
+        }
     }
 
     void persistCase(UUID caseUuid) {
