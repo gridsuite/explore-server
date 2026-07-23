@@ -31,7 +31,6 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
     private static final String SPREADSHEET_CONFIG_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String SPREADSHEET_CONFIG_COLLECTIONS_PATH = DELIMITER + SPREADSHEET_CONFIG_API_VERSION + DELIMITER + "spreadsheet-config-collections";
-    private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
 
     private final RestTemplate restTemplate;
 
@@ -80,9 +79,8 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
         Objects.requireNonNull(collectionId);
 
         var path = UriComponentsBuilder
-                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH)
-                .queryParam(DUPLICATE_FROM_PARAMETER, collectionId)
-                .buildAndExpand()
+                .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + "/{uuid}/duplicate")
+                .buildAndExpand(collectionId)
                 .toUriString();
 
         HttpHeaders headers = new HttpHeaders();

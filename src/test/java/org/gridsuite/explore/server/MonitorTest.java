@@ -73,7 +73,6 @@ class MonitorTest {
     private static final String QUERY_PARAM_DESCRIPTION = "description";
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
     private static final String QUERY_PARAM_USER_ID = "userId";
-    private static final String QUERY_PARAM_DUPLICATE_FROM = "duplicateFrom";
 
     private static final UUID ID = UUID.randomUUID();
     private static final UUID NEW_ID = UUID.randomUUID();
@@ -184,15 +183,13 @@ class MonitorTest {
 
     @Test
     void duplicateProcessConfig() throws Exception {
-        UUID stubId = wireMockServer.stubFor(WireMock.post(urlPathEqualTo(URL_PROCESS_CONFIGS))
-                .withQueryParam(QUERY_PARAM_DUPLICATE_FROM, equalTo(ID.toString()))
+        UUID stubId = wireMockServer.stubFor(WireMock.post(urlPathEqualTo(URL_PROCESS_CONFIGS + "/" + ID + "/duplicate"))
                 .willReturn(WireMock.ok()
                     .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .withBody(objectMapper.writeValueAsString(NEW_ID))))
             .getId();
 
-        String result = mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS)
-                .queryParam(QUERY_PARAM_DUPLICATE_FROM, ID.toString())
+        String result = mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isOk())
@@ -203,17 +200,16 @@ class MonitorTest {
         verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
         verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, USER_ID);
-        wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(QUERY_PARAM_DUPLICATE_FROM, equalTo(ID.toString())), false);
+        wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 
     @Test
     void duplicateProcessConfigServerError() throws Exception {
-        UUID stubId = wireMockServer.stubFor(WireMock.post(urlPathEqualTo(URL_PROCESS_CONFIGS))
+        UUID stubId = wireMockServer.stubFor(WireMock.post(urlPathEqualTo(URL_PROCESS_CONFIGS + "/" + ID + "/duplicate"))
                 .willReturn(WireMock.serverError()))
             .getId();
 
-        mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS)
-                .queryParam(QUERY_PARAM_DUPLICATE_FROM, ID.toString())
+        mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isInternalServerError());
@@ -221,6 +217,6 @@ class MonitorTest {
         verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
         verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(String.class));
-        wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(QUERY_PARAM_DUPLICATE_FROM, equalTo(ID.toString())), false);
+        wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 }

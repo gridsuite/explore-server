@@ -45,9 +45,8 @@ public class WorkspaceService implements IDirectoryElementsService {
         Objects.requireNonNull(sourceWorkspaceId);
 
         var path = UriComponentsBuilder
-                .fromPath(WORKSPACES_PATH)
-                .queryParam(DUPLICATE_FROM_PARAMETER, sourceWorkspaceId)
-                .buildAndExpand()
+                .fromPath(WORKSPACES_PATH + "/{uuid}/duplicate")
+                .buildAndExpand(sourceWorkspaceId)
                 .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
