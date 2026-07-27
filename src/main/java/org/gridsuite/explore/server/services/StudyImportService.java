@@ -6,14 +6,9 @@
  */
 package org.gridsuite.explore.server.services;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gridsuite.explore.server.dto.CaseExportInfos;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.RootNetworkExportInfos;
-import org.gridsuite.explore.server.dto.StudyExportInfos;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.gridsuite.explore.server.dto.CaseInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -45,16 +40,16 @@ public class StudyImportService {
 
     private final CaseService caseService;
     private final StudyService studyService;
-    private final ExploreService exploreService;
     private final DirectoryService directoryService;
     private final ObjectMapper objectMapper;
+    private final ExploreService exploreService;
 
-    public StudyImportService(CaseService caseService, StudyService studyService, ExploreService exploreService, DirectoryService directoryService, ObjectMapper objectMapper) {
+    public StudyImportService(CaseService caseService, StudyService studyService, DirectoryService directoryService, ObjectMapper objectMapper, ExploreService exploreService) {
         this.caseService = caseService;
         this.studyService = studyService;
-        this.exploreService = exploreService;
         this.directoryService = directoryService;
         this.objectMapper = objectMapper;
+        this.exploreService = exploreService;
     }
 
     /**
@@ -143,57 +138,47 @@ public class StudyImportService {
                 }
 
                 // Get the first root network's new case UUID
-                var firstRootNetwork = studyExportInfos.rootNetworks().get(0);
+                var firstRootNetwork = studyExportInfos.rootNetworks().getFirst();
                 UUID oldCaseUuid = firstRootNetwork.caseInfos().uuid();
                 UUID newCaseUuid = caseUuidMapping.get(oldCaseUuid);
-
-                // Create the study with the first root network using the correct root network name
-                UUID createdStudyUuid = UUID.randomUUID();
-                ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description);
-
-                try {
-                    // Insert study with the first root network name from export
-                    studyService.insertStudyWithExistingCaseFile(
-                            createdStudyUuid,
-                            userId,
-                            newCaseUuid,
-                            firstRootNetwork.caseFormat(),
-                            firstRootNetwork.importParameters(),
-                            false, // Don't duplicate case
-                            firstRootNetwork.name() // Use the name from the export (e.g., "n1")
-                    );
-
-                    // Create directory element
-                    directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
-                } catch (Exception e) {
-                    // Rollback: delete the study if directory creation fails
-                    try {
-                        studyService.delete(createdStudyUuid, userId);
-                    } catch (Exception cleanupException) {
-                        LOGGER.error("Failed to cleanup study after error", cleanupException);
-                    }
-                    throw e;
-                }
-
-                LOGGER.info("Study creation initiated with UUID: {}", createdStudyUuid);
-
-                // Wait for the study to be fully created (asynchronous case import processing)
-                LOGGER.info("Waiting for study to be fully created in study-server...");
-                waitForStudyCreation(createdStudyUuid, userId);
-                LOGGER.info("Study creation confirmed");
 
                 // Update the StudyExportInfos with new case UUIDs
                 StudyExportInfos updatedExportInfos = updateCaseUuidsInExportInfos(studyExportInfos, caseUuidMapping);
                 LOGGER.info("Updated export infos with {} root networks", updatedExportInfos.rootNetworks().size());
 
-                // Call importStudy to import node tree and additional root networks
-                LOGGER.info("Calling studyService.importStudy() to import node tree and additional root networks");
+                // Create study UUID
+                UUID createdStudyUuid = UUID.randomUUID();
+
                 try {
-                    studyService.importStudy(createdStudyUuid, userId, updatedExportInfos);
-                    LOGGER.info("studyService.importStudy() completed successfully");
+                    // Import the complete study using STUDY_IMPORT action (async via consumer)
+                    // This will trigger the consumer which will:
+                    // 1. Insert the study with the first root network
+                    // 2. Create the directory element
+                    // 3. Import the node tree and additional root networks
+                    LOGGER.info("Importing study {} with {} root networks using STUDY_IMPORT action",
+                            createdStudyUuid, updatedExportInfos.rootNetworks().size());
+
+                    studyService.importStudyWithCaseImportAction(
+                            createdStudyUuid,
+                            userId,
+                            newCaseUuid,
+                            firstRootNetwork.caseFormat(),
+                            firstRootNetwork.importParameters(),
+                            updatedExportInfos,
+                            studyName,
+                            description,
+                            parentDirectoryUuid);
+
+                    LOGGER.info("Study import initiated for study {}", createdStudyUuid);
                 } catch (Exception e) {
-                    LOGGER.error("Failed to import study tree and additional root networks", e);
-                    throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study tree: " + e.getMessage());
+                    LOGGER.error("Failed to import study", e);
+                    // Cleanup on error
+                    try {
+                        studyService.delete(createdStudyUuid, userId);
+                    } catch (Exception cleanupException) {
+                        LOGGER.error("Failed to cleanup study after error", cleanupException);
+                    }
+                    throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
                 }
 
                 LOGGER.info("Successfully imported study {} with UUID {}", studyName, createdStudyUuid);
@@ -240,38 +225,7 @@ public class StudyImportService {
         }
     }
 
-    /**
-     * Wait for study to be fully created in study-server (polling with timeout)
-     */
-    private void waitForStudyCreation(UUID studyUuid, String userId) {
-        int maxAttempts = 60; // 60 seconds max
-        int attemptDelayMs = 1000; // Check every second
 
-        for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            try {
-                // Try to get study metadata - if it exists, the study is created
-                List<Map<String, Object>> metadata = studyService.getMetadata(List.of(studyUuid));
-                if (metadata != null && !metadata.isEmpty()) {
-                    LOGGER.info("Study {} found after {} attempts", studyUuid, attempt + 1);
-                    return;
-                }
-            } catch (Exception e) {
-                // Study not found yet, wait and retry
-                if (attempt < maxAttempts - 1) {
-                    try {
-                        Thread.sleep(attemptDelayMs);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        throw new ExploreException(IMPORT_STUDY_FAILED, "Interrupted while waiting for study creation");
-                    }
-                } else {
-                    LOGGER.error("Study {} not found after {} attempts", studyUuid, maxAttempts);
-                    throw new ExploreException(IMPORT_STUDY_FAILED,
-                            "Timeout waiting for study creation. Study may not have been created successfully.");
-                }
-            }
-        }
-    }
 
     /**
      * Update case UUIDs in StudyExportInfos with new imported case UUIDs

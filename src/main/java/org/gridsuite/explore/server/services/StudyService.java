@@ -118,4 +118,51 @@ public class StudyService implements IDirectoryElementsService {
         HttpEntity<StudyExportInfos> request = new HttpEntity<>(studyExportInfos, headers);
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
+
+    public void importStudyWithExistingCase(UUID studyUuid, StudyExportInfos studyExportInfos, String userId) {
+        var firstRootNetwork = studyExportInfos.rootNetworks().getFirst();
+
+        var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                "/studies/import-with-existing-case/{caseUuid}")
+                .queryParam("studyUuid", studyUuid)
+                .queryParam("caseFormat", firstRootNetwork.caseFormat());
+
+        if (firstRootNetwork.importParameters() != null && !firstRootNetwork.importParameters().isEmpty()) {
+            firstRootNetwork.importParameters().forEach(uriComponentsBuilder::queryParam);
+        }
+
+        String path = uriComponentsBuilder.buildAndExpand(firstRootNetwork.caseInfos().uuid()).toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HEADER_USER_ID, userId);
+        HttpEntity<StudyExportInfos> request = new HttpEntity<>(studyExportInfos, headers);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+    }
+
+    public void importStudyWithCaseImportAction(UUID studyUuid, String userId, UUID caseUuid, String caseFormat,
+                                                Map<String, Object> importParams, StudyExportInfos studyExportInfos,
+                                                String studyName, String description, UUID parentDirectoryUuid) {
+        var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                "/studies/import-with-case-import-action/{caseUuid}")
+                .queryParam("studyUuid", studyUuid)
+                .queryParam("caseFormat", caseFormat)
+                .queryParam("studyName", studyName)
+                .queryParam("description", description)
+                .queryParam("parentDirectoryUuid", parentDirectoryUuid);
+
+        String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HEADER_USER_ID, userId);
+
+        // Create a map with both import parameters and study export infos
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("importParameters", importParams);
+        requestBody.put("studyExportInfos", studyExportInfos);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+    }
 }

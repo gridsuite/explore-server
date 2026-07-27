@@ -115,7 +115,7 @@ public class ExploreService {
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
     }
 
-    private @Nullable String getElementName(UUID elementUuid) {
+    public @Nullable String getElementName(UUID elementUuid) {
         String elementName = null;
         // Two scenarios to handle.
         try {
@@ -474,7 +474,7 @@ public class ExploreService {
         return newDynamicMappingUuid;
     }
 
-    private void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
+    public void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
         executeWithRollback(() -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId), elementAttributes.getElementUuid(), userId, rollback);
     }
 
