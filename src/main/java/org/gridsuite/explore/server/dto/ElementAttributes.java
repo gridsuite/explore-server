@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import java.time.Instant;
@@ -40,6 +41,7 @@ public class ElementAttributes {
     private String lastModifiedBy;
 
     // uses of the current element as a reference (shared element), empty when it is not referenced
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<ReferenceAttributes> references = new ArrayList<>();
 
     private Map<String, Object> specificMetadata = new HashMap<>();
