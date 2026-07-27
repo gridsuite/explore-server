@@ -9,6 +9,8 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import mockwebserver3.*;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
@@ -24,6 +26,7 @@ import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
 import static org.junit.jupiter.api.Assertions.*;
@@ -173,6 +177,8 @@ class ExploreTest {
     @Autowired
     private OutputDestination output;
 
+    private WireMockServer wireMockServer;
+
     private static final String USER_MESSAGE_DESTINATION = "directory.update";
     public static final String HEADER_USER_MESSAGE = "userMessage";
     public static final String HEADER_USER_ID = "userId";
@@ -184,6 +190,9 @@ class ExploreTest {
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
     void setup(final MockWebServer server) throws Exception {
+        wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+        wireMockServer.start();
+
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
@@ -320,8 +329,6 @@ class ExploreTest {
                 } else if (path.matches("/v1/elements\\?ids=" + PROCESS_CONFIG_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + processConfigElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements/" + ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/elements\\?ids=.*&status=.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?targetDirectoryUuid=" + PARENT_DIRECTORY_UUID) && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
@@ -510,6 +517,13 @@ class ExploreTest {
         server.setDispatcher(dispatcher);
         server.start();
         output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
+    }
+
+    @AfterEach
+    void teardown() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
     }
 
     @Test
@@ -1515,6 +1529,24 @@ class ExploreTest {
 
     @Test
     void testDeleteElementSpawnsDeletionThread() throws Exception {
+        //TODO Remove server url temporary redefinition once MockWebServer is removed from this class
+        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
+
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/authorized"))
+                .willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/v1/elements/" + FILTER_UUID))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(mapper.writeValueAsString(
+                                new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)))));
+        wireMockServer.stubFor(WireMock.put(WireMock.urlMatching("/v1/elements\\?ids=.*&status=.*"))
+                .willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo("/v1/filters/" + FILTER_UUID))
+                .willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo("/v1/elements/" + FILTER_UUID))
+                .willReturn(WireMock.ok()));
+
         CountDownLatch deletionStarted = new CountDownLatch(1);
         CountDownLatch deletionFinished = new CountDownLatch(1);
         AtomicReference<Thread> deletionThread = new AtomicReference<>();
@@ -1537,6 +1569,9 @@ class ExploreTest {
 
         // wait for the async chain to finish so pending requests don't bleed into other tests
         assertTrue(deletionFinished.await(TIMEOUT, TimeUnit.MILLISECONDS));
+
+        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/filters/" + FILTER_UUID)));
+        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/elements/" + FILTER_UUID)));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {

@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -193,35 +194,38 @@ public class ExploreService {
     }
 
     public CompletableFuture<Void> deleteElement(UUID id, String userId) {
-        directoryService.updateElementsStatus(List.of(id), "DELETING", userId);
-
         return exploreServerExecutionService.runAsync(() -> {
             try {
-                directoryService.deleteElement(id, userId);
-                directoryService.deleteDirectoryElement(id, userId);
+                directoryService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING, userId);
                 // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
+                directoryService.deleteElement(id, userId);
             } catch (Exception e) {
                 LOGGER.error(e.toString(), e);
+            } finally {
                 directoryService.deleteDirectoryElement(id, userId);
             }
         });
     }
 
     public CompletableFuture<Void> deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuid, String userId) {
-        directoryService.updateElementsStatus(uuids, "DELETING", userId);
-
         return exploreServerExecutionService.runAsync(() -> {
+            directoryService.updateElementsStatus(uuids, DirectoryElementStatus.DELETING, userId);
             List<UUID> deletedIds = new ArrayList<>();
+            List<UUID> failedIds = new ArrayList<>();
             for (UUID id : uuids) {
                 try {
                     directoryService.deleteElement(id, userId);
                     deletedIds.add(id);
                 } catch (Exception e) {
                     LOGGER.error("Failed to delete element {}", id, e);
+                    failedIds.add(id);
                 }
             }
             if (!deletedIds.isEmpty()) {
                 directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
+            }
+            if (!failedIds.isEmpty()) {
+                directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.ACTIVE, userId);
             }
         });
     }

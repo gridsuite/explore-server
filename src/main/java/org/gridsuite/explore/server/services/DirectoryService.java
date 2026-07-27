@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
@@ -472,7 +473,7 @@ public class DirectoryService implements IDirectoryElementsService {
         );
     }
 
-    public void updateElementsStatus(List<UUID> elementUuids, String status, String userId) {
+    public void updateElementsStatus(List<UUID> elementUuids, DirectoryElementStatus status, String userId) {
         if (elementUuids == null || elementUuids.isEmpty()) {
             return;
         }
