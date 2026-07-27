@@ -90,11 +90,10 @@ public class StudyService implements IDirectoryElementsService {
 
     public List<NodeInfos> getNodesInfos(List<UUID> nodeUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/nodes/infos")
+                .queryParam("ids", nodeUuids)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(nodeUuids, headers),
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
                 new ParameterizedTypeReference<List<NodeInfos>>() {
                 }).getBody();
     }
