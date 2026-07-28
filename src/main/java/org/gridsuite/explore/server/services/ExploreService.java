@@ -222,7 +222,11 @@ public class ExploreService {
                 }
             }
             if (!deletedIds.isEmpty()) {
-                directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
+                try {
+                    directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
+                }
             }
             if (!failedIds.isEmpty()) {
                 directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.ACTIVE, userId);

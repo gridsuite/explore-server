@@ -17,10 +17,7 @@ import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okio.Buffer;
-import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionDTO;
-import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -50,14 +47,17 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -1528,50 +1528,43 @@ class ExploreTest {
     }
 
     @Test
-    void testDeleteElementSpawnsDeletionThread() throws Exception {
+    void testDeleteElementsFromDirectoryRevertsStatusWhenElementDeletionFails() throws Exception {
         //TODO Remove server url temporary redefinition once MockWebServer is removed from this class
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
+        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
 
         wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/authorized"))
                 .willReturn(WireMock.ok()));
-        wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/v1/elements/" + FILTER_UUID))
+        wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/v1/elements/" + PRIVATE_STUDY_UUID))
                 .willReturn(WireMock.ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(mapper.writeValueAsString(
-                                new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)))));
+                                new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)))));
         wireMockServer.stubFor(WireMock.put(WireMock.urlMatching("/v1/elements\\?ids=.*&status=.*"))
                 .willReturn(WireMock.ok()));
-        wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo("/v1/filters/" + FILTER_UUID))
+        wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID))
                 .willReturn(WireMock.ok()));
-        wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo("/v1/elements/" + FILTER_UUID))
+        wireMockServer.stubFor(WireMock.delete(WireMock.urlMatching("/v1/elements\\?ids=.*"))
                 .willReturn(WireMock.ok()));
 
-        CountDownLatch deletionStarted = new CountDownLatch(1);
-        CountDownLatch deletionFinished = new CountDownLatch(1);
-        AtomicReference<Thread> deletionThread = new AtomicReference<>();
+        doThrow(new RuntimeException("simulated failure"))
+                .when(directoryService).deleteElement(FILTER_UUID, USER1);
 
+        CountDownLatch reconciliationDone = new CountDownLatch(1);
         doAnswer(invocation -> {
-            deletionThread.set(Thread.currentThread());
-            deletionStarted.countDown();
-            return invocation.callRealMethod();
-        }).when(directoryService).deleteElement(FILTER_UUID, USER1);
-        doAnswer(invocation -> {
-            invocation.callRealMethod();
-            deletionFinished.countDown();
-            return null;
-        }).when(directoryService).deleteDirectoryElement(FILTER_UUID, USER1);
+            Object result = invocation.callRealMethod();
+            reconciliationDone.countDown();
+            return result;
+        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.ACTIVE, USER1);
 
-        deleteElement(FILTER_UUID);
+        deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID), PARENT_DIRECTORY_UUID);
 
-        assertTrue(deletionStarted.await(TIMEOUT, TimeUnit.MILLISECONDS), "deletion was never started");
-        assertNotSame(Thread.currentThread(), deletionThread.get(), "deletion ran on the caller thread instead of a spawned one");
+        assertTrue(reconciliationDone.await(TIMEOUT, TimeUnit.MILLISECONDS), "status was never reverted after individual deletion failure");
 
-        // wait for the async chain to finish so pending requests don't bleed into other tests
-        assertTrue(deletionFinished.await(TIMEOUT, TimeUnit.MILLISECONDS));
-
-        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/filters/" + FILTER_UUID)));
-        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/elements/" + FILTER_UUID)));
+        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID)));
+        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + PRIVATE_STUDY_UUID + "&parentDirectoryUuid=.*")));
+        wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=ACTIVE")));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
