@@ -778,18 +778,4 @@ public class ExploreController {
         UUID newDynamicMappingUuid = exploreService.duplicateDynamicMapping(id, targetDirectoryId, userId);
         return ResponseEntity.ofNullable(newDynamicMappingUuid);
     }
-
-    @PostMapping(value = "/explore/studies/{studyName}/import", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Import a study from a study export descriptor")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import request delegated to study server")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> importStudy(@PathVariable("studyName") String studyName,
-                                            @RequestParam("description") String description,
-                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId,
-                                            @RequestBody StudyExportInfos studyExportInfos) {
-        exploreService.assertCanCreateCase(userId);
-        exploreService.importStudy(studyName, description, userId, parentDirectoryUuid, studyExportInfos);
-        return ResponseEntity.ok().build();
-    }
 }
