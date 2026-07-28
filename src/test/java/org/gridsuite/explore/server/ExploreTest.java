@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -44,6 +45,10 @@ import org.springframework.util.ResourceUtils;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -187,12 +192,13 @@ class ExploreTest {
 
     private static final long TIMEOUT = 1000;
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    private @interface UsesWireMock {}
+
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
-    void setup(final MockWebServer server) throws Exception {
-        wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
-        wireMockServer.start();
-
+    void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
@@ -206,6 +212,15 @@ class ExploreTest {
         monitorService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
+
+        //TODO Remove server url conditional redefinition once MockWebServer is removed from this class
+        if (testInfo.getTestMethod().map(m -> m.isAnnotationPresent(UsesWireMock.class)).orElse(false)) {
+            wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+            wireMockServer.start();
+            directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+            filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
+            studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+        }
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
@@ -1474,12 +1489,8 @@ class ExploreTest {
     }
 
     @Test
+    @UsesWireMock
     void testDeleteElementsFromDirectoryRevertsStatusWhenElementDeletionFails() throws Exception {
-        //TODO Remove server url temporary redefinition once MockWebServer is removed from this class
-        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
-        filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
-        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
-
         wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/authorized"))
                 .willReturn(WireMock.ok()));
         wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/v1/elements/" + PRIVATE_STUDY_UUID))
