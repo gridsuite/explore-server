@@ -188,8 +188,7 @@ class DynamicMappingTest {
                     .withBody(objectMapper.writeValueAsString(NEW_ID))))
             .getId();
 
-        mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS)
-                .queryParam("duplicateFrom", ID.toString())
+        mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID + "/duplicate")
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isOk());
@@ -206,8 +205,7 @@ class DynamicMappingTest {
                 .willReturn(WireMock.serverError()))
             .getId();
 
-        mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS)
-                .queryParam("duplicateFrom", ID.toString())
+        mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID + "/duplicate")
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isInternalServerError());

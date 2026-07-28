@@ -89,7 +89,7 @@ class SpreadsheetConfigTest {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(CONFIG_UUID));
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/" + CONFIG_UUID) && "PUT".equals(request.getMethod())) {
                     return new MockResponse(204);
-                } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "\\?duplicateFrom=" + CONFIG_UUID) && "POST".equals(request.getMethod())) {
+                } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/" + CONFIG_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/metadata\\?ids=" + CONFIG_UUID)) {
                     Map<String, Object> metadata = new HashMap<>();
@@ -115,7 +115,7 @@ class SpreadsheetConfigTest {
                 } else if (path.matches("/v1/elements/" + CONFIG_UUID) && "PUT".equals(request.getMethod())) {
                     // Mock response for updating element in directory
                     return new MockResponse(200);
-                } else if (path.matches("/v1/elements\\?duplicateFrom=.*&newElementUuid=.*")) {
+                } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*")) {
                     ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), CONFIG_NAME + " (copy)", "SPREADSHEET_CONFIG", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
                 } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
@@ -151,20 +151,10 @@ class SpreadsheetConfigTest {
 
     @Test
     void testDuplicateSpreadsheetConfig() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", CONFIG_UUID.toString())
+        mockMvc.perform(post(BASE_URL + "/" + CONFIG_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
-    }
-
-    @Test
-    void testDuplicateSpreadsheetConfigWithInvalidUUID() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .param("duplicateFrom", "invalid-uuid")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
-                .andExpect(status().isInternalServerError());
     }
 
     @Test
