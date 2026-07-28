@@ -1513,7 +1513,7 @@ class ExploreTest {
             Object result = invocation.callRealMethod();
             reconciliationDone.countDown();
             return result;
-        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.ACTIVE, USER1);
+        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.CREATED, USER1);
 
         deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID), PARENT_DIRECTORY_UUID);
 

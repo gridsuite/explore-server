@@ -228,7 +228,7 @@ public class ExploreService {
             }
         }
         if (!failedIds.isEmpty()) {
-            directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.ACTIVE, userId);
+            directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.CREATED, userId);
         }
     }
 
