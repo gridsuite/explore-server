@@ -187,44 +187,49 @@ public class ExploreService {
     }
 
     public CompletableFuture<Void> deleteElement(UUID id, String userId) {
-        return exploreServerExecutionService.runAsync(() -> {
-            try {
-                directoryService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING, userId);
-                // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
-                directoryService.deleteElement(id, userId);
-            } catch (Exception e) {
-                LOGGER.error(e.toString(), e);
-            } finally {
-                directoryService.deleteDirectoryElement(id, userId);
-            }
-        });
+        return exploreServerExecutionService.runAsync(() -> doDeleteElement(id, userId));
+    }
+
+    private void doDeleteElement(UUID id, String userId) {
+        try {
+            directoryService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING, userId);
+            // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
+            directoryService.deleteElement(id, userId);
+        } catch (Exception e) {
+            LOGGER.error(e.toString(), e);
+        } finally {
+            directoryService.deleteDirectoryElement(id, userId);
+        }
     }
 
     public CompletableFuture<Void> deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuid, String userId) {
-        return exploreServerExecutionService.runAsync(() -> {
-            directoryService.updateElementsStatus(uuids, DirectoryElementStatus.DELETING, userId);
-            List<UUID> deletedIds = new ArrayList<>();
-            List<UUID> failedIds = new ArrayList<>();
-            for (UUID id : uuids) {
-                try {
-                    directoryService.deleteElement(id, userId);
-                    deletedIds.add(id);
-                } catch (Exception e) {
-                    LOGGER.error("Failed to delete element {}", id, e);
-                    failedIds.add(id);
-                }
+        return exploreServerExecutionService.runAsync(() -> doDeleteElementsFromDirectory(uuids, parentDirectoryUuid, userId));
+    }
+
+    private void doDeleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuid, String userId) {
+        directoryService.updateElementsStatus(uuids, DirectoryElementStatus.DELETING, userId);
+        List<UUID> deletedIds = new ArrayList<>();
+        List<UUID> failedIds = new ArrayList<>();
+        for (UUID id : uuids) {
+            try {
+                directoryService.deleteElement(id, userId);
+                deletedIds.add(id);
+            } catch (Exception e) {
+                LOGGER.error("Failed to delete element {}", id, e);
+                failedIds.add(id);
             }
-            if (!deletedIds.isEmpty()) {
-                try {
-                    directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
-                } catch (Exception e) {
-                    LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
-                }
+        }
+        if (!deletedIds.isEmpty()) {
+            try {
+                directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
+            } catch (Exception e) {
+                LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
+                failedIds.addAll(deletedIds);
             }
-            if (!failedIds.isEmpty()) {
-                directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.ACTIVE, userId);
-            }
-        });
+        }
+        if (!failedIds.isEmpty()) {
+            directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.ACTIVE, userId);
+        }
     }
 
     public void updateFilter(UUID id, String filter, String userId, String name, String description) {
