@@ -1521,7 +1521,7 @@ class ExploreTest {
 
         wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID)));
         wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + PRIVATE_STUDY_UUID + "&parentDirectoryUuid=.*")));
-        wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=ACTIVE")));
+        wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=CREATED")));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
