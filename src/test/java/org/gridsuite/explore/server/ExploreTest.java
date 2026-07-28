@@ -194,7 +194,7 @@ class ExploreTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    private @interface UsesWireMock {}
+    private @interface UsesWireMock { }
 
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
