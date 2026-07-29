@@ -11,10 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import org.gridsuite.explore.server.dto.ConsumerElementInfos;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;
+import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserIdentityService;
@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-class ConsumerElementInfosTest {
+class ReferencingElementInfosTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -153,8 +153,8 @@ class ConsumerElementInfosTest {
         return path;
     }
 
-    private List<ConsumerElementInfos> getConsumerElementInfos() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/consumer-element-infos", SHARED_ELEMENT_UUID)
+    private List<ReferencingElementInfos> getReferencingElementInfos() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/referencing-element-infos", SHARED_ELEMENT_UUID)
                         .header("userId", USER_ID))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -172,11 +172,11 @@ class ConsumerElementInfosTest {
                 STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root", "folder"),
                 STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
 
-        List<ConsumerElementInfos> infos = getConsumerElementInfos();
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
 
         assertEquals(2, infos.size());
 
-        ConsumerElementInfos first = infos.get(0);
+        ReferencingElementInfos first = infos.get(0);
         assertEquals("node1", first.node());
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
@@ -187,7 +187,7 @@ class ConsumerElementInfosTest {
         // unknown identities fall back to the sub itself
         assertEquals(MODIFIER_SUB, first.lastModifiedByLabel());
 
-        ConsumerElementInfos second = infos.get(1);
+        ReferencingElementInfos second = infos.get(1);
         assertEquals("node2", second.node());
         assertEquals("study2", second.elementName());
         assertEquals("STUDY", second.type());
@@ -211,7 +211,7 @@ class ConsumerElementInfosTest {
         stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
-        List<ConsumerElementInfos> infos = getConsumerElementInfos();
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
 
         // one line per reference, the study is repeated
         assertEquals(2, infos.size());
@@ -230,7 +230,7 @@ class ConsumerElementInfosTest {
         stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
-        List<ConsumerElementInfos> infos = getConsumerElementInfos();
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
 
         // one line per reference, even when they point to the same node
         assertEquals(2, infos.size());
@@ -250,11 +250,11 @@ class ConsumerElementInfosTest {
         stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
 
-        List<ConsumerElementInfos> infos = getConsumerElementInfos();
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
 
         // only the readable study is described, the other one is dropped along with the node referencing it
         assertEquals(1, infos.size());
-        ConsumerElementInfos readable = infos.get(0);
+        ReferencingElementInfos readable = infos.get(0);
         assertEquals("node1", readable.node());
         assertEquals("study1", readable.elementName());
         assertEquals("STUDY", readable.type());
@@ -273,7 +273,7 @@ class ConsumerElementInfosTest {
         // the study-server knows none of the referenced nodes anymore
         stubNodesInfos();
 
-        assertTrue(getConsumerElementInfos().isEmpty());
+        assertTrue(getReferencingElementInfos().isEmpty());
 
         // with no resolved study, neither the directory elements/paths nor the user-identity server is queried
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH)));
@@ -285,7 +285,7 @@ class ConsumerElementInfosTest {
     void testElementWithoutReferences() throws Exception {
         stubSharedElementReferences();
 
-        assertTrue(getConsumerElementInfos().isEmpty());
+        assertTrue(getReferencingElementInfos().isEmpty());
 
         // without any reference, nothing is left to describe: no other server is reached
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));

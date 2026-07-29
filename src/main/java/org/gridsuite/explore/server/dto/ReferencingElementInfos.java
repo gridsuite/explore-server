@@ -17,7 +17,7 @@ import java.util.List;
  * @author Florent MILLOT {@literal <florent.millot_externe at rte-france.com>}
  */
 @Builder
-public record ConsumerElementInfos(String elementName, String type,
+public record ReferencingElementInfos(String elementName, String type,
                                    List<String> path,
                                    // only relevant when sharing a network modification within a study
                                    String node,
