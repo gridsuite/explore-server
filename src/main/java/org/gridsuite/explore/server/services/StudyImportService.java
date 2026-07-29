@@ -20,6 +20,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
@@ -58,7 +59,8 @@ public class StudyImportService {
     @Async
     public void importStudyArchive(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         try {
-            Path tempDir = createTempDirectory();
+            FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
+            Path tempDir = Files.createTempDirectory("study-import-", attr);
             try {
                 importStudyFromArchive(archiveFile, studyName, description, userId, parentDirectoryUuid, tempDir);
             } finally {
@@ -239,13 +241,5 @@ public class StudyImportService {
                 });
             }
         }
-    }
-
-    private Path createTempDirectory() throws IOException {
-        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
-            Set<PosixFilePermission> ownerOnly = PosixFilePermissions.fromString("rwx------");
-            return Files.createTempDirectory("study-import-", PosixFilePermissions.asFileAttribute(ownerOnly));
-        }
-        return Files.createTempDirectory("study-import-");
     }
 }
