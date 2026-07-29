@@ -7,7 +7,9 @@
 package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.CaseExportInfos;
+import org.gridsuite.explore.server.dto.RootNetworkExportInfos;
+import org.gridsuite.explore.server.dto.StudyExportInfos;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +17,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-import java.nio.file.FileSystems;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
