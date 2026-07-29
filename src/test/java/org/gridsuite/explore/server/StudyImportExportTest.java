@@ -9,13 +9,11 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import org.gridsuite.explore.server.dto.CaseExportInfos;
-import org.gridsuite.explore.server.dto.NodeTreeExportInfos;
-import org.gridsuite.explore.server.dto.RootNetworkExportInfos;
-import org.gridsuite.explore.server.dto.StudyExportInfos;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.StudyService;
+import org.gridsuite.explore.server.services.UserAdminService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,10 +27,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -75,6 +70,9 @@ class StudyImportExportTest {
     @Autowired
     private DirectoryService directoryService;
 
+    @Autowired
+    private UserAdminService userAdminService;
+
     @BeforeEach
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
@@ -83,6 +81,7 @@ class StudyImportExportTest {
         studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
         caseService.setBaseUri(wireMockServer.baseUrl());
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
 
         // Stub case-server
         wireMockServer.stubFor(post(urlPathMatching("/v1/cases"))
@@ -95,6 +94,12 @@ class StudyImportExportTest {
         // Stub directory-server
         wireMockServer.stubFor(get(urlPathMatching("/v1/elements/authorized"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("true")));
+        wireMockServer.stubFor(get(urlPathMatching("/v1/cases-alert-threshold"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("10")));
+        // Stub user-admin-server max quota
+        wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/quota/max"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(Map.of(QuotaType.CASES, 10)))));
     }
 
     @AfterEach
