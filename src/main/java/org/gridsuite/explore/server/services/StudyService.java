@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -104,40 +107,6 @@ public class StudyService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HEADER_USER_ID, userId);
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
-    }
-
-    public void importStudy(UUID studyUuid, String userId, StudyExportInfos studyExportInfos) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import")
-                .queryParam("studyUuid", studyUuid)
-                .buildAndExpand()
-                .toUriString();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HEADER_USER_ID, userId);
-        HttpEntity<StudyExportInfos> request = new HttpEntity<>(studyExportInfos, headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
-    }
-
-    public void importStudyWithExistingCase(UUID studyUuid, StudyExportInfos studyExportInfos, String userId) {
-        var firstRootNetwork = studyExportInfos.rootNetworks().getFirst();
-
-        var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/import-with-existing-case/{caseUuid}")
-                .queryParam("studyUuid", studyUuid)
-                .queryParam("caseFormat", firstRootNetwork.caseFormat());
-
-        if (firstRootNetwork.importParameters() != null && !firstRootNetwork.importParameters().isEmpty()) {
-            firstRootNetwork.importParameters().forEach(uriComponentsBuilder::queryParam);
-        }
-
-        String path = uriComponentsBuilder.buildAndExpand(firstRootNetwork.caseInfos().uuid()).toUriString();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HEADER_USER_ID, userId);
-        HttpEntity<StudyExportInfos> request = new HttpEntity<>(studyExportInfos, headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 
     public void importStudyWithCaseImportAction(UUID studyUuid, String userId, UUID caseUuid, String caseFormat,
