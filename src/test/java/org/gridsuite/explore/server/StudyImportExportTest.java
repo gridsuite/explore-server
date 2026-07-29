@@ -14,6 +14,7 @@ import org.gridsuite.explore.server.dto.NodeTreeExportInfos;
 import org.gridsuite.explore.server.dto.RootNetworkExportInfos;
 import org.gridsuite.explore.server.dto.StudyExportInfos;
 import org.gridsuite.explore.server.services.CaseService;
+import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -71,6 +72,9 @@ class StudyImportExportTest {
     @Autowired
     private CaseService caseService;
 
+    @Autowired
+    private DirectoryService directoryService;
+
     @BeforeEach
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
@@ -78,13 +82,19 @@ class StudyImportExportTest {
         wireMockServer.start();
         studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
         caseService.setBaseUri(wireMockServer.baseUrl());
+        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
 
         // Stub case-server
         wireMockServer.stubFor(post(urlPathMatching("/v1/cases"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(CASE_UUID))));
-        // Stub study-server : import-with-case-import-action
+        wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/cases/count"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("0")));
+        // Stub study-server: import-with-case-import-action
         wireMockServer.stubFor(post(urlPathMatching("/v1/studies/import-with-case-import-action/.*"))
                 .willReturn(aResponse().withStatus(200)));
+        // Stub directory-server
+        wireMockServer.stubFor(get(urlPathMatching("/v1/elements/authorized"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("true")));
     }
 
     @AfterEach
@@ -356,5 +366,13 @@ class StudyImportExportTest {
                 null,
                 children
         );
+    }
+
+    public CaseService getCaseService() {
+        return caseService;
+    }
+
+    public void setCaseService(CaseService caseService) {
+        this.caseService = caseService;
     }
 }
