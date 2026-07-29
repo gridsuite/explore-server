@@ -123,7 +123,7 @@ class ConsumerElementInfosTest {
     }
 
     private void stubNodesInfos(NodeInfos... nodesInfos) throws Exception {
-        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
                 .willReturn(jsonResponse(List.of(nodesInfos))));
     }
 
@@ -236,8 +236,8 @@ class ConsumerElementInfosTest {
         assertEquals(2, infos.size());
         assertEquals(infos.get(0), infos.get(1));
         // the node is queried only once: duplicate references are collapsed before hitting the study-server
-        wireMockServer.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
-                .withRequestBody(WireMock.equalToJson(objectMapper.writeValueAsString(List.of(NODE_1_UUID)))));
+        wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .withQueryParam("ids", WireMock.equalTo(NODE_1_UUID.toString())));
     }
 
     @Test
@@ -288,7 +288,7 @@ class ConsumerElementInfosTest {
         assertTrue(getConsumerElementInfos().isEmpty());
 
         // without any reference, nothing is left to describe: no other server is reached
-        wireMockServer.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH)));
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATHS_PATH)));
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(USERS_IDENTITIES_PATH)));
