@@ -38,6 +38,7 @@ public class ExploreController {
 
     // /!\ This query parameter is used by the gateway to control access
     private static final String QUERY_PARAM_NAME = "name";
+    private static final String QUERY_PARAM_STUDY_NAME = "studyName";
     private static final String QUERY_PARAM_DESCRIPTION = "description";
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
 
@@ -88,7 +89,7 @@ public class ExploreController {
     @Operation(summary = "Import a study from an archive")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import started asynchronously")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_NAME) String studyName,
+    public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
                                            @RequestPart("archiveFile") MultipartFile archiveFile,
                                            @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,

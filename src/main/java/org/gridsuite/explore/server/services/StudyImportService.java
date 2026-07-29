@@ -168,12 +168,10 @@ public class StudyImportService {
         try (ZipInputStream zipIn = new ZipInputStream(inputStream)) {
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
-                // Prevent directory traversal attacks
                 Path outputPath = destDir.resolve(entry.getName()).normalize();
                 if (!outputPath.startsWith(destDir)) {
                     throw new IOException("Invalid zip entry: " + entry.getName());
                 }
-
                 if (entry.isDirectory()) {
                     Files.createDirectories(outputPath);
                 } else {
