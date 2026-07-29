@@ -9,6 +9,8 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import mockwebserver3.*;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
@@ -21,8 +23,10 @@ import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,21 +38,31 @@ import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.ResourceUtils;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -145,7 +159,7 @@ class ExploreTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
+    @MockitoSpyBean
     private DirectoryService directoryService;
     @Autowired
     private ContingencyListService contingencyListService;
@@ -168,6 +182,8 @@ class ExploreTest {
     @Autowired
     private OutputDestination output;
 
+    private WireMockServer wireMockServer;
+
     private static final String USER_MESSAGE_DESTINATION = "directory.update";
     public static final String HEADER_USER_MESSAGE = "userMessage";
     public static final String HEADER_USER_ID = "userId";
@@ -176,9 +192,13 @@ class ExploreTest {
 
     private static final long TIMEOUT = 1000;
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    private @interface UsesWireMock { }
+
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
-    void setup(final MockWebServer server) throws Exception {
+    void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
@@ -192,6 +212,15 @@ class ExploreTest {
         monitorService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
+
+        //TODO Remove server url conditional redefinition once MockWebServer is removed from this class
+        if (testInfo.getTestMethod().map(m -> m.isAnnotationPresent(UsesWireMock.class)).orElse(false)) {
+            wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+            wireMockServer.start();
+            directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+            filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
+            studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+        }
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
         String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
@@ -499,6 +528,13 @@ class ExploreTest {
         server.setDispatcher(dispatcher);
         server.start();
         output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
+    }
+
+    @AfterEach
+    void teardown() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
     }
 
     @Test
@@ -1450,6 +1486,42 @@ class ExploreTest {
         assertEquals(
             mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null, processConfigSprecificMetadata)),
             mapper.writeValueAsString(elementsMetadata.getFirst()));
+    }
+
+    @Test
+    @UsesWireMock
+    void testDeleteElementsFromDirectoryRevertsStatusWhenElementDeletionFails() throws Exception {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/authorized"))
+                .willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/v1/elements/" + PRIVATE_STUDY_UUID))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(mapper.writeValueAsString(
+                                new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)))));
+        wireMockServer.stubFor(WireMock.put(WireMock.urlMatching("/v1/elements\\?ids=.*&status=.*"))
+                .willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.delete(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID))
+                .willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.delete(WireMock.urlMatching("/v1/elements\\?ids=.*"))
+                .willReturn(WireMock.ok()));
+
+        doThrow(new RuntimeException("simulated failure"))
+                .when(directoryService).deleteElement(FILTER_UUID, USER1);
+
+        CountDownLatch reconciliationDone = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            Object result = invocation.callRealMethod();
+            reconciliationDone.countDown();
+            return result;
+        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.CREATED, USER1);
+
+        deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID), PARENT_DIRECTORY_UUID);
+
+        assertTrue(reconciliationDone.await(TIMEOUT, TimeUnit.MILLISECONDS), "status was never reverted after individual deletion failure");
+
+        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID)));
+        wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + PRIVATE_STUDY_UUID + "&parentDirectoryUuid=.*")));
+        wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=CREATED")));
     }
 
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {

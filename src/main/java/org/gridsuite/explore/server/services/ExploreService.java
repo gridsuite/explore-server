@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.StudyExportInfos;
 import org.gridsuite.explore.server.error.ExploreException;
@@ -22,10 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -65,6 +64,7 @@ public class ExploreService {
     private final NotificationService notificationService;
     private final MonitorService monitorService;
     private final DynamicMappingService dynamicMappingService;
+    private final ExploreServerExecutionService exploreServerExecutionService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
@@ -86,7 +86,8 @@ public class ExploreService {
         NotificationService notificationService,
         SingleLineDiagramService singleLineDiagramService,
         MonitorService monitorService,
-        DynamicMappingService dynamicMappingService) {
+        DynamicMappingService dynamicMappingService,
+        ExploreServerExecutionService exploreServerExecutionService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -104,6 +105,7 @@ public class ExploreService {
         this.singleLineDiagramService = singleLineDiagramService;
         this.monitorService = monitorService;
         this.dynamicMappingService = dynamicMappingService;
+        this.exploreServerExecutionService = exploreServerExecutionService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, String userId, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -185,26 +187,49 @@ public class ExploreService {
         duplicateDirectoryElementOrDeleteElement(sourceFilterId, newFilterId, targetDirectoryId, userId, filterService::delete);
     }
 
-    public void deleteElement(UUID id, String userId) {
+    public CompletableFuture<Void> deleteElement(UUID id, String userId) {
+        return exploreServerExecutionService.runAsync(() -> doDeleteElement(id, userId));
+    }
+
+    private void doDeleteElement(UUID id, String userId) {
         try {
-            directoryService.deleteElement(id, userId);
-            directoryService.deleteDirectoryElement(id, userId);
+            directoryService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING, userId);
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
+            directoryService.deleteElement(id, userId);
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
+        } finally {
             directoryService.deleteDirectoryElement(id, userId);
         }
     }
 
-    public void deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuids, String userId) {
+    public CompletableFuture<Void> deleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuid, String userId) {
+        return exploreServerExecutionService.runAsync(() -> doDeleteElementsFromDirectory(uuids, parentDirectoryUuid, userId));
+    }
 
-        try {
-            uuids.forEach(id -> directoryService.deleteElement(id, userId));
-            // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
-        } catch (Exception e) {
-            LOGGER.error(e.toString(), e);
-        } finally {
-            directoryService.deleteElementsFromDirectory(uuids, parentDirectoryUuids, userId);
+    private void doDeleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuid, String userId) {
+        directoryService.updateElementsStatus(uuids, DirectoryElementStatus.DELETING, userId);
+        List<UUID> deletedIds = new ArrayList<>();
+        List<UUID> failedIds = new ArrayList<>();
+        for (UUID id : uuids) {
+            try {
+                directoryService.deleteElement(id, userId);
+                deletedIds.add(id);
+            } catch (Exception e) {
+                LOGGER.error("Failed to delete element {}", id, e);
+                failedIds.add(id);
+            }
+        }
+        if (!deletedIds.isEmpty()) {
+            try {
+                directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid, userId);
+            } catch (Exception e) {
+                LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
+                failedIds.addAll(deletedIds);
+            }
+        }
+        if (!failedIds.isEmpty()) {
+            directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.CREATED, userId);
         }
     }
 
