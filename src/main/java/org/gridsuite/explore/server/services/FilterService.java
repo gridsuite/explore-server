@@ -29,6 +29,7 @@ public class FilterService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
+    private static final String FILTERS_ID_URL = "/filters/{id}";
 
     private String filterServerBaseUri;
 
@@ -45,7 +46,7 @@ public class FilterService implements IDirectoryElementsService {
 
     @Override
     public void delete(UUID id, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + FILTERS_ID_URL)
                 .buildAndExpand(id)
                 .toUriString();
         restTemplate.exchange(filterServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(getHeaders(userId)),
@@ -86,7 +87,7 @@ public class FilterService implements IDirectoryElementsService {
 
     public void updateFilter(UUID id, String filter, String userId) {
 
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + FILTERS_ID_URL)
                 .buildAndExpand(id)
                 .toUriString();
 
@@ -95,7 +96,7 @@ public class FilterService implements IDirectoryElementsService {
     }
 
     public String getFilter(UUID id) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + FILTERS_ID_URL)
                 .buildAndExpand(id)
                 .toUriString();
         return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
