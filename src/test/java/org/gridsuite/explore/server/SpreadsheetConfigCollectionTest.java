@@ -103,6 +103,8 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?f=true&ids=.*")) {
                     return new MockResponse(200);
+                } else if (path.matches("/v1/elements\\?ids=.*&status=.*") && "PUT".equals(request.getMethod())) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
