@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -28,6 +29,7 @@ public class NetworkConversionService {
     private static final String DELIMITER = "/";
     private static final String HEADER_USER_ID = "userId";
 
+    @Setter
     private String networkConversionServerBaseUri;
     private final RestTemplate restTemplate;
 
@@ -35,10 +37,6 @@ public class NetworkConversionService {
                                     RestTemplate restTemplate) {
         this.networkConversionServerBaseUri = networkConversionServerBaseUri;
         this.restTemplate = restTemplate;
-    }
-
-    public void setNetworkConversionServerBaseUri(String networkConversionServerBaseUri) {
-        this.networkConversionServerBaseUri = networkConversionServerBaseUri;
     }
 
     public ResponseEntity<String> getCaseImportParameters(UUID caseUuid) {
