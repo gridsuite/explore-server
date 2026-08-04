@@ -67,17 +67,4 @@ public class UserAdminService {
         return restTemplate.getForObject(userAdminServerBaseUri + path, Integer.class);
 
     }
-
-    public ResponseEntity<String> getGroups() {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + "/groups")
-            .buildAndExpand()
-            .toUriString();
-        try {
-            return restTemplate.exchange(userAdminServerBaseUri + path, HttpMethod.GET, null, String.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                .body(e.getResponseBodyAsString());
-        }
-    }
 }

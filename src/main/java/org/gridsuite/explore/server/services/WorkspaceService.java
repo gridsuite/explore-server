@@ -73,22 +73,6 @@ public class WorkspaceService implements IDirectoryElementsService {
         restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    public ResponseEntity<String> getWorkspace(UUID workspaceId) {
-        Objects.requireNonNull(workspaceId);
-
-        var path = UriComponentsBuilder
-                .fromPath(WORKSPACES_PATH + DELIMITER + workspaceId)
-                .buildAndExpand()
-                .toUriString();
-        try {
-            return restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.GET, null, String.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                    .body(e.getResponseBodyAsString());
-        }
-    }
-
     @Override
     public void delete(UUID workspaceUuid, String userId) {
         Objects.requireNonNull(workspaceUuid);

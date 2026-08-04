@@ -121,18 +121,4 @@ public class StudyService implements IDirectoryElementsService {
                     .body(e.getResponseBodyAsString());
         }
     }
-
-    public ResponseEntity<String> getServersInfos(String view) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/servers/about")
-                .queryParam("view", view)
-                .buildAndExpand()
-                .toUriString();
-        try {
-            return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null, String.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                    .body(e.getResponseBodyAsString());
-        }
-    }
 }

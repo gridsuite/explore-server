@@ -95,22 +95,6 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
         restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
-    public ResponseEntity<String> getSpreadsheetConfig(UUID configUuid) {
-        Objects.requireNonNull(configUuid);
-
-        var path = UriComponentsBuilder
-                .fromPath(SPREADSHEET_CONFIG_SERVER_ROOT_PATH + DELIMITER + configUuid)
-                .buildAndExpand()
-                .toUriString();
-        try {
-            return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.GET, null, String.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                    .body(e.getResponseBodyAsString());
-        }
-    }
-
     @Override
     public void delete(UUID configUuid, String userId) {
         Objects.requireNonNull(configUuid);
