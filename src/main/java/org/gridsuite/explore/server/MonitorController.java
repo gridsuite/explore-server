@@ -28,6 +28,6 @@ public class MonitorController {
 
     @GetMapping(value = "/process-configs/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getProcessConfig(@PathVariable("id") UUID id) {
-        return monitorService.getProcessConfig(id);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(monitorService.getProcessConfig(id));
     }
 }

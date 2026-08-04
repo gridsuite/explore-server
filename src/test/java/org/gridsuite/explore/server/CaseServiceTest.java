@@ -66,9 +66,9 @@ class CaseServiceTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("case")))
             .andRespond(withSuccess("\"" + CASE_UUID + "\"", MediaType.APPLICATION_JSON));
 
-        ResponseEntity<UUID> response = caseService.importCaseWithoutDirectoryElementCreation(file, true);
+        UUID response = caseService.importCaseWithoutDirectoryElementCreation(file, true);
 
-        assertEquals(CASE_UUID, response.getBody());
+        assertEquals(CASE_UUID, response);
         server.verify();
     }
 
@@ -94,9 +94,8 @@ class CaseServiceTest {
             .andExpect(method(HttpMethod.DELETE))
             .andRespond(withSuccess());
 
-        ResponseEntity<Void> response = caseService.deleteCase(CASE_UUID);
+        caseService.deleteCase(CASE_UUID);
 
-        assertEquals(200, response.getStatusCode().value());
         server.verify();
     }
 
@@ -106,9 +105,9 @@ class CaseServiceTest {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("network", MediaType.TEXT_PLAIN));
 
-        ResponseEntity<String> response = caseService.getBaseName(CASE_NAME);
+        String response = caseService.getBaseName(CASE_NAME);
 
-        assertEquals("network", response.getBody());
+        assertEquals("network", response);
         server.verify();
     }
 }

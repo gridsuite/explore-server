@@ -35,7 +35,7 @@ public class NetworkConversionController {
 
     @GetMapping(value = "/cases/{caseUuid}/import-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getCaseImportParameters(@PathVariable("caseUuid") UUID caseUuid) {
-        return networkConversionService.getCaseImportParameters(caseUuid);
+        return ResponseEntity.ok(networkConversionService.getCaseImportParameters(caseUuid));
     }
 
     @PostMapping(value = "/cases/{caseUuid}/convert/{format}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -44,7 +44,7 @@ public class NetworkConversionController {
                                             @RequestParam(value = "fileName", required = false) String fileName,
                                             @RequestBody(required = false) String formatParameters,
                                             @RequestHeader(HEADER_USER_ID) String userId) {
-        return networkConversionService.convertCase(caseUuid, format, fileName, formatParameters, userId);
+        return ResponseEntity.ok(networkConversionService.convertCase(caseUuid, format, fileName, formatParameters, userId));
     }
 
     @GetMapping(value = "/download-file/{exportUuid}")
@@ -54,6 +54,6 @@ public class NetworkConversionController {
 
     @GetMapping(value = "/export/formats", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getExportFormats() {
-        return networkConversionService.getExportFormats();
+        return ResponseEntity.ok(networkConversionService.getExportFormats());
     }
 }

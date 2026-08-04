@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
@@ -33,10 +32,10 @@ class FilterControllerTest {
 
     @Test
     void getFilterForwardsId() {
-        ResponseEntity<String> response = ResponseEntity.ok("{\"name\":\"filter\"}");
+        String response = "{\"name\":\"filter\"}";
         when(filterService.getFilter(FILTER_UUID)).thenReturn(response);
 
-        assertSame(response, controller.getFilter(FILTER_UUID));
+        assertSame(response, controller.getFilter(FILTER_UUID).getBody());
 
         verify(filterService).getFilter(FILTER_UUID);
     }

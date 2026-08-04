@@ -35,20 +35,20 @@ class NetworkConversionControllerTest {
 
     @Test
     void getCaseImportParametersForwardsCaseUuid() {
-        ResponseEntity<String> response = ResponseEntity.ok("{\"parameters\":[]}");
+        String response = "{\"parameters\":[]}";
         when(networkConversionService.getCaseImportParameters(CASE_UUID)).thenReturn(response);
 
-        assertSame(response, controller.getCaseImportParameters(CASE_UUID));
+        assertSame(response, controller.getCaseImportParameters(CASE_UUID).getBody());
 
         verify(networkConversionService).getCaseImportParameters(CASE_UUID);
     }
 
     @Test
     void convertCaseForwardsArguments() {
-        ResponseEntity<UUID> response = ResponseEntity.ok(EXPORT_UUID);
+        UUID response = EXPORT_UUID;
         when(networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId")).thenReturn(response);
 
-        assertSame(response, controller.convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId"));
+        assertSame(response, controller.convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId").getBody());
 
         verify(networkConversionService).convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId");
     }
@@ -65,10 +65,10 @@ class NetworkConversionControllerTest {
 
     @Test
     void getExportFormatsDelegatesToService() {
-        ResponseEntity<String> response = ResponseEntity.ok("[\"XIIDM\"]");
+        String response = "[\"XIIDM\"]";
         when(networkConversionService.getExportFormats()).thenReturn(response);
 
-        assertSame(response, controller.getExportFormats());
+        assertSame(response, controller.getExportFormats().getBody());
 
         verify(networkConversionService).getExportFormats();
     }

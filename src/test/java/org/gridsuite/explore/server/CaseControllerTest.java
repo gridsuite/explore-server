@@ -38,20 +38,17 @@ class CaseControllerTest {
 
     @Test
     void importCaseForwardsFileAndExpirationFlag() {
-        ResponseEntity<UUID> response = ResponseEntity.ok(CASE_UUID);
+        UUID response = CASE_UUID;
         when(caseService.importCaseWithoutDirectoryElementCreation(file, true)).thenReturn(response);
 
-        assertSame(response, controller.importCase(file, true));
+        assertSame(response, controller.importCase(file, true).getBody());
 
         verify(caseService).importCaseWithoutDirectoryElementCreation(file, true);
     }
 
     @Test
     void deleteCaseForwardsCaseUuid() {
-        ResponseEntity<Void> response = ResponseEntity.noContent().build();
-        when(caseService.deleteCase(CASE_UUID)).thenReturn(response);
-
-        assertSame(response, controller.deleteCase(CASE_UUID));
+        controller.deleteCase(CASE_UUID);
 
         verify(caseService).deleteCase(CASE_UUID);
     }
@@ -68,10 +65,10 @@ class CaseControllerTest {
 
     @Test
     void getBaseNameForwardsCaseName() {
-        ResponseEntity<String> response = ResponseEntity.ok("case");
+        String response = "case";
         when(caseService.getBaseName("case.xiidm")).thenReturn(response);
 
-        assertSame(response, controller.getBaseName("case.xiidm"));
+        assertSame(response, controller.getBaseName("case.xiidm").getBody());
 
         verify(caseService).getBaseName("case.xiidm");
     }

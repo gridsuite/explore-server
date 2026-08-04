@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
@@ -33,10 +32,10 @@ class MonitorControllerTest {
 
     @Test
     void getProcessConfigForwardsId() {
-        ResponseEntity<String> response = ResponseEntity.ok("{\"name\":\"process config\"}");
+        String response = "{\"name\":\"process config\"}";
         when(monitorService.getProcessConfig(PROCESS_CONFIG_UUID)).thenReturn(response);
 
-        assertSame(response, controller.getProcessConfig(PROCESS_CONFIG_UUID));
+        assertSame(response, controller.getProcessConfig(PROCESS_CONFIG_UUID).getBody());
 
         verify(monitorService).getProcessConfig(PROCESS_CONFIG_UUID);
     }

@@ -35,12 +35,13 @@ public class CaseController {
     @PostMapping(value = "/cases", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file,
                                            @RequestParam(value = "withExpiration", required = false, defaultValue = "false") boolean withExpiration) {
-        return caseService.importCaseWithoutDirectoryElementCreation(file, withExpiration);
+        return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file, withExpiration));
     }
 
     @DeleteMapping(value = "/cases/{caseUuid}")
     public ResponseEntity<Void> deleteCase(@PathVariable("caseUuid") UUID caseUuid) {
-        return caseService.deleteCase(caseUuid);
+        caseService.deleteCase(caseUuid);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(value = "/cases/{caseUuid}")
@@ -50,6 +51,6 @@ public class CaseController {
 
     @GetMapping(value = "/cases/caseBaseName")
     public ResponseEntity<String> getBaseName(@RequestParam("caseName") String caseName) {
-        return caseService.getBaseName(caseName);
+        return ResponseEntity.ok(caseService.getBaseName(caseName));
     }
 }

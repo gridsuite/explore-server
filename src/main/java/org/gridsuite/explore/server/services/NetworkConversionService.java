@@ -15,11 +15,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -39,20 +37,14 @@ public class NetworkConversionService {
         this.restTemplate = restTemplate;
     }
 
-    public ResponseEntity<String> getCaseImportParameters(UUID caseUuid) {
+    public String getCaseImportParameters(UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/import-parameters")
             .buildAndExpand(caseUuid)
             .toUriString();
-        try {
-            return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                .body(e.getResponseBodyAsString());
-        }
+        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
     }
 
-    public ResponseEntity<UUID> convertCase(UUID caseUuid, String format, String fileName, String formatParameters, String userId) {
+    public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters, String userId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/convert/{format}")
             .queryParam("fileName", fileName)
             .buildAndExpand(caseUuid, format)
@@ -61,38 +53,20 @@ public class NetworkConversionService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set(HEADER_USER_ID, userId);
-        try {
-            return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                .build();
-        }
+        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class).getBody();
     }
 
     public ResponseEntity<Resource> downloadFile(UUID exportUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/download-file/{exportUuid}")
             .buildAndExpand(exportUuid)
             .toUriString();
-        try {
-            return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, Resource.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                .build();
-        }
+        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, Resource.class);
     }
 
-    public ResponseEntity<String> getExportFormats() {
+    public String getExportFormats() {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/export/formats")
             .buildAndExpand()
             .toUriString();
-        try {
-            return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                .headers(Objects.requireNonNullElseGet(e.getResponseHeaders(), HttpHeaders::new))
-                .body(e.getResponseBodyAsString());
-        }
+        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
     }
 }

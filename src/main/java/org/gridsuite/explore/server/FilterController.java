@@ -28,6 +28,6 @@ public class FilterController {
 
     @GetMapping(value = "/filters/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getFilter(@PathVariable("id") UUID id) {
-        return filterService.getFilter(id);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(filterService.getFilter(id));
     }
 }

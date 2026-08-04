@@ -13,7 +13,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
@@ -55,9 +54,9 @@ class MonitorServiceTest {
                 .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                 .withBody(PROCESS_CONFIG)));
 
-        ResponseEntity<String> response = monitorService.getProcessConfig(PROCESS_CONFIG_UUID);
+        String response = monitorService.getProcessConfig(PROCESS_CONFIG_UUID);
 
-        assertEquals(PROCESS_CONFIG, response.getBody());
+        assertEquals(PROCESS_CONFIG, response);
         wireMockServer.verify(1, getRequestedFor(urlPathEqualTo("/v1/process-configs/" + PROCESS_CONFIG_UUID)));
     }
 }

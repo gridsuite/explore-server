@@ -52,9 +52,9 @@ class NetworkConversionServiceTest {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess(JSON, MediaType.APPLICATION_JSON));
 
-        ResponseEntity<String> response = networkConversionService.getCaseImportParameters(CASE_UUID);
+        String response = networkConversionService.getCaseImportParameters(CASE_UUID);
 
-        assertEquals(JSON, response.getBody());
+        assertEquals(JSON, response);
         server.verify();
     }
 
@@ -67,9 +67,9 @@ class NetworkConversionServiceTest {
             .andExpect(content().string(JSON))
             .andRespond(withSuccess("\"" + CONVERSION_UUID + "\"", MediaType.APPLICATION_JSON));
 
-        ResponseEntity<UUID> response = networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", JSON, "userId");
+        UUID response = networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", JSON, "userId");
 
-        assertEquals(CONVERSION_UUID, response.getBody());
+        assertEquals(CONVERSION_UUID, response);
         server.verify();
     }
 
@@ -95,9 +95,9 @@ class NetworkConversionServiceTest {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess(JSON, MediaType.APPLICATION_JSON));
 
-        ResponseEntity<String> response = networkConversionService.getExportFormats();
+        String response = networkConversionService.getExportFormats();
 
-        assertEquals(JSON, response.getBody());
+        assertEquals(JSON, response);
         server.verify();
     }
 }

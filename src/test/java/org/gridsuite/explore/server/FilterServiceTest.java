@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
@@ -47,9 +46,9 @@ class FilterServiceTest {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess(FILTER, MediaType.APPLICATION_JSON));
 
-        ResponseEntity<String> response = filterService.getFilter(FILTER_UUID);
+        String response = filterService.getFilter(FILTER_UUID);
 
-        assertEquals(FILTER, response.getBody());
+        assertEquals(FILTER, response);
         server.verify();
     }
 }
