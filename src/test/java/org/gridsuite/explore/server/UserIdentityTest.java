@@ -10,6 +10,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -160,5 +161,48 @@ class UserIdentityTest {
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null, EXCEPTION_SUB);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);
+    }
+
+    private void stubUsersIdentities(String body) {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(USER_IDENTITY_SERVER_BASE_URL + "/identities"))
+                .willReturn(WireMock.ok(body).withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)));
+    }
+
+    @Test
+    void getUsersIdentitiesMapReturnsNothingForNoSubWithoutCallingTheServer() {
+        assertTrue(userIdentityService.getUsersIdentitiesMap(List.of()).isEmpty());
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(USER_IDENTITY_SERVER_BASE_URL + "/identities")));
+    }
+
+    @Test
+    void getUsersIdentitiesMapReturnsTheIdentitiesIndexedBySub() {
+        stubUsersIdentities("{\"data\": {\"" + SUB + "\": {\"firstName\": \"John\", \"lastName\": \"Doe\"}}}");
+
+        Map<String, UsersIdentities.UserIdentity> identities = userIdentityService.getUsersIdentitiesMap(List.of(SUB));
+
+        assertEquals(new UsersIdentities.UserIdentity("John", "Doe"), identities.get(SUB));
+    }
+
+    @Test
+    void getUsersIdentitiesMapFallsBackToAnEmptyMapWhenDataIsNull() {
+        stubUsersIdentities("{\"data\": null}");
+
+        assertTrue(userIdentityService.getUsersIdentitiesMap(List.of(SUB)).isEmpty());
+    }
+
+    @Test
+    void getUsersIdentitiesMapFallsBackToAnEmptyMapWhenResponseIsEmpty() {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(USER_IDENTITY_SERVER_BASE_URL + "/identities"))
+                .willReturn(WireMock.noContent()));
+
+        assertTrue(userIdentityService.getUsersIdentitiesMap(List.of(SUB)).isEmpty());
+    }
+
+    @Test
+    void getUsersIdentitiesMapSwallowsRemoteErrorsAndReturnsAnEmptyMap() {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(USER_IDENTITY_SERVER_BASE_URL + "/identities"))
+                .willReturn(WireMock.serverError()));
+
+        assertTrue(userIdentityService.getUsersIdentitiesMap(List.of(SUB)).isEmpty());
     }
 }
