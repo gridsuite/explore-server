@@ -94,8 +94,6 @@ public class StudyImportService {
         var firstRootNetwork = studyExportInfos.rootNetworks().getFirst();
         UUID newCaseUuid = caseUuidMapping.get(firstRootNetwork.caseInfos().uuid());
         StudyExportInfos updatedExportInfos = updateCaseUuidsInExportInfos(studyExportInfos, caseUuidMapping);
-        LOGGER.info("Updated export infos with {} root networks", updatedExportInfos.rootNetworks().size());
-
         importStudyAndCleanupOnFailure(userId, parentDirectoryUuid, studyName, description, firstRootNetwork, newCaseUuid, updatedExportInfos);
     }
 
@@ -106,8 +104,6 @@ public class StudyImportService {
             LOGGER.warn("Cases directory not found or not a directory: {}", casesDir);
             return caseUuidMapping;
         }
-
-        LOGGER.info("Cases directory found: {}", casesDir);
         for (var rootNetwork : studyExportInfos.rootNetworks()) {
             importCaseForRootNetwork(rootNetwork, casesDir, caseUuidMapping);
         }
@@ -130,14 +126,12 @@ public class StudyImportService {
             return;
         }
         try {
-            LOGGER.info("Importing case file: {}", caseFile);
             UUID newCaseUuid = caseService.importCaseFromFile(caseFile.toFile());
             if (newCaseUuid == null) {
                 LOGGER.error("Case import returned null UUID for file: {}", caseFile);
                 throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import case: " + caseName);
             }
             caseUuidMapping.put(oldCaseUuid, newCaseUuid);
-            LOGGER.info("Successfully imported case {} with new UUID {}", caseName, newCaseUuid);
         } catch (ExploreException e) {
             throw e;
         } catch (Exception e) {
@@ -159,11 +153,8 @@ public class StudyImportService {
                                                 RootNetworkExportInfos firstRootNetwork, UUID newCaseUuid, StudyExportInfos updatedExportInfos) {
         UUID createdStudyUuid = UUID.randomUUID();
         try {
-            LOGGER.info("Importing study {} with {} root networks using STUDY_IMPORT action",
-                    createdStudyUuid, updatedExportInfos.rootNetworks().size());
             studyService.importStudyWithCaseImportAction(createdStudyUuid, userId, newCaseUuid, firstRootNetwork.caseFormat(),
                     firstRootNetwork.importParameters(), updatedExportInfos, studyName, description, parentDirectoryUuid);
-            LOGGER.info("Study import initiated for study {}", createdStudyUuid);
         } catch (Exception e) {
             try {
                 studyService.delete(createdStudyUuid, userId);
@@ -202,29 +193,15 @@ public class StudyImportService {
      * Update case UUIDs in StudyExportInfos with new imported case UUIDs
      */
     private StudyExportInfos updateCaseUuidsInExportInfos(StudyExportInfos original, Map<UUID, UUID> caseUuidMapping) {
-        LOGGER.info("Updating case UUIDs for {} root networks", original.rootNetworks().size());
-        List<RootNetworkExportInfos> updatedRootNetworks = original.rootNetworks().stream()
-                .map(rootNetwork -> {
-                    UUID oldCaseUuid = rootNetwork.caseInfos().uuid();
-                    UUID newCaseUuid = caseUuidMapping.get(oldCaseUuid);
-                    if (newCaseUuid == null) {
-                        LOGGER.warn("No mapping found for case UUID {}, keeping original", oldCaseUuid);
-                        return rootNetwork;
-                    }
-                    LOGGER.info("Mapping root network '{}': old case UUID {} -> new case UUID {}",
-                            rootNetwork.name(), oldCaseUuid, newCaseUuid);
-                    CaseExportInfos updatedCaseInfo = new CaseExportInfos(newCaseUuid, rootNetwork.caseInfos().name());
-                    return new RootNetworkExportInfos(
-                            rootNetwork.name(),
-                            rootNetwork.tag(),
-                            rootNetwork.caseFormat(),
-                            updatedCaseInfo,
-                            rootNetwork.importParameters()
-                    );
-                })
-                .toList();
-
-        LOGGER.info("Updated StudyExportInfos with {} root networks", updatedRootNetworks.size());
+        List<RootNetworkExportInfos> updatedRootNetworks = original.rootNetworks().stream().map(rootNetwork -> {
+            UUID oldCaseUuid = rootNetwork.caseInfos().uuid();
+            UUID newCaseUuid = caseUuidMapping.get(oldCaseUuid);
+            if (newCaseUuid == null) {
+                return rootNetwork;
+            }
+            CaseExportInfos updatedCaseInfo = new CaseExportInfos(newCaseUuid, rootNetwork.caseInfos().name());
+            return new RootNetworkExportInfos(rootNetwork.name(), rootNetwork.tag(), rootNetwork.caseFormat(), updatedCaseInfo, rootNetwork.importParameters());
+        }).toList();
         return new StudyExportInfos(original.studyUuid(), updatedRootNetworks, original.nodeTree());
     }
 

@@ -360,6 +360,7 @@ class StudyImportExportTest {
                 "NETWORK_MODIFICATION",
                 UUID.randomUUID(),
                 "BUILT",
+                "CONSTRUCTION",
                 Collections.emptyList()
         ));
         return new NodeTreeExportInfos(
@@ -367,6 +368,7 @@ class StudyImportExportTest {
                 "ROOT",
                 null,
                 null,
+                "CONSTRUCTION",
                 children
         );
     }

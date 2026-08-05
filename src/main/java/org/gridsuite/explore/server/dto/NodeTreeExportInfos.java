@@ -17,6 +17,7 @@ public record NodeTreeExportInfos(
         String type,
         UUID modificationGroupUuid,
         String buildStatus,
+        String nodeType,
         List<NodeTreeExportInfos> children
 ) {
 }
