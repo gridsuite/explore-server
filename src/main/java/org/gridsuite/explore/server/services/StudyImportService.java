@@ -78,9 +78,9 @@ public class StudyImportService {
     private void importStudyFromArchive(MultipartFile archiveFile, String studyName, String description, String userId,
                                         UUID parentDirectoryUuid, Path tempDir) throws IOException {
         extractArchive(archiveFile.getInputStream(), tempDir);
-        Path studyJsonPath = tempDir.resolve("study.json");
+        Path studyJsonPath = tempDir.resolve("tree.json");
         if (!Files.exists(studyJsonPath)) {
-            throw new ExploreException(IMPORT_STUDY_FAILED, "study.json not found in archive");
+            throw new ExploreException(IMPORT_STUDY_FAILED, "tree.json not found in archive");
         }
 
         StudyExportInfos studyExportInfos = objectMapper.readValue(studyJsonPath.toFile(), StudyExportInfos.class);

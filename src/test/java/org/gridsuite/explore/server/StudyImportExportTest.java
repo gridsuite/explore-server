@@ -136,7 +136,7 @@ class StudyImportExportTest {
 
     @Test
     void testImportStudyArchiveMissingStudyJson() throws Exception {
-        // Create an archive without study.json
+        // Create an archive without tree.json
         byte[] archiveContent = createArchiveWithoutStudyJson();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
@@ -220,7 +220,7 @@ class StudyImportExportTest {
 
     @Test
     void testImportStudyArchiveMissingCaseFile() throws Exception {
-        // Create an archive where the case file referenced in study.json doesn't exist
+        // Create an archive where the case file referenced in tree.json doesn't exist
         byte[] archiveContent = createArchiveWithMissingCaseFile();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
@@ -244,7 +244,7 @@ class StudyImportExportTest {
     private byte[] createValidStudyArchive() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            // Add study.json
+            // Add tree.json
             StudyExportInfos exportInfos = createStudyExportInfos();
             addJsonEntry(zos, exportInfos);
 
@@ -258,7 +258,7 @@ class StudyImportExportTest {
     private byte[] createArchiveWithoutStudyJson() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            // Add only case file, no study.json
+            // Add only case file, no tree.json
             addFileEntry(zos, "cases/" + CASE_UUID + "/test.xiidm", "<network></network>".getBytes());
         }
         return baos.toByteArray();
@@ -298,7 +298,7 @@ class StudyImportExportTest {
     private byte[] createArchiveWithMissingCaseFile() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            // Add study.json with case reference
+            // Add tree.json with case reference
             StudyExportInfos exportInfos = createStudyExportInfos();
             addJsonEntry(zos, exportInfos);
             // But don't add the actual case file
@@ -307,7 +307,7 @@ class StudyImportExportTest {
     }
 
     private void addJsonEntry(ZipOutputStream zos, Object content) throws IOException {
-        ZipEntry entry = new ZipEntry("study.json");
+        ZipEntry entry = new ZipEntry("tree.json");
         zos.putNextEntry(entry);
         zos.write(objectMapper.writeValueAsBytes(content));
         zos.closeEntry();
@@ -356,7 +356,6 @@ class StudyImportExportTest {
     private NodeTreeExportInfos createNodeTree() {
         List<NodeTreeExportInfos> children = new ArrayList<>();
         children.add(new NodeTreeExportInfos(
-                UUID.randomUUID(),
                 "Node 1",
                 "NETWORK_MODIFICATION",
                 UUID.randomUUID(),
@@ -364,20 +363,11 @@ class StudyImportExportTest {
                 Collections.emptyList()
         ));
         return new NodeTreeExportInfos(
-                UUID.randomUUID(),
                 "Root",
                 "ROOT",
                 null,
                 null,
                 children
         );
-    }
-
-    public CaseService getCaseService() {
-        return caseService;
-    }
-
-    public void setCaseService(CaseService caseService) {
-        this.caseService = caseService;
     }
 }
