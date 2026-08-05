@@ -11,10 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.gridsuite.explore.server.dto.CaseInfo;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionDTO;
-import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;
@@ -689,7 +686,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "The shared element was not found"),
     })
     public ResponseEntity<List<ReferencingElementInfos>> getReferencingElementInfos(@PathVariable("elementUuid") UUID elementUuid,
-                                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+                                                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(exploreService.getReferencingElementInfos(elementUuid, userId));
     }
