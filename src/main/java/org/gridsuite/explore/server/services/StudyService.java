@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.StudyExportInfos;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -14,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -88,6 +86,16 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
                 new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }).getBody();
+    }
+
+    public List<NodeInfos> getNodesInfos(List<UUID> nodeUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/nodes/infos")
+                .queryParam("ids", nodeUuids)
+                .buildAndExpand()
+                .toUriString();
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<NodeInfos>>() {
                 }).getBody();
     }
 
