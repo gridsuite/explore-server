@@ -117,13 +117,12 @@ public class StudyService implements IDirectoryElementsService {
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
-    public void importStudyWithCaseImportAction(UUID studyUuid, String userId, UUID caseUuid, String caseFormat,
+    public void importStudyWithCaseImportAction(UUID studyUuid, String userId, UUID caseUuid,
                                                 Map<String, Object> importParams, StudyExportInfos studyExportInfos,
                                                 String studyName, String description, UUID parentDirectoryUuid) {
         var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                 "/studies/import-with-case-import-action/{caseUuid}")
                 .queryParam("studyUuid", studyUuid)
-                .queryParam("caseFormat", caseFormat)
                 .queryParam("studyName", studyName)
                 .queryParam("description", description)
                 .queryParam("parentDirectoryUuid", parentDirectoryUuid);

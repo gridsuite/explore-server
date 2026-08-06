@@ -153,7 +153,7 @@ public class StudyImportService {
                                                 RootNetworkExportInfos firstRootNetwork, UUID newCaseUuid, StudyExportInfos updatedExportInfos) {
         UUID createdStudyUuid = UUID.randomUUID();
         try {
-            studyService.importStudyWithCaseImportAction(createdStudyUuid, userId, newCaseUuid, firstRootNetwork.caseFormat(),
+            studyService.importStudyWithCaseImportAction(createdStudyUuid, userId, newCaseUuid,
                     firstRootNetwork.importParameters(), updatedExportInfos, studyName, description, parentDirectoryUuid);
         } catch (Exception e) {
             try {
