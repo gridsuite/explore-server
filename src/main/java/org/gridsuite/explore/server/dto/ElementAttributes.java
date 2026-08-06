@@ -6,9 +6,13 @@
  */
 package org.gridsuite.explore.server.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,9 +36,15 @@ public class ElementAttributes {
 
     private String description;
 
+    private Instant lastModificationDate;
+
     private String lastModifiedBy;
 
     private DirectoryElementStatus status;
+
+    // uses of the current element as a reference (shared element), empty when it is not referenced
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<ReferenceAttributes> references = new ArrayList<>();
 
     private Map<String, Object> specificMetadata = new HashMap<>();
 
@@ -42,13 +52,17 @@ public class ElementAttributes {
     // change all places calling the constructor to explicitly pass lastModifiedBy ? or is it like specificMetadata ?
     // and remove the other constructor because it becomes the AllArgsConstructor
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description) {
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null);
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null);
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, Map<String, Object> specificMetadata) {
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, specificMetadata);
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, specificMetadata);
     }
 
-    // DTO in directory-server has others properties : creationDate, lastModificationDate
+    public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, DirectoryElementStatus status) {
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, status, null, null);
+    }
+
+    // DTO in directory-server has another property : creationDate
     // TODO clean this DTO duplication problem
 }
