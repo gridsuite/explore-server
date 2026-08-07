@@ -6,7 +6,7 @@
  */
 package org.gridsuite.explore.server.controllers;
 
-import org.gridsuite.explore.server.CaseController;
+import org.gridsuite.explore.server.controller.CaseController;
 import org.gridsuite.explore.server.services.CaseService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

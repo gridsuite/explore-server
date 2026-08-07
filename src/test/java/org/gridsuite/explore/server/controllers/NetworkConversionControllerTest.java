@@ -6,7 +6,7 @@
  */
 package org.gridsuite.explore.server.controllers;
 
-import org.gridsuite.explore.server.NetworkConversionController;
+import org.gridsuite.explore.server.controller.NetworkConversionController;
 import org.gridsuite.explore.server.services.NetworkConversionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

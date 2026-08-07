@@ -6,7 +6,7 @@
  */
 package org.gridsuite.explore.server.controllers;
 
-import org.gridsuite.explore.server.FilterController;
+import org.gridsuite.explore.server.controller.FilterController;
 import org.gridsuite.explore.server.services.FilterService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
