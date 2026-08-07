@@ -15,6 +15,7 @@ import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -662,6 +663,18 @@ public class ExploreController {
                                          @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         directoryService.checkPermission(List.of(elementUuid), null, userId, permission);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/explore/elements/{elementUuid}/referencing-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get the elements using the given shared element")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The infos of the elements using the shared element"),
+        @ApiResponse(responseCode = "404", description = "The shared element was not found"),
+    })
+    public ResponseEntity<List<ReferencingElementInfos>> getReferencingElementInfos(@PathVariable("elementUuid") UUID elementUuid,
+                                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(exploreService.getReferencingElementInfos(elementUuid, userId));
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
