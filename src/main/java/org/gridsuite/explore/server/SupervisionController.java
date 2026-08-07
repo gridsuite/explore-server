@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION + "/supervision")
-@Tag(name = "explore-server - Supervision")
+@Tag(name = "Explore server - Supervision")
 public class SupervisionController {
     private final SupervisionService supervisionService;
 

@@ -36,7 +36,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION)
-@Tag(name = "explore-server")
+@Tag(name = "Explore server")
 public class ExploreController {
 
     // /!\ This query parameter is used by the gateway to control access

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.services.NetworkConversionService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION + "/explore")
+@Tag(name = "Explore server - Network conversion")
 public class NetworkConversionController {
 
     private static final String HEADER_USER_ID = "userId";

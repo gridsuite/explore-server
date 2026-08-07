@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.services.FilterService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION + "/explore")
+@Tag(name = "Explore server - Filter")
 public class FilterController {
 
     private final FilterService filterService;

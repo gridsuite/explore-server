@@ -22,7 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION + "/explore")
-@Tag(name = "explore-server")
+@Tag(name = "Explore server - Actions")
 public class ActionsController {
 
     private final ContingencyListService contingencyListService;
@@ -36,7 +36,7 @@ public class ActionsController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The identifier contingency list"),
         @ApiResponse(responseCode = "404", description = "The identifier contingency list does not exists")})
     public ResponseEntity<String> getIdentifierContingencyList(@PathVariable("id") UUID id) {
-        return contingencyListService.getIdentifierContingencyList(id);
+        return ResponseEntity.ok(contingencyListService.getIdentifierContingencyList(id));
     }
 
     @GetMapping(value = "/filters-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -44,6 +44,6 @@ public class ActionsController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter based contingency list"),
         @ApiResponse(responseCode = "404", description = "The filter based contingency list does not exists")})
     public ResponseEntity<String> getFilterBasedContingencyList(@PathVariable("id") UUID id) {
-        return contingencyListService.getFilterBasedContingencyList(id);
+        return ResponseEntity.ok(contingencyListService.getFilterBasedContingencyList(id));
     }
 }
