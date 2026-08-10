@@ -8,14 +8,17 @@ package org.gridsuite.explore.server.services;
 
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.NodeInfos;
-import org.gridsuite.explore.server.dto.StudyExportInfos;
+import org.gridsuite.explore.server.dto.TreeExportInfos;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -117,26 +120,20 @@ public class StudyService implements IDirectoryElementsService {
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
-    public void importStudyWithCaseImportAction(UUID studyUuid, String userId, UUID caseUuid,
-                                                Map<String, Object> importParams, StudyExportInfos studyExportInfos,
+    public void importStudyWithCaseImportAction(String userId, TreeExportInfos treeExportInfos,
                                                 String studyName, String description, UUID parentDirectoryUuid) {
-        var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/import-with-case-import-action/{caseUuid}")
-                .queryParam("studyUuid", studyUuid)
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
+                "/studies/import-with-case-import-action")
                 .queryParam("studyName", studyName)
                 .queryParam("description", description)
-                .queryParam("parentDirectoryUuid", parentDirectoryUuid);
-
-        String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
-
+                .queryParam("parentDirectoryUuid", parentDirectoryUuid).toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(HEADER_USER_ID, userId);
 
         // Create a map with both import parameters and study export infos
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("importParameters", importParams);
-        requestBody.put("studyExportInfos", studyExportInfos);
+        requestBody.put("studyExportInfos", treeExportInfos);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);

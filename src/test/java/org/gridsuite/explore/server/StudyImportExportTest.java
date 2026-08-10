@@ -89,11 +89,13 @@ class StudyImportExportTest {
         wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/cases/count"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("0")));
         // Stub study-server: import-with-case-import-action
-        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/import-with-case-import-action/.*"))
+        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/import-with-case-import-action"))
                 .willReturn(aResponse().withStatus(200)));
         // Stub directory-server
         wireMockServer.stubFor(get(urlPathMatching("/v1/elements/authorized"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("true")));
+        wireMockServer.stubFor(post(urlPathMatching("/v1/directories/.*/elements"))
+                .willReturn(aResponse().withStatus(200)));
         wireMockServer.stubFor(get(urlPathMatching("/v1/cases-alert-threshold"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("10")));
         // Stub user-admin-server max quota
@@ -115,8 +117,8 @@ class StudyImportExportTest {
         byte[] archiveContent = createValidStudyArchive();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "study-export.gz",
-                "application/gzip",
+                "study-export.zip",
+                "application/zip",
                 archiveContent
         );
 
@@ -140,8 +142,8 @@ class StudyImportExportTest {
         byte[] archiveContent = createArchiveWithoutStudyJson();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "invalid-study.gz",
-                "application/gzip",
+                "invalid-study.zip",
+                "application/zip",
                 archiveContent
         );
 
@@ -161,8 +163,8 @@ class StudyImportExportTest {
         byte[] invalidContent = "This is not a valid zip file".getBytes();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "invalid.gz",
-                "application/gzip",
+                "invalid.zio",
+                "application/zip",
                 invalidContent
         );
 
@@ -182,8 +184,8 @@ class StudyImportExportTest {
         byte[] archiveContent = createArchiveWithMultipleRootNetworks();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "multi-root-study.gz",
-                "application/gzip",
+                "multi-root-study.zip",
+                "application/zip",
                 archiveContent
         );
 
@@ -203,8 +205,8 @@ class StudyImportExportTest {
         byte[] archiveContent = createArchiveWithEmptyRootNetworks();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "empty-roots.gz",
-                "application/gzip",
+                "empty-roots.zio",
+                "application/zip",
                 archiveContent
         );
 
@@ -224,8 +226,8 @@ class StudyImportExportTest {
         byte[] archiveContent = createArchiveWithMissingCaseFile();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "missing-case.gz",
-                "application/gzip",
+                "missing-case.zip",
+                "application/zip",
                 archiveContent
         );
 
@@ -245,7 +247,7 @@ class StudyImportExportTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             // Add tree.json
-            StudyExportInfos exportInfos = createStudyExportInfos();
+            TreeExportInfos exportInfos = createStudyExportInfos();
             addJsonEntry(zos, exportInfos);
 
             // Add case file
@@ -268,13 +270,13 @@ class StudyImportExportTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             // Create export info with 3 root networks
-            StudyExportInfos exportInfos = createStudyExportInfosWithMultipleRoots();
+            TreeExportInfos exportInfos = createStudyExportInfosWithMultipleRoots();
             addJsonEntry(zos, exportInfos);
 
             // Add case files for each root network
             for (RootNetworkExportInfos rootNetwork : exportInfos.rootNetworks()) {
-                UUID caseUuid = rootNetwork.caseInfos().uuid();
-                String caseName = rootNetwork.caseInfos().name();
+                UUID caseUuid = rootNetwork.caseInfos().caseUuid();
+                String caseName = rootNetwork.caseInfos().caseName();
                 addFileEntry(zos, "cases/" + caseUuid + "/" + caseName, "<network></network>".getBytes());
             }
         }
@@ -285,7 +287,7 @@ class StudyImportExportTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             // Create export info with empty root networks list
-            StudyExportInfos exportInfos = new StudyExportInfos(
+            TreeExportInfos exportInfos = new TreeExportInfos(
                     STUDY_UUID,
                     Collections.emptyList(),
                     createNodeTree()
@@ -299,7 +301,7 @@ class StudyImportExportTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             // Add tree.json with case reference
-            StudyExportInfos exportInfos = createStudyExportInfos();
+            TreeExportInfos exportInfos = createStudyExportInfos();
             addJsonEntry(zos, exportInfos);
             // But don't add the actual case file
         }
@@ -313,6 +315,13 @@ class StudyImportExportTest {
         zos.closeEntry();
     }
 
+    private void addNetworkModificationsEntry(ZipOutputStream zos, Object content) throws IOException {
+        ZipEntry entry = new ZipEntry("network_modifications.json");
+        zos.putNextEntry(entry);
+        zos.write(objectMapper.writeValueAsBytes(content));
+        zos.closeEntry();
+    }
+
     private void addFileEntry(ZipOutputStream zos, String entryName, byte[] content) throws IOException {
         ZipEntry entry = new ZipEntry(entryName);
         zos.putNextEntry(entry);
@@ -320,37 +329,37 @@ class StudyImportExportTest {
         zos.closeEntry();
     }
 
-    private StudyExportInfos createStudyExportInfos() {
-        CaseExportInfos caseInfo = new CaseExportInfos(CASE_UUID, "testCase.xiidm");
+    private TreeExportInfos createStudyExportInfos() {
+        CaseInfos caseInfo = new CaseInfos(CASE_UUID, UUID.randomUUID(), "testCase.xiidm", "XIIDM");
         RootNetworkExportInfos rootNetwork = new RootNetworkExportInfos(
                 "Network 1",
                 "1",
-                "XIIDM",
+                0,
                 caseInfo,
                 Collections.emptyMap()
         );
-        return new StudyExportInfos(
+        return new TreeExportInfos(
                 STUDY_UUID,
                 Collections.singletonList(rootNetwork),
                 createNodeTree()
         );
     }
 
-    private StudyExportInfos createStudyExportInfosWithMultipleRoots() {
+    private TreeExportInfos createStudyExportInfosWithMultipleRoots() {
         List<RootNetworkExportInfos> rootNetworks = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             UUID caseUuid = UUID.randomUUID();
-            CaseExportInfos caseInfo = new CaseExportInfos(caseUuid, "case" + i + ".xiidm");
+            CaseInfos caseInfo = new CaseInfos(caseUuid, UUID.randomUUID(), "case" + i + ".xiidm", "XIIDM");
             RootNetworkExportInfos rootNetwork = new RootNetworkExportInfos(
                     "Network " + (i + 1),
                     String.valueOf(i + 1),
-                    "XIIDM",
+                    0,
                     caseInfo,
                     Collections.emptyMap()
             );
             rootNetworks.add(rootNetwork);
         }
-        return new StudyExportInfos(STUDY_UUID, rootNetworks, createNodeTree());
+        return new TreeExportInfos(STUDY_UUID, rootNetworks, createNodeTree());
     }
 
     private NodeTreeExportInfos createNodeTree() {
@@ -359,14 +368,12 @@ class StudyImportExportTest {
                 "Node 1",
                 "NETWORK_MODIFICATION",
                 UUID.randomUUID(),
-                "BUILT",
                 "CONSTRUCTION",
                 Collections.emptyList()
         ));
         return new NodeTreeExportInfos(
                 "Root",
                 "ROOT",
-                null,
                 null,
                 "CONSTRUCTION",
                 children

@@ -85,20 +85,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/studies/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Import a study from an archive")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import started asynchronously")})
-    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
-                                           @RequestPart("archiveFile") MultipartFile archiveFile,
-                                           @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
-                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                           @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.assertCanCreateCase(userId);
-        studyImportService.importStudyArchive(archiveFile, studyName, description, userId, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping(value = "/explore/cases/{caseName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "create a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case creation request delegated to case server")})
@@ -790,5 +776,19 @@ public class ExploreController {
                                                        @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         UUID newDynamicMappingUuid = exploreService.duplicateDynamicMapping(id, targetDirectoryId, userId);
         return ResponseEntity.ofNullable(newDynamicMappingUuid);
+    }
+
+    @PostMapping(value = "/explore/studies/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Import a study from an archive")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import started asynchronously")})
+    @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
+    public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
+                                            @RequestPart("archiveFile") MultipartFile archiveFile,
+                                            @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        exploreService.assertCanCreateCase(userId);
+        studyImportService.importStudyArchive(archiveFile, studyName, description, userId, parentDirectoryUuid);
+        return ResponseEntity.ok().build();
     }
 }
