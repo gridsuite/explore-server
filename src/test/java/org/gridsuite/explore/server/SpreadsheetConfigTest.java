@@ -103,8 +103,7 @@ class SpreadsheetConfigTest {
                             "SPREADSHEET_CONFIG",
                             USER_ID,
                             0L,
-                            null,
-                            null  // We'll set specificMetadata to null here as it's handled separately
+                            null
                     );
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(List.of(elementAttributes)));
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
