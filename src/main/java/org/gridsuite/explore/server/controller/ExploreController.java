@@ -4,14 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.ExploreApi;
+import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionDTO;
+import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;
@@ -33,7 +38,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION)
-@Tag(name = "explore-server")
+@Tag(name = "Explore server")
 public class ExploreController {
 
     // /!\ This query parameter is used by the gateway to control access
@@ -672,7 +677,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "The shared element was not found"),
     })
     public ResponseEntity<List<ReferencingElementInfos>> getReferencingElementInfos(@PathVariable("elementUuid") UUID elementUuid,
-                                                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+                                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(exploreService.getReferencingElementInfos(elementUuid, userId));
     }

@@ -1,6 +1,5 @@
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.services.DirectoryService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;

@@ -24,6 +24,7 @@ public class MonitorService implements IDirectoryElementsService {
     private static final String MONITOR_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     public static final String PROCESS_CONFIGS_PATH = DELIMITER + "process-configs";
+    private static final String UUID_URL = "{uuid}";
 
     private String monitorServerBaseUri;
 
@@ -53,16 +54,23 @@ public class MonitorService implements IDirectoryElementsService {
 
     public void updateProcessConfig(UUID uuid, String processConfig) {
         restClient.put()
-            .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}", uuid)
+            .uri(PROCESS_CONFIGS_PATH + DELIMITER + UUID_URL, uuid)
             .contentType(MediaType.APPLICATION_JSON)
             .body(processConfig)
             .retrieve()
             .toBodilessEntity();
     }
 
+    public String getProcessConfig(UUID uuid) {
+        return restClient.get()
+            .uri(PROCESS_CONFIGS_PATH + DELIMITER + UUID_URL, uuid)
+            .retrieve()
+            .body(String.class);
+    }
+
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid) {
         return restClient.post()
-            .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{uuid}" + DELIMITER + "duplicate", sourceProcessConfigUuid)
+            .uri(PROCESS_CONFIGS_PATH + DELIMITER + UUID_URL + DELIMITER + "duplicate", sourceProcessConfigUuid)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .body(UUID.class);
