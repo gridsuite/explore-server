@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -57,10 +58,53 @@ public class CaseService implements IDirectoryElementsService {
         return caseUuid;
     }
 
+    public UUID importCaseWithoutDirectoryElementCreation(MultipartFile multipartFile, boolean withExpiration) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        if (multipartFile != null) {
+            Objects.requireNonNull(multipartFile.getOriginalFilename());
+            body.add("file", multipartFile.getResource());
+        }
+        body.add("withExpiration", withExpiration);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
+            .buildAndExpand()
+            .toUriString();
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, request, UUID.class).getBody();
+    }
+
+    public ResponseEntity<Resource> downloadCase(UUID caseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseUuid}")
+            .buildAndExpand(caseUuid)
+            .toUriString();
+
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, Resource.class);
+    }
+
+    public Void deleteCase(UUID caseUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseUuid}")
+            .buildAndExpand(caseUuid)
+            .toUriString();
+
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, null, Void.class).getBody();
+    }
+
+    public String getBaseName(String caseName) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/caseBaseName")
+            .queryParam("caseName", caseName)
+            .buildAndExpand()
+            .toUriString();
+
+        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
+    }
+
     void persistCase(UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/" + caseUuid + "/disableExpiration")
             .buildAndExpand()
             .toUriString();
+
         restTemplate.exchange(caseServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(new HttpHeaders()), void.class);
     }
 

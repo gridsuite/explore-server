@@ -84,6 +84,21 @@ public class ContingencyListService implements IDirectoryElementsService {
         return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
     }
 
+    public String getIdentifierContingencyList(UUID id) {
+        return getContingencyList("/identifier-contingency-lists/{id}", id);
+    }
+
+    public String getFilterBasedContingencyList(UUID id) {
+        return getContingencyList("/filters-contingency-lists/{id}", id);
+    }
+
+    private String getContingencyList(String endpoint, UUID id) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + endpoint)
+                .buildAndExpand(id)
+                .toUriString();
+        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
+    }
+
     @Override
     public List<Map<String, Object>> getMetadata(List<UUID> contingencyListsUuids) {
         var ids = contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
