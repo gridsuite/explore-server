@@ -137,9 +137,9 @@ class StudyImportExportTest {
     }
 
     @Test
-    void testImportStudyArchiveMissingStudyJson() throws Exception {
+    void testImportStudyArchiveMissingTreeJson() throws Exception {
         // Create an archive without tree.json
-        byte[] archiveContent = createArchiveWithoutStudyJson();
+        byte[] archiveContent = createArchiveWithoutTreeJson();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
                 "invalid-study.zip",
@@ -257,7 +257,7 @@ class StudyImportExportTest {
         return baos.toByteArray();
     }
 
-    private byte[] createArchiveWithoutStudyJson() throws IOException {
+    private byte[] createArchiveWithoutTreeJson() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             // Add only case file, no tree.json

@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -120,22 +119,14 @@ public class StudyService implements IDirectoryElementsService {
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
-    public void importStudyWithCaseImportAction(String userId, TreeExportInfos treeExportInfos,
-                                                String studyName, String description, UUID parentDirectoryUuid) {
+    public void importStudyWithCaseImportAction(String userId, TreeExportInfos treeExportInfos) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/import-with-case-import-action")
-                .queryParam("studyName", studyName)
-                .queryParam("description", description)
-                .queryParam("parentDirectoryUuid", parentDirectoryUuid).toUriString();
+                "/studies/import-with-case-import-action").toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(HEADER_USER_ID, userId);
 
-        // Create a map with both import parameters and study export infos
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("studyExportInfos", treeExportInfos);
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        HttpEntity<TreeExportInfos> request = new HttpEntity<>(treeExportInfos, headers);
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 }

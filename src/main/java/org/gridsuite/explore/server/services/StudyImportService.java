@@ -29,7 +29,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
-import static org.gridsuite.explore.server.services.ExploreService.CASE;
 import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 
 /**
@@ -61,7 +60,7 @@ public class StudyImportService {
      * @param parentDirectoryUuid the parent directory UUID
      */
     @Async
-    public void importStudyArchive(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+    public void importStudy(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         try {
             FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
             Path tempDir = Files.createTempDirectory("study-import-", attr);
@@ -86,44 +85,51 @@ public class StudyImportService {
         }
 
         TreeExportInfos treeExportInfos = objectMapper.readValue(studyJsonPath.toFile(), TreeExportInfos.class);
-        if (treeExportInfos.rootNetworks() == null || treeExportInfos.rootNetworks().isEmpty()) {
+        if (treeExportInfos == null || treeExportInfos.rootNetworks() == null || treeExportInfos.rootNetworks().isEmpty()) {
             throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
         }
 
-        Map<UUID, UUID> caseUuidMapping = importCasesFromArchive(treeExportInfos, userId, description, parentDirectoryUuid, tempDir);
-        checkAllCasesWereImported(treeExportInfos, caseUuidMapping);
-        UUID createdStudyUuid = UUID.randomUUID();
-        TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, caseUuidMapping, createdStudyUuid);
+        Map<UUID, UUID> caseUuidMapping = new HashMap<>();
         try {
-            ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description);
-            studyService.importStudyWithCaseImportAction(userId, updatedExportInfos, studyName, description, parentDirectoryUuid);
-            exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
-        } catch (Exception e) {
-            try {
-                studyService.delete(createdStudyUuid, userId);
-            } catch (Exception cleanupException) {
-                LOGGER.error("Failed to cleanup study after error", cleanupException);
+            Path casesDir = tempDir.resolve("cases");
+            if (!Files.exists(casesDir) || !Files.isDirectory(casesDir)) {
+                throw new ExploreException(IMPORT_STUDY_FAILED, "No cases found in archive");
             }
+            for (var rootNetwork : treeExportInfos.rootNetworks()) {
+                importCaseForRootNetwork(rootNetwork, casesDir, caseUuidMapping);
+            }
+            checkAllCasesWereImported(treeExportInfos, caseUuidMapping);
+            UUID createdStudyUuid = UUID.randomUUID();
+            TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, caseUuidMapping, createdStudyUuid);
+            try {
+                ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description);
+                studyService.importStudyWithCaseImportAction(userId, updatedExportInfos);
+                exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+            } catch (Exception e) {
+                try {
+                    studyService.delete(createdStudyUuid, userId);
+                } catch (Exception cleanupException) {
+                    LOGGER.error("Failed to cleanup study after error", cleanupException);
+                }
+                throw e;
+            }
+        } catch (Exception e) {
+            deleteImportedCases(caseUuidMapping, userId);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
         }
     }
 
-    private Map<UUID, UUID> importCasesFromArchive(TreeExportInfos treeExportInfos, String userId, String description,
-                                                   UUID parentDirectoryUuid, Path tempDir) {
-        Map<UUID, UUID> caseUuidMapping = new HashMap<>();
-        Path casesDir = tempDir.resolve("cases");
-        if (!Files.exists(casesDir) || !Files.isDirectory(casesDir)) {
-            LOGGER.warn("Cases directory not found or not a directory: {}", casesDir);
-            return caseUuidMapping;
-        }
-        for (var rootNetwork : treeExportInfos.rootNetworks()) {
-            importCaseForRootNetwork(rootNetwork, casesDir, userId, description, parentDirectoryUuid, caseUuidMapping);
-        }
-        return caseUuidMapping;
+    private void deleteImportedCases(Map<UUID, UUID> caseUuidMapping, String userId) {
+        caseUuidMapping.values().forEach(caseUuid -> {
+            try {
+                exploreService.deleteElement(caseUuid, userId).join();
+            } catch (Exception cleanupException) {
+                LOGGER.error("Failed to cleanup imported case {} after error", caseUuid, cleanupException);
+            }
+        });
     }
 
-    private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, String userId, String description,
-                                          UUID parentDirectoryUuid, Map<UUID, UUID> caseUuidMapping) {
+    private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, Map<UUID, UUID> caseUuidMapping) {
         UUID oldCaseUuid = rootNetwork.caseInfos().caseUuid();
         String caseName = rootNetwork.caseInfos().caseName();
         Path caseDir = casesDir.resolve(oldCaseUuid.toString());
@@ -140,8 +146,6 @@ public class StudyImportService {
         }
         try {
             UUID newCaseUuid = caseService.importCaseFromFile(caseFile.toFile());
-            ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, userId, 0L, description);
-            exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, caseService::delete);
             if (newCaseUuid == null) {
                 LOGGER.error("Case import returned null UUID for file: {}", caseFile);
                 throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import case: " + caseName);

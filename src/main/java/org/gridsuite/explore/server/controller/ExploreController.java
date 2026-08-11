@@ -793,7 +793,7 @@ public class ExploreController {
                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         exploreService.assertCanCreateCase(userId);
-        studyImportService.importStudyArchive(archiveFile, studyName, description, userId, parentDirectoryUuid);
+        studyImportService.importStudy(archiveFile, studyName, description, userId, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 }
