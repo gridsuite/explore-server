@@ -88,8 +88,8 @@ class StudyImportExportTest {
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(CASE_UUID))));
         wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/cases/count"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("0")));
-        // Stub study-server: import-with-case-import-action
-        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/import-with-case-import-action"))
+        // Stub study-server: import
+        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/import"))
                 .willReturn(aResponse().withStatus(200)));
         // Stub directory-server
         wireMockServer.stubFor(get(urlPathMatching("/v1/elements/authorized"))

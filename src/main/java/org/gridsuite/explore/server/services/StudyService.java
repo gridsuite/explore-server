@@ -120,8 +120,7 @@ public class StudyService implements IDirectoryElementsService {
     }
 
     public void importStudyWithCaseImportAction(String userId, TreeExportInfos treeExportInfos) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/import-with-case-import-action").toUriString();
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import").toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add(HEADER_USER_ID, userId);

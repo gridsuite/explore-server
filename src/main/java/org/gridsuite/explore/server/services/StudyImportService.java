@@ -102,7 +102,7 @@ public class StudyImportService {
             UUID createdStudyUuid = UUID.randomUUID();
             TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, caseUuidMapping, createdStudyUuid);
             try {
-                ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description);
+                ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
                 studyService.importStudyWithCaseImportAction(userId, updatedExportInfos);
                 exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
             } catch (Exception e) {
