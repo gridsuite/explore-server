@@ -241,7 +241,32 @@ class StudyImportExportTest {
                 .andExpect(status().is5xxServerError());
     }
 
-    // Helper methods to create test archives
+    @Test
+    void testImportStudyFailure() throws Exception {
+        byte[] archiveContent = createArchiveWithOneMissingCaseFileAmongTwoRoots();
+        MockMultipartFile archiveFile = new MockMultipartFile(
+                "archiveFile",
+                "partial-study.zip",
+                "application/zip",
+                archiveContent
+        );
+
+        UUID stubUpdateStatusId = wireMockServer.stubFor(put(urlPathMatching("/v1/elements"))
+                .willReturn(aResponse().withStatus(200))).getId();
+        wireMockServer.stubFor(delete(urlPathMatching("/v1/elements/" + CASE_UUID))
+                .willReturn(aResponse().withStatus(200)));
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(archiveFile)
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().is5xxServerError());
+
+        wireMockUtils.verifyPutRequest(stubUpdateStatusId, "/v1/elements", Map.of("ids", equalTo(CASE_UUID.toString())), false);
+        wireMockServer.verify(deleteRequestedFor(urlPathEqualTo("/v1/elements/" + CASE_UUID)));
+    }
 
     private byte[] createValidStudyArchive() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -308,15 +333,28 @@ class StudyImportExportTest {
         return baos.toByteArray();
     }
 
-    private void addJsonEntry(ZipOutputStream zos, Object content) throws IOException {
-        ZipEntry entry = new ZipEntry("tree.json");
-        zos.putNextEntry(entry);
-        zos.write(objectMapper.writeValueAsBytes(content));
-        zos.closeEntry();
+    private byte[] createArchiveWithOneMissingCaseFileAmongTwoRoots() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            UUID validCaseUuid = UUID.randomUUID();
+            CaseInfos validCaseInfo = new CaseInfos(validCaseUuid, UUID.randomUUID(), "case-valid.xiidm", "XIIDM");
+            RootNetworkExportInfos validRootNetwork = new RootNetworkExportInfos("Network 1", "1", 0, validCaseInfo, Collections.emptyMap());
+
+            UUID missingCaseUuid = UUID.randomUUID();
+            CaseInfos missingCaseInfo = new CaseInfos(missingCaseUuid, UUID.randomUUID(), "case-missing.xiidm", "XIIDM");
+            RootNetworkExportInfos missingRootNetwork = new RootNetworkExportInfos("Network 2", "2", 1, missingCaseInfo, Collections.emptyMap());
+
+            TreeExportInfos exportInfos = new TreeExportInfos(STUDY_UUID, List.of(validRootNetwork, missingRootNetwork), createNodeTree());
+            addJsonEntry(zos, exportInfos);
+
+            // only the first root network's case file is present in the archive
+            addFileEntry(zos, "cases/" + validCaseUuid + "/case-valid.xiidm", "<network></network>".getBytes());
+        }
+        return baos.toByteArray();
     }
 
-    private void addNetworkModificationsEntry(ZipOutputStream zos, Object content) throws IOException {
-        ZipEntry entry = new ZipEntry("network_modifications.json");
+    private void addJsonEntry(ZipOutputStream zos, Object content) throws IOException {
+        ZipEntry entry = new ZipEntry("tree.json");
         zos.putNextEntry(entry);
         zos.write(objectMapper.writeValueAsBytes(content));
         zos.closeEntry();
