@@ -101,21 +101,30 @@ public class StudyImportService {
             checkAllCasesWereImported(treeExportInfos, caseUuidMapping);
             UUID createdStudyUuid = UUID.randomUUID();
             TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, caseUuidMapping, createdStudyUuid);
-            try {
-                ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-                studyService.importStudyWithCaseImportAction(userId, updatedExportInfos);
-                exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
-            } catch (Exception e) {
-                try {
-                    studyService.delete(createdStudyUuid, userId);
-                } catch (Exception cleanupException) {
-                    LOGGER.error("Failed to cleanup study after error", cleanupException);
-                }
-                throw e;
-            }
+            createStudyFromImport(createdStudyUuid, studyName, userId, description, parentDirectoryUuid, updatedExportInfos);
         } catch (Exception e) {
             deleteImportedCases(caseUuidMapping, userId);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
+        }
+    }
+
+    private void createStudyFromImport(UUID createdStudyUuid, String studyName, String userId, String description,
+                                                 UUID parentDirectoryUuid, TreeExportInfos updatedExportInfos) {
+        try {
+            ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
+            studyService.importStudyWithCaseImportAction(userId, updatedExportInfos);
+            exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+        } catch (Exception e) {
+            deleteStudy(createdStudyUuid, userId);
+            throw e;
+        }
+    }
+
+    private void deleteStudy(UUID studyUuid, String userId) {
+        try {
+            studyService.delete(studyUuid, userId);
+        } catch (Exception cleanupException) {
+            LOGGER.error("Failed to cleanup study after error", cleanupException);
         }
     }
 

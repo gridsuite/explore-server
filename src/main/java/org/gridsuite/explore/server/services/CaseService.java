@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @Service
 public class CaseService implements IDirectoryElementsService {
     private static final String CASE_SERVER_API_VERSION = "v1";
-
+    private static final String CASES_URL = "cases";
     private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
     private String caseServerBaseUri;
@@ -54,7 +54,7 @@ public class CaseService implements IDirectoryElementsService {
         }
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(
             body, headers);
-        caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases", request,
+        caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL, request,
             UUID.class);
         return caseUuid;
     }
@@ -70,14 +70,14 @@ public class CaseService implements IDirectoryElementsService {
         body.add("withExpiration", withExpiration);
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
 
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
             .buildAndExpand()
             .toUriString();
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.POST, request, UUID.class).getBody();
     }
 
     public ResponseEntity<Resource> downloadCase(UUID caseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseUuid}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{caseUuid}")
             .buildAndExpand(caseUuid)
             .toUriString();
 
@@ -85,7 +85,7 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     public Void deleteCase(UUID caseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{caseUuid}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{caseUuid}")
             .buildAndExpand(caseUuid)
             .toUriString();
 
@@ -93,7 +93,7 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     public String getBaseName(String caseName) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/caseBaseName")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "caseBaseName")
             .queryParam("caseName", caseName)
             .buildAndExpand()
             .toUriString();
@@ -110,14 +110,14 @@ public class CaseService implements IDirectoryElementsService {
 
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
         return restTemplate.postForObject(
-            caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + "/cases",
+            caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL,
             request,
             UUID.class
         );
     }
 
     void persistCase(UUID caseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/" + caseUuid + "/disableExpiration")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + caseUuid + "/disableExpiration")
             .buildAndExpand()
             .toUriString();
 
@@ -125,7 +125,7 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     UUID duplicateCase(UUID caseId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{uuid}/duplicate")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{uuid}/duplicate")
             .buildAndExpand(caseId)
             .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -136,7 +136,7 @@ public class CaseService implements IDirectoryElementsService {
 
     @Override
     public void delete(UUID id, String userId) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/{id}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{id}")
             .buildAndExpand(id)
             .toUriString();
         HttpHeaders headers = new HttpHeaders();
@@ -148,7 +148,7 @@ public class CaseService implements IDirectoryElementsService {
     public List<Map<String, Object>> getMetadata(List<UUID> casesUuids) {
         var ids = casesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-            .fromPath(DELIMITER + CASE_SERVER_API_VERSION + "/cases/metadata" + "?ids=" + ids)
+            .fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "metadata" + "?ids=" + ids)
             .buildAndExpand()
             .toUriString();
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null,
