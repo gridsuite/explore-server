@@ -112,7 +112,7 @@ public class StudyImportService {
                                                  UUID parentDirectoryUuid, TreeExportInfos updatedExportInfos) {
         try {
             ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-            studyService.importStudyWithCaseImportAction(userId, updatedExportInfos);
+            studyService.importStudy(userId, updatedExportInfos);
             exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
         } catch (Exception e) {
             deleteStudy(createdStudyUuid, userId);

@@ -119,7 +119,7 @@ public class StudyService implements IDirectoryElementsService {
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
-    public void importStudyWithCaseImportAction(String userId, TreeExportInfos treeExportInfos) {
+    public void importStudy(String userId, TreeExportInfos treeExportInfos) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import").toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

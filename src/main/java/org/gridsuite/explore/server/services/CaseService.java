@@ -117,7 +117,7 @@ public class CaseService implements IDirectoryElementsService {
     }
 
     void persistCase(UUID caseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + caseUuid + "/disableExpiration")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + DELIMITER + CASES_URL + DELIMITER + caseUuid + "/disableExpiration")
             .buildAndExpand()
             .toUriString();
 
