@@ -315,8 +315,7 @@ class StudyImportExportTest {
             TreeExportInfos exportInfos = new TreeExportInfos(
                     STUDY_UUID,
                     Collections.emptyList(),
-                    createNodeTree(),
-                    Collections.emptyMap()
+                    createNodeTree()
             );
             addJsonEntry(zos, exportInfos);
         }
@@ -345,7 +344,7 @@ class StudyImportExportTest {
             CaseInfos missingCaseInfo = new CaseInfos(missingCaseUuid, UUID.randomUUID(), "case-missing.xiidm", "XIIDM");
             RootNetworkExportInfos missingRootNetwork = new RootNetworkExportInfos("Network 2", "2", 1, missingCaseInfo, Collections.emptyMap());
 
-            TreeExportInfos exportInfos = new TreeExportInfos(STUDY_UUID, List.of(validRootNetwork, missingRootNetwork), createNodeTree(), Collections.emptyMap());
+            TreeExportInfos exportInfos = new TreeExportInfos(STUDY_UUID, List.of(validRootNetwork, missingRootNetwork), createNodeTree());
             addJsonEntry(zos, exportInfos);
 
             // only the first root network's case file is present in the archive
@@ -380,8 +379,7 @@ class StudyImportExportTest {
         return new TreeExportInfos(
                 STUDY_UUID,
                 Collections.singletonList(rootNetwork),
-                createNodeTree(),
-                Collections.emptyMap()
+                createNodeTree()
         );
     }
 
@@ -399,7 +397,7 @@ class StudyImportExportTest {
             );
             rootNetworks.add(rootNetwork);
         }
-        return new TreeExportInfos(STUDY_UUID, rootNetworks, createNodeTree(), Collections.emptyMap());
+        return new TreeExportInfos(STUDY_UUID, rootNetworks, createNodeTree());
     }
 
     private NodeTreeExportInfos createNodeTree() {
