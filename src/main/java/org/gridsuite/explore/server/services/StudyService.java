@@ -10,8 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.TreeExportInfos;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -119,13 +122,26 @@ public class StudyService implements IDirectoryElementsService {
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
     }
 
-    public void importStudy(String userId, TreeExportInfos treeExportInfos) {
+    public void importStudy(String userId, TreeExportInfos treeExportInfos, byte[] modificationsArchive) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import").toUriString();
+
+        HttpHeaders treeExportInfosPartHeaders = new HttpHeaders();
+        treeExportInfosPartHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("treeExportInfos", new HttpEntity<>(treeExportInfos, treeExportInfosPartHeaders));
+        body.add("modificationsArchive", new ByteArrayResource(modificationsArchive) {
+            @Override
+            public String getFilename() {
+                return "modifications.zip";
+            }
+        });
+
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         headers.add(HEADER_USER_ID, userId);
 
-        HttpEntity<TreeExportInfos> request = new HttpEntity<>(treeExportInfos, headers);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 }

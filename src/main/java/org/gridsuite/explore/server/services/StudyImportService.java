@@ -6,7 +6,9 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,6 +30,7 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
 import static org.gridsuite.explore.server.services.ExploreService.STUDY;
@@ -38,6 +42,10 @@ import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 public class StudyImportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudyImportService.class);
+
+    private static final String NETWORK_MODIFICATIONS_JSON = "network-modification.json";
+    private static final String NETWORK_MODIFICATION_FILTERS_JSON = "network-modification-filters.json";
+    private static final String NETWORK_MODIFICATION_LOAD_FLOW_PARAMETERS_JSON = "network-modification-load-flow-parameters.json";
 
     private final CaseService caseService;
     private final StudyService studyService;
@@ -90,6 +98,7 @@ public class StudyImportService {
         }
 
         Map<UUID, UUID> caseUuidMapping = new HashMap<>();
+        List<UUID> createdFilterIds = new ArrayList<>();
         try {
             Path casesDir = tempDir.resolve("cases");
             if (!Files.exists(casesDir) || !Files.isDirectory(casesDir)) {
@@ -101,18 +110,68 @@ public class StudyImportService {
             checkAllCasesWereImported(treeExportInfos, caseUuidMapping);
             UUID createdStudyUuid = UUID.randomUUID();
             TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, caseUuidMapping, createdStudyUuid);
-            createStudyFromImport(createdStudyUuid, studyName, userId, description, parentDirectoryUuid, updatedExportInfos);
+            byte[] modificationsArchive = recreateFiltersAndBuildModificationsArchive(tempDir, parentDirectoryUuid, userId, createdFilterIds);
+            createStudyFromImport(createdStudyUuid, studyName, userId, description, parentDirectoryUuid, updatedExportInfos, modificationsArchive);
         } catch (Exception e) {
             deleteImportedCases(caseUuidMapping, userId);
+            deleteImportedFilters(createdFilterIds, userId);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
         }
     }
 
+    private byte[] recreateFiltersAndBuildModificationsArchive(Path tempDir, UUID parentDirectoryUuid, String userId, List<UUID> createdFilterIds) throws IOException {
+        Path filtersJsonPath = tempDir.resolve(NETWORK_MODIFICATION_FILTERS_JSON);
+        Map<UUID, ObjectNode> updatedFiltersByOldId = new LinkedHashMap<>();
+        if (Files.exists(filtersJsonPath)) {
+            Map<UUID, ObjectNode> filtersByOldId = objectMapper.readValue(filtersJsonPath.toFile(), new TypeReference<Map<UUID, ObjectNode>>() { });
+            for (Map.Entry<UUID, ObjectNode> entry : filtersByOldId.entrySet()) {
+                ObjectNode filter = entry.getValue();
+                String filterType = filter.path("type").asText("filter");
+                UUID newFilterId = exploreService.createFilter(filter.toString(), "Imported " + filterType + " " + entry.getKey(), null, parentDirectoryUuid, userId);
+                createdFilterIds.add(newFilterId);
+                filter.put("id", newFilterId.toString());
+                updatedFiltersByOldId.put(entry.getKey(), filter);
+            }
+        }
+
+        ByteArrayOutputStream archiveBytes = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOut = new ZipOutputStream(archiveBytes)) {
+            addFileEntryIfPresent(zipOut, tempDir.resolve(NETWORK_MODIFICATIONS_JSON), NETWORK_MODIFICATIONS_JSON);
+            addJsonEntry(zipOut, NETWORK_MODIFICATION_FILTERS_JSON, updatedFiltersByOldId);
+            addFileEntryIfPresent(zipOut, tempDir.resolve(NETWORK_MODIFICATION_LOAD_FLOW_PARAMETERS_JSON), NETWORK_MODIFICATION_LOAD_FLOW_PARAMETERS_JSON);
+        }
+        return archiveBytes.toByteArray();
+    }
+
+    private void addFileEntryIfPresent(ZipOutputStream zipOut, Path filePath, String entryName) throws IOException {
+        if (Files.exists(filePath)) {
+            zipOut.putNextEntry(new ZipEntry(entryName));
+            Files.copy(filePath, zipOut);
+            zipOut.closeEntry();
+        }
+    }
+
+    private void addJsonEntry(ZipOutputStream zipOut, String entryName, Object content) throws IOException {
+        zipOut.putNextEntry(new ZipEntry(entryName));
+        zipOut.write(objectMapper.writeValueAsBytes(content));
+        zipOut.closeEntry();
+    }
+
+    private void deleteImportedFilters(List<UUID> filterIds, String userId) {
+        filterIds.forEach(filterId -> {
+            try {
+                exploreService.deleteElement(filterId, userId).join();
+            } catch (Exception cleanupException) {
+                LOGGER.error("Failed to cleanup imported filter {} after error", filterId, cleanupException);
+            }
+        });
+    }
+
     private void createStudyFromImport(UUID createdStudyUuid, String studyName, String userId, String description,
-                                                 UUID parentDirectoryUuid, TreeExportInfos updatedExportInfos) {
+                                                 UUID parentDirectoryUuid, TreeExportInfos updatedExportInfos, byte[] modificationsArchive) {
         try {
             ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-            studyService.importStudy(userId, updatedExportInfos);
+            studyService.importStudy(userId, updatedExportInfos, modificationsArchive);
             exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
         } catch (Exception e) {
             deleteStudy(createdStudyUuid, userId);
