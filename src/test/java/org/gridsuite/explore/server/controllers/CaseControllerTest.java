@@ -13,8 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -54,15 +52,16 @@ class CaseControllerTest {
         verify(caseService).deleteCase(CASE_UUID);
     }
 
-    @Test
-    void downloadCaseForwardsCaseUuid() {
-        ResponseEntity<ByteArrayResource> response = ResponseEntity.ok(new ByteArrayResource("case".getBytes()));
-        when(caseService.downloadCase(CASE_UUID)).thenReturn(ResponseEntity.ok(response.getBody()));
+    // See comment in CaseController.java for the reason this test is commented out
+    // @Test
+    // void downloadCaseForwardsCaseUuid() {
+    //     ResponseEntity<ByteArrayResource> response = ResponseEntity.ok(new ByteArrayResource("case".getBytes()));
+    //     when(caseService.downloadCase(CASE_UUID)).thenReturn(ResponseEntity.ok(response.getBody()));
 
-        assertSame(response.getBody(), controller.downloadCase(CASE_UUID).getBody());
+    //     assertSame(response.getBody(), controller.downloadCase(CASE_UUID).getBody());
 
-        verify(caseService).downloadCase(CASE_UUID);
-    }
+    //     verify(caseService).downloadCase(CASE_UUID);
+    // }
 
     @Test
     void getBaseNameForwardsCaseName() {

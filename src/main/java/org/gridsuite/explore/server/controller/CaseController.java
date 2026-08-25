@@ -9,7 +9,6 @@ package org.gridsuite.explore.server.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
 import org.gridsuite.explore.server.services.CaseService;
-import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,10 +46,13 @@ public class CaseController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/cases/{caseUuid}")
-    public ResponseEntity<Resource> downloadCase(@PathVariable("caseUuid") UUID caseUuid) {
-        return caseService.downloadCase(caseUuid);
-    }
+    // TODO : do not work with the current implementation.
+    // Direct endpoint querying the case-server to download a case has been restored
+    // Investigate and fix before reactivating this endpoint
+    // @GetMapping(value = "/cases/{caseUuid}")
+    // public ResponseEntity<Resource> downloadCase(@PathVariable("caseUuid") UUID caseUuid) {
+    //     return caseService.downloadCase(caseUuid);
+    // }
 
     @GetMapping(value = "/cases/caseBaseName")
     public ResponseEntity<String> getBaseName(@RequestParam("caseName") String caseName) {
