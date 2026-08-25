@@ -181,10 +181,11 @@ public class ExploreService {
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, contingencyListService::delete);
     }
 
-    public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
+    public UUID createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid, String userId) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, userId, 0, description);
         filterService.insertFilter(filter, elementAttributes.getElementUuid(), userId);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, filterService::delete);
+        return elementAttributes.getElementUuid();
     }
 
     public void duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId, String userId) {
