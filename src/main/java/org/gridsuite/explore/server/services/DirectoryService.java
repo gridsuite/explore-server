@@ -468,6 +468,26 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), Void.class);
     }
 
+    /** Tells which of the given elements the user may access. */
+    public List<UUID> getAccessibleElements(List<UUID> elementUuids, String userId, PermissionType permissionType) {
+        String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_USER_ID, userId);
+
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/permission")
+            .queryParam(PARAM_ACCESS_TYPE, permissionType)
+            .queryParam(PARAM_IDS, ids)
+            .buildAndExpand()
+            .toUriString();
+
+        List<UUID> accessibleUuids = restTemplate
+            .exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers),
+                new ParameterizedTypeReference<List<UUID>>() {
+                })
+            .getBody();
+        return Objects.requireNonNullElse(accessibleUuids, Collections.emptyList());
+    }
+
     public List<PermissionDTO> getDirectoryPermissions(UUID directoryUuid, String userId) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/permissions")

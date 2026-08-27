@@ -467,14 +467,6 @@ class ExploreTest {
                         return new MockResponse(409);
                     } else if (path.matches("/v1/elements/authorized\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
                         return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
                     } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*&recursiveCheck=.*")) {
                         return new MockResponse(200);
                     }
@@ -1440,38 +1432,39 @@ class ExploreTest {
     }
 
     @Test
-    void testHasRights(final MockWebServer server) throws Exception {
-        // test read access allowed
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=READ")
+    @UsesWireMock
+    void testGetAccessibleElements() throws Exception {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/permission"))
+                .withQueryParam("accessType", WireMock.equalTo("WRITE"))
+                .withQueryParam("ids", WireMock.equalTo(TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "," + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(mapper.writeValueAsString(List.of(TEST_ACCESS_DIRECTORY_UUID_ALLOWED)))));
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/permission"))
+                .withQueryParam("accessType", WireMock.equalTo("READ"))
+                .withQueryParam("ids", WireMock.equalTo(TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN.toString()))
+                .willReturn(WireMock.ok()
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(mapper.writeValueAsString(List.of()))));
+
+        // only the allowed one comes back
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/permission"
+                        + "?ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "," + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN
+                        + "&accessType=WRITE")
                 .header("userId", NOT_ADMIN_USER)
-            ).andExpect(status().isOk());
+            ).andExpect(status().isOk())
+            .andReturn();
+        assertEquals("[\"" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "\"]", result.getResponse().getContentAsString());
 
-        var requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+        // a forbidden element alone answers an empty list
+        result = mockMvc.perform(get("/v1/explore/elements/permission"
+                        + "?ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&accessType=READ")
+                .header("userId", NOT_ADMIN_USER)
+            ).andExpect(status().isOk())
+            .andReturn();
+        assertEquals("[]", result.getResponse().getContentAsString());
 
-        // test read access forbidden
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
-            .header("userId", NOT_ADMIN_USER)
-        ).andExpect(status().isForbidden());
-
-        requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
-
-        // test write access forbidden
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
-            .header("userId", NOT_ADMIN_USER)
-        ).andExpect(status().isForbidden());
-
-        requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
-
-        // test write access allowed (admin)
-        mockMvc.perform(get("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
-            .header("userId", USER1)
-        ).andExpect(status().isOk());
-
-        requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
+        wireMockServer.verify(2, WireMock.getRequestedFor(WireMock.urlPathEqualTo("/v1/elements/permission")));
     }
 
     @Test
