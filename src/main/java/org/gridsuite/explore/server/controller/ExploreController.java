@@ -653,17 +653,17 @@ public class ExploreController {
                 .body(directoryService.searchElements(userInput, directoryUuid, userId));
     }
 
-    @GetMapping(value = "/explore/elements/{elementUuid}")
-    @Operation(summary = "Check if user has a given right on a directory, or a single element by checking its parent")
+    @GetMapping(value = "/explore/elements/permission", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get, among the given elements, the ones the user has the given right on, "
+        + "a directory being checked on itself and any other element on its parent")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "The user has the right on the element"),
-        @ApiResponse(responseCode = "204", description = "The user has not the right on the element"),
+        @ApiResponse(responseCode = "200", description = "The uuids of the elements the user has the right on"),
     })
-    public ResponseEntity<Void> hasRight(@PathVariable("elementUuid") UUID elementUuid,
-                                         @RequestParam(name = "permission") PermissionType permission,
-                                         @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        directoryService.checkPermission(List.of(elementUuid), null, userId, permission);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<UUID>> getAccessibleElements(@RequestParam("ids") List<UUID> elementUuids,
+                                                            @RequestParam(name = "accessType") PermissionType permission,
+                                                            @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+            .body(directoryService.getAccessibleElements(elementUuids, userId, permission));
     }
 
     @GetMapping(value = "/explore/elements/{elementUuid}/referencing-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
