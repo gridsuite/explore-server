@@ -447,11 +447,13 @@ public class DirectoryService implements IDirectoryElementsService {
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
     }
 
+    // TODO: delete
     public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType) {
         checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType, false);
     }
 
     //This method should only be called inside of AuthorizationService to centralize permission checks
+    // TODO: delete
     public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, String userId, PermissionType permissionType, boolean recursiveCheck) {
         String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         HttpHeaders headers = new HttpHeaders();
@@ -466,6 +468,22 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, new HttpEntity<>(headers), Void.class);
+    }
+
+    public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
+        checkPermission(elementUuids, targetDirectoryUuid, permissionType, false);
+    }
+
+    public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType, boolean recursiveCheck) {
+        String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/authorized")
+                .queryParam(PARAM_ACCESS_TYPE, permissionType)
+                .queryParam(PARAM_IDS, elementUuids)
+                .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
+                .queryParam(PARAM_RECURSIVE_CHECK, recursiveCheck)
+                .buildAndExpand()
+                .toUriString();
+
+        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, HttpEntity.EMPTY, Void.class);
     }
 
     public List<PermissionDTO> getDirectoryPermissions(UUID directoryUuid, String userId) {
