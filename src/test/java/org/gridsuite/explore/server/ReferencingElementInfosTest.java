@@ -73,6 +73,8 @@ class ReferencingElementInfosTest {
     private static final UUID SHARED_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID NODE_1_UUID = UUID.randomUUID();
     private static final UUID NODE_2_UUID = UUID.randomUUID();
+    private static final UUID MODIFICATION_1_UUID = UUID.randomUUID();
+    private static final UUID MODIFICATION_2_UUID = UUID.randomUUID();
     private static final UUID STUDY_1_UUID = UUID.randomUUID();
     private static final UUID STUDY_2_UUID = UUID.randomUUID();
 
@@ -80,6 +82,7 @@ class ReferencingElementInfosTest {
     private static final String ELEMENTS_PATH = "/v1/elements";
     private static final String ELEMENTS_PATHS_PATH = "/v1/elements/paths";
     private static final String NODES_INFOS_PATH = "/v1/nodes/infos";
+    private static final String NODES_BY_MODIFICATION_PATH = "/v1/nodes/uuids-by-network-modification";
     private static final String USERS_IDENTITIES_PATH = "/v1/users/identities";
 
     @BeforeEach
@@ -114,12 +117,21 @@ class ReferencingElementInfosTest {
     }
 
     private void stubSharedElementReferences(UUID... referencedNodeUuids) throws Exception {
-        ElementAttributes sharedElement = new ElementAttributes(SHARED_ELEMENT_UUID, "sharedModification", "MODIFICATION", OWNER_SUB, 0L, null);
-        sharedElement.setReferences(Arrays.stream(referencedNodeUuids)
+        stubSharedElementReferences(Arrays.stream(referencedNodeUuids)
                 .map(nodeUuid -> new ReferenceAttributes(nodeUuid, ReferenceAttributes.ReferenceType.STUDY_NODE))
                 .toList());
+    }
+
+    private void stubSharedElementReferences(List<ReferenceAttributes> references) throws Exception {
+        ElementAttributes sharedElement = new ElementAttributes(SHARED_ELEMENT_UUID, "sharedModification", "MODIFICATION", OWNER_SUB, 0L, null);
+        sharedElement.setReferences(references);
         wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(SHARED_ELEMENT_PATH))
                 .willReturn(jsonResponse(sharedElement)));
+    }
+
+    private void stubNodeUuidsByNetworkModification(Map<UUID, UUID> nodeUuidByModificationUuid) throws Exception {
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(NODES_BY_MODIFICATION_PATH))
+                .willReturn(jsonResponse(nodeUuidByModificationUuid)));
     }
 
     private void stubNodesInfos(NodeInfos... nodesInfos) throws Exception {
@@ -289,8 +301,89 @@ class ReferencingElementInfosTest {
 
         // without any reference, nothing is left to describe: no other server is reached
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_BY_MODIFICATION_PATH)));
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH)));
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATHS_PATH)));
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(USERS_IDENTITIES_PATH)));
+    }
+
+    @Test
+    void testNetworkModificationReferenceResolvedToItsNodeAndStudy() throws Exception {
+        stubSharedElementReferences(List.of(
+                new ReferenceAttributes(MODIFICATION_1_UUID, ReferenceAttributes.ReferenceType.NETWORK_MODIFICATION)));
+        // the modification lives (possibly nested) in node1's modification group
+        stubNodeUuidsByNetworkModification(Map.of(MODIFICATION_1_UUID, NODE_1_UUID));
+        stubNodesInfos(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"));
+        stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
+
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
+
+        assertEquals(1, infos.size());
+        ReferencingElementInfos info = infos.getFirst();
+        // a network modification reference is described exactly like a direct study-node reference
+        assertEquals("node1", info.node());
+        assertEquals("study1", info.elementName());
+        assertEquals("STUDY", info.type());
+        assertEquals(List.of("root"), info.path());
+        assertEquals("John Doe", info.ownerLabel());
+        assertEquals(LAST_MODIFICATION_DATE, info.lastModificationDate());
+        assertEquals(MODIFIER_SUB, info.lastModifiedByLabel());
+    }
+
+    @Test
+    void testStudyNodeAndNetworkModificationReferencesAreMerged() throws Exception {
+        stubSharedElementReferences(List.of(
+                new ReferenceAttributes(NODE_1_UUID, ReferenceAttributes.ReferenceType.STUDY_NODE),
+                new ReferenceAttributes(MODIFICATION_1_UUID, ReferenceAttributes.ReferenceType.NETWORK_MODIFICATION)));
+        stubNodeUuidsByNetworkModification(Map.of(MODIFICATION_1_UUID, NODE_2_UUID));
+        stubNodesInfos(
+                new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
+                new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"), studyStub(STUDY_2_UUID, "study2"));
+        stubStudiesPaths(Map.of(
+                STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root"),
+                STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
+
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
+
+        // one row per reference, in reference order
+        assertEquals(2, infos.size());
+        assertEquals("node1", infos.get(0).node());
+        assertEquals("study1", infos.get(0).elementName());
+        assertEquals("node2", infos.get(1).node());
+        assertEquals("study2", infos.get(1).elementName());
+        // both nodes are resolved in a single call to the study-server
+        wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
+    }
+
+    @Test
+    void testUnresolvedNetworkModificationReferenceIsOmitted() throws Exception {
+        stubSharedElementReferences(List.of(
+                new ReferenceAttributes(MODIFICATION_1_UUID, ReferenceAttributes.ReferenceType.NETWORK_MODIFICATION),
+                new ReferenceAttributes(MODIFICATION_2_UUID, ReferenceAttributes.ReferenceType.NETWORK_MODIFICATION)));
+        // the study-server can only attach one of the two modifications to a node
+        stubNodeUuidsByNetworkModification(Map.of(MODIFICATION_1_UUID, NODE_1_UUID));
+        stubNodesInfos(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"));
+        stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
+
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
+
+        assertEquals(1, infos.size());
+        assertEquals("node1", infos.getFirst().node());
+    }
+
+    @Test
+    void testNetworkModificationServerNotCalledWithoutSuchReference() throws Exception {
+        stubSharedElementReferences(NODE_1_UUID);
+        stubNodesInfos(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"));
+        stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
+
+        assertEquals(1, getReferencingElementInfos().size());
+
+        // no NETWORK_MODIFICATION reference: the resolution endpoint is never hit
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_BY_MODIFICATION_PATH)));
     }
 }

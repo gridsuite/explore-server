@@ -471,10 +471,26 @@ public class ExploreService {
      * Elements the user cannot read are omitted.
      */
     public List<ReferencingElementInfos> getReferencingElementInfos(UUID elementUuid, String userId) {
-        // for now only STUDY_NODE references
-        List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
+        List<ReferenceAttributes> references = directoryService.getElementInfos(elementUuid).getReferences();
+
+        // a STUDY_NODE reference points directly at a node; a NETWORK_MODIFICATION reference points at a composite
+        // modification nested in a node's modification group, so it has to be resolved to that node first, then it
+        // is described exactly like a direct STUDY_NODE reference
+        List<UUID> networkModificationUuids = references.stream()
+                .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.NETWORK_MODIFICATION)
                 .map(ReferenceAttributes::getReferenceId)
+                .toList();
+        Map<UUID, UUID> nodeUuidByNetworkModification = networkModificationUuids.isEmpty()
+                ? Map.of()
+                : studyService.getNodeUuidsByNetworkModifications(networkModificationUuids.stream().distinct().toList());
+
+        List<UUID> referencedNodeUuids = references.stream()
+                .map(reference -> switch (reference.getReferenceType()) {
+                    case STUDY_NODE -> reference.getReferenceId();
+                    case NETWORK_MODIFICATION -> nodeUuidByNetworkModification.get(reference.getReferenceId());
+                    default -> null;
+                })
+                .filter(Objects::nonNull)
                 .toList();
         if (referencedNodeUuids.isEmpty()) {
             return List.of();
