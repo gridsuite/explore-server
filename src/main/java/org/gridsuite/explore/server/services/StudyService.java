@@ -98,6 +98,21 @@ public class StudyService implements IDirectoryElementsService {
                 }).getBody();
     }
 
+    /**
+     * @param networkModificationUuids network modification uuids referenced by a shared composite modification
+     * @return network modification uuid -> uuid of the study node whose modification group ultimately contains it;
+     * modifications that cannot be attached to a node are omitted
+     */
+    public Map<UUID, UUID> getNodeUuidsByNetworkModifications(List<UUID> networkModificationUuids) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/nodes/uuids-by-network-modification")
+                .queryParam("uuids", networkModificationUuids)
+                .buildAndExpand()
+                .toUriString();
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
+                new ParameterizedTypeReference<Map<UUID, UUID>>() {
+                }).getBody();
+    }
+
     private HttpHeaders getHeaders(String userId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
