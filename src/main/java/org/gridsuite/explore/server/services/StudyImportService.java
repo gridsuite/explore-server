@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.slf4j.Logger;
@@ -26,7 +27,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
 import static org.gridsuite.explore.server.services.ExploreService.STUDY;
@@ -38,7 +38,8 @@ import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 public class StudyImportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudyImportService.class);
-
+    public static final int MAX_UNCOMPRESSED_ARCHIVE_SIZE = 2000000000;
+    public static final int MAX_ARCHIVE_ENTRIES = 1000;
     private final CaseService caseService;
     private final StudyService studyService;
     private final ObjectMapper objectMapper;
@@ -83,27 +84,22 @@ public class StudyImportService {
         if (!Files.exists(studyJsonPath)) {
             throw new ExploreException(IMPORT_STUDY_FAILED, "tree.json not found in archive");
         }
-
         TreeExportInfos treeExportInfos = objectMapper.readValue(studyJsonPath.toFile(), TreeExportInfos.class);
         if (treeExportInfos == null || treeExportInfos.rootNetworks() == null || treeExportInfos.rootNetworks().isEmpty()) {
             throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
         }
-
-        Map<UUID, UUID> caseUuidMapping = new HashMap<>();
+        Map<UUID, UUID> oldCaseUuidToNewCaseUuid = new HashMap<>();
         try {
             Path casesDir = tempDir.resolve("cases");
-            if (!Files.exists(casesDir) || !Files.isDirectory(casesDir)) {
-                throw new ExploreException(IMPORT_STUDY_FAILED, "No cases found in archive");
-            }
             for (var rootNetwork : treeExportInfos.rootNetworks()) {
-                importCaseForRootNetwork(rootNetwork, casesDir, caseUuidMapping);
+                importCaseForRootNetwork(rootNetwork, casesDir, oldCaseUuidToNewCaseUuid);
             }
-            checkAllCasesWereImported(treeExportInfos, caseUuidMapping);
+            checkAllCasesWereImported(treeExportInfos, oldCaseUuidToNewCaseUuid);
             UUID createdStudyUuid = UUID.randomUUID();
-            TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, caseUuidMapping, createdStudyUuid);
+            TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, oldCaseUuidToNewCaseUuid, createdStudyUuid);
             createStudyFromImport(createdStudyUuid, studyName, userId, description, parentDirectoryUuid, updatedExportInfos);
         } catch (Exception e) {
-            deleteImportedCases(caseUuidMapping, userId);
+            deleteImportedCases(oldCaseUuidToNewCaseUuid, userId);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
         }
     }
@@ -128,8 +124,8 @@ public class StudyImportService {
         }
     }
 
-    private void deleteImportedCases(Map<UUID, UUID> caseUuidMapping, String userId) {
-        caseUuidMapping.values().forEach(caseUuid -> {
+    private void deleteImportedCases(Map<UUID, UUID> oldCaseUuidToNewCaseUuid, String userId) {
+        oldCaseUuidToNewCaseUuid.values().forEach(caseUuid -> {
             try {
                 exploreService.deleteElement(caseUuid, userId).join();
             } catch (Exception cleanupException) {
@@ -138,28 +134,14 @@ public class StudyImportService {
         });
     }
 
-    private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, Map<UUID, UUID> caseUuidMapping) {
+    private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, Map<UUID, UUID> oldCaseUuidToNewCaseUuid) {
         UUID oldCaseUuid = rootNetwork.caseInfos().caseUuid();
         String caseName = rootNetwork.caseInfos().caseName();
         Path caseDir = casesDir.resolve(oldCaseUuid.toString());
-
-        if (!Files.exists(caseDir) || !Files.isDirectory(caseDir)) {
-            LOGGER.error("Case directory not found or not a directory: {}", caseDir);
-            return;
-        }
-
         Path caseFile = caseDir.resolve(caseName);
-        if (!Files.exists(caseFile) || !Files.isRegularFile(caseFile)) {
-            LOGGER.error("Expected case file not found or not a regular file: {}", caseFile);
-            return;
-        }
         try {
-            UUID newCaseUuid = caseService.importCaseFromFile(caseFile.toFile());
-            if (newCaseUuid == null) {
-                LOGGER.error("Case import returned null UUID for file: {}", caseFile);
-                throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import case: " + caseName);
-            }
-            caseUuidMapping.put(oldCaseUuid, newCaseUuid);
+            UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
+            oldCaseUuidToNewCaseUuid.put(oldCaseUuid, newCaseUuid);
         } catch (ExploreException e) {
             throw e;
         } catch (Exception e) {
@@ -168,10 +150,10 @@ public class StudyImportService {
         }
     }
 
-    private void checkAllCasesWereImported(TreeExportInfos treeExportInfos, Map<UUID, UUID> caseUuidMapping) {
+    private void checkAllCasesWereImported(TreeExportInfos treeExportInfos, Map<UUID, UUID> oldCaseUuidToNewCaseUuid) {
         for (var rootNetwork : treeExportInfos.rootNetworks()) {
             UUID oldCaseUuid = rootNetwork.caseInfos().caseUuid();
-            if (!caseUuidMapping.containsKey(oldCaseUuid)) {
+            if (!oldCaseUuidToNewCaseUuid.containsKey(oldCaseUuid)) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import case: " + rootNetwork.caseInfos().caseName());
             }
         }
@@ -181,7 +163,7 @@ public class StudyImportService {
      * Extract zip archive to directory
      */
     private void extractArchive(InputStream inputStream, Path destDir) throws IOException {
-        try (ZipInputStream zipIn = new ZipInputStream(inputStream)) {
+        try (SecuredZipInputStream zipIn = new SecuredZipInputStream(inputStream, MAX_ARCHIVE_ENTRIES, MAX_UNCOMPRESSED_ARCHIVE_SIZE)) {
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
                 Path outputPath = destDir.resolve(entry.getName()).normalize();
@@ -204,13 +186,10 @@ public class StudyImportService {
     /**
      * Update case UUIDs in StudyExportInfos with new imported case UUIDs
      */
-    private TreeExportInfos updateCaseUuidsAndStudyUuidInExportInfos(TreeExportInfos original, Map<UUID, UUID> caseUuidMapping, UUID createdStudyUuid) {
+    private TreeExportInfos updateCaseUuidsAndStudyUuidInExportInfos(TreeExportInfos original, Map<UUID, UUID> oldCaseUuidToNewCaseUuid, UUID createdStudyUuid) {
         List<RootNetworkExportInfos> updatedRootNetworks = original.rootNetworks().stream().map(rootNetwork -> {
             UUID oldCaseUuid = rootNetwork.caseInfos().caseUuid();
-            UUID newCaseUuid = caseUuidMapping.get(oldCaseUuid);
-            if (newCaseUuid == null) {
-                return rootNetwork;
-            }
+            UUID newCaseUuid = oldCaseUuidToNewCaseUuid.get(oldCaseUuid);
             CaseInfos updatedCaseInfo = new CaseInfos(newCaseUuid, rootNetwork.caseInfos().originalCaseUuid(),
                     rootNetwork.caseInfos().caseName(), rootNetwork.caseInfos().caseFormat());
             return new RootNetworkExportInfos(rootNetwork.name(), rootNetwork.tag(), rootNetwork.index(), updatedCaseInfo, rootNetwork.importParameters());

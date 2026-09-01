@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.services;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -43,20 +44,12 @@ public class CaseService implements IDirectoryElementsService {
         this.caseServerBaseUri = actionsServerBaseUri;
     }
 
-    UUID importCase(MultipartFile multipartFile) {
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        UUID caseUuid;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+    UUID importMultipartCase(MultipartFile multipartFile) {
         if (multipartFile != null) {
             Objects.requireNonNull(multipartFile.getOriginalFilename());
-            body.add("file", multipartFile.getResource());
+            return importCaseResource(multipartFile.getResource());
         }
-        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(
-            body, headers);
-        caseUuid = restTemplate.postForObject(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL, request,
-            UUID.class);
-        return caseUuid;
+        return importCaseResource(null);
     }
 
     public UUID importCaseWithoutDirectoryElementCreation(MultipartFile multipartFile, boolean withExpiration) {
@@ -101,13 +94,17 @@ public class CaseService implements IDirectoryElementsService {
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
     }
 
-    public UUID importCaseFromFile(File file) {
+    public UUID importFileCase(File file) {
+        return importCaseResource(new FileSystemResource(file));
+    }
+
+    private UUID importCaseResource(Resource resource) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-        body.add("file", new org.springframework.core.io.FileSystemResource(file));
-
+        if (resource != null) {
+            body.add("file", resource);
+        }
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
         return restTemplate.postForObject(
             caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL,

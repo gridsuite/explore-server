@@ -145,7 +145,7 @@ public class ExploreService {
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, String userId, UUID parentDirectoryUuid) {
-        UUID uuid = caseService.importCase(caseFile);
+        UUID uuid = caseService.importMultipartCase(caseFile);
         ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, userId, 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, caseService::delete);
     }
