@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server;
 
+import org.gridsuite.explore.server.dto.CompositeModificationContentInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.FilterService;
@@ -82,9 +83,9 @@ class ExploreServiceExceptionTest {
         UUID createdCompositeModificationId = UUID.randomUUID();
         when(networkModificationService.createCompositeModification(anyList(), any())).thenReturn(createdCompositeModificationId);
 
-        List<UUID> modificationUuids = List.of(UUID.randomUUID());
+        List<CompositeModificationContentInfos> contents = List.of(new CompositeModificationContentInfos(UUID.randomUUID(), null));
         UUID parentDirectoryUuid = UUID.randomUUID();
-        String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(modificationUuids,
+        String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(contents,
                 "userId", "name", "description", parentDirectoryUuid))
                 .getMessage();
         verify(networkModificationService, times(1)).createCompositeModification(any(), any());
