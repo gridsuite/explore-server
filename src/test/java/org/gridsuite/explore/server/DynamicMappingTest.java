@@ -9,6 +9,7 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
@@ -35,6 +36,7 @@ import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -195,7 +197,7 @@ class DynamicMappingTest {
 
         verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
         verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
-        verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, USER_ID);
+        verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, CREATED, USER_ID);
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 
@@ -212,7 +214,7 @@ class DynamicMappingTest {
 
         verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
         verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
-        verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(String.class));
+        verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(DirectoryElementStatus.class), any(String.class));
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 }
