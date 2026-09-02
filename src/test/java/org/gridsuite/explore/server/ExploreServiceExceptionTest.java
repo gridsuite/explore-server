@@ -62,7 +62,7 @@ class ExploreServiceExceptionTest {
 
         // duplication
         String duplicateErrorMessage = "error when duplicating element from directory server";
-        when(directoryService.duplicateElement(any(), any(), any(), any())).thenThrow(new RuntimeException(duplicateErrorMessage));
+        when(directoryService.duplicateElement(any(), any(), any(), any(), any())).thenThrow(new RuntimeException(duplicateErrorMessage));
         UUID duplicatedFilterId = UUID.randomUUID();
         when(filterService.duplicateFilter(any())).thenReturn(duplicatedFilterId);
 

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -130,7 +131,7 @@ class WorkspaceTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, USER_ID);
+        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED, USER_ID);
         verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.READ);
     }
@@ -141,7 +142,7 @@ class WorkspaceTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, USER_ID);
+        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED, USER_ID);
     }
 
     @Test
