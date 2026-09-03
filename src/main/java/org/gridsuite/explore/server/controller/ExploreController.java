@@ -61,7 +61,7 @@ public class ExploreController {
     @PostMapping(value = "/explore/studies/{studyName}/cases/{caseUuid}")
     @Operation(summary = "create a study from an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
-    @PreAuthorize("@permissionService.canWrite(#parentDirectoryUuid)")
+    @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
     public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
                                                             @PathVariable("caseUuid") UUID caseUuid,
                                                             @RequestParam(name = "caseFormat") String caseFormat,
@@ -69,7 +69,7 @@ public class ExploreController {
                                                             @RequestParam("description") String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         exploreService.assertCanCreateCase(userId);
         CaseInfo caseInfo = new CaseInfo(caseUuid, caseFormat);
         exploreService.createStudy(studyName, caseInfo, description, userId, parentDirectoryUuid, importParams, duplicateCase);
@@ -201,9 +201,9 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "Directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for the directory/element")
     })
-    @PreAuthorize("@permissionService.canDelete(#elementUuid)")
+    @PreAuthorize("@authorizationService.canDelete(#elementUuid)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         exploreService.deleteElement(elementUuid, userId);
         return ResponseEntity.ok().build();
     }
@@ -216,10 +216,10 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "At least one directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for at least one directory/element")
     })
-    @PreAuthorize("@permissionService.canWrite(#directoryUuid)")
+    @PreAuthorize("@authorizationService.canWrite(#directoryUuid)")
     public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
                                                @PathVariable UUID directoryUuid) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         exploreService.deleteElementsFromDirectory(elementsUuid, directoryUuid, userId);
         return ResponseEntity.ok().build();
     }
@@ -531,11 +531,11 @@ public class ExploreController {
     @PutMapping(value = "/explore/elements/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
-    @PreAuthorize("@permissionService.canWrite(#id)")
+    @PreAuthorize("@authorizationService.canWrite(#id)")
     public ResponseEntity<Void> updateElement(
             @PathVariable UUID id,
             @RequestBody ElementAttributes elementAttributes) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         exploreService.updateElement(id, elementAttributes, userId);
         return ResponseEntity.ok().build();
     }
@@ -704,10 +704,10 @@ public class ExploreController {
         @ApiResponse(responseCode = "403", description = "Not authorized to update permissions for this directory"),
         @ApiResponse(responseCode = "404", description = "The directory was not found")
     })
-    @PreAuthorize("@permissionService.canManage(#directoryUuid)")
+    @PreAuthorize("@authorizationService.canManage(#directoryUuid)")
     public ResponseEntity<Void> setDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,
                                                         @RequestBody List<PermissionDTO> permissions) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         directoryService.setDirectoryPermissions(directoryUuid, permissions, userId);
         return ResponseEntity.ok().build();
     }
@@ -716,12 +716,12 @@ public class ExploreController {
     @PostMapping(value = "/explore/process-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
-    @PreAuthorize("@permissionService.canWrite(#parentDirectoryId)")
+    @PreAuthorize("@authorizationService.canWrite(#parentDirectoryId)")
     public ResponseEntity<UUID> createProcessConfig(@RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
                                                     @RequestBody(required = false) String processConfig) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         return ResponseEntity.ok().body(exploreService.createProcessConfig(name, processConfig, description, userId, parentDirectoryId));
     }
 
@@ -729,12 +729,12 @@ public class ExploreController {
     @PutMapping(value = "/explore/process-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully modified")})
-    @PreAuthorize("@permissionService.canWrite(#id)")
+    @PreAuthorize("@authorizationService.canWrite(#id)")
     public ResponseEntity<Void> updateProcessConfig(@PathVariable UUID id,
                                                     @RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestBody(required = false) String processConfig) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         exploreService.updateProcessConfig(id, name, processConfig, description, userId);
         return ResponseEntity.ok().build();
     }
@@ -743,10 +743,10 @@ public class ExploreController {
     @PostMapping(value = "/explore/process-configs/{id}/duplicate")
     @Operation(summary = "Duplicate a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
-    @PreAuthorize("@permissionService.canDuplicateTo(#id, #targetDirectoryId)")
+    @PreAuthorize("@authorizationService.canDuplicateTo(#id, #targetDirectoryId)")
     public ResponseEntity<UUID> duplicateProcessConfig(@PathVariable("id") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         return ResponseEntity.ok().body(exploreService.duplicateProcessConfig(id, targetDirectoryId, userId));
     }
 

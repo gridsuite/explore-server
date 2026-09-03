@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.gridsuite.explore.server.UserAuthentication;
 import org.springframework.boot.jackson.JsonComponentModule;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -19,14 +20,11 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -69,15 +67,12 @@ public class RestTemplateConfig {
         @Override
         public ClientHttpResponse intercept(HttpRequest request, byte[] body,
                                             ClientHttpRequestExecution execution) throws IOException {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserAuthentication authentication = (UserAuthentication) SecurityContextHolder.getContext().getAuthentication();
 
-            if (authentication != null && authentication.getPrincipal() instanceof String userId) {
-                request.getHeaders().set(USER_ID_HEADER, userId);
+            if (authentication != null) {
+                request.getHeaders().set(USER_ID_HEADER, authentication.getUserId());
 
-                String roles = authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.joining("|"));
-
+                String roles = authentication.getRoles();
                 if (!roles.isEmpty()) {
                     request.getHeaders().set(ROLES_HEADER, roles);
                 }

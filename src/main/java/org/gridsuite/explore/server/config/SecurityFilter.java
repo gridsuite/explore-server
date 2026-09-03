@@ -11,17 +11,24 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.gridsuite.explore.server.UserAuthentication;
+import org.gridsuite.explore.server.UserContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
@@ -49,13 +56,18 @@ public class SecurityFilter extends OncePerRequestFilter {
                         .toList();
             }
 
-            Authentication authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-            // obligé de mettre un UsernamePasswordAuthenticationToken ici ? ou une classe maison { userId, roles} ça suffit ?
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            // SecurityContext ne sert qu'ici (pour les userId et les roles)
-            // est ce que ça vaut vraiment la peine ? ou on crée un contexte GridSuite à nous ?
-            // l'avantage c'est que le cycle de vie du contexte est géré correctement
-            // sinon il peut y avoir des complications dans le cas des requêtes asynchrones par ex ?
+            SecurityContextHolder.getContext().setAuthentication(new UserAuthentication(userId, authorities));
+            /*
+            Set<String> roles = Collections.emptySet();
+            if (rolesHeader != null && !rolesHeader.isEmpty()) {
+                roles = Arrays.stream(rolesHeader.split("\\|"))
+                        .map(String::trim)
+                        .filter(role -> !role.isEmpty())
+                        .collect(Collectors.toSet());
+            }
+            userContext.setUserId(userId);
+            userContext.setRoles(roles);
+            */
         }
 
         filterChain.doFilter(request, response);
