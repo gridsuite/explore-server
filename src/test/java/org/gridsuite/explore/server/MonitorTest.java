@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.MonitorService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -28,7 +27,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -117,7 +115,6 @@ class MonitorTest {
         UUID createdProcessConfigId = objectMapper.readValue(result, UUID.class);
 
         assertEquals(ID, createdProcessConfigId);
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(USER_ID), eq(true));
         assertEquals(ID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
@@ -138,7 +135,6 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(String.class), any(boolean.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
     }
@@ -157,7 +153,6 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isOk());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture(), eq(USER_ID));
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
     }
@@ -176,7 +171,6 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(0)).updateElement(any(UUID.class), any(ElementAttributes.class), any(String.class));
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
     }
@@ -197,8 +191,6 @@ class MonitorTest {
         UUID duplicatedProcessConfigId = objectMapper.readValue(result, UUID.class);
 
         assertEquals(NEW_ID, duplicatedProcessConfigId);
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, USER_ID);
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
@@ -214,8 +206,6 @@ class MonitorTest {
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, USER_ID, PermissionType.READ);
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, USER_ID, PermissionType.WRITE);
         verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(String.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }

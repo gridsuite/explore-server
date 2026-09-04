@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import jakarta.validation.constraints.NotNull;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +41,11 @@ public class AuthorizationService {
     }
 
     public boolean canRead(UUID elementUuid) {
-        directoryService.checkPermission(List.of(elementUuid), null, PermissionType.READ);
+        return canRead(List.of(elementUuid));
+    }
+
+    public boolean canRead(List<UUID> elementUuids) {
+        directoryService.checkPermission(elementUuids, null, PermissionType.READ);
         return true;
     }
 
@@ -50,18 +55,27 @@ public class AuthorizationService {
     }
 
     public boolean canDuplicateTo(UUID elementUuid, UUID targetDirectoryUuid) {
-        canRead(elementUuid);
-        canWrite(targetDirectoryUuid != null ? targetDirectoryUuid : elementUuid);
-        return true;
+        return canDuplicateTo(List.of(elementUuid), targetDirectoryUuid != null ? targetDirectoryUuid : elementUuid);
+    }
+
+    public boolean canDuplicateTo(List<UUID> elementUuids, @NotNull UUID targetDirectoryUuid) {
+        return canRead(elementUuids) && canWrite(targetDirectoryUuid);
     }
 
     public boolean canDelete(UUID elementUuid) {
-        canRecursivelyWrite(elementUuid);
-        return true;
+        return canDelete(List.of(elementUuid));
     }
 
-    public boolean canRecursivelyWrite(UUID elementUuid) {
-        directoryService.checkPermission(List.of(elementUuid), null, PermissionType.WRITE, true);
+    public boolean canDelete(List<UUID> elementUuids) {
+        return canRecursivelyWrite(elementUuids, null);
+    }
+
+    public boolean canMoveTo(List<UUID> elementUuids, UUID targetDirectoryUuid) {
+        return canRecursivelyWrite(elementUuids, targetDirectoryUuid);
+    } // pas sûre de ça, p-e on veut plus la main au niveau des endpoints pour savoir exactement ce qu'on checke ?
+
+    public boolean canRecursivelyWrite(List<UUID> elementUuids, UUID targetDirectoryUuid) {
+        directoryService.checkPermission(elementUuids, targetDirectoryUuid, PermissionType.WRITE, true);
         return true;
     }
 

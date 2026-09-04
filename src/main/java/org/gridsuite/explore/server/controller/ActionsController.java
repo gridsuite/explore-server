@@ -14,6 +14,7 @@ import org.gridsuite.explore.server.ExploreApi;
 import org.gridsuite.explore.server.services.ContingencyListService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,18 +33,22 @@ public class ActionsController {
         this.contingencyListService = contingencyListService;
     }
 
+    // TODO: on récupère l'élément depuis actions-server, donc vérifier qu'il existe bien dans directory-server
     @GetMapping(value = "/identifier-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get identifier contingency list by id from actions-server")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The identifier contingency list"),
         @ApiResponse(responseCode = "404", description = "The identifier contingency list does not exists")})
+    @PreAuthorize("@authorizationService.canRead(#id)")
     public ResponseEntity<String> getIdentifierContingencyList(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(contingencyListService.getIdentifierContingencyList(id));
     }
 
+    // TODO: on récupère l'élément depuis actions-server, donc vérifier qu'il existe bien dans directory-server
     @GetMapping(value = "/filters-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get filter based contingency list by id from actions-server")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter based contingency list"),
         @ApiResponse(responseCode = "404", description = "The filter based contingency list does not exists")})
+    @PreAuthorize("@authorizationService.canRead(#id)")
     public ResponseEntity<String> getFilterBasedContingencyList(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(contingencyListService.getFilterBasedContingencyList(id));
     }

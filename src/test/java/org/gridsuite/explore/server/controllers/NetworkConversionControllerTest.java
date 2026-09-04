@@ -49,7 +49,7 @@ class NetworkConversionControllerTest {
         UUID response = EXPORT_UUID;
         when(networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId")).thenReturn(response);
 
-        assertSame(response, controller.convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId").getBody());
+        assertSame(response, controller.convertCase(CASE_UUID, "CGMES", "network.zip", "{}").getBody());
 
         verify(networkConversionService).convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId");
     }
