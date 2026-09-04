@@ -583,7 +583,7 @@ public class ExploreService {
         executeWithRollback(() -> directoryService.createElement(elementAttributes, parentDirectoryUuid, userId), elementAttributes.getElementUuid(), userId, rollback);
     }
 
-    private void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
+    void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, String userId, BiConsumer<UUID, String> rollback) {
         executeWithRollback(() -> directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, userId, true), elementAttributes.getElementUuid(), userId, rollback);
     }
 

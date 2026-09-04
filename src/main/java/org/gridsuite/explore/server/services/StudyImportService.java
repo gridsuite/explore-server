@@ -29,6 +29,8 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
+import static org.gridsuite.explore.server.services.ExploreService.CASE;
+import static org.gridsuite.explore.server.services.ExploreService.DIRECTORY;
 import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 
 /**
@@ -44,12 +46,14 @@ public class StudyImportService {
     private final StudyService studyService;
     private final ObjectMapper objectMapper;
     private final ExploreService exploreService;
+    private final DirectoryService directoryService;
 
-    public StudyImportService(CaseService caseService, StudyService studyService, ObjectMapper objectMapper, ExploreService exploreService) {
+    public StudyImportService(CaseService caseService, StudyService studyService, ObjectMapper objectMapper, ExploreService exploreService, DirectoryService directoryService) {
         this.caseService = caseService;
         this.studyService = studyService;
         this.objectMapper = objectMapper;
         this.exploreService = exploreService;
+        this.directoryService = directoryService;
     }
 
     /**
@@ -89,64 +93,46 @@ public class StudyImportService {
             throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
         }
         Map<UUID, UUID> oldCaseUuidToNewCaseUuid = new HashMap<>();
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
+        ElementAttributes newElementAttributes = directoryService.createElement(elementAttributes, parentDirectoryUuid, userId);
+        UUID importDirectoryUuid = newElementAttributes.getElementUuid();
         try {
             Path casesDir = tempDir.resolve("cases");
             for (var rootNetwork : treeExportInfos.rootNetworks()) {
-                importCaseForRootNetwork(rootNetwork, casesDir, oldCaseUuidToNewCaseUuid);
+                importCaseForRootNetwork(rootNetwork, casesDir, oldCaseUuidToNewCaseUuid, description, userId, importDirectoryUuid);
             }
             checkAllCasesWereImported(treeExportInfos, oldCaseUuidToNewCaseUuid);
             UUID createdStudyUuid = UUID.randomUUID();
             TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, oldCaseUuidToNewCaseUuid, createdStudyUuid);
-            createStudyFromImport(createdStudyUuid, studyName, userId, description, parentDirectoryUuid, updatedExportInfos);
+            createStudyFromImport(createdStudyUuid, studyName, userId, description, importDirectoryUuid, updatedExportInfos);
         } catch (Exception e) {
-            deleteImportedCases(oldCaseUuidToNewCaseUuid, userId);
+            directoryService.deleteElement(importDirectoryUuid, userId);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
         }
     }
 
     private void createStudyFromImport(UUID createdStudyUuid, String studyName, String userId, String description,
                                                  UUID parentDirectoryUuid, TreeExportInfos updatedExportInfos) {
-        try {
-            ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-            studyService.importStudy(userId, updatedExportInfos);
-            exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
-        } catch (Exception e) {
-            deleteStudy(createdStudyUuid, userId);
-            throw e;
-        }
+        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
+        studyService.importStudy(userId, updatedExportInfos);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
     }
 
-    private void deleteStudy(UUID studyUuid, String userId) {
-        try {
-            studyService.delete(studyUuid, userId);
-        } catch (Exception cleanupException) {
-            LOGGER.error("Failed to cleanup study after error", cleanupException);
-        }
-    }
-
-    private void deleteImportedCases(Map<UUID, UUID> oldCaseUuidToNewCaseUuid, String userId) {
-        oldCaseUuidToNewCaseUuid.values().forEach(caseUuid -> {
-            try {
-                exploreService.deleteElement(caseUuid, userId).join();
-            } catch (Exception cleanupException) {
-                LOGGER.error("Failed to cleanup imported case {} after error", caseUuid, cleanupException);
-            }
-        });
-    }
-
-    private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, Map<UUID, UUID> oldCaseUuidToNewCaseUuid) {
+    private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, Map<UUID, UUID> oldCaseUuidToNewCaseUuid, String description, String userId, UUID parentDirectoryUuid) {
         UUID oldCaseUuid = rootNetwork.caseInfos().caseUuid();
         String caseName = rootNetwork.caseInfos().caseName();
         Path caseDir = casesDir.resolve(oldCaseUuid.toString());
         Path caseFile = caseDir.resolve(caseName);
         try {
             UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
+            ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, userId, 0L, description);
             oldCaseUuidToNewCaseUuid.put(oldCaseUuid, newCaseUuid);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, caseService::delete);
         } catch (ExploreException e) {
             throw e;
         } catch (Exception e) {
             LOGGER.error("Failed to import case file {}: {}", caseFile, e.getMessage(), e);
-            throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import case file: " + caseName);
+            throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import case file: " + caseName + ": " + e.getMessage());
         }
     }
 
