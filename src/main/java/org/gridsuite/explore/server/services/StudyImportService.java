@@ -180,7 +180,7 @@ public class StudyImportService {
                     rootNetwork.caseInfos().caseName(), rootNetwork.caseInfos().caseFormat());
             return new RootNetworkExportInfos(rootNetwork.name(), rootNetwork.tag(), rootNetwork.index(), updatedCaseInfo, rootNetwork.importParameters());
         }).toList();
-        return new TreeExportInfos(createdStudyUuid, updatedRootNetworks, original.nodeTree());
+        return new TreeExportInfos(createdStudyUuid, updatedRootNetworks, original.nodeTree(), original.computationParameters());
     }
 
     /**
