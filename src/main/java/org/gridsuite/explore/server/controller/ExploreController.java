@@ -486,12 +486,12 @@ public class ExploreController {
     @Operation(summary = "Create composite modification element from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been created and composite modification element created in the directory")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
-    public ResponseEntity<Void> createCompositeModification(@RequestBody List<CompositeModificationContentInfos> contents,
+    public ResponseEntity<Void> createCompositeModification(@RequestBody List<UUID> modificationUuids,
                                                             @RequestParam(QUERY_PARAM_NAME) String name,
                                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createCompositeModification(contents, userId, name, description, parentDirectoryUuid);
+        exploreService.createCompositeModification(modificationUuids, userId, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -500,11 +500,11 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #id, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> updateCompositeNetworkModification(@PathVariable UUID id,
-                                                                   @RequestBody List<CompositeModificationContentInfos> contents,
+                                                                   @RequestBody List<UUID> modificationUuids,
                                                                    @RequestHeader(QUERY_PARAM_USER_ID) String userId,
                                                                    @RequestParam(QUERY_PARAM_NAME) String name,
                                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        exploreService.updateCompositeModification(id, contents, userId, name, description);
+        exploreService.updateCompositeModification(id, modificationUuids, userId, name, description);
         return ResponseEntity.ok().build();
     }
 

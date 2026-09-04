@@ -977,14 +977,12 @@ class ExploreTest {
 
     @Test
     void testCreateNetworkCompositeModifications() throws Exception {
-        List<CompositeModificationContentInfos> contents = Arrays.asList(
-                new CompositeModificationContentInfos(MODIFICATION_UUID, "kept description"),
-                new CompositeModificationContentInfos(UUID.randomUUID(), null));
+        List<UUID> modificationUuids = Arrays.asList(MODIFICATION_UUID, UUID.randomUUID());
         mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "nameModif", "descModif", PARENT_DIRECTORY_UUID)
                 .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(contents))
+                .content(mapper.writeValueAsString(modificationUuids))
         ).andExpect(status().isOk());
     }
 
@@ -994,9 +992,7 @@ class ExploreTest {
         mockMvc.perform(
                 put("/v1/explore/composite-modifications/{id}", COMPOSITE_MODIFICATION_UUID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(List.of(
-                                new CompositeModificationContentInfos(MODIFICATION_UUID, null),
-                                new CompositeModificationContentInfos(UUID.randomUUID(), null))))
+                        .content(mapper.writeValueAsString(List.of(MODIFICATION_UUID, UUID.randomUUID())))
                         .param("name", name)
                         .param("description", "description")
                         .header("userId", USER1)

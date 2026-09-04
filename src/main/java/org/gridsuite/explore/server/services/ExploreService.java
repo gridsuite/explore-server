@@ -10,7 +10,6 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
-import org.gridsuite.explore.server.dto.CompositeModificationContentInfos;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
@@ -262,8 +261,8 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes, userId);
     }
 
-    public void updateCompositeModification(UUID id, List<CompositeModificationContentInfos> contents, String userId, String name, String description) {
-        networkModificationService.replaceCompositeModification(id, name, contents);
+    public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String userId, String name, String description) {
+        networkModificationService.replaceCompositeModification(id, name, modificationUuids);
         updateElementNameAndDescription(id, name, description, userId);
     }
 
@@ -386,11 +385,11 @@ public class ExploreService {
         duplicateDirectoryElementOrDeleteElement(sourceId, newWorkspaceId, targetDirectoryId, userId, workspaceService::delete);
     }
 
-    public void createCompositeModification(List<CompositeModificationContentInfos> contents, String userId, String name,
+    public void createCompositeModification(List<UUID> modificationUuids, String userId, String name,
                                             String description, UUID parentDirectoryUuid) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModification(contents, name);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
                         userId, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, networkModificationService::delete);

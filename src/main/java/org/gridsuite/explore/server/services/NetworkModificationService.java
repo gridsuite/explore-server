@@ -7,7 +7,6 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
-import org.gridsuite.explore.server.dto.CompositeModificationContentInfos;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -53,25 +52,25 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .getBody();
     }
 
-    public UUID createCompositeModification(List<CompositeModificationContentInfos> contents, String compositeModificationName) {
+    public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH)
                 .queryParam(NAME, compositeModificationName)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(contents, headers), new ParameterizedTypeReference<UUID>() { })
+        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<UUID>() { })
                 .getBody();
     }
 
-    public void replaceCompositeModification(UUID compositeModificationId, String newName, List<CompositeModificationContentInfos> contents) {
+    public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId + "/replace")
                 .queryParam(NAME, newName)
                 .buildAndExpand()
                 .toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(contents, headers), Void.class);
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(modificationUuids, headers), Void.class);
     }
 
     /**
