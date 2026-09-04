@@ -95,7 +95,8 @@ class StudyImportExportTest {
         wireMockServer.stubFor(get(urlPathMatching("/v1/elements/authorized"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("true")));
         wireMockServer.stubFor(post(urlPathMatching("/v1/directories/.*/elements"))
-                .willReturn(aResponse().withStatus(200)));
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(UUID.randomUUID(), STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
         wireMockServer.stubFor(get(urlPathMatching("/v1/cases-alert-threshold"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("10")));
         // Stub user-admin-server max quota
@@ -251,9 +252,26 @@ class StudyImportExportTest {
                 archiveContent
         );
 
-        UUID stubUpdateStatusId = wireMockServer.stubFor(put(urlPathMatching("/v1/elements"))
-                .willReturn(aResponse().withStatus(200))).getId();
-        wireMockServer.stubFor(delete(urlPathMatching("/v1/elements/" + CASE_UUID))
+        UUID importDirectoryUuid = UUID.randomUUID();
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
+                .atPriority(1)
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(importDirectoryUuid, STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/directories/" + importDirectoryUuid + "/elements"))
+                .atPriority(1)
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case-valid.xiidm", "CASE", USER_ID, 0L, DESCRIPTION)))));
+
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/elements/" + importDirectoryUuid))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(importDirectoryUuid, STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/directories/" + importDirectoryUuid + "/elements"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(List.of(new ElementAttributes(CASE_UUID, "case-valid.xiidm", "CASE", USER_ID, 0L, DESCRIPTION))))));
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/elements/" + CASE_UUID))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case-valid.xiidm", "CASE", USER_ID, 0L, DESCRIPTION)))));
+        wireMockServer.stubFor(delete(urlPathEqualTo("/v1/cases/" + CASE_UUID))
                 .willReturn(aResponse().withStatus(200)));
 
         mockMvc.perform(multipart("/v1/explore/studies/import")
@@ -264,8 +282,7 @@ class StudyImportExportTest {
                         .header("userId", USER_ID))
                 .andExpect(status().is5xxServerError());
 
-        wireMockUtils.verifyPutRequest(stubUpdateStatusId, "/v1/elements", Map.of("ids", equalTo(CASE_UUID.toString())), false);
-        wireMockServer.verify(deleteRequestedFor(urlPathEqualTo("/v1/elements/" + CASE_UUID)));
+        wireMockServer.verify(deleteRequestedFor(urlPathEqualTo("/v1/cases/" + CASE_UUID)));
     }
 
     private byte[] createValidStudyArchive() throws IOException {
