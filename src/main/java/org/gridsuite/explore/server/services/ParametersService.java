@@ -28,7 +28,6 @@ public class ParametersService implements IDirectoryElementsService {
     private static final String SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
-    private static final String HEADER_USER_ID = "userId";
     private static final String COMPUTATION_PARAMETERS = "/parameters";
     private static final String NETWORK_VISU_PARAMETERS = "/network-visualizations-params";
 
@@ -98,30 +97,30 @@ public class ParametersService implements IDirectoryElementsService {
         restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.PUT, httpEntity, UUID.class);
     }
 
-    public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType, String userId) {
+    public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         Objects.requireNonNull(sourceParametersUuid);
         var path = UriComponentsBuilder
                     .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
                     .buildAndExpand(sourceParametersUuid)
                     .toUriString();
+        // TODO: HttpHeaders
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
         return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
     }
 
     @Override
-    public void delete(UUID parametersUuid, String userId) {
+    public void delete(UUID parametersUuid) {
         ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
         String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
                 .buildAndExpand(parametersUuid)
                 .toUriString();
+        // TODO: HttpHeaders
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
 
         restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers),
                 Void.class);

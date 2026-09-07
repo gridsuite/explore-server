@@ -13,7 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
@@ -29,7 +29,7 @@ public class SpringSecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
             )
-            .addFilterBefore(new SecurityFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterAfter(new SecurityFilter(), SecurityContextHolderFilter.class);
 
         return http.build();
     }

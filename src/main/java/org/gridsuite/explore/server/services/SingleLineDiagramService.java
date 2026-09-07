@@ -27,16 +27,16 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID configUuid, String userId) {
+    public void delete(UUID configUuid) {
         Objects.requireNonNull(configUuid);
 
         var path = UriComponentsBuilder
             .fromPath(SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH + DELIMITER + configUuid)
             .buildAndExpand()
             .toUriString();
+        // TODO: HttpHeaders
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
 
         restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }

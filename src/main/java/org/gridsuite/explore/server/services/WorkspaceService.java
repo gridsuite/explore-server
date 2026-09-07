@@ -72,16 +72,16 @@ public class WorkspaceService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID workspaceUuid, String userId) {
+    public void delete(UUID workspaceUuid) {
         Objects.requireNonNull(workspaceUuid);
 
         var path = UriComponentsBuilder
                 .fromPath(WORKSPACES_PATH + DELIMITER + workspaceUuid)
                 .buildAndExpand()
                 .toUriString();
+        // TODO: HttpHeaders
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
 
         restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }

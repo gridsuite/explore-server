@@ -47,11 +47,11 @@ class NetworkConversionControllerTest {
     @Test
     void convertCaseForwardsArguments() {
         UUID response = EXPORT_UUID;
-        when(networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId")).thenReturn(response);
+        when(networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", "{}")).thenReturn(response);
 
         assertSame(response, controller.convertCase(CASE_UUID, "CGMES", "network.zip", "{}").getBody());
 
-        verify(networkConversionService).convertCase(CASE_UUID, "CGMES", "network.zip", "{}", "userId");
+        verify(networkConversionService).convertCase(CASE_UUID, "CGMES", "network.zip", "{}");
     }
 
     @Test

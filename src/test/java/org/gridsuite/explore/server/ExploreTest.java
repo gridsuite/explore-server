@@ -38,6 +38,7 @@ import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -199,6 +200,10 @@ class ExploreTest {
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
     void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
+        // Set up authentication
+//        UserAuthentication userAuthentication = new UserAuthentication(USER1, "");
+//        SecurityContextHolder.getContext().setAuthentication(userAuthentication);
+
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
@@ -541,7 +546,7 @@ class ExploreTest {
     void testCreateStudyFromExistingCase() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .param("duplicateCase", "false")
-                .header("userId", "userId")
+                .header("userId", USER1)
                 .param("caseFormat", "XIIDM")
                 .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk());
@@ -662,12 +667,14 @@ class ExploreTest {
                 .andExpect(status().is2xxSuccessful());
     }
 
+    // TODO: not admin user
     private void deleteElementNotAllowed(UUID elementUUid, int status) throws Exception {
         mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
                         elementUUid).header("userId", NOT_ADMIN_USER))
                 .andExpect(status().is(status));
     }
 
+    // TODO: not admin user
     private void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid, int status) throws Exception {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
@@ -999,6 +1006,7 @@ class ExploreTest {
         ).andExpect(status().isOk());
     }
 
+    // TODO: not allowed user
     @Test
     void testGetDirectoryPermissions() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
@@ -1015,6 +1023,7 @@ class ExploreTest {
                 .andExpect(status().isForbidden());
     }
 
+    // TODO: not allowed user
     @Test
     void testSetDirectoryPermissions() throws Exception {
         List<PermissionDTO> permissions = List.of(
@@ -1062,6 +1071,7 @@ class ExploreTest {
         assertEquals(2, metadata.size());
     }
 
+    // TODO: user with case limits exceeded
     @Test
     void testMaxCaseCreationExceeded() throws Exception {
         //test create a study with a user that already exceeded his cases limit
@@ -1116,6 +1126,7 @@ class ExploreTest {
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
     }
 
+    // TODO: user with case limits not exceeded
     @Test
     void testMaxCaseCreationNotExceeded() throws Exception {
         //test create a study with a user that hasn't already exceeded his cases limit
@@ -1159,6 +1170,7 @@ class ExploreTest {
                 .andExpect(status().isOk());
     }
 
+    // TODO: not found user
     @Test
     void testMaxCaseCreationProfileNotSet() throws Exception {
         //test create a study with a user that has no profile to limit his case creation
@@ -1202,6 +1214,7 @@ class ExploreTest {
                 .andExpect(status().isOk());
     }
 
+    // TODO: user error
     @Test
     void testMaxCaseCreationWithRemoteException() throws Exception {
         //test create a study with a remote unexpected exception
@@ -1244,6 +1257,7 @@ class ExploreTest {
                 .andExpect(status().isInternalServerError());
     }
 
+    // TODO: user with case limits exceeded
     @Test
     void testCaseAlertThreshold(final MockWebServer server) throws Exception {
         //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 has not yet reached the defined case alert threshold, no message sent to him
@@ -1312,6 +1326,7 @@ class ExploreTest {
         ).andExpect(status().isOk());
     }
 
+    // TODO: not allowed user
     @Test
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
@@ -1439,6 +1454,7 @@ class ExploreTest {
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/indexation-infos")));
     }
 
+    // TODO: not admin user
     @Test
     void testHasRights(final MockWebServer server) throws Exception {
         // test read access allowed
@@ -1506,14 +1522,14 @@ class ExploreTest {
                 .willReturn(WireMock.ok()));
 
         doThrow(new RuntimeException("simulated failure"))
-                .when(directoryService).deleteElement(FILTER_UUID, USER1);
+                .when(directoryService).deleteElement(FILTER_UUID);
 
         CountDownLatch reconciliationDone = new CountDownLatch(1);
         doAnswer(invocation -> {
             Object result = invocation.callRealMethod();
             reconciliationDone.countDown();
             return result;
-        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.CREATED, USER1);
+        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.CREATED);
 
         deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID), PARENT_DIRECTORY_UUID);
 
@@ -1524,6 +1540,7 @@ class ExploreTest {
         wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=CREATED")));
     }
 
+    // TODO: on doit verify les checkPermissions ??? ou le SecurityTest suffit ???
     private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
         // check that we called 2 times the directory server to checks authorization and 1 time the server to duplicate
         // check read authorization on the duplicated element and write authorization on the target directory

@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
-import org.gridsuite.explore.server.UserAuthentication;
 import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
@@ -26,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,10 +68,9 @@ public class ExploreController {
                                                             @RequestParam("description") String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.assertCanCreateCase(userId);
+        exploreService.assertCanCreateCase();
         CaseInfo caseInfo = new CaseInfo(caseUuid, caseFormat);
-        exploreService.createStudy(studyName, caseInfo, description, userId, parentDirectoryUuid, importParams, duplicateCase);
+        exploreService.createStudy(studyName, caseInfo, description, parentDirectoryUuid, importParams, duplicateCase);
         return ResponseEntity.ok().build();
     }
 
@@ -83,9 +80,8 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#studyId, #targetDirectoryId)")
     public ResponseEntity<Void> duplicateStudy(@PathVariable("id") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.assertCanCreateCase(userId);
-        exploreService.duplicateStudy(studyId, targetDirectoryId, userId);
+        exploreService.assertCanCreateCase();
+        exploreService.duplicateStudy(studyId, targetDirectoryId);
         return ResponseEntity.ok().build();
     }
 
@@ -97,9 +93,8 @@ public class ExploreController {
                                            @RequestPart("caseFile") MultipartFile caseFile,
                                            @RequestParam("description") String description,
                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.assertCanCreateCase(userId);
-        exploreService.createCase(caseName, caseFile, description, userId, parentDirectoryUuid);
+        exploreService.assertCanCreateCase();
+        exploreService.createCase(caseName, caseFile, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -111,9 +106,8 @@ public class ExploreController {
                                            @RequestParam("caseUuid") UUID caseUuid,
                                            @RequestParam("description") String description,
                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.assertCanCreateCase(userId);
-        exploreService.persistCase(caseName, caseUuid, description, userId, parentDirectoryUuid);
+        exploreService.assertCanCreateCase();
+        exploreService.persistCase(caseName, caseUuid, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -124,9 +118,8 @@ public class ExploreController {
     public ResponseEntity<Void> duplicateCase(
             @PathVariable("id") UUID caseId,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.assertCanCreateCase(userId);
-        exploreService.duplicateCase(caseId, targetDirectoryId, userId);
+        exploreService.assertCanCreateCase();
+        exploreService.duplicateCase(caseId, targetDirectoryId);
         return ResponseEntity.ok().build();
     }
 
@@ -138,8 +131,7 @@ public class ExploreController {
             @PathVariable("id") UUID contingencyListUuid,
             @RequestParam(name = QUERY_PARAM_TYPE) ContingencyListType contingencyListType,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateContingencyList(contingencyListUuid, targetDirectoryId, userId, contingencyListType);
+        exploreService.duplicateContingencyList(contingencyListUuid, targetDirectoryId, contingencyListType);
         return ResponseEntity.ok().build();
     }
 
@@ -151,8 +143,7 @@ public class ExploreController {
                                                           @RequestBody(required = false) String content,
                                                           @RequestParam("description") String description,
                                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createIdentifierContingencyList(listName, content, description, userId, parentDirectoryUuid);
+        exploreService.createIdentifierContingencyList(listName, content, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -164,8 +155,7 @@ public class ExploreController {
                                                                 @RequestBody(required = false) String content,
                                                                 @RequestParam("description") String description,
                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createFilterBasedContingencyList(listName, content, description, userId, parentDirectoryUuid);
+        exploreService.createFilterBasedContingencyList(listName, content, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -177,8 +167,7 @@ public class ExploreController {
                                              @RequestParam("name") String filterName,
                                              @RequestParam("description") String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createFilter(filter, filterName, description, parentDirectoryUuid, userId);
+        exploreService.createFilter(filter, filterName, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -189,8 +178,7 @@ public class ExploreController {
     public ResponseEntity<Void> duplicateFilter(
                                              @PathVariable("id") UUID filterId,
                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateFilter(filterId, targetDirectoryId, userId);
+        exploreService.duplicateFilter(filterId, targetDirectoryId);
         return ResponseEntity.ok().build();
     }
 
@@ -205,8 +193,7 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canDelete(#elementUuid)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.deleteElement(elementUuid, userId);
+        exploreService.deleteElement(elementUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -220,8 +207,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDelete(#elementsUuids)") // ça ne peut pas contenir de subDirectories, car ils n'apparaissent que dans l'arbre
     public ResponseEntity<Void> deleteElements(@RequestParam("elementsUuids") List<UUID> elementsUuids,
                                                @PathVariable UUID directoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.deleteElementsFromDirectory(elementsUuids, directoryUuid, userId);
+        exploreService.deleteElementsFromDirectory(elementsUuids, directoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -234,8 +220,7 @@ public class ExploreController {
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids,
                                                                        @RequestParam(value = "equipmentTypes", required = false) List<String> equipmentTypes,
                                                                        @RequestParam(value = "elementTypes", required = false) List<String> elementTypes) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes, userId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
 
     // TODO: ici je pense qu'on n'a pas besoin de permission ? ou alors READ ?
@@ -265,8 +250,7 @@ public class ExploreController {
                                              @RequestBody String filter,
                                              @RequestParam("name") String name,
                                              @RequestParam("description") String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateFilter(id, filter, userId, name, description);
+        exploreService.updateFilter(id, filter, name, description);
         return ResponseEntity.ok().build();
     }
 
@@ -280,8 +264,7 @@ public class ExploreController {
             @RequestParam(name = QUERY_PARAM_DESCRIPTION) String description,
             @RequestParam(name = "contingencyListType") ContingencyListType contingencyListType,
             @RequestBody String content) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateContingencyList(id, content, userId, name, description, contingencyListType);
+        exploreService.updateContingencyList(id, content, name, description, contingencyListType);
         return ResponseEntity.ok().build();
     }
 
@@ -294,8 +277,7 @@ public class ExploreController {
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createParameters(parameters, parametersType, parametersName, description, parentDirectoryUuid, userId);
+        exploreService.createParameters(parameters, parametersType, parametersName, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -307,8 +289,7 @@ public class ExploreController {
                                                     @RequestParam("name") String diagramConfigName,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid, userId);
+        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -318,8 +299,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
     public ResponseEntity<Void> duplicateDiagramConfig(@PathVariable("id") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId, userId);
+        exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId);
         return ResponseEntity.ok().build();
     }
 
@@ -331,8 +311,7 @@ public class ExploreController {
                                                     @RequestBody String diagramConfig,
                                                     @RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateDiagramConfig(id, diagramConfig, userId, name, description);
+        exploreService.updateDiagramConfig(id, diagramConfig, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -345,8 +324,7 @@ public class ExploreController {
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestParam(QUERY_PARAM_NAME) String name,
                                              @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateParameters(id, parameters, parametersType, userId, name, description);
+        exploreService.updateParameters(id, parameters, parametersType, name, description);
         return ResponseEntity.ok().build();
     }
 
@@ -357,8 +335,7 @@ public class ExploreController {
     public ResponseEntity<Void> duplicateParameters(@PathVariable("id") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                     @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType, userId);
+        exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType);
         return ResponseEntity.ok().build();
     }
 
@@ -370,8 +347,7 @@ public class ExploreController {
                                                         @RequestParam("name") String configName,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                         @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, description, parentDirectoryUuid, userId);
+        exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, description, parentDirectoryUuid);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -383,8 +359,7 @@ public class ExploreController {
                                                                   @RequestParam("name") String collectionName,
                                                                   @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto, collectionName, description, parentDirectoryUuid, userId);
+        exploreService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto, collectionName, description, parentDirectoryUuid);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -396,9 +371,8 @@ public class ExploreController {
     public ResponseEntity<Void> createSpreadsheetConfigCollectionFromConfigIds(@RequestBody List<UUID> configUuids,
                                                                                @RequestParam("name") String collectionName,
                                                                                @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
-                                                                               @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
-                                                                               @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
-        exploreService.createSpreadsheetConfigCollectionFromConfigIds(configUuids, collectionName, description, parentDirectoryUuid, userId);
+                                                                               @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
+        exploreService.createSpreadsheetConfigCollectionFromConfigIds(configUuids, collectionName, description, parentDirectoryUuid);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -410,8 +384,7 @@ public class ExploreController {
                                                         @RequestBody String spreadsheetConfigDto,
                                                         @RequestParam(QUERY_PARAM_NAME) String name,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, userId, name, description);
+        exploreService.updateSpreadsheetConfig(id, spreadsheetConfigDto, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -423,8 +396,7 @@ public class ExploreController {
                                                         @RequestBody String spreadsheetConfigCollectionDto,
                                                         @RequestParam(QUERY_PARAM_NAME) String name,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, userId, name, description);
+        exploreService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -437,8 +409,7 @@ public class ExploreController {
                                                                         @RequestBody List<UUID> configUuids,
                                                                         @RequestParam(QUERY_PARAM_NAME) String name,
                                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.replaceAllSpreadsheetConfigsInCollection(id, configUuids, userId, name, description);
+        exploreService.replaceAllSpreadsheetConfigsInCollection(id, configUuids, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -448,8 +419,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
     public ResponseEntity<Void> duplicateSpreadsheetConfig(@PathVariable("id") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateSpreadsheetConfig(sourceId, targetDirectoryId, userId);
+        exploreService.duplicateSpreadsheetConfig(sourceId, targetDirectoryId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -462,8 +432,7 @@ public class ExploreController {
                                                 @RequestParam("name") String workspaceName,
                                                 @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createWorkspace(workspaceId, workspaceName, description, parentDirectoryUuid, userId);
+        exploreService.createWorkspace(workspaceId, workspaceName, description, parentDirectoryUuid);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -476,8 +445,7 @@ public class ExploreController {
                                                  @RequestParam("workspaceId") UUID workspaceId,
                                                  @RequestParam(QUERY_PARAM_NAME) String name,
                                                  @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.replaceWorkspace(id, workspaceId, userId, name, description);
+        exploreService.replaceWorkspace(id, workspaceId, name, description);
         return ResponseEntity.noContent().build();
     }
 
@@ -487,8 +455,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
     public ResponseEntity<Void> duplicateWorkspace(@PathVariable("id") UUID sourceId,
                                                    @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateWorkspace(sourceId, targetDirectoryId, userId);
+        exploreService.duplicateWorkspace(sourceId, targetDirectoryId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -498,8 +465,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
     public ResponseEntity<Void> duplicateSpreadsheetConfigCollection(@PathVariable("id") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateSpreadsheetConfigCollection(sourceId, targetDirectoryId, userId);
+        exploreService.duplicateSpreadsheetConfigCollection(sourceId, targetDirectoryId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -511,8 +477,7 @@ public class ExploreController {
                                                             @RequestParam(QUERY_PARAM_NAME) String name,
                                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.createCompositeModification(modificationAttributes, userId, name, description, parentDirectoryUuid);
+        exploreService.createCompositeModification(modificationAttributes, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -524,8 +489,7 @@ public class ExploreController {
                                                                    @RequestBody List<UUID> modificationUuids,
                                                                    @RequestParam(QUERY_PARAM_NAME) String name,
                                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateCompositeModification(id, modificationUuids, userId, name, description);
+        exploreService.updateCompositeModification(id, modificationUuids, name, description);
         return ResponseEntity.ok().build();
     }
 
@@ -535,8 +499,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#networkModificationId, #targetDirectoryId)")
     public ResponseEntity<Void> duplicateCompositeNetworkModification(@PathVariable("id") UUID networkModificationId,
                                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.duplicateCompositeModification(networkModificationId, targetDirectoryId, userId);
+        exploreService.duplicateCompositeModification(networkModificationId, targetDirectoryId);
         return ResponseEntity.ok().build();
     }
 
@@ -548,8 +511,7 @@ public class ExploreController {
     public ResponseEntity<Void> updateElement(
             @PathVariable UUID id,
             @RequestBody ElementAttributes elementAttributes) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateElement(id, elementAttributes, userId);
+        exploreService.updateElement(id, elementAttributes);
         return ResponseEntity.ok().build();
     }
 
@@ -564,8 +526,7 @@ public class ExploreController {
     public ResponseEntity<Void> moveElementsDirectory(
             @RequestParam UUID targetDirectoryUuid,
             @RequestBody List<UUID> elementsUuids) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.moveElementsDirectory(elementsUuids, targetDirectoryUuid, userId);
+        exploreService.moveElementsDirectory(elementsUuids, targetDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -578,8 +539,7 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canRead(#ids)")
     public ResponseEntity<String> getUsersIdentities(@RequestParam("ids") List<UUID> ids) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        String usersIdentities = exploreService.getUsersIdentities(ids, userId);
+        String usersIdentities = exploreService.getUsersIdentities(ids);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities);
     }
 
@@ -590,8 +550,7 @@ public class ExploreController {
     @Operation(summary = "Get root directories")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "The root directories"))
     public ResponseEntity<String> getRootDirectories(@RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().body(directoryService.getRootDirectories(types, userId));
+        return ResponseEntity.ok().body(directoryService.getRootDirectories(types));
     }
 
     // TODO: idem que au dessus: PostFilter ?
@@ -602,8 +561,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "204", description = "The root directory doesn't exist"),
     })
     public ResponseEntity<Void> rootDirectoryExists(@RequestParam("directoryName") String directoryName) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.status(directoryService.rootDirectoryExists(directoryName, userId)).contentType(MediaType.APPLICATION_JSON).build();
+        return ResponseEntity.status(directoryService.rootDirectoryExists(directoryName)).contentType(MediaType.APPLICATION_JSON).build();
     }
 
     // TODO: ici tout le monde a les droits -> pas de @PreAuthorize
@@ -611,8 +569,7 @@ public class ExploreController {
     @Operation(summary = "Create root directory")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "The created root directory"))
     public ResponseEntity<String> createRootDirectory(@RequestBody String rootDirectoryAttributes) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createRootDirectory(rootDirectoryAttributes, userId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createRootDirectory(rootDirectoryAttributes));
     }
 
     // TODO: je rajoute un canRead ? il est déjà côté directory-server : hasReadPermission(directoryUuid) et renvoie List.of()
@@ -623,8 +580,7 @@ public class ExploreController {
     public ResponseEntity<String> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
                                                        @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getDirectoryElements(directoryUuid, types, recursive, userId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getDirectoryElements(directoryUuid, types, recursive));
     }
 
     @PostMapping(value = "/explore/directories/{directoryUuid}/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -634,8 +590,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canWrite(#directoryUuid)")
     public ResponseEntity<ElementAttributes> createDirectory(@PathVariable("directoryUuid") UUID directoryUuid,
                                                              @RequestBody ElementAttributes elementAttributes) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createElement(elementAttributes, directoryUuid, userId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createElement(elementAttributes, directoryUuid));
     }
 
     // TODO: est ce que je rajoute un canRead ici ? ça ne sert pas à grand chose, de toute manière on ne peut pas ouvrir l'élément par la suite si on n'a pas les droits
@@ -647,8 +602,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "403", description = "Access forbidden for the element"),
         @ApiResponse(responseCode = "404", description = "The searched element was not found")})
     public ResponseEntity<String> getPath(@PathVariable("elementUuid") UUID elementUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getPath(elementUuid, userId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getPath(elementUuid));
     }
 
     // TODO: accessible à tout le monde ; pas de @PreAuthorize
@@ -656,12 +610,11 @@ public class ExploreController {
     @Operation(summary = "Check if an element with this name and this type already exists in the given directory")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element exists"),
         @ApiResponse(responseCode = "204", description = "The element doesn't exist")})
-    @PreAuthorize("true")
+    //@PreAuthorize("true")
     public ResponseEntity<Void> elementExists(@PathVariable("directoryUuid") UUID directoryUuid,
                                               @PathVariable("elementName") String elementName,
                                               @PathVariable("type") String type) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.status(directoryService.elementExists(directoryUuid, elementName, type, userId)).contentType(MediaType.APPLICATION_JSON).build();
+        return ResponseEntity.status(directoryService.elementExists(directoryUuid, elementName, type)).contentType(MediaType.APPLICATION_JSON).build();
     }
 
     // TODO: vérif dans endpoint de directory-server canRead(directoryUuid) -> je le rajoute ici en @PreAuthorize, à suppr dans directory-server ??
@@ -672,21 +625,19 @@ public class ExploreController {
     public ResponseEntity<String> elementNameCandidate(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @PathVariable("elementName") String elementName,
                                                        @RequestParam("type") String type) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getNameCandidate(directoryUuid, elementName, type, userId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getNameCandidate(directoryUuid, elementName, type));
     }
 
     // TODO: accessible à tout le monde
     @GetMapping(value = "/explore/directories/elements/indexation-infos", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Search elements in elasticsearch")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "List of elements found")})
-    @PreAuthorize("true")
+    //@PreAuthorize("true")
     public ResponseEntity<String> searchElements(
             @Parameter(description = "User input") @RequestParam(value = "userInput") String userInput,
             @Parameter(description = "Current directory UUID") @RequestParam(value = "directoryUuid", required = false, defaultValue = "") String directoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(directoryService.searchElements(userInput, directoryUuid, userId));
+                .body(directoryService.searchElements(userInput, directoryUuid));
     }
 
     // TODO: accessible à tous ??? ou remplacer entièrement par @PreAuthorize... (bof)
@@ -696,11 +647,10 @@ public class ExploreController {
         @ApiResponse(responseCode = "200", description = "The user has the right on the element"),
         @ApiResponse(responseCode = "204", description = "The user has not the right on the element"),
     })
-    @PreAuthorize("true")
+    //@PreAuthorize("true")
     public ResponseEntity<Void> hasRight(@PathVariable("elementUuid") UUID elementUuid,
                                          @RequestParam(name = "permission") PermissionType permission) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        directoryService.checkPermission(List.of(elementUuid), null, userId, permission);
+        directoryService.checkPermission(List.of(elementUuid), null, permission);
         return ResponseEntity.ok().build();
     }
 
@@ -715,9 +665,8 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canRead(#elementUuid)")
     public ResponseEntity<List<ReferencingElementInfos>> getReferencingElementInfos(@PathVariable("elementUuid") UUID elementUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(exploreService.getReferencingElementInfos(elementUuid, userId));
+                .body(exploreService.getReferencingElementInfos(elementUuid));
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -729,9 +678,8 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canRead(#directoryUuid)")
     public ResponseEntity<List<PermissionDTO>> getDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(directoryService.getDirectoryPermissions(directoryUuid, userId));
+                .body(directoryService.getDirectoryPermissions(directoryUuid));
     }
 
     // TODO
@@ -745,8 +693,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canManage(#directoryUuid)")
     public ResponseEntity<Void> setDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,
                                                         @RequestBody List<PermissionDTO> permissions) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        directoryService.setDirectoryPermissions(directoryUuid, permissions, userId);
+        directoryService.setDirectoryPermissions(directoryUuid, permissions);
         return ResponseEntity.ok().build();
     }
 
@@ -759,8 +706,7 @@ public class ExploreController {
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
                                                     @RequestBody(required = false) String processConfig) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().body(exploreService.createProcessConfig(name, processConfig, description, userId, parentDirectoryId));
+        return ResponseEntity.ok().body(exploreService.createProcessConfig(name, processConfig, description, parentDirectoryId));
     }
 
     // TODO
@@ -772,8 +718,7 @@ public class ExploreController {
                                                     @RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestBody(required = false) String processConfig) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateProcessConfig(id, name, processConfig, description, userId);
+        exploreService.updateProcessConfig(id, name, processConfig, description);
         return ResponseEntity.ok().build();
     }
 
@@ -784,8 +729,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#id, #targetDirectoryId)")
     public ResponseEntity<UUID> duplicateProcessConfig(@PathVariable("id") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        return ResponseEntity.ok().body(exploreService.duplicateProcessConfig(id, targetDirectoryId, userId));
+        return ResponseEntity.ok().body(exploreService.duplicateProcessConfig(id, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/dynamic-mappings", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -796,8 +740,7 @@ public class ExploreController {
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryId,
                                                     @RequestBody(required = false) String dynamicMapping) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        UUID newDynamicMappingUuid = exploreService.createDynamicMapping(name, dynamicMapping, description, userId, parentDirectoryId);
+        UUID newDynamicMappingUuid = exploreService.createDynamicMapping(name, dynamicMapping, description, parentDirectoryId);
         return ResponseEntity.ofNullable(newDynamicMappingUuid);
     }
 
@@ -809,8 +752,7 @@ public class ExploreController {
                                                     @RequestParam(QUERY_PARAM_NAME) String name,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestBody(required = false) String dynamicMapping) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        exploreService.updateDynamicMapping(id, name, dynamicMapping, description, userId);
+        exploreService.updateDynamicMapping(id, name, dynamicMapping, description);
         return ResponseEntity.ok().build();
     }
 
@@ -820,8 +762,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canDuplicateTo(#id, #targetDirectoryId)")
     public ResponseEntity<UUID> duplicateDynamicMapping(@PathVariable("id") UUID id,
                                                        @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        UUID newDynamicMappingUuid = exploreService.duplicateDynamicMapping(id, targetDirectoryId, userId);
+        UUID newDynamicMappingUuid = exploreService.duplicateDynamicMapping(id, targetDirectoryId);
         return ResponseEntity.ofNullable(newDynamicMappingUuid);
     }
 }

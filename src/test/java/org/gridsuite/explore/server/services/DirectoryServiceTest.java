@@ -35,11 +35,10 @@ class DirectoryServiceTest {
     void testSearchElementsWithSpecialCharacters() {
         String userInput = "a+éè{}\\`b";
         String directoryUuid = UUID.randomUUID().toString();
-        String userId = "testUser";
         when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
-        directoryService.searchElements(userInput, directoryUuid, userId);
+        directoryService.searchElements(userInput, directoryUuid);
 
         ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
         verify(restTemplate).exchange(uriCaptor.capture(), any(), any(), any(Class.class));

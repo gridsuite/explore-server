@@ -115,7 +115,7 @@ class MonitorTest {
         UUID createdProcessConfigId = objectMapper.readValue(result, UUID.class);
 
         assertEquals(ID, createdProcessConfigId);
-        verify(directoryService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(USER_ID), eq(true));
+        verify(directoryService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(true));
         assertEquals(ID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
     }
@@ -135,7 +135,7 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(String.class), any(boolean.class));
+        verify(directoryService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(boolean.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
     }
 
@@ -153,7 +153,7 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isOk());
 
-        verify(directoryService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture(), eq(USER_ID));
+        verify(directoryService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture());
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
     }
 
@@ -171,7 +171,7 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(0)).updateElement(any(UUID.class), any(ElementAttributes.class), any(String.class));
+        verify(directoryService, times(0)).updateElement(any(UUID.class), any(ElementAttributes.class));
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
     }
 
@@ -191,7 +191,7 @@ class MonitorTest {
         UUID duplicatedProcessConfigId = objectMapper.readValue(result, UUID.class);
 
         assertEquals(NEW_ID, duplicatedProcessConfigId);
-        verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, USER_ID);
+        verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID);
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 
@@ -206,7 +206,7 @@ class MonitorTest {
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(String.class));
+        verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 }

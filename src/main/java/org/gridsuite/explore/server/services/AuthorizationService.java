@@ -25,21 +25,6 @@ public class AuthorizationService {
         this.directoryService = directoryService;
     }
 
-    //This method should only be called inside of @PreAuthorize to centralize permission checks
-    public void isAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType) {
-        directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, permissionType);
-    }
-
-    //This method should only be called inside of @PreAuthorize to centralize permission checks
-    public void isAuthorizedForDuplication(String userId, UUID elementToDuplicate, UUID targetDirectoryUuid) {
-        directoryService.checkPermission(List.of(elementToDuplicate), null, userId, PermissionType.READ);
-        directoryService.checkPermission(List.of(targetDirectoryUuid != null ? targetDirectoryUuid : elementToDuplicate), null, userId, PermissionType.WRITE);
-    }
-
-    public void isRecursivelyAuthorized(String userId, List<UUID> elementUuids, UUID targetDirectoryUuid) {
-        directoryService.checkPermission(elementUuids, targetDirectoryUuid, userId, PermissionType.WRITE, true);
-    }
-
     public boolean canRead(UUID elementUuid) {
         return canRead(List.of(elementUuid));
     }
@@ -51,7 +36,7 @@ public class AuthorizationService {
 
     public boolean canWrite(UUID elementUuid) {
         directoryService.checkPermission(List.of(elementUuid), null, PermissionType.WRITE);
-        return true;
+        return false;
     }
 
     public boolean canDuplicateTo(UUID elementUuid, UUID targetDirectoryUuid) {

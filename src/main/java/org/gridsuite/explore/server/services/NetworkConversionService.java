@@ -25,7 +25,6 @@ public class NetworkConversionService {
 
     private static final String NETWORK_CONVERSION_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    private static final String HEADER_USER_ID = "userId";
 
     @Setter
     private String networkConversionServerBaseUri;
@@ -44,15 +43,15 @@ public class NetworkConversionService {
         return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
     }
 
-    public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters, String userId) {
+    public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/convert/{format}")
             .queryParam("fileName", fileName)
             .buildAndExpand(caseUuid, format)
             .toUriString();
+        // TODO: HttpHeaders
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(HEADER_USER_ID, userId);
         return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class).getBody();
     }
 
