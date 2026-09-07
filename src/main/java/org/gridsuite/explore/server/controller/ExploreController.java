@@ -785,7 +785,7 @@ public class ExploreController {
 
     @PostMapping(value = "/explore/studies/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Import a study from an archive")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import started asynchronously")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import finished")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
                                             @RequestPart("archiveFile") MultipartFile archiveFile,

@@ -12,7 +12,6 @@ import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,14 +56,13 @@ public class StudyImportService {
     }
 
     /**
-     * Import a study from an archive asynchronously
+     * Import a study from an archive synchronously
      * @param archiveFile the zip archive file
      * @param studyName the name for the new study
      * @param description the description for the new study
      * @param userId the user ID
      * @param parentDirectoryUuid the parent directory UUID
      */
-    @Async
     public void importStudy(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         try {
             FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
@@ -105,17 +103,20 @@ public class StudyImportService {
             UUID createdStudyUuid = UUID.randomUUID();
             TreeExportInfos updatedExportInfos = updateCaseUuidsAndStudyUuidInExportInfos(treeExportInfos, oldCaseUuidToNewCaseUuid, createdStudyUuid);
             createStudyFromImport(createdStudyUuid, studyName, userId, description, importDirectoryUuid, updatedExportInfos);
-        } catch (Exception e) {
+        } catch (Exception exception) {
             directoryService.deleteElement(importDirectoryUuid, userId);
-            throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + e.getMessage());
+            if (exception instanceof ExploreException exploreException) {
+                throw new ExploreException(exploreException.getBusinessErrorCode(), "Failed to import study: " + exploreException.getMessage(), exploreException);
+            }
+            throw new ExploreException(IMPORT_STUDY_FAILED, "Failed to import study: " + exception.getMessage(), exception);
         }
     }
 
     private void createStudyFromImport(UUID createdStudyUuid, String studyName, String userId, String description,
                                                  UUID parentDirectoryUuid, TreeExportInfos updatedExportInfos) {
         ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-        studyService.importStudy(userId, updatedExportInfos);
         exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+        studyService.importStudy(userId, updatedExportInfos);
     }
 
     private void importCaseForRootNetwork(RootNetworkExportInfos rootNetwork, Path casesDir, Map<UUID, UUID> oldCaseUuidToNewCaseUuid, String description, String userId, UUID parentDirectoryUuid) {
