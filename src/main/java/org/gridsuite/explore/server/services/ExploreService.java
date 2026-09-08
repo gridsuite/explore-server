@@ -116,8 +116,7 @@ public class ExploreService {
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
 
         String elementName = getElementName(caseInfo.caseUuid());
 
@@ -148,16 +147,14 @@ public class ExploreService {
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         UUID uuid = caseService.importCase(caseFile);
-        ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
     }
 
     public void persistCase(String caseName, UUID caseUuid, String description, UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         caseService.persistCase(caseUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(caseUuid, caseName, CASE, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(caseUuid, caseName, CASE, 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
     }
 
@@ -175,22 +172,19 @@ public class ExploreService {
     }
 
     public void createIdentifierContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
         contingencyListService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
     }
 
     public void createFilterBasedContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
         contingencyListService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
     }
 
     public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, 0, description);
         filterService.insertFilter(filter, elementAttributes.getElementUuid());
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, filterService::delete);
     }
@@ -299,8 +293,7 @@ public class ExploreService {
 
     public void createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid) {
         UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, parametersService::delete);
     }
 
@@ -316,8 +309,7 @@ public class ExploreService {
 
     public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid) {
         UUID diagramConfigUuid = singleLineDiagramService.createDiagramConfig(diagramConfig);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, singleLineDiagramService::delete);
     }
 
@@ -333,8 +325,7 @@ public class ExploreService {
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
         UUID spreadsheetConfigUuid = spreadsheetConfigService.createSpreadsheetConfig(spreadsheetConfigDto);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, spreadsheetConfigService::delete);
     }
 
@@ -349,8 +340,7 @@ public class ExploreService {
     }
 
     private void createSpreadsheetConfigCollectionElement(UUID spreadsheetConfigUuid, String collectionName, String description, UUID parentDirectoryUuid) {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, collectionName, SPREADSHEET_CONFIG_COLLECTION, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, collectionName, SPREADSHEET_CONFIG_COLLECTION, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, spreadsheetConfigCollectionService::delete);
     }
 
@@ -383,8 +373,7 @@ public class ExploreService {
 
     public void createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid) {
         UUID newWorkspaceId = workspaceService.duplicateWorkspace(workspaceId);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, userId, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, workspaceService::delete);
     }
 
@@ -403,9 +392,7 @@ public class ExploreService {
 
         // create composite modifications
         UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION,
-                        userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
     }
 
@@ -558,9 +545,7 @@ public class ExploreService {
 
     public UUID createProcessConfig(String name, String processConfig, String description, UUID parentDirectoryUuid) {
         UUID processConfigUuid = monitorService.createProcessConfig(processConfig);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG,
-                userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, monitorService::delete);
         return processConfigUuid;
     }
@@ -578,9 +563,7 @@ public class ExploreService {
 
     public UUID createDynamicMapping(String name, String dynamicMapping, String description, UUID parentDirectoryUuid) {
         UUID dynamicMappingUuid = dynamicMappingService.createMapping(dynamicMapping);
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
-        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING,
-                userId, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, dynamicMappingService::delete);
         return dynamicMappingUuid;
     }

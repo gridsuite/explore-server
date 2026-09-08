@@ -38,7 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -201,8 +200,8 @@ class ExploreTest {
     @BeforeEach
     void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
         // Set up authentication
-//        UserAuthentication userAuthentication = new UserAuthentication(USER1, "");
-//        SecurityContextHolder.getContext().setAuthentication(userAuthentication);
+        //        UserAuthentication userAuthentication = new UserAuthentication(USER1, "");
+        //        SecurityContextHolder.getContext().setAuthentication(userAuthentication);
 
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
