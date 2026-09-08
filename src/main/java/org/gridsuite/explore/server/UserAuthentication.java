@@ -10,10 +10,9 @@ package org.gridsuite.explore.server;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class UserAuthentication implements Authentication {
@@ -31,6 +30,21 @@ public class UserAuthentication implements Authentication {
                 : Collections.unmodifiableList(new ArrayList<>(authorities));
         setAuthenticated(true);
     }
+
+    public UserAuthentication(String principal, String roles) {
+        List<GrantedAuthority> authorities = Collections.emptyList();
+        if (roles != null && !roles.isEmpty()) {
+            authorities = Arrays.stream(roles.split("\\|"))
+                    .map(String::trim)
+                    .filter(role -> !role.isEmpty())
+                    .map(SimpleGrantedAuthority::new)
+                    .map(GrantedAuthority.class::cast)
+                    .toList();
+        }
+        this(principal, authorities);
+    }
+
+    // TODO: pour les roles, on recoit un String ou une liste d'authorities ? on renvoie un String on une liste d'authorities ?
 
     public String getUserId() {
         return principal;

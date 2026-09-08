@@ -11,24 +11,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.gridsuite.explore.server.UserAuthentication;
-import org.gridsuite.explore.server.UserContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
@@ -46,17 +33,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         String rolesHeader = request.getHeader(HEADER_ROLES);
 
         if (userId != null && !userId.isEmpty()) {
-            List<GrantedAuthority> authorities = Collections.emptyList();
-            if (rolesHeader != null && !rolesHeader.isEmpty()) {
-                authorities = Arrays.stream(rolesHeader.split("\\|"))
-                        .map(String::trim)
-                        .filter(role -> !role.isEmpty())
-                        .map(SimpleGrantedAuthority::new)
-                        .map(GrantedAuthority.class::cast)
-                        .toList();
-            }
-
-            SecurityContextHolder.getContext().setAuthentication(new UserAuthentication(userId, authorities));
+            SecurityContextHolder.getContext().setAuthentication(new UserAuthentication(userId, rolesHeader));
             /*
             Set<String> roles = Collections.emptySet();
             if (rolesHeader != null && !rolesHeader.isEmpty()) {
