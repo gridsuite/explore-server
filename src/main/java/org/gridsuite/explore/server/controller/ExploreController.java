@@ -197,6 +197,7 @@ public class ExploreController {
     }
 
     @DeleteMapping(value = "/explore/elements/{directoryUuid}", params = "ids")
+    // dans les ids, ça ne peut pas contenir de subDirectories, car ils n'apparaissent que dans l'arbre
     @Operation(summary = "Remove directories/elements")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "directories/elements was successfully removed"),
@@ -204,7 +205,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "403", description = "Access forbidden for at least one directory/element")
     })
     @PreAuthorize("@authorizationService.canDelete(#elementsUuids)") // ça ne peut pas contenir de subDirectories, car ils n'apparaissent que dans l'arbre
-    public ResponseEntity<Void> deleteElements(@RequestParam("elementsUuids") List<UUID> elementsUuids,
+    public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuids,
                                                @PathVariable UUID directoryUuid) {
         exploreService.deleteElementsFromDirectory(elementsUuids, directoryUuid);
         return ResponseEntity.ok().build();
@@ -403,7 +404,7 @@ public class ExploreController {
     @PutMapping(value = "/explore/spreadsheet-config-collections/{id}/spreadsheet-configs/replace-all", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Replace all spreadsheet configurations in a collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config collection has been successfully modified")})
-    @PreAuthorize("@authorizationService.canWrite(#id) && @authorizationService.canRead(configUuids)")
+    @PreAuthorize("@authorizationService.canWrite(#id) && @authorizationService.canRead(#configUuids)")
     public ResponseEntity<Void> replaceAllSpreadsheetConfigsInCollection(@PathVariable UUID id,
                                                                         @RequestBody List<UUID> configUuids,
                                                                         @RequestParam(QUERY_PARAM_NAME) String name,

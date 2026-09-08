@@ -36,7 +36,7 @@ public class AuthorizationService {
 
     public boolean canWrite(UUID elementUuid) {
         directoryService.checkPermission(List.of(elementUuid), null, PermissionType.WRITE);
-        return false;
+        return true;
     }
 
     public boolean canDuplicateTo(UUID elementUuid, UUID targetDirectoryUuid) {
