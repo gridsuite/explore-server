@@ -104,10 +104,8 @@ public class ParametersService implements IDirectoryElementsService {
                     .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
                     .buildAndExpand(sourceParametersUuid)
                     .toUriString();
-        // TODO: HttpHeaders
-        HttpHeaders headers = new HttpHeaders();
-        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-        return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+
+        return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, UUID.class).getBody();
     }
 
     @Override
@@ -118,12 +116,8 @@ public class ParametersService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
                 .buildAndExpand(parametersUuid)
                 .toUriString();
-        // TODO: HttpHeaders
 
-        HttpHeaders headers = new HttpHeaders();
-
-        restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers),
-                Void.class);
+        restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
 }

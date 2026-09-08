@@ -79,10 +79,7 @@ public class WorkspaceService implements IDirectoryElementsService {
                 .fromPath(WORKSPACES_PATH + DELIMITER + workspaceUuid)
                 .buildAndExpand()
                 .toUriString();
-        // TODO: HttpHeaders
 
-        HttpHeaders headers = new HttpHeaders();
-
-        restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 }

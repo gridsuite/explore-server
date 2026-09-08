@@ -44,9 +44,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        // TODO: HttpHeaders
-        HttpHeaders headers = new HttpHeaders();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
     public void insertIdentifierContingencyList(UUID id, String content) {
@@ -114,15 +112,7 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + element)
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, getHttpEntityWithUserHeader(content), Void.class);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(content), Void.class);
 
-    }
-
-    private HttpEntity<String> getHttpEntityWithUserHeader(String content) {
-
-        // TODO: HttpHeaders
-        HttpHeaders headers = new HttpHeaders();
-
-        return new HttpEntity<>(content, headers);
     }
 }

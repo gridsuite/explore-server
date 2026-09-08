@@ -34,11 +34,8 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
             .fromPath(SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH + DELIMITER + configUuid)
             .buildAndExpand()
             .toUriString();
-        // TODO: HttpHeaders
 
-        HttpHeaders headers = new HttpHeaders();
-
-        restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
     public UUID createDiagramConfig(String diagramConfig) {

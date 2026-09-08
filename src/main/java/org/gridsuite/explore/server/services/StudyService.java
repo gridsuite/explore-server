@@ -50,12 +50,8 @@ public class StudyService implements IDirectoryElementsService {
             uriComponentsBuilder.queryParam("firstRootNetworkName", firstRootNetworkName);
         }
         String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
-        // TODO: clean HttpHeaders
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(
-                importParams, headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(importParams), Void.class);
     }
 
     public UUID duplicateStudy(UUID studyId) {
@@ -63,9 +59,8 @@ public class StudyService implements IDirectoryElementsService {
                 "/studies/{uuid}/duplicate")
                 .buildAndExpand(studyId)
                 .toUriString();
-        // TODO: HttpHeaders
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(null),
-                UUID.class).getBody();
+
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, UUID.class).getBody();
     }
 
     @Override
@@ -73,9 +68,8 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
-        // TODO: HttpHeaders
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(null),
-                Void.class);
+
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
     @Override
@@ -105,9 +99,7 @@ public class StudyService implements IDirectoryElementsService {
                         "/studies/{studyUuid}/notification?type={metadata_updated}")
                 .buildAndExpand(studyUuid, NOTIFICATION_TYPE_METADATA_UPDATED)
                 .toUriString();
-        // TODO: HttpHeaders
 
-        HttpHeaders headers = new HttpHeaders();
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), Void.class);
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, Void.class);
     }
 }

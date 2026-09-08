@@ -131,10 +131,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .fromPath(SPREADSHEET_CONFIG_COLLECTIONS_PATH + DELIMITER + configUuid)
                 .buildAndExpand()
                 .toUriString();
-        // TODO: HttpHeaders
 
-        HttpHeaders headers = new HttpHeaders();
-
-        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 }

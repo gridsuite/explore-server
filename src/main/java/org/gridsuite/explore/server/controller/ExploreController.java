@@ -46,7 +46,6 @@ public class ExploreController {
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
 
     private static final String QUERY_PARAM_TYPE = "type";
-    private static final String QUERY_PARAM_USER_ID = "userId";
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;

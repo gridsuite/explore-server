@@ -95,9 +95,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam(UUIDS, List.of(id))
                 .buildAndExpand()
                 .toUriString();
-        // TODO: HttpHeaders
-        HttpHeaders headers = new HttpHeaders();
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
     @Override
