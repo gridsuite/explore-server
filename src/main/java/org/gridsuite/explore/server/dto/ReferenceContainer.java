@@ -9,7 +9,6 @@ package org.gridsuite.explore.server.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
@@ -18,7 +17,6 @@ import java.util.UUID;
  * @author Maissa Souissi <maissa.souissi at rte-france.com>
  */
 @Getter
-@Setter
 @NoArgsConstructor
 @SuperBuilder
 /**
