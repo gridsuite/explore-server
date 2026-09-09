@@ -474,7 +474,8 @@ public class ExploreService {
         // for now only STUDY_NODE references
         List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
                 .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
-                .map(ReferenceAttributes::getReferenceId)
+                // STUDY_NODE: the referenced node is the container's containerId
+                .map(reference -> reference.getReferenceContainer().getContainerId())
                 .toList();
         if (referencedNodeUuids.isEmpty()) {
             return List.of();

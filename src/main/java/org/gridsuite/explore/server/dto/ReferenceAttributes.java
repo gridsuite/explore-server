@@ -6,27 +6,27 @@
  */
 package org.gridsuite.explore.server.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
 /**
- * @author Florent MILLOT {@literal <florent.millot_externe at rte-france.com>}
+ * @author Maissa Souissi <maissa.souissi at rte-france.com>
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@SuperBuilder
 public class ReferenceAttributes {
     public enum ReferenceType {
         STUDY_NODE,
-        NETWORK_MODIFICATION,
-        DIRECTORY_ELEMENT
+        STUDY_NODE_NETWORK_MODIFICATION,
+        DIRECTORY_NETWORK_MODIFICATION,
     }
 
+    @NonNull
     private UUID referenceId;
-    private ReferenceType referenceType;
+    @NonNull private ReferenceContainer referenceContainer;
+    @NonNull private ReferenceType referenceType;
 }
