@@ -1434,13 +1434,13 @@ class ExploreTest {
     @Test
     @UsesWireMock
     void testGetAccessibleElements() throws Exception {
-        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/permission"))
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/accessible"))
                 .withQueryParam("accessType", WireMock.equalTo("WRITE"))
                 .withQueryParam("ids", WireMock.equalTo(TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "," + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN))
                 .willReturn(WireMock.ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(mapper.writeValueAsString(List.of(TEST_ACCESS_DIRECTORY_UUID_ALLOWED)))));
-        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/permission"))
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/accessible"))
                 .withQueryParam("accessType", WireMock.equalTo("READ"))
                 .withQueryParam("ids", WireMock.equalTo(TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN.toString()))
                 .willReturn(WireMock.ok()
@@ -1448,7 +1448,7 @@ class ExploreTest {
                         .withBody(mapper.writeValueAsString(List.of()))));
 
         // only the allowed one comes back
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/permission"
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/accessible"
                         + "?ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "," + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN
                         + "&accessType=WRITE")
                 .header("userId", NOT_ADMIN_USER)
@@ -1457,14 +1457,14 @@ class ExploreTest {
         assertEquals("[\"" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "\"]", result.getResponse().getContentAsString());
 
         // a forbidden element alone answers an empty list
-        result = mockMvc.perform(get("/v1/explore/elements/permission"
+        result = mockMvc.perform(get("/v1/explore/elements/accessible"
                         + "?ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&accessType=READ")
                 .header("userId", NOT_ADMIN_USER)
             ).andExpect(status().isOk())
             .andReturn();
         assertEquals("[]", result.getResponse().getContentAsString());
 
-        wireMockServer.verify(2, WireMock.getRequestedFor(WireMock.urlPathEqualTo("/v1/elements/permission")));
+        wireMockServer.verify(2, WireMock.getRequestedFor(WireMock.urlPathEqualTo("/v1/elements/accessible")));
     }
 
     @Test

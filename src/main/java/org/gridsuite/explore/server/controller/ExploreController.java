@@ -653,17 +653,17 @@ public class ExploreController {
                 .body(directoryService.searchElements(userInput, directoryUuid, userId));
     }
 
-    @GetMapping(value = "/explore/elements/permission", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get, among the given elements, the ones the user has the given right on, "
-        + "a directory being checked on itself and any other element on its parent")
+    @GetMapping(value = "/explore/elements/accessible", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Filter the given elements to the ones the user has the given permission on, "
+        + "a directory being checked on itself and any other element on its parent directory")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "The uuids of the elements the user has the right on"),
+        @ApiResponse(responseCode = "200", description = "The uuids of the given elements the user has that permission on"),
     })
     public ResponseEntity<List<UUID>> getAccessibleElements(@RequestParam("ids") List<UUID> elementUuids,
-                                                            @RequestParam(name = "accessType") PermissionType permission,
+                                                            @RequestParam(name = "accessType") PermissionType permissionType,
                                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-            .body(directoryService.getAccessibleElements(elementUuids, userId, permission));
+            .body(directoryService.getAccessibleElements(elementUuids, userId, permissionType));
     }
 
     @GetMapping(value = "/explore/elements/{elementUuid}/referencing-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
