@@ -222,27 +222,6 @@ class StudyImportExportTest {
     }
 
     @Test
-    void testImportStudyArchiveMissingCaseFile() throws Exception {
-        // Create an archive where the case file referenced in tree.json doesn't exist
-        byte[] archiveContent = createArchiveWithMissingCaseFile();
-        MockMultipartFile archiveFile = new MockMultipartFile(
-                "archiveFile",
-                "missing-case.zip",
-                "application/zip",
-                archiveContent
-        );
-
-        // Attempt to import - should fail
-        mockMvc.perform(multipart("/v1/explore/studies/import")
-                        .file(archiveFile)
-                        .param("studyName", STUDY_NAME)
-                        .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
-                .andExpect(status().is5xxServerError());
-    }
-
-    @Test
     void testImportStudyFailure() throws Exception {
         byte[] archiveContent = createArchiveWithOneMissingCaseFileAmongTwoRoots();
         MockMultipartFile archiveFile = new MockMultipartFile(
