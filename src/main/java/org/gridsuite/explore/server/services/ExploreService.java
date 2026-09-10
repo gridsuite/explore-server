@@ -30,11 +30,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATING;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
 /**
@@ -116,7 +118,7 @@ public class ExploreService {
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, 0L, description, CREATING);
 
         String elementName = getElementName(caseInfo.caseUuid());
 
@@ -143,7 +145,7 @@ public class ExploreService {
 
     public void duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
         UUID newStudyId = studyService.duplicateStudy(sourceStudyUuid);
-        duplicateDirectoryElementOrDeleteElement(sourceStudyUuid, newStudyId, targetDirectoryId, studyService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceStudyUuid, newStudyId, targetDirectoryId, CREATING, studyService::delete);
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
@@ -601,6 +603,11 @@ public class ExploreService {
     }
 
     private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId, Consumer<UUID> rollback) {
-        executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId), elementDuplicated, rollback);
+        duplicateDirectoryElementOrDeleteElement(elementToDuplicate, elementDuplicated, targetDirectoryId, DirectoryElementStatus.CREATED, rollback);
+    }
+
+    private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId,
+                                                          DirectoryElementStatus elementStatus, Consumer<UUID> rollback) {
+        executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
     }
 }
