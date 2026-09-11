@@ -22,14 +22,13 @@ import java.util.stream.Collectors;
  */
 
 interface IDirectoryElementsService {
-    String HEADER_USER_ID = "userId";
     Logger LOGGER = LoggerFactory.getLogger(IDirectoryElementsService.class);
 
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
     }
 
-    void delete(UUID id, String userId);
+    void delete(UUID id);
 
     default List<ElementAttributes> completeElementAttribute(List<ElementAttributes> lstElementAttribute) {
         /* generating id -> elementAttribute map */

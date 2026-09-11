@@ -124,7 +124,7 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
     }
 
     @Override
-    public void delete(UUID configUuid, String userId) {
+    public void delete(UUID configUuid) {
         Objects.requireNonNull(configUuid);
 
         var path = UriComponentsBuilder
@@ -132,9 +132,6 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand()
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-
-        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 }

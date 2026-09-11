@@ -35,23 +35,27 @@ public class CaseController {
         this.caseService = caseService;
     }
 
+    // TODO: rien à checker
     @PostMapping(value = "/cases", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file,
                                            @RequestParam(value = "withExpiration", required = false, defaultValue = "false") boolean withExpiration) {
         return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file, withExpiration));
     }
 
+    // TODO: appel à case-server et pas à directory-server -> rien à checker ?? vérifier l'utilité de cet endpoint
     @DeleteMapping(value = "/cases/{caseUuid}")
     public ResponseEntity<Void> deleteCase(@PathVariable("caseUuid") UUID caseUuid) {
         caseService.deleteCase(caseUuid);
         return ResponseEntity.ok().build();
     }
 
+    // TODO: appel à case-server et pas à directory-server -> rien à checker ?? vérifier l'utilité de cet endpoint
     @GetMapping(value = "/cases/{caseUuid}")
     public ResponseEntity<Resource> downloadCase(@PathVariable("caseUuid") UUID caseUuid) {
         return caseService.downloadCase(caseUuid);
     }
 
+    // TODO: rien à checker
     @GetMapping(value = "/cases/caseBaseName")
     public ResponseEntity<String> getBaseName(@RequestParam("caseName") String caseName) {
         return ResponseEntity.ok(caseService.getBaseName(caseName));

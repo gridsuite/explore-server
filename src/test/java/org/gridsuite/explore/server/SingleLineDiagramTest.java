@@ -99,8 +99,8 @@ class SingleLineDiagramTest {
                     .andExpect(status().isOk())
                     .andReturn();
 
-        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID), eq(USER1));
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE);
+        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
+        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
     }
@@ -123,8 +123,8 @@ class SingleLineDiagramTest {
                     .andExpect(status().isNoContent())
                     .andReturn();
 
-        verify(directoryService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture(), eq(USER1));
-        verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.WRITE);
+        verify(directoryService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture());
+        verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, PermissionType.WRITE);
         wireMockUtils.verifyPutRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID, Map.of(), false);
     }
 
@@ -142,9 +142,9 @@ class SingleLineDiagramTest {
                     .andExpect(status().isOk())
                     .andReturn();
 
-        verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED, USER1);
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER1, PermissionType.WRITE);
-        verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, USER1, PermissionType.READ);
+        verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED);
+        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
+        verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, PermissionType.READ);
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate", Map.of(), false);
     }
 }

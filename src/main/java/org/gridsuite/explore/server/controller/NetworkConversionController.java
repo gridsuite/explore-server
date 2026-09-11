@@ -12,11 +12,11 @@ import org.gridsuite.explore.server.services.NetworkConversionService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,33 +28,37 @@ import java.util.UUID;
 @Tag(name = "Explore server - Network conversion")
 public class NetworkConversionController {
 
-    private static final String HEADER_USER_ID = "userId";
-
     private final NetworkConversionService networkConversionService;
 
     public NetworkConversionController(NetworkConversionService networkConversionService) {
         this.networkConversionService = networkConversionService;
     }
 
+    // TODO: à checker ???
     @GetMapping(value = "/cases/{caseUuid}/import-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("@authorizationService.canRead(#caseUuid)")
     public ResponseEntity<String> getCaseImportParameters(@PathVariable("caseUuid") UUID caseUuid) {
         return ResponseEntity.ok(networkConversionService.getCaseImportParameters(caseUuid));
     }
 
+    // TODO: à checker ???
     @PostMapping(value = "/cases/{caseUuid}/convert/{format}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("@authorizationService.canWrite(#caseUuid)")
     public ResponseEntity<UUID> convertCase(@PathVariable("caseUuid") UUID caseUuid,
                                             @PathVariable("format") String format,
                                             @RequestParam(value = "fileName", required = false) String fileName,
-                                            @RequestBody(required = false) String formatParameters,
-                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        return ResponseEntity.ok(networkConversionService.convertCase(caseUuid, format, fileName, formatParameters, userId));
+                                            @RequestBody(required = false) String formatParameters) {
+        return ResponseEntity.ok(networkConversionService.convertCase(caseUuid, format, fileName, formatParameters));
     }
 
+    // TODO: à checker ???
     @GetMapping(value = "/download-file/{exportUuid}")
+    @PreAuthorize("@authorizationService.canRead(#exportUuid)")
     public ResponseEntity<Resource> downloadFile(@PathVariable("exportUuid") UUID exportUuid) {
         return networkConversionService.downloadFile(exportUuid);
     }
 
+    // TODO: accessible à tous
     @GetMapping(value = "/export/formats", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getExportFormats() {
         return ResponseEntity.ok(networkConversionService.getExportFormats());

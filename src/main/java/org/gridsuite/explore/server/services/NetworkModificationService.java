@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 public class NetworkModificationService implements IDirectoryElementsService {
     private static final String NETWORK_MODIFICATION_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    private static final String HEADER_USER_ID = "userId";
     public static final String UUIDS = "uuids";
     public static final String NAME = "name";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
@@ -91,14 +90,13 @@ public class NetworkModificationService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID id, String userId) {
+    public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .queryParam(UUIDS, List.of(id))
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
     @Override

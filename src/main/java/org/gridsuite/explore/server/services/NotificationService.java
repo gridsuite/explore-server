@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.gridsuite.explore.server.UserAuthentication;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.UUID;
@@ -59,13 +61,15 @@ public class NotificationService {
         this.updatePublisher = updatePublisher;
         this.objectMapper = objectMapper;
     }
+    // TODO: faire un interceptor de messages envoyés ici ???
 
     private void sendMessage(Message<String> message, String bindingName) {
         MESSAGE_OUTPUT_LOGGER.debug(MESSAGE_LOG, message);
         updatePublisher.send(bindingName, message);
     }
 
-    public void emitUserMessage(String sub, String messageId, CaseAlertThresholdMessage message) {
+    public void emitUserMessage(String messageId, CaseAlertThresholdMessage message) {
+        String sub = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         try {
             sendMessage(MessageBuilder.withPayload(objectMapper.writeValueAsString(message))
                 .setHeader(HEADER_USER_MESSAGE, messageId)
@@ -77,7 +81,8 @@ public class NotificationService {
         }
     }
 
-    public void emitElementUpdated(UUID elementUuid, String modifiedBy) {
+    public void emitElementUpdated(UUID elementUuid) {
+        String modifiedBy = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
         sendMessage(MessageBuilder.withPayload("")
             .setHeader(HEADER_ELEMENT_UUID, elementUuid)
             .setHeader(HEADER_MODIFIED_BY, modifiedBy)

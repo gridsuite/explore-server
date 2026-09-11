@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    private static final String HEADER_USER_ID = "userId";
     private String actionsServerBaseUri;
     private final RestTemplate restTemplate;
 
@@ -41,13 +40,11 @@ public class ContingencyListService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID id, String userId) {
+    public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HEADER_USER_ID, userId);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
     public void insertIdentifierContingencyList(UUID id, String content) {
@@ -111,21 +108,11 @@ public class ContingencyListService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-    public void updateContingencyList(UUID id, String content, String userId, String element) {
-
+    public void updateContingencyList(UUID id, String content, String element) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + element)
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, getHttpEntityWithUserHeader(userId, content), Void.class);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(content), Void.class);
 
-    }
-
-    private HttpEntity<String> getHttpEntityWithUserHeader(String userId, String content) {
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HEADER_USER_ID, userId);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        return new HttpEntity<>(content, headers);
     }
 }

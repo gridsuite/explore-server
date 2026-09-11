@@ -77,7 +77,7 @@ public class MonitorService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID id, String userId) {
+    public void delete(UUID id) {
         restClient.delete()
             .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{id}", id)
             .retrieve()

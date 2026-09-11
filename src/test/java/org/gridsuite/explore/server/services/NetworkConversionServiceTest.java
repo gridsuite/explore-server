@@ -66,7 +66,7 @@ class NetworkConversionServiceTest {
             .andExpect(content().string(JSON))
             .andRespond(withSuccess("\"" + CONVERSION_UUID + "\"", MediaType.APPLICATION_JSON));
 
-        UUID response = networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", JSON, "userId");
+        UUID response = networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", JSON);
 
         assertEquals(CONVERSION_UUID, response);
         server.verify();
