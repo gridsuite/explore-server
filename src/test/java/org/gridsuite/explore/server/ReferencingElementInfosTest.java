@@ -127,6 +127,28 @@ class ReferencingElementInfosTest {
                 .build();
     }
 
+    private static ReferenceAttributes studyNodeNetworkModificationReference() {
+        return ReferenceAttributes.builder()
+                .referenceId(UUID.randomUUID())
+                .referenceType(ReferenceAttributes.ReferenceType.STUDY_NODE_NETWORK_MODIFICATION)
+                .referenceContainer(ReferenceContainer.builder()
+                        .rootContainerId(ReferencingElementInfosTest.NODE_2_UUID)
+                        .containerId(UUID.randomUUID())
+                        .build())
+                .build();
+    }
+
+    private static ReferenceAttributes directoryNetworkModificationReference() {
+        return ReferenceAttributes.builder()
+                .referenceId(UUID.randomUUID())
+                .referenceType(ReferenceAttributes.ReferenceType.DIRECTORY_NETWORK_MODIFICATION)
+                .referenceContainer(ReferenceContainer.builder()
+                        .rootContainerId(UUID.randomUUID())
+                        .containerId(UUID.randomUUID())
+                        .build())
+                .build();
+    }
+
     private void stubSharedElementReferences(ReferenceAttributes... references) throws Exception {
         ElementAttributes sharedElement = new ElementAttributes(SHARED_ELEMENT_UUID, "sharedModification", "MODIFICATION", OWNER_SUB, 0L, null);
         sharedElement.setReferences(List.of(references));
@@ -188,7 +210,7 @@ class ReferencingElementInfosTest {
 
         assertEquals(2, infos.size());
 
-        ReferencingElementInfos first = infos.get(0);
+        ReferencingElementInfos first = infos.getFirst();
         assertEquals("node1", first.node());
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
@@ -212,6 +234,29 @@ class ReferencingElementInfosTest {
         // the studies are fetched in a single, non-strict call
         wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(ELEMENTS_PATH))
                 .withQueryParam("strictMode", WireMock.equalTo("false")));
+    }
+
+    @Test
+    void testGetAllReferencingElements() throws Exception {
+        stubSharedElementReferences(
+                studyNodeReference(NODE_1_UUID, STUDY_1_UUID),
+                studyNodeNetworkModificationReference(),
+                directoryNetworkModificationReference());
+        stubNodesInfos(
+                new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
+                new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
+        stubStudies(studyStub(STUDY_1_UUID, "study1"), studyStub(STUDY_2_UUID, "study2"));
+        stubStudiesPaths(Map.of(
+                STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root"),
+                STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
+
+        List<ReferencingElementInfos> infos = getReferencingElementInfos();
+
+        assertEquals(2, infos.size());
+        assertEquals("node1", infos.get(0).node());
+        assertEquals("study1", infos.get(0).elementName());
+        assertEquals("node2", infos.get(1).node());
+        assertEquals("study2", infos.get(1).elementName());
     }
 
     @Test
