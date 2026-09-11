@@ -14,7 +14,6 @@ import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
-import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @AutoConfigureMockMvc
 @SpringBootTest
-class StudyImportExportTest {
+class StudyImportTest {
 
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID CASE_UUID = UUID.randomUUID();
@@ -55,8 +54,6 @@ class StudyImportExportTest {
     private MockMvc mockMvc;
 
     private WireMockServer wireMockServer;
-
-    protected WireMockUtils wireMockUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -76,7 +73,6 @@ class StudyImportExportTest {
     @BeforeEach
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
-        wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
         studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
         caseService.setBaseUri(wireMockServer.baseUrl());
@@ -164,7 +160,7 @@ class StudyImportExportTest {
         byte[] invalidContent = "This is not a valid zip file".getBytes();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "invalid.zio",
+                "invalid.zip",
                 "application/zip",
                 invalidContent
         );
@@ -206,7 +202,7 @@ class StudyImportExportTest {
         byte[] archiveContent = createArchiveWithEmptyRootNetworks();
         MockMultipartFile archiveFile = new MockMultipartFile(
                 "archiveFile",
-                "empty-roots.zio",
+                "empty-roots.zip",
                 "application/zip",
                 archiveContent
         );
@@ -314,17 +310,6 @@ class StudyImportExportTest {
                     createNodeTree()
             );
             addJsonEntry(zos, exportInfos);
-        }
-        return baos.toByteArray();
-    }
-
-    private byte[] createArchiveWithMissingCaseFile() throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            // Add tree.json with case reference
-            TreeExportInfos exportInfos = createStudyExportInfos();
-            addJsonEntry(zos, exportInfos);
-            // But don't add the actual case file
         }
         return baos.toByteArray();
     }

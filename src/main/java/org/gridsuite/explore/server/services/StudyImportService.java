@@ -66,69 +66,85 @@ public class StudyImportService {
         Path tempDir = null;
         UUID createdDirectoryUuid = null;
         try {
-            FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
-            tempDir = Files.createTempDirectory("study-import-", attr);
-            try (SecuredZipInputStream zipIn = new SecuredZipInputStream(archiveFile.getInputStream(), MAX_ARCHIVE_ENTRIES, MAX_UNCOMPRESSED_ARCHIVE_SIZE)) {
-                ZipEntry entry;
-                while ((entry = zipIn.getNextEntry()) != null) {
-                    Path outputPath = tempDir.resolve(entry.getName()).normalize();
-                    if (entry.isDirectory()) {
-                        Files.createDirectories(outputPath);
-                    } else {
-                        if (outputPath.getParent() != null) {
-                            Files.createDirectories(outputPath.getParent());
-                        }
-                        Files.copy(zipIn, outputPath, StandardCopyOption.REPLACE_EXISTING);
-                    }
-                    zipIn.closeEntry();
-                }
-            }
+            tempDir = extractArchiveToDisk(archiveFile);
             Path studyJsonPath = tempDir.resolve("tree.json");
             Path casesDir = tempDir.resolve("cases");
-            if (!Files.exists(studyJsonPath)) {
-                throw new ExploreException(IMPORT_STUDY_FAILED, "tree.json not found in archive");
-            }
             TreeExportInfos treeExportInfos = objectMapper.readValue(studyJsonPath.toFile(), TreeExportInfos.class);
-            if (treeExportInfos == null || treeExportInfos.rootNetworks() == null || treeExportInfos.rootNetworks().isEmpty()) {
+            if (treeExportInfos.rootNetworks() == null || treeExportInfos.rootNetworks().isEmpty()) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
             ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
             createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
-            UUID importDirectoryUuid = createdDirectoryUuid;
-            List<RootNetworkExportInfos> createdRootNetworks = treeExportInfos.rootNetworks().stream()
-                    .map(rootNetwork -> {
-                        CaseInfos oldCaseInfos = rootNetwork.caseInfos();
-                        Path caseFile = casesDir.resolve(oldCaseInfos.caseUuid().toString()).resolve(oldCaseInfos.caseName());
-                        UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
-                        ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, oldCaseInfos.caseName(), CASE, userId, 0L, description);
-                        exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, importDirectoryUuid, userId, caseService::delete);
-                        CaseInfos newCaseInfos = new CaseInfos(newCaseUuid, oldCaseInfos.originalCaseUuid(), oldCaseInfos.caseName(), oldCaseInfos.caseFormat());
-                        return new RootNetworkExportInfos(rootNetwork.name(), rootNetwork.tag(), rootNetwork.index(), newCaseInfos, rootNetwork.importParameters());
-                    })
-                    .toList();
-            UUID createdStudyUuid = UUID.randomUUID();
-            TreeExportInfos updatedExportInfos = new TreeExportInfos(createdStudyUuid, createdRootNetworks, treeExportInfos.nodeTree());
-            ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-            exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
-            studyService.importStudy(userId, updatedExportInfos);
+            List<RootNetworkExportInfos> createdRootNetworks = createCases(treeExportInfos, casesDir, createdDirectoryUuid, userId, description);
+            createStudy(userId, studyName, description, parentDirectoryUuid, treeExportInfos, createdRootNetworks);
         } catch (Exception e) {
             if (createdDirectoryUuid != null) {
                 directoryService.deleteElement(createdDirectoryUuid, userId);
             }
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
-            if (tempDir != null && Files.exists(tempDir)) {
-                try (Stream<Path> walk = Files.walk(tempDir)) {
-                    walk.sorted(Comparator.reverseOrder()).forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            LOGGER.warn("Failed to delete {}", path, e);
-                        }
-                    });
-                } catch (IOException e) {
-                    LOGGER.warn("Failed to walk directory {}", tempDir, e);
+            deleteDirectoryRecursively(tempDir);
+        }
+    }
+
+    private Path extractArchiveToDisk(MultipartFile archiveFile) throws IOException {
+        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
+        Path tempDir = Files.createTempDirectory("study-import-", attr);
+        try (SecuredZipInputStream zipIn = new SecuredZipInputStream(archiveFile.getInputStream(), MAX_ARCHIVE_ENTRIES, MAX_UNCOMPRESSED_ARCHIVE_SIZE)) {
+            ZipEntry entry;
+            while ((entry = zipIn.getNextEntry()) != null) {
+                Path outputPath = tempDir.resolve(entry.getName()).normalize();
+                if (!outputPath.startsWith(tempDir)) {
+                    throw new IOException("Zip entry is outside of the target directory: " + entry.getName());
                 }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(outputPath);
+                } else {
+                    if (outputPath.getParent() != null) {
+                        Files.createDirectories(outputPath.getParent());
+                    }
+                    Files.copy(zipIn, outputPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+                zipIn.closeEntry();
+            }
+        }
+        return tempDir;
+    }
+
+    private List<RootNetworkExportInfos> createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID importDirectoryUuid, String userId, String description) {
+        return treeExportInfos.rootNetworks().stream()
+                .map(rootNetwork -> {
+                    CaseInfos oldCaseInfos = rootNetwork.caseInfos();
+                    Path caseFile = casesDir.resolve(oldCaseInfos.caseUuid().toString()).resolve(oldCaseInfos.caseName()).normalize();
+                    UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
+                    ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, oldCaseInfos.caseName(), CASE, userId, 0L, description);
+                    exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, importDirectoryUuid, userId, caseService::delete);
+                    CaseInfos newCaseInfos = new CaseInfos(newCaseUuid, oldCaseInfos.originalCaseUuid(), oldCaseInfos.caseName(), oldCaseInfos.caseFormat());
+                    return new RootNetworkExportInfos(rootNetwork.name(), rootNetwork.tag(), rootNetwork.index(), newCaseInfos, rootNetwork.importParameters());
+                })
+                .toList();
+    }
+
+    private void createStudy(String userId, String studyName, String description, UUID parentDirectoryUuid, TreeExportInfos treeExportInfos, List<RootNetworkExportInfos> createdRootNetworks) {
+        UUID createdStudyUuid = UUID.randomUUID();
+        TreeExportInfos updatedExportInfos = new TreeExportInfos(createdStudyUuid, createdRootNetworks, treeExportInfos.nodeTree());
+        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
+        studyService.importStudy(userId, updatedExportInfos);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+    }
+
+    private void deleteDirectoryRecursively(Path tempDir) {
+        if (tempDir != null && Files.exists(tempDir)) {
+            try (Stream<Path> walk = Files.walk(tempDir)) {
+                walk.sorted(Comparator.reverseOrder()).forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        LOGGER.warn("Failed to delete {}", path, e);
+                    }
+                });
+            } catch (IOException e) {
+                LOGGER.warn("Failed to walk directory {}", tempDir, e);
             }
         }
     }
