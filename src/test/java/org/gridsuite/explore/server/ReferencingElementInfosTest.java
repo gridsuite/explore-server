@@ -238,8 +238,6 @@ class ReferencingElementInfosTest {
 
     @Test
     void testGetAllReferencingElements() throws Exception {
-        // STUDY_NODE: node is the container's containerId. STUDY_NODE_NETWORK_MODIFICATION: node is the container's rootContainerId.
-        // DIRECTORY_NETWORK_MODIFICATION doesn't resolve to a study node, so it can't be described (for now) and is dropped.
         stubSharedElementReferences(
                 studyNodeReference(NODE_1_UUID, STUDY_1_UUID),
                 studyNodeNetworkModificationReference(),

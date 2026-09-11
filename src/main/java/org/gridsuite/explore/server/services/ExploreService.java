@@ -503,10 +503,6 @@ public class ExploreService {
                 .toList();
     }
 
-    /**
-     * Returns the study node uuid a reference points to, or {@code null} if the reference doesn't resolve to a node.
-     * STUDY_NODE: the node is the container's containerId. STUDY_NODE_NETWORK_MODIFICATION: the node is the container's rootContainerId.
-     */
     private static UUID getReferencedNodeUuid(ReferenceAttributes reference) {
         return switch (reference.getReferenceType()) {
             case STUDY_NODE -> reference.getReferenceContainer().getContainerId();
