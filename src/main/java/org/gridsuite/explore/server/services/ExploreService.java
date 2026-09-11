@@ -472,11 +472,10 @@ public class ExploreService {
      * Elements the user cannot read are omitted.
      */
     public List<ReferencingElementInfos> getReferencingElementInfos(UUID elementUuid, String userId) {
-        // for now only STUDY_NODE references
+        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
         List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                .filter(reference -> reference.getReferenceType() == ReferenceAttributes.ReferenceType.STUDY_NODE)
-                // STUDY_NODE: the referenced node is the container's containerId
-                .map(reference -> reference.getReferenceContainer().getContainerId())
+                .map(ExploreService::getReferencedNodeUuid)
+                .filter(Objects::nonNull)
                 .toList();
         if (referencedNodeUuids.isEmpty()) {
             return List.of();
@@ -502,6 +501,18 @@ public class ExploreService {
                         parentDirectoryNamesByStudyUuid, identityBySub))
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    /**
+     * Returns the study node uuid a reference points to, or {@code null} if the reference doesn't resolve to a node.
+     * STUDY_NODE: the node is the container's containerId. STUDY_NODE_NETWORK_MODIFICATION: the node is the container's rootContainerId.
+     */
+    private static UUID getReferencedNodeUuid(ReferenceAttributes reference) {
+        return switch (reference.getReferenceType()) {
+            case STUDY_NODE -> reference.getReferenceContainer().getContainerId();
+            case STUDY_NODE_NETWORK_MODIFICATION -> reference.getReferenceContainer().getRootContainerId();
+            case DIRECTORY_NETWORK_MODIFICATION -> null;
+        };
     }
 
     private ReferencingElementInfos toReferencingElementInfos(NodeInfos nodeInfos, ElementAttributes study,
