@@ -14,6 +14,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;
+import org.gridsuite.explore.server.dto.ReferenceContainer;
 import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.StudyService;
@@ -113,11 +114,22 @@ class ReferencingElementInfosTest {
                                 """)));
     }
 
-    private void stubSharedElementReferences(UUID... referencedNodeUuids) throws Exception {
+    /** A STUDY_NODE reference: containerId is the node, rootContainerId is the study that holds it. */
+    private static ReferenceAttributes studyNodeReference(UUID nodeUuid, UUID studyUuid) {
+        return ReferenceAttributes.builder()
+                // id of the modification reference pointing to the composite, not the composite itself
+                .referenceId(UUID.randomUUID())
+                .referenceType(ReferenceAttributes.ReferenceType.STUDY_NODE)
+                .referenceContainer(ReferenceContainer.builder()
+                        .rootContainerId(studyUuid)
+                        .containerId(nodeUuid)
+                        .build())
+                .build();
+    }
+
+    private void stubSharedElementReferences(ReferenceAttributes... references) throws Exception {
         ElementAttributes sharedElement = new ElementAttributes(SHARED_ELEMENT_UUID, "sharedModification", "MODIFICATION", OWNER_SUB, 0L, null);
-        sharedElement.setReferences(Arrays.stream(referencedNodeUuids)
-                .map(nodeUuid -> new ReferenceAttributes(nodeUuid, ReferenceAttributes.ReferenceType.STUDY_NODE))
-                .toList());
+        sharedElement.setReferences(List.of(references));
         wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(SHARED_ELEMENT_PATH))
                 .willReturn(jsonResponse(sharedElement)));
     }
@@ -163,7 +175,7 @@ class ReferencingElementInfosTest {
 
     @Test
     void testTwoNodesInDistinctStudies() throws Exception {
-        stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
+        stubSharedElementReferences(studyNodeReference(NODE_1_UUID, STUDY_1_UUID), studyNodeReference(NODE_2_UUID, STUDY_2_UUID));
         stubNodesInfos(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
@@ -204,7 +216,7 @@ class ReferencingElementInfosTest {
 
     @Test
     void testTwoNodesInSameStudy() throws Exception {
-        stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
+        stubSharedElementReferences(studyNodeReference(NODE_1_UUID, STUDY_1_UUID), studyNodeReference(NODE_2_UUID, STUDY_1_UUID));
         stubNodesInfos(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID));
@@ -225,7 +237,7 @@ class ReferencingElementInfosTest {
 
     @Test
     void testSameNodeReferencedTwice() throws Exception {
-        stubSharedElementReferences(NODE_1_UUID, NODE_1_UUID);
+        stubSharedElementReferences(studyNodeReference(NODE_1_UUID, STUDY_1_UUID), studyNodeReference(NODE_1_UUID, STUDY_1_UUID));
         stubNodesInfos(new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID));
         stubStudies(studyStub(STUDY_1_UUID, "study1"));
         stubStudiesPaths(Map.of(STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root")));
@@ -242,7 +254,7 @@ class ReferencingElementInfosTest {
 
     @Test
     void testStudyNotReadableIsOmitted() throws Exception {
-        stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
+        stubSharedElementReferences(studyNodeReference(NODE_1_UUID, STUDY_1_UUID), studyNodeReference(NODE_2_UUID, STUDY_2_UUID));
         stubNodesInfos(
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
@@ -269,7 +281,7 @@ class ReferencingElementInfosTest {
 
     @Test
     void testUnknownNodesLeaveNothingToDescribe() throws Exception {
-        stubSharedElementReferences(NODE_1_UUID, NODE_2_UUID);
+        stubSharedElementReferences(studyNodeReference(NODE_1_UUID, STUDY_1_UUID), studyNodeReference(NODE_2_UUID, STUDY_2_UUID));
         // the study-server knows none of the referenced nodes anymore
         stubNodesInfos();
 
