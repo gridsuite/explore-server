@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
-import org.gridsuite.explore.server.UserAuthentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
@@ -58,7 +57,7 @@ public class ElementAttributes {
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description) {
-        String owner = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
+        String owner = SecurityContextHolder.getContext().getAuthentication().getName();
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null);
     }
 
@@ -67,7 +66,7 @@ public class ElementAttributes {
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description, DirectoryElementStatus status) {
-        String owner = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
+        String owner = SecurityContextHolder.getContext().getAuthentication().getName();
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, status, null, null);
     }
 

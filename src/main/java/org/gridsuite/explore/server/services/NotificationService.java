@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gridsuite.explore.server.UserAuthentication;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,6 @@ public class NotificationService {
         this.updatePublisher = updatePublisher;
         this.objectMapper = objectMapper;
     }
-    // TODO: faire un interceptor de messages envoyés ici ???
 
     private void sendMessage(Message<String> message, String bindingName) {
         MESSAGE_OUTPUT_LOGGER.debug(MESSAGE_LOG, message);
@@ -69,7 +67,7 @@ public class NotificationService {
     }
 
     public void emitUserMessage(String messageId, CaseAlertThresholdMessage message) {
-        String sub = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
+        String sub = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
             sendMessage(MessageBuilder.withPayload(objectMapper.writeValueAsString(message))
                 .setHeader(HEADER_USER_MESSAGE, messageId)
@@ -82,7 +80,7 @@ public class NotificationService {
     }
 
     public void emitElementUpdated(UUID elementUuid) {
-        String modifiedBy = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
+        String modifiedBy = SecurityContextHolder.getContext().getAuthentication().getName();
         sendMessage(MessageBuilder.withPayload("")
             .setHeader(HEADER_ELEMENT_UUID, elementUuid)
             .setHeader(HEADER_MODIFIED_BY, modifiedBy)

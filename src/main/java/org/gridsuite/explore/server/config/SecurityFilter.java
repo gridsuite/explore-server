@@ -11,11 +11,16 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.gridsuite.explore.server.UserAuthentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
@@ -33,18 +38,16 @@ public class SecurityFilter extends OncePerRequestFilter {
         String rolesHeader = request.getHeader(HEADER_ROLES);
 
         if (userId != null && !userId.isEmpty()) {
-            SecurityContextHolder.getContext().setAuthentication(new UserAuthentication(userId, rolesHeader));
-            /*
-            Set<String> roles = Collections.emptySet();
+            List<GrantedAuthority> authorities = Collections.emptyList();
             if (rolesHeader != null && !rolesHeader.isEmpty()) {
-                roles = Arrays.stream(rolesHeader.split("\\|"))
+                authorities = Arrays.stream(rolesHeader.split("\\|"))
                         .map(String::trim)
                         .filter(role -> !role.isEmpty())
-                        .collect(Collectors.toSet());
+                        .map(SimpleGrantedAuthority::new)
+                        .map(GrantedAuthority.class::cast)
+                        .toList();
             }
-            userContext.setUserId(userId);
-            userContext.setRoles(roles);
-            */
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userId, null, authorities));
         }
 
         filterChain.doFilter(request, response);

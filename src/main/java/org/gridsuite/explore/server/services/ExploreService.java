@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.UserAuthentication;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
@@ -30,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -407,7 +405,7 @@ public class ExploreService {
     }
 
     public void assertCanCreateCase() {
-        String userId = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserId();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         Integer userMaxAllowedStudiesAndCases = userAdminService.getUserMaxAllowedCases(userId);
         if (userMaxAllowedStudiesAndCases != null) {
             int userCasesCount = directoryService.getUserCasesCount(userId);
