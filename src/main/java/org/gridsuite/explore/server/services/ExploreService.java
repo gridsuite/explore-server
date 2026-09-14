@@ -441,7 +441,7 @@ public class ExploreService {
 
         // the composite modification name has to be updated in order to match the new element name
         if (MODIFICATION.equals(element.getType())) {
-            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName());
+            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName(), element.getDescription());
         }
     }
 
