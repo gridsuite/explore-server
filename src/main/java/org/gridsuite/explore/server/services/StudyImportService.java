@@ -76,7 +76,7 @@ public class StudyImportService {
             ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
             createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
             List<RootNetworkExportInfos> createdRootNetworks = createCases(treeExportInfos, casesDir, createdDirectoryUuid, userId, description);
-            createStudy(userId, studyName, description, parentDirectoryUuid, treeExportInfos, createdRootNetworks);
+            createStudy(userId, studyName, description, createdDirectoryUuid, treeExportInfos, createdRootNetworks);
         } catch (Exception e) {
             if (createdDirectoryUuid != null) {
                 directoryService.deleteElement(createdDirectoryUuid, userId);
