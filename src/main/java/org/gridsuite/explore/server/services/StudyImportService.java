@@ -117,22 +117,22 @@ public class StudyImportService {
         return tempDir;
     }
 
-    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID importDirectoryUuid, String userId, String description) {
+    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID createdDirectoryUuid, String userId, String description) {
         treeExportInfos.getRootNetworks().forEach(rootNetwork -> {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
             UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
             ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, userId, 0L, description);
-            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, importDirectoryUuid, userId, caseService::delete);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, createdDirectoryUuid, userId, caseService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
     }
 
-    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String userId, String description) {
+    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID createdDirectoryUuid, String userId, String description) {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
         ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
         studyService.importStudy(userId, treeExportInfos);
-        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, createdDirectoryUuid, userId, studyService::delete);
     }
 }
