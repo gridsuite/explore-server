@@ -291,9 +291,9 @@ class StudyImportTest {
             addJsonEntry(zos, exportInfos);
 
             // Add case files for each root network
-            for (RootNetworkExportInfos rootNetwork : exportInfos.rootNetworks()) {
-                UUID caseUuid = rootNetwork.caseInfos().caseUuid();
-                String caseName = rootNetwork.caseInfos().caseName();
+            for (RootNetworkExportInfos rootNetwork : exportInfos.getRootNetworks()) {
+                UUID caseUuid = rootNetwork.caseInfos().getCaseUuid();
+                String caseName = rootNetwork.caseInfos().getCaseName();
                 addFileEntry(zos, "cases/" + caseUuid + "/" + caseName, "<network></network>".getBytes());
             }
         }

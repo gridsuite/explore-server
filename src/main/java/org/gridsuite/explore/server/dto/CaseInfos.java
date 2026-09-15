@@ -6,15 +6,21 @@
  */
 package org.gridsuite.explore.server.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
  */
-public record CaseInfos(
-        UUID caseUuid,
-        UUID originalCaseUuid,
-        String caseName,
-        String caseFormat
-) {
+@Getter
+@Setter
+@AllArgsConstructor
+public class CaseInfos {
+    private UUID caseUuid;
+    private UUID originalCaseUuid;
+    private String caseName;
+    private String caseFormat;
 }
