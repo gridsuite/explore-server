@@ -38,8 +38,8 @@ import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 public class StudyImportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StudyImportService.class);
-    public static final int MAX_UNCOMPRESSED_ARCHIVE_SIZE = 2000000000;
-    public static final int MAX_ARCHIVE_ENTRIES = 1000;
+    public static final long MAX_UNCOMPRESSED_ARCHIVE_SIZE = 10000000000L;
+    public static final int MAX_ARCHIVE_ENTRIES = 5000;
     private final CaseService caseService;
     private final StudyService studyService;
     private final ObjectMapper objectMapper;
