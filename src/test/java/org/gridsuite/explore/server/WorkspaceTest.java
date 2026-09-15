@@ -106,8 +106,8 @@ class WorkspaceTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID), eq(USER_ID));
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE);
+        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
+        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
         assertEquals(WORKSPACE_UUID, elementAttributesCaptor.getValue().getElementUuid());
     }
 
@@ -120,8 +120,8 @@ class WorkspaceTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isNoContent());
 
-        verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture(), eq(USER_ID));
-        verify(directoryService, times(1)).checkPermission(List.of(WORKSPACE_UUID), null, USER_ID, PermissionType.WRITE);
+        verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
+        verify(directoryService, times(1)).checkPermission(List.of(WORKSPACE_UUID), null, PermissionType.WRITE);
     }
 
     @Test
@@ -131,9 +131,9 @@ class WorkspaceTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED, USER_ID);
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE);
-        verify(directoryService, times(1)).checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.READ);
+        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
+        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
+        verify(directoryService, times(1)).checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, PermissionType.READ);
     }
 
     @Test
@@ -142,7 +142,7 @@ class WorkspaceTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED, USER_ID);
+        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
     }
 
     @Test

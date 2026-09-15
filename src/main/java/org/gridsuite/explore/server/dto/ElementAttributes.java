@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -55,11 +56,17 @@ public class ElementAttributes {
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null);
     }
 
+    public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description) {
+        String owner = SecurityContextHolder.getContext().getAuthentication().getName();
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null);
+    }
+
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, Map<String, Object> specificMetadata) {
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, specificMetadata);
     }
 
-    public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, DirectoryElementStatus status) {
+    public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description, DirectoryElementStatus status) {
+        String owner = SecurityContextHolder.getContext().getAuthentication().getName();
         this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, status, null, null);
     }
 

@@ -68,7 +68,7 @@ public class DynamicMappingService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID id, String userId) {
+    public void delete(UUID id) {
         restClient.delete()
             .uri(MAPPING_PATH + DELIMITER + "{id}", id)
             .retrieve()

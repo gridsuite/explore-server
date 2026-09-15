@@ -41,10 +41,10 @@ public class SupervisionService {
         this.restTemplate = restTemplate;
     }
 
-    public void deleteElements(List<UUID> uuids, String userId) {
+    public void deleteElements(List<UUID> uuids) {
         uuids.forEach(id -> {
             try {
-                directoryService.deleteElement(id, userId);
+                directoryService.deleteElement(id);
             } catch (Exception e) {
                 // if deletion fails (element does not exist, server is down...), the process keeps proceeding to at least delete references in directory-server
                 // orphan elements will be deleted in a dedicated script
