@@ -34,14 +34,12 @@ public class NetworkConversionController {
         this.networkConversionService = networkConversionService;
     }
 
-    // TODO: à checker ???
     @GetMapping(value = "/cases/{caseUuid}/import-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@authorizationService.canRead(#caseUuid)")
     public ResponseEntity<String> getCaseImportParameters(@PathVariable("caseUuid") UUID caseUuid) {
         return ResponseEntity.ok(networkConversionService.getCaseImportParameters(caseUuid));
     }
 
-    // TODO: à checker ???
     @PostMapping(value = "/cases/{caseUuid}/convert/{format}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@authorizationService.canWrite(#caseUuid)")
     public ResponseEntity<UUID> convertCase(@PathVariable("caseUuid") UUID caseUuid,
@@ -51,15 +49,14 @@ public class NetworkConversionController {
         return ResponseEntity.ok(networkConversionService.convertCase(caseUuid, format, fileName, formatParameters));
     }
 
-    // TODO: à checker ???
     @GetMapping(value = "/download-file/{exportUuid}")
-    @PreAuthorize("@authorizationService.canRead(#exportUuid)")
+    @PreAuthorize("true")
     public ResponseEntity<Resource> downloadFile(@PathVariable("exportUuid") UUID exportUuid) {
         return networkConversionService.downloadFile(exportUuid);
     }
 
-    // TODO: accessible à tous
     @GetMapping(value = "/export/formats", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("true")
     public ResponseEntity<String> getExportFormats() {
         return ResponseEntity.ok(networkConversionService.getExportFormats());
     }

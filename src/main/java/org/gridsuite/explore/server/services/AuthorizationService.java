@@ -35,7 +35,11 @@ public class AuthorizationService {
     }
 
     public boolean canWrite(UUID elementUuid) {
-        directoryService.checkPermission(List.of(elementUuid), null, PermissionType.WRITE);
+        return canWrite(List.of(elementUuid));
+    }
+
+    public boolean canWrite(List<UUID> elementUuids) {
+        directoryService.checkPermission(elementUuids, null, PermissionType.WRITE);
         return true;
     }
 
@@ -57,15 +61,15 @@ public class AuthorizationService {
 
     public boolean canMoveTo(List<UUID> elementUuids, UUID targetDirectoryUuid) {
         return canRecursivelyWrite(elementUuids, targetDirectoryUuid);
-    } // pas sûre de ça, p-e on veut plus la main au niveau des endpoints pour savoir exactement ce qu'on checke ?
-
-    public boolean canRecursivelyWrite(List<UUID> elementUuids, UUID targetDirectoryUuid) {
-        directoryService.checkPermission(elementUuids, targetDirectoryUuid, PermissionType.WRITE, true);
-        return true;
     }
 
     public boolean canManage(UUID elementUuid) {
         directoryService.checkPermission(List.of(elementUuid), null, PermissionType.MANAGE);
+        return true;
+    }
+
+    private boolean canRecursivelyWrite(List<UUID> elementUuids, UUID targetDirectoryUuid) {
+        directoryService.checkPermission(elementUuids, targetDirectoryUuid, PermissionType.WRITE, true);
         return true;
     }
 }

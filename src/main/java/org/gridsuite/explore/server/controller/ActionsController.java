@@ -33,7 +33,6 @@ public class ActionsController {
         this.contingencyListService = contingencyListService;
     }
 
-    // TODO: on récupère l'élément depuis actions-server, donc vérifier qu'il existe bien dans directory-server
     @GetMapping(value = "/identifier-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get identifier contingency list by id from actions-server")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The identifier contingency list"),
@@ -43,7 +42,6 @@ public class ActionsController {
         return ResponseEntity.ok(contingencyListService.getIdentifierContingencyList(id));
     }
 
-    // TODO: on récupère l'élément depuis actions-server, donc vérifier qu'il existe bien dans directory-server
     @GetMapping(value = "/filters-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get filter based contingency list by id from actions-server")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter based contingency list"),

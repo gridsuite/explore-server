@@ -180,8 +180,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    // TODO: les deux endpoints suivants sont redondants ??? p-e moyen de refacto ?
-
     @DeleteMapping(value = "/explore/elements/{elementUuid}")
     @Operation(summary = "Remove directory/element")
     @ApiResponses(value = {
@@ -196,45 +194,41 @@ public class ExploreController {
     }
 
     @DeleteMapping(value = "/explore/elements/{directoryUuid}", params = "ids")
-    // dans les ids, ça ne peut pas contenir de subDirectories, car ils n'apparaissent que dans l'arbre
     @Operation(summary = "Remove directories/elements")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "directories/elements was successfully removed"),
         @ApiResponse(responseCode = "404", description = "At least one directory/element was not found"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for at least one directory/element")
     })
-    @PreAuthorize("@authorizationService.canDelete(#elementsUuids)") // ça ne peut pas contenir de subDirectories, car ils n'apparaissent que dans l'arbre
+    @PreAuthorize("@authorizationService.canDelete(#elementsUuids)")
     public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuids,
                                                @PathVariable UUID directoryUuid) {
         exploreService.deleteElementsFromDirectory(elementsUuids, directoryUuid);
         return ResponseEntity.ok().build();
     }
 
-    // TODO : l'endpoint getElements dans directory-server filtre les éléments sur lesquels on n'a pas les droits si strictMode = false, et renvoie une erreur si strictMode = true
-    //  ici on a strictMode = true (peut être que c'est à revoir ?) -> @PreFilter à tester ?
     @GetMapping(value = "/explore/elements/metadata", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get element infos from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements information")})
-    @PreAuthorize("@authorizationService.canRead(#ids)") // TODO: strictMode => @PreAuthorize, non strictMode => @PreFilter
+    @PreAuthorize("@authorizationService.canRead(#ids)")
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids,
                                                                        @RequestParam(value = "equipmentTypes", required = false) List<String> equipmentTypes,
                                                                        @RequestParam(value = "elementTypes", required = false) List<String> elementTypes) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
 
-    // TODO: ici je pense qu'on n'a pas besoin de permission ? ou alors READ ?
-    //  actuellement on ne regarde pas si on a les droits (même dans l'endpoint de directory-server), on renvoie tout. On peut faire un @PreFilter ?
     @GetMapping(value = "/explore/elements/name", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get element names from ids given as parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements names")})
+    @PreAuthorize("true")
     public ResponseEntity<Map<UUID, String>> getElementsName(@RequestParam("ids") List<UUID> ids) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsName(ids));
     }
 
-    // TODO: est ce que cet élément existe dans directory-server ??? car on l'appelle depuis network-modification-server
     @GetMapping(value = "/explore/composite-modification/{id}/network-modifications", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get the basic information of the network modifications contained in a composite modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Basic infos from all the contained network modifications")})
+    @PreAuthorize("@authorizationService.canRead(#compositeModificationId)")
     public ResponseEntity<List<Object>> getCompositeModificationContent(@PathVariable("id") UUID compositeModificationId) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -362,7 +356,6 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // TODO: je passe de canCreate à canDuplicateTo. Pertinent ?
     @PostMapping(value = "/explore/spreadsheet-config-collections/merge", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a new spreadsheet configuration collection duplicating and merging a list of existing configurations")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
@@ -399,7 +392,6 @@ public class ExploreController {
         return ResponseEntity.noContent().build();
     }
 
-    // TODO: on rajoute un canRead ?
     @PutMapping(value = "/explore/spreadsheet-config-collections/{id}/spreadsheet-configs/replace-all", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Replace all spreadsheet configurations in a collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Spreadsheet config collection has been successfully modified")})
@@ -422,7 +414,6 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // TODO: je passe de canCreate à canDuplicateTo. Pertinent ?
     @PostMapping(value = "/explore/workspaces", params = "workspaceId")
     @Operation(summary = "Create a workspace by duplicating an existing workspace")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Workspace created")})
@@ -435,7 +426,6 @@ public class ExploreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // TODO: je rajoute un canRead ?
     @PutMapping(value = "/explore/workspaces/{id}", params = "workspaceId")
     @Operation(summary = "Replace a workspace with another workspace")
     @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Workspace has been successfully replaced")})
@@ -502,7 +492,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    // TODO
     @PutMapping(value = "/explore/elements/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
@@ -529,8 +518,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    // TODO: ici dans getUsersIdentities, ça appelle directory-server getElements qui vérifie si on a le droit, avec strictMode = true.
-    //  Je met un PreAuthorize, voir si on met un PreFilter à la place
     @GetMapping(value = "/explore/elements/users-identities", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "get users identities from the elements ids given as parameters")
     @ApiResponses(value = {
@@ -542,40 +529,37 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(usersIdentities);
     }
 
-    // TODO: PostFilter ? et virer la vérification dans l'endpoint directory-server
-    //  Mais pas très efficace, on ferait 2 requêtes eu lieu d'une
-    //  Par contre c'est plus dans la logique de mon refacto
     @GetMapping(value = "/explore/directories/root-directories", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get root directories")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "The root directories"))
+    @PreAuthorize("true")
     public ResponseEntity<String> getRootDirectories(@RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types) {
         return ResponseEntity.ok().body(directoryService.getRootDirectories(types));
     }
 
-    // TODO: idem que au dessus: PostFilter ?
     @RequestMapping(value = "explore/directories/root-directories", method = RequestMethod.HEAD)
     @Operation(summary = "Get if a root directory of this name exists")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The root directory exists"),
         @ApiResponse(responseCode = "204", description = "The root directory doesn't exist"),
     })
+    @PreAuthorize("true")
     public ResponseEntity<Void> rootDirectoryExists(@RequestParam("directoryName") String directoryName) {
         return ResponseEntity.status(directoryService.rootDirectoryExists(directoryName)).contentType(MediaType.APPLICATION_JSON).build();
     }
 
-    // TODO: ici tout le monde a les droits -> pas de @PreAuthorize
     @PostMapping(value = "/explore/directories/root-directories", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create root directory")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "The created root directory"))
+    @PreAuthorize("true")
     public ResponseEntity<String> createRootDirectory(@RequestBody String rootDirectoryAttributes) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createRootDirectory(rootDirectoryAttributes));
     }
 
-    // TODO: je rajoute un canRead ? il est déjà côté directory-server : hasReadPermission(directoryUuid) et renvoie List.of()
     @GetMapping(value = "/explore/directories/{directoryUuid}/elements", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get directory elements")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "List directory's elements"))
-    @PreAuthorize("@authorizationService.canRead(#directoryUuid)") // renvoie une erreur, alors qu'actuellement on renvoie juste une liste vide
+    @PreAuthorize("@authorizationService.canRead(#directoryUuid)")
     public ResponseEntity<String> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
                                                        @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive) {
@@ -592,31 +576,27 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createElement(elementAttributes, directoryUuid));
     }
 
-    // TODO: est ce que je rajoute un canRead ici ? ça ne sert pas à grand chose, de toute manière on ne peut pas ouvrir l'élément par la suite si on n'a pas les droits
-    //  par contre vérifier s'il n'y a pas des infos dans le path. Il n'y a que les parentDirectories et le depth de l'élément
-    //  donc j'aurais tendance à dire qu'on veut justement que ce soit accessible à tous
     @GetMapping(value = "/explore/directories/elements/{elementUuid}/path", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get path of element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "List info of an element and its parents in order to get its path"),
         @ApiResponse(responseCode = "403", description = "Access forbidden for the element"),
         @ApiResponse(responseCode = "404", description = "The searched element was not found")})
+    @PreAuthorize("@authorizationService.canRead(#elementUuid)")
     public ResponseEntity<String> getPath(@PathVariable("elementUuid") UUID elementUuid) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getPath(elementUuid));
     }
 
-    // TODO: accessible à tout le monde ; pas de @PreAuthorize
     @RequestMapping(method = RequestMethod.HEAD, value = "/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}")
     @Operation(summary = "Check if an element with this name and this type already exists in the given directory")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element exists"),
         @ApiResponse(responseCode = "204", description = "The element doesn't exist")})
-    //@PreAuthorize("true")
+    @PreAuthorize("@authorizationService.canRead(#directoryUuid)")
     public ResponseEntity<Void> elementExists(@PathVariable("directoryUuid") UUID directoryUuid,
                                               @PathVariable("elementName") String elementName,
                                               @PathVariable("type") String type) {
         return ResponseEntity.status(directoryService.elementExists(directoryUuid, elementName, type)).contentType(MediaType.APPLICATION_JSON).build();
     }
 
-    // TODO: vérif dans endpoint de directory-server canRead(directoryUuid) -> je le rajoute ici en @PreAuthorize, à suppr dans directory-server ??
     @GetMapping(value = "/explore/directories/{directoryUuid}/{elementName}/newNameCandidate")
     @Operation(summary = "Get a free name in directory based on the one given and it's type")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "If the element exists or not")})
@@ -627,11 +607,10 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getNameCandidate(directoryUuid, elementName, type));
     }
 
-    // TODO: accessible à tout le monde
     @GetMapping(value = "/explore/directories/elements/indexation-infos", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Search elements in elasticsearch")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "List of elements found")})
-    //@PreAuthorize("true")
+    @PreAuthorize("true")
     public ResponseEntity<String> searchElements(
             @Parameter(description = "User input") @RequestParam(value = "userInput") String userInput,
             @Parameter(description = "Current directory UUID") @RequestParam(value = "directoryUuid", required = false, defaultValue = "") String directoryUuid) {
@@ -639,23 +618,19 @@ public class ExploreController {
                 .body(directoryService.searchElements(userInput, directoryUuid));
     }
 
-    // TODO: accessible à tous ??? ou remplacer entièrement par @PreAuthorize... (bof)
     @GetMapping(value = "/explore/elements/{elementUuid}")
     @Operation(summary = "Check if user has a given right on a directory, or a single element by checking its parent")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The user has the right on the element"),
         @ApiResponse(responseCode = "204", description = "The user has not the right on the element"),
     })
-    //@PreAuthorize("true")
+    @PreAuthorize("true")
     public ResponseEntity<Void> hasRight(@PathVariable("elementUuid") UUID elementUuid,
                                          @RequestParam(name = "permission") PermissionType permission) {
         directoryService.checkPermission(List.of(elementUuid), null, permission);
         return ResponseEntity.ok().build();
     }
 
-    // TODO: verif READ dans endpoint directory-server sur les studyUuids retournées car on leur fait getElementsInfos en strictMode = false ;
-    //  voir ce qu'on en fait, je ne sais pas
-    //  je rajoute le canRead sur l'elementUuid'
     @GetMapping(value = "/explore/elements/{elementUuid}/referencing-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get the elements using the given shared element")
     @ApiResponses(value = {
@@ -681,7 +656,6 @@ public class ExploreController {
                 .body(directoryService.getDirectoryPermissions(directoryUuid));
     }
 
-    // TODO
     @PutMapping(value = "/explore/directories/{directoryUuid}/permissions", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Set permissions for a directory")
     @ApiResponses(value = {
@@ -696,7 +670,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    // TODO
     @PostMapping(value = "/explore/process-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
@@ -708,7 +681,6 @@ public class ExploreController {
         return ResponseEntity.ok().body(exploreService.createProcessConfig(name, processConfig, description, parentDirectoryId));
     }
 
-    // TODO
     @PutMapping(value = "/explore/process-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully modified")})
@@ -721,7 +693,6 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    // TODO
     @PostMapping(value = "/explore/process-configs/{id}/duplicate")
     @Operation(summary = "Duplicate a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})

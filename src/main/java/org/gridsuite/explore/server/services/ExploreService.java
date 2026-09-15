@@ -22,7 +22,6 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
@@ -405,10 +404,9 @@ public class ExploreService {
     }
 
     public void assertCanCreateCase() {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        Integer userMaxAllowedStudiesAndCases = userAdminService.getUserMaxAllowedCases(userId);
+        Integer userMaxAllowedStudiesAndCases = userAdminService.getUserMaxAllowedCases();
         if (userMaxAllowedStudiesAndCases != null) {
-            int userCasesCount = directoryService.getUserCasesCount(userId);
+            int userCasesCount = directoryService.getUserCasesCount();
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
                 throw new ExploreException(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases reached", Map.of("limit", userMaxAllowedStudiesAndCases));
             }

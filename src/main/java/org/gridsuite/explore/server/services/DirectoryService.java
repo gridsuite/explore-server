@@ -13,6 +13,7 @@ import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -289,8 +290,8 @@ public class DirectoryService implements IDirectoryElementsService {
         return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
     }
 
-    // TODO: est ce que je laisse userId en argument ici ?
-    public int getUserCasesCount(String userId) {
+    public int getUserCasesCount() {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         String path = UriComponentsBuilder
             .fromPath(DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + "users/{userId}/cases/count")
             .buildAndExpand(userId)
@@ -299,7 +300,6 @@ public class DirectoryService implements IDirectoryElementsService {
         return Objects.requireNonNull(restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.GET, HttpEntity.EMPTY, Integer.class).getBody());
     }
 
-    // TODO: method not used -> to delete ?
     public void notifyDirectoryChanged(UUID elementUuid) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/notification?type={update_directory}")

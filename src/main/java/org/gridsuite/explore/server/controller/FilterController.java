@@ -30,8 +30,6 @@ public class FilterController {
         this.filterService = filterService;
     }
 
-    // TODO: appel direct à filter-server -> n'existe pas dans directory-server donc rien à checker ?
-    //  vérifier où est utilisé cet endpoint. Pour l'instant je mets canRead
     @GetMapping(value = "/filters/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@authorizationService.canRead(#id)")
     public ResponseEntity<String> getFilter(@PathVariable("id") UUID id) {
