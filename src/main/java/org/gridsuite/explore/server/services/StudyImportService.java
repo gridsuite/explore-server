@@ -40,6 +40,8 @@ public class StudyImportService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StudyImportService.class);
     public static final long MAX_UNCOMPRESSED_ARCHIVE_SIZE = 10000000000L;
     public static final int MAX_ARCHIVE_ENTRIES = 5000;
+    public static final String TREE_EXPORT_FILE = "tree.json";
+    public static final String CASES_DIR = "cases";
     private final CaseService caseService;
     private final StudyService studyService;
     private final ObjectMapper objectMapper;
@@ -67,15 +69,17 @@ public class StudyImportService {
         UUID createdDirectoryUuid = null;
         try {
             tempDir = extractArchiveToDisk(archiveFile);
-            Path studyJsonPath = tempDir.resolve("tree.json");
-            Path casesDir = tempDir.resolve("cases");
-            TreeExportInfos treeExportInfos = objectMapper.readValue(studyJsonPath.toFile(), TreeExportInfos.class);
+
+            ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
+            createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
+
+            TreeExportInfos treeExportInfos = objectMapper.readValue(tempDir.resolve(TREE_EXPORT_FILE).toFile(), TreeExportInfos.class);
             if (treeExportInfos.getRootNetworks() == null || treeExportInfos.getRootNetworks().isEmpty()) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
-            ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
-            createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
-            createCases(treeExportInfos, casesDir, createdDirectoryUuid, userId, description);
+
+            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), createdDirectoryUuid, userId, description);
+
             createStudy(treeExportInfos, studyName, createdDirectoryUuid, userId, description);
         } catch (Exception e) {
             if (createdDirectoryUuid != null) {
@@ -84,9 +88,7 @@ public class StudyImportService {
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
             try {
-                if (tempDir != null && Files.exists(tempDir)) {
-                    FileUtils.deleteDirectory(tempDir.toFile());
-                }
+                FileUtils.deleteDirectory(tempDir.toFile());
             } catch (IOException e) {
                 LOGGER.error("Error cleaning up temporary directory: " + tempDir, e);
             }

@@ -151,7 +151,7 @@ class StudyImportTest {
                         .param("description", DESCRIPTION)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
     }
 
     @Test
@@ -172,7 +172,7 @@ class StudyImportTest {
                         .param("description", DESCRIPTION)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
     }
 
     @Test
@@ -214,7 +214,7 @@ class StudyImportTest {
                         .param("description", DESCRIPTION)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                         .header("userId", USER_ID))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().is4xxClientError());
     }
 
     @Test

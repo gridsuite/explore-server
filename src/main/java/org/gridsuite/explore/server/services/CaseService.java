@@ -44,12 +44,29 @@ public class CaseService implements IDirectoryElementsService {
         this.caseServerBaseUri = actionsServerBaseUri;
     }
 
-    UUID importMultipartCase(MultipartFile multipartFile) {
-        if (multipartFile != null) {
-            Objects.requireNonNull(multipartFile.getOriginalFilename());
-            return importCaseResource(multipartFile.getResource());
+    private UUID importCaseResource(Resource resource) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        if (resource != null) {
+            body.add("file", resource);
         }
-        return importCaseResource(null);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+        return restTemplate.postForObject(
+                caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL,
+                request,
+                UUID.class
+        );
+    }
+
+    UUID importMultipartCase(MultipartFile multipartFile) {
+        Objects.requireNonNull(multipartFile);
+        Objects.requireNonNull(multipartFile.getOriginalFilename());
+        return importCaseResource(multipartFile.getResource());
+    }
+
+    public UUID importFileCase(File file) {
+        return importCaseResource(new FileSystemResource(file));
     }
 
     public UUID importCaseWithoutDirectoryElementCreation(MultipartFile multipartFile, boolean withExpiration) {
@@ -92,25 +109,6 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
-    }
-
-    public UUID importFileCase(File file) {
-        return importCaseResource(new FileSystemResource(file));
-    }
-
-    private UUID importCaseResource(Resource resource) {
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        if (resource != null) {
-            body.add("file", resource);
-        }
-        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
-        return restTemplate.postForObject(
-            caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL,
-            request,
-            UUID.class
-        );
     }
 
     void persistCase(UUID caseUuid) {

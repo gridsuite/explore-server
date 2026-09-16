@@ -49,6 +49,7 @@ public class ExploreController {
 
     private static final String QUERY_PARAM_TYPE = "type";
     private static final String QUERY_PARAM_USER_ID = "userId";
+    private static final String QUERY_PARAM_ARCHIVE_FILE = "archiveFile";
 
     private final ExploreService exploreService;
     private final DirectoryService directoryService;
@@ -788,7 +789,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import finished")})
     @PreAuthorize("@authorizationService.isAuthorized(#userId, #parentDirectoryUuid, null, T(org.gridsuite.explore.server.dto.PermissionType).WRITE)")
     public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
-                                            @RequestPart("archiveFile") MultipartFile archiveFile,
+                                            @RequestPart(QUERY_PARAM_ARCHIVE_FILE) MultipartFile archiveFile,
                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
                                             @RequestHeader(QUERY_PARAM_USER_ID) String userId) {
