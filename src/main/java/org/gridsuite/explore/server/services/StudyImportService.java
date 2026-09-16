@@ -88,7 +88,9 @@ public class StudyImportService {
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
             try {
-                FileUtils.deleteDirectory(tempDir.toFile());
+                if (Files.exists(tempDir)) {
+                    FileUtils.deleteDirectory(tempDir.toFile());
+                }
             } catch (IOException e) {
                 LOGGER.error("Error cleaning up temporary directory: " + tempDir, e);
             }
