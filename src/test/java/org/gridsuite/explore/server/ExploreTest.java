@@ -424,17 +424,17 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
                     } else if (path.matches("/v1/process-configs/metadata[?]ids=" + PROCESS_CONFIG_UUID)) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(List.of(processConfigSprecificMetadata)));
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/quota/max")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 3)));
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/quota/max")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 5)));
-                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/quota/max")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 5)));
-                    } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/quota/max")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, 5)));
-                    } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/quota/max")) {
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/quota/state")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(4, 3))));
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/quota/state")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(2, 5))));
+                    } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/quota/state")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(1, 5))));
+                    } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/quota/state")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(0, 5))));
+                    } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/quota/state")) {
                         return new MockResponse(500);
-                    } else if (path.matches("/v1/users/.*/quota/max")) {
+                    } else if (path.matches("/v1/users/.*/quota/state")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Collections.emptyMap()));
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/cases/count")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "4");
