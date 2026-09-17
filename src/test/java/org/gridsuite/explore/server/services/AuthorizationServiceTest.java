@@ -220,10 +220,10 @@ class AuthorizationServiceTest {
     void shouldPropagateExceptionWhenDeleteElementsPermissionDenied() {
         List<UUID> elementUuids = List.of(ELEMENT_UUID, ELEMENT_UUID_2);
 
-        doThrow(new AccessDeniedException("Write access denied"))
-                .when(directoryService).checkPermission(elementUuids, null, PermissionType.WRITE);
+        doThrow(new AccessDeniedException("Access denied"))
+                .when(directoryService).checkPermission(elementUuids, null, PermissionType.WRITE, true);
 
-        assertThatThrownBy(() -> authorizationService.canWrite(elementUuids))
+        assertThatThrownBy(() -> authorizationService.canDelete(elementUuids))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
