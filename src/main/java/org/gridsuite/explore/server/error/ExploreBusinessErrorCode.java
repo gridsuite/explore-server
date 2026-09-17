@@ -14,7 +14,8 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
  * Business error codes emitted by the explore service.
  */
 public enum ExploreBusinessErrorCode implements BusinessErrorCode {
-    EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded");
+    EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded"),
+    IMPORT_STUDY_FAILED("explore.importStudyFailed");
 
     private final String code;
 
