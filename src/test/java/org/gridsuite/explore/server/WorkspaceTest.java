@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.WorkspaceService;
 import org.junit.jupiter.api.AfterEach;
@@ -22,12 +21,12 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -43,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AuthorizationTestConfiguration.class)
 class WorkspaceTest {
 
     @Autowired
@@ -107,7 +107,6 @@ class WorkspaceTest {
                 .andExpect(status().isCreated());
 
         verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
         assertEquals(WORKSPACE_UUID, elementAttributesCaptor.getValue().getElementUuid());
     }
 
@@ -121,7 +120,6 @@ class WorkspaceTest {
                 .andExpect(status().isNoContent());
 
         verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
-        verify(directoryService, times(1)).checkPermission(List.of(WORKSPACE_UUID), null, PermissionType.WRITE);
     }
 
     @Test
@@ -132,8 +130,6 @@ class WorkspaceTest {
                 .andExpect(status().isCreated());
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
-        verify(directoryService, times(1)).checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, PermissionType.READ);
     }
 
     @Test

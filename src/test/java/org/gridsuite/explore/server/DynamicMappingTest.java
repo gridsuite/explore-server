@@ -11,7 +11,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.DynamicMappingService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -24,13 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
+@Import(AuthorizationTestConfiguration.class)
 class DynamicMappingTest {
 
     @Autowired
@@ -118,7 +118,6 @@ class DynamicMappingTest {
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isOk());
 
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, PermissionType.WRITE);
         verify(directoryService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(true));
         assertEquals(ID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS, Map.of(), false);
@@ -139,7 +138,6 @@ class DynamicMappingTest {
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, PermissionType.WRITE);
         verify(directoryService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(boolean.class));
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS, Map.of(), false);
     }
@@ -158,7 +156,6 @@ class DynamicMappingTest {
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isOk());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, PermissionType.WRITE);
         verify(directoryService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture());
         wireMockUtils.verifyPutRequest(stubId, URL_MAPPINGS + "/" + ID, Map.of(), false);
     }
@@ -177,7 +174,6 @@ class DynamicMappingTest {
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, PermissionType.WRITE);
         verify(directoryService, times(0)).updateElement(any(UUID.class), any(ElementAttributes.class));
         wireMockUtils.verifyPutRequest(stubId, URL_MAPPINGS + "/" + ID, Map.of(), false);
     }
@@ -195,8 +191,6 @@ class DynamicMappingTest {
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isOk());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, PermissionType.READ);
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, PermissionType.WRITE);
         verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, CREATED);
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS + "/" + ID + "/duplicate", Map.of(), false);
     }
@@ -212,8 +206,6 @@ class DynamicMappingTest {
                 .header(QUERY_PARAM_USER_ID, USER_ID))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).checkPermission(List.of(ID), null, PermissionType.READ);
-        verify(directoryService, times(1)).checkPermission(List.of(DIRECTORY_ID), null, PermissionType.WRITE);
         verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(DirectoryElementStatus.class));
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS + "/" + ID + "/duplicate", Map.of(), false);
     }

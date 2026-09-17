@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SingleLineDiagramService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -16,12 +15,12 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AuthorizationTestConfiguration.class)
 class SingleLineDiagramTest {
 
     @Autowired
@@ -100,7 +100,6 @@ class SingleLineDiagramTest {
                     .andReturn();
 
         verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
     }
@@ -124,7 +123,6 @@ class SingleLineDiagramTest {
                     .andReturn();
 
         verify(directoryService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture());
-        verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, PermissionType.WRITE);
         wireMockUtils.verifyPutRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID, Map.of(), false);
     }
 
@@ -143,8 +141,6 @@ class SingleLineDiagramTest {
                     .andReturn();
 
         verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED);
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, PermissionType.WRITE);
-        verify(directoryService, times(1)).checkPermission(List.of(NAD_CONFIG_UUID), null, PermissionType.READ);
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate", Map.of(), false);
     }
 }

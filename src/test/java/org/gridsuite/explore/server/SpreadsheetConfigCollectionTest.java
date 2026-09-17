@@ -27,11 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import java.util.UUID;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockWebServerExtension.class)
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @AutoConfigureMockMvc
+@Import(AuthorizationTestConfiguration.class)
 class SpreadsheetConfigCollectionTest {
 
     @Autowired
@@ -170,11 +171,8 @@ class SpreadsheetConfigCollectionTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
-        // check read authorization on the duplicated element and write authorization on the target directory
-        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")));
+        // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
+        TestUtils.getRequestsWithBodyDone(2, mockWebServer);
     }
 
     @Test
@@ -183,11 +181,8 @@ class SpreadsheetConfigCollectionTest {
                         .header("userId", USER_ID))
                 .andExpect(status().isCreated());
 
-        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
-        // check read authorization on the duplicated element and write authorization on the target directory
-        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
+        TestUtils.getRequestsWithBodyDone(2, mockWebServer);
     }
 
     @Test

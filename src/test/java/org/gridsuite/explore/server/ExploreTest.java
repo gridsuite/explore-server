@@ -33,11 +33,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -61,9 +63,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -74,6 +76,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockWebServerExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
+@Import(AuthorizationTestConfiguration.class)
 class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
@@ -85,9 +88,7 @@ class ExploreTest {
     private static final UUID PARENT_DIRECTORY_UUID2 = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_WITH_ERROR_UUID = UUID.randomUUID();
-    private static final UUID NO_CONTENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final UUID PRIVATE_STUDY_UUID = UUID.randomUUID();
-    private static final UUID FORBIDDEN_STUDY_UUID = UUID.randomUUID();
     private static final UUID PUBLIC_STUDY_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final UUID FILTER_UUID_2 = UUID.randomUUID();
@@ -104,13 +105,10 @@ class ExploreTest {
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
-    private static final UUID TEST_ACCESS_DIRECTORY_UUID_ALLOWED = UUID.randomUUID();
-    private static final UUID TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN = UUID.randomUUID();
     private static final UUID PROCESS_CONFIG_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
-    private static final String NOT_ADMIN_USER = "notAdminUser";
     private static final String DIRECTORY1 = "directory1";
     private static final String USER_NOT_ALLOWED = "user not allowed";
     private static final String USER_WITH_CASE_LIMIT_EXCEEDED = "limitedUser";
@@ -150,7 +148,6 @@ class ExploreTest {
     private static final UUID ELEMENT_UUID_2 = UUID.randomUUID();
     private static final String ELEMENT_NAME_2 = "elementName2";
     private static final UUID FORBIDDEN_ELEMENT_UUID = UUID.randomUUID();
-    private static final UUID DIRECTORY_NOT_OWNED_SUBELEMENT_UUID = UUID.randomUUID();
 
     private final Map<UUID, String> elementNames = Map.of(
         ELEMENT_UUID, ELEMENT_NAME,
@@ -192,6 +189,9 @@ class ExploreTest {
 
     private static final long TIMEOUT = 1000;
 
+    @Autowired
+    private AuthorizationService authorizationService;
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     private @interface UsesWireMock { }
@@ -199,9 +199,7 @@ class ExploreTest {
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
     void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
-        // Set up authentication
-        //        UserAuthentication userAuthentication = new UserAuthentication(USER1, "");
-        //        SecurityContextHolder.getContext().setAuthentication(userAuthentication);
+        clearInvocations(authorizationService);
 
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
@@ -457,30 +455,6 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
                         return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + NO_CONTENT_DIRECTORY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + FORBIDDEN_STUDY_UUID + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=" + PARENT_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?forUpdate=true&ids=" + FORBIDDEN_ELEMENT_UUID) && USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + DIRECTORY_NOT_OWNED_SUBELEMENT_UUID + "&targetDirectoryUuid.*&recursiveCheck=true")) {
-                        return new MockResponse(409);
-                    } else if (path.matches("/v1/elements/authorized\\?forDeletion=true&ids=.*") || path.matches("/v1/elements\\?forUpdate=true&ids=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(200);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid&recursiveCheck=.*")) {
-                        return new MockResponse(403);
-                    } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*&recursiveCheck=.*")) {
-                        return new MockResponse(200);
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
@@ -542,32 +516,32 @@ class ExploreTest {
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateStudyFromExistingCase() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .param("duplicateCase", "false")
-                .header("userId", USER1)
                 .param("caseFormat", "XIIDM")
                 .contentType(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateStudyFromExistingCaseError() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + NON_EXISTING_CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1)
                         .param("caseFormat", "XIIDM")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isIAmATeapot());
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateCase() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, MediaType.TEXT_XML_VALUE, is);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isOk());
@@ -575,63 +549,63 @@ class ExploreTest {
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testPersistCase() throws Exception {
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1)
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCaseCreationError() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE_WITH_ERRORS))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE_WITH_ERRORS, MediaType.TEXT_XML_VALUE, is);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isConflict());
         }
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Contingency list content\"")
         ).andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateFilterBasedContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/filters-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
             "filterBasedContingencyListName", PARENT_DIRECTORY_UUID, null)
-            .header("userId", USER1)
             .contentType(MediaType.APPLICATION_JSON)
             .content("\"Contingency list content\"")
         ).andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Filter content\"")
         ).andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateParameters() throws Exception {
         mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "paramName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), "comment", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Parameters content\"")
         ).andExpect(status().isOk());
@@ -641,44 +615,25 @@ class ExploreTest {
     void testUpdateParameters() throws Exception {
         mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&description={description}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                 PARAMETERS_UUID, "", "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"new Parameters content\"")
         ).andExpect(status().isOk());
     }
 
     private void deleteElement(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
-                        elementUUid).header("userId", USER1))
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid))
                 .andExpect(status().isOk());
     }
 
     private void deleteElements(List<UUID> elementUuids, UUID parentUuid) throws Exception {
         var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
-                        .header("userId", USER1))
+        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid))
                 .andExpect(status().isOk());
     }
 
     private void deleteElementInvalidType(UUID elementUUid) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid)
-                        .header("userId", USER1))
+        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}", elementUUid))
                 .andExpect(status().is2xxSuccessful());
-    }
-
-    // TODO: not admin user
-    private void deleteElementNotAllowed(UUID elementUUid, int status) throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{elementUuid}",
-                        elementUUid).header("userId", NOT_ADMIN_USER))
-                .andExpect(status().is(status));
-    }
-
-    // TODO: not admin user
-    private void deleteElementsNotAllowed(List<UUID> elementUuids, UUID parentUuid, int status) throws Exception {
-        var ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
-        mockMvc.perform(delete("/v1/explore/elements/{parentUuid}?ids=" + ids, parentUuid)
-                        .header("userId", NOT_ADMIN_USER))
-                .andExpect(status().is(status));
     }
 
     @Test
@@ -693,51 +648,42 @@ class ExploreTest {
         deleteElement(PARAMETERS_UUID);
         deleteElement(MODIFICATION_UUID);
         deleteElement(PROCESS_CONFIG_UUID);
-        deleteElementsNotAllowed(List.of(FORBIDDEN_STUDY_UUID), PARENT_DIRECTORY_UUID_FORBIDDEN, 403);
-        deleteElementNotAllowed(FORBIDDEN_STUDY_UUID, 403);
-        deleteElementNotAllowed(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID, 409);
     }
 
     @Test
     void testGetElementsMetadata() throws Exception {
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID)
-                .header("userId", USER1)
-        ).andExpectAll(status().isOk());
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID))
+                .andExpectAll(status().isOk());
 
         ElementAttributes filter1 = new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0L, null, specificMetadata);
         ElementAttributes filter2 = new ElementAttributes(FILTER_UUID_2, FILTER_CONTINGENCY_LIST_2, FILTER, USER1, 0L, null, specificMetadata2);
         ElementAttributes caseElement = new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null, caseSpecificMetadata);
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER")
-            .header("userId", USER1))
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=&elementTypes=FILTER"))
             .andExpectAll(
                 status().isOk(),
                 content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
             );
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER")
-            .header("userId", USER1))
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR&elementTypes=FILTER"))
             .andExpectAll(
                 status().isOk(),
                 content().string(mapper.writeValueAsString(List.of(filter1)))
             );
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER")
-            .header("userId", USER1))
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=LINE&elementTypes=FILTER"))
             .andExpectAll(
                 status().isOk(),
                 content().string(mapper.writeValueAsString(List.of(filter2)))
             );
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR,LINE&elementTypes=FILTER")
-            .header("userId", USER1))
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&equipmentTypes=GENERATOR,LINE&elementTypes=FILTER"))
             .andExpectAll(
                 status().isOk(),
                 content().string(mapper.writeValueAsString(List.of(filter1, filter2)))
             );
 
-        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&equipmentTypes=GENERATOR&elementTypes=FILTER,CASE")
-            .header("userId", USER1))
+        mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&equipmentTypes=GENERATOR&elementTypes=FILTER,CASE"))
             .andExpectAll(
                 status().isOk(),
                 content().string(mapper.writeValueAsString(List.of(filter1, caseElement)))
@@ -745,137 +691,121 @@ class ExploreTest {
     }
 
     @Test
-    void testDuplicateCase(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateCase() throws Exception {
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
+                        CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CASE_UUID, PARENT_DIRECTORY_UUID);
+        verify(authorizationService).canDuplicateTo(CASE_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateCaseInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateCaseInSameDirectory() throws Exception {
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER1))
+                        CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CASE_UUID, CASE_UUID);
+        verify(authorizationService).canDuplicateTo(CASE_UUID, null);
     }
 
     @Test
-    void testDuplicateFilter(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateFilter() throws Exception {
         mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                FILTER_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)).andExpect(status().isOk());
+                FILTER_UUID, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, PARENT_DIRECTORY_UUID);
+        verify(authorizationService).canDuplicateTo(FILTER_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateFilterInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate",
-                FILTER_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)).andExpect(status().isOk());
+    void testDuplicateFilterInSameDirectory() throws Exception {
+        mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate", FILTER_UUID, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, FILTER_UUID, FILTER_UUID);
+        verify(authorizationService).canDuplicateTo(FILTER_UUID, null);
     }
 
     @Test
-    void testDuplicateIdentifierContingencyList(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateIdentifierContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
-                CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
+        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateIdentifierContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateIdentifierContingencyListInSameDirectory() throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}",
-                CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, null);
     }
 
     @Test
-    void testDuplicateFilterBasedContingencyList(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateFilterBasedContingencyList() throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
-            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID)
-            .header("userId", USER1)
-        ).andExpect(status().isOk());
+            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
+        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateFilterBasedContingencyListInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateFilterBasedContingencyListInSameDirectory() throws Exception {
         mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}",
-            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS)
-            .header("userId", USER1)
-        ).andExpect(status().isOk());
+            CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, CONTINGENCY_LIST_UUID, CONTINGENCY_LIST_UUID);
+        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, null);
     }
 
     @Test
-    void testDuplicateStudy(final MockWebServer mockWebServer) throws Exception {
+    @WithMockUser(username = USER1)
+    void testDuplicateStudy() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID);
+        verify(authorizationService).canDuplicateTo(PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateStudyInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate",
-                PUBLIC_STUDY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+    @WithMockUser(username = USER1)
+    void testDuplicateStudyInSameDirectory() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate", PUBLIC_STUDY_UUID))
+                .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, PUBLIC_STUDY_UUID, PUBLIC_STUDY_UUID);
+        verify(authorizationService).canDuplicateTo(PUBLIC_STUDY_UUID, null);
     }
 
     @Test
-    void testDuplicateStudyInSameDirectoryNotAllowed() throws Exception {
-        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate",
-                NO_CONTENT_DIRECTORY_UUID)
-                .header("userId", USER1)
-        ).andExpect(status().isForbidden());
-    }
-
-    @Test
-    void testDuplicateParameters(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateParameters() throws Exception {
         mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}&parentDirectoryUuid={parentDirectoryUuid}",
-                        PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID)
-                .header("userId", USER1))
+                        PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID))
             .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARENT_DIRECTORY_UUID);
+        verify(authorizationService).canDuplicateTo(PARAMETERS_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
-    void testDuplicateParametersInSameDirectory(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateParametersInSameDirectory() throws Exception {
         mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}",
-                        PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS)
-                        .header("userId", USER1))
+                        PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS))
                 .andExpect(status().isOk());
 
-        checkAuthorizationRequestDoneForDuplication(mockWebServer, PARAMETERS_UUID, PARAMETERS_UUID);
+        verify(authorizationService).canDuplicateTo(PARAMETERS_UUID, null);
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCaseCreationErrorWithBadExtension() throws Exception {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_INCORRECT_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_INCORRECT_FILE, MediaType.TEXT_XML_VALUE, is);
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY_ERROR_NAME, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER1)
                             .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isUnprocessableEntity());
         }
@@ -888,16 +818,14 @@ class ExploreTest {
                         + ",\"tso\":[\"ceps\"]}}}";
         final String name = "filter name";
         final String description = "new filter description";
-        mockMvc.perform(put("/v1/explore/filters/{id}",
-                FILTER_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(filter)
-                .param("name", name)
-                .param("description", description)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/filters/{id}", FILTER_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .content(filter)
+                        .param("name", name)
+                        .param("description", description))
+                .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/", USER1);
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/");
     }
 
     @Test
@@ -907,17 +835,15 @@ class ExploreTest {
                         + "\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
         final String name = "identifier contingencyList name";
         final String description = "identifier contingencyList description";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-                SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-                .contentType(APPLICATION_JSON)
-                .content(identifierContingencyList)
-                .param("name", name)
-                .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
-                .param("description", description)
-                .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                        .contentType(APPLICATION_JSON)
+                        .content(identifierContingencyList)
+                        .param("name", name)
+                        .param("contingencyListType", ContingencyListType.IDENTIFIERS.name())
+                        .param("description", description))
+                .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/", USER1);
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/");
     }
 
     @Test
@@ -926,29 +852,26 @@ class ExploreTest {
                 + "ARGIA\",\"equipmentType\":\"LINE\"}]}";
         final String name = "filter based contingencyList name";
         final String description = "filter based contingencyList description";
-        mockMvc.perform(put("/v1/explore/contingency-lists/{id}",
-            SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
-            .contentType(APPLICATION_JSON)
-            .content(filters)
-            .param("name", name)
-            .param("contingencyListType", ContingencyListType.FILTERS.name())
-            .param("description", description)
-            .header("userId", USER1)
-        ).andExpect(status().isOk());
+        mockMvc.perform(put("/v1/explore/contingency-lists/{id}", SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID)
+                    .contentType(APPLICATION_JSON)
+                    .content(filters)
+                    .param("name", name)
+                    .param("contingencyListType", ContingencyListType.FILTERS.name())
+                    .param("description", description))
+                .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters-contingency-lists/", USER1);
+        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters-contingency-lists/");
     }
 
-    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath, String user) {
-        var requests = TestUtils.getRequestsWithBodyDone(3, server);
+    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath) {
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
     }
 
     @Test
     void testGetMetadata() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID)
-                .header("userId", USER1))
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CASE_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
         String res = result.getResponse().getContentAsString();
@@ -960,8 +883,7 @@ class ExploreTest {
 
     @Test
     void testGetMetadataReturnsPartialResponseWhenSpecificMetadataLoadingFails() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID)
-                .header("userId", USER1))
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -986,14 +908,13 @@ class ExploreTest {
         List<UUID> modificationUuids = Arrays.asList(MODIFICATION_UUID, UUID.randomUUID());
         mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "nameModif", "descModif", PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(modificationUuids))
         ).andExpect(status().isOk());
     }
 
     @Test
-    void testModifyCompositeModifications(final MockWebServer server) throws Exception {
+    void testModifyCompositeModifications() throws Exception {
         final String name = "script name";
         mockMvc.perform(
                 put("/v1/explore/composite-modifications/{id}", COMPOSITE_MODIFICATION_UUID)
@@ -1001,15 +922,13 @@ class ExploreTest {
                         .content(mapper.writeValueAsString(List.of(MODIFICATION_UUID, UUID.randomUUID())))
                         .param("name", name)
                         .param("description", "description")
-                        .header("userId", USER1)
         ).andExpect(status().isOk());
     }
 
-    // TODO: not allowed user
     @Test
     void testGetDirectoryPermissions() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1))
+                        .with(user(USER1)))
                 .andExpect(status().isOk())
                 .andReturn();
         String responseJson = result.getResponse().getContentAsString();
@@ -1018,11 +937,10 @@ class ExploreTest {
 
         // Execute the test with a forbidden directory ID
         mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID_FORBIDDEN)
-                        .header("userId", USER_NOT_ALLOWED))
+                        .with(user(USER_NOT_ALLOWED)))
                 .andExpect(status().isForbidden());
     }
 
-    // TODO: not allowed user
     @Test
     void testSetDirectoryPermissions() throws Exception {
         List<PermissionDTO> permissions = List.of(
@@ -1033,14 +951,14 @@ class ExploreTest {
         String permissionsJson = mapper.writeValueAsString(permissions);
 
         mockMvc.perform(put("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1)
+                        .with(user(USER1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(permissionsJson))
                 .andExpect(status().isOk());
 
         // Execute the test with a forbidden directory ID
         mockMvc.perform(put("/v1/explore/directories/{directoryUuid}/permissions", PARENT_DIRECTORY_UUID_FORBIDDEN)
-                        .header("userId", USER_NOT_ALLOWED)
+                        .with(user(USER_NOT_ALLOWED))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(permissionsJson))
                 .andExpect(status().isForbidden());
@@ -1049,8 +967,7 @@ class ExploreTest {
     @Test
     void testGetModificationMetadata() throws Exception {
         final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null, modificationSpecificMetadata));
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID)
-                        .header("userId", USER1))
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
         String response = result.getResponse().getContentAsString();
@@ -1061,22 +978,20 @@ class ExploreTest {
 
     @Test
     void testGetCompositeModificationContent() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications")
-                .header("userId", USER1)
-                ).andExpect(status().isOk())
+        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modification/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications"))
+                .andExpect(status().isOk())
                 .andReturn();
         String response = result.getResponse().getContentAsString();
         List<Map<String, Object>> metadata = mapper.readValue(response, new TypeReference<>() { });
         assertEquals(2, metadata.size());
     }
 
-    // TODO: user with case limits exceeded
     @Test
+    @WithMockUser(username = USER_WITH_CASE_LIMIT_EXCEEDED)
     void testMaxCaseCreationExceeded() throws Exception {
         //test create a study with a user that already exceeded his cases limit
         MvcResult result = mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                         .param("duplicateCase", "false")
-                        .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
                         .param("caseFormat", "XIIDM")
                         .contentType(APPLICATION_JSON)
                 ).andExpect(status().isForbidden())
@@ -1085,15 +1000,14 @@ class ExploreTest {
 
         //test duplicate a study with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
-        ).andExpect(status().isForbidden())
+                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a case with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_EXCEEDED))
+                        CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
@@ -1104,7 +1018,6 @@ class ExploreTest {
 
             result = mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isForbidden())
@@ -1117,34 +1030,30 @@ class ExploreTest {
         //test persist a case with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER_WITH_CASE_LIMIT_EXCEEDED)
-                        .contentType(APPLICATION_JSON)
-                )
+                        .contentType(APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
     }
 
-    // TODO: user with case limits not exceeded
     @Test
+    @WithMockUser(username = USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
     void testMaxCaseCreationNotExceeded() throws Exception {
         //test create a study with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                         .param("duplicateCase", "false")
-                        .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
                         .param("caseFormat", "XIIDM")
                         .contentType(APPLICATION_JSON)
                 ).andExpect(status().isOk());
 
         //test duplicate a study with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
-                        .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
-                ).andExpect(status().isOk());
+                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk());
 
         //test duplicate a case with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
+                        CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
 
         //test create a case with a user that hasn't already exceeded his cases limit
@@ -1153,7 +1062,6 @@ class ExploreTest {
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isOk())
@@ -1163,19 +1071,17 @@ class ExploreTest {
         //test persist a case with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(status().isOk());
     }
 
-    // TODO: not found user
     @Test
+    @WithMockUser(username = USER_NOT_FOUND)
     void testMaxCaseCreationProfileNotSet() throws Exception {
         //test create a study with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .param("duplicateCase", "false")
-                .header("userId", USER_NOT_FOUND)
                 .param("caseFormat", "XIIDM")
                 .contentType(APPLICATION_JSON)
         ).andExpect(status().isOk());
@@ -1183,12 +1089,11 @@ class ExploreTest {
         //test duplicate a study with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER_NOT_FOUND)
         ).andExpect(status().isOk());
 
         //test duplicate a case with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_NOT_FOUND))
+                        CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
 
         //test create a case with a user that has no profile to limit his case creation
@@ -1197,7 +1102,6 @@ class ExploreTest {
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER_NOT_FOUND)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isOk())
@@ -1207,19 +1111,17 @@ class ExploreTest {
         //test persist a case with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER_NOT_FOUND)
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(status().isOk());
     }
 
-    // TODO: user error
     @Test
+    @WithMockUser(username = USER_UNEXPECTED_ERROR)
     void testMaxCaseCreationWithRemoteException() throws Exception {
         //test create a study with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
                 .param("duplicateCase", "false")
-                .header("userId", USER_UNEXPECTED_ERROR)
                 .param("caseFormat", "XIIDM")
                 .contentType(APPLICATION_JSON)
         ).andExpect(status().isInternalServerError());
@@ -1227,12 +1129,11 @@ class ExploreTest {
         //test duplicate a study with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
-                .header("userId", USER_UNEXPECTED_ERROR)
         ).andExpect(status().isInternalServerError());
 
         //test duplicate a case with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID).header("userId", USER_UNEXPECTED_ERROR))
+                        CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isInternalServerError());
 
         //test create a case with a remote unexpected exception
@@ -1241,7 +1142,6 @@ class ExploreTest {
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
-                            .header("userId", USER_UNEXPECTED_ERROR)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isInternalServerError());
@@ -1250,21 +1150,19 @@ class ExploreTest {
         //test persist a case with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER_UNEXPECTED_ERROR)
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(status().isInternalServerError());
     }
 
-    // TODO: user with case limits exceeded
     @Test
-    void testCaseAlertThreshold(final MockWebServer server) throws Exception {
+    void testCaseAlertThreshold() throws Exception {
         //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 has not yet reached the defined case alert threshold, no message sent to him
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
             .param("duplicateCase", "false")
-            .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2)
             .param("caseFormat", "XIIDM")
             .contentType(APPLICATION_JSON)
+            .with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2))
         ).andExpect(status().isOk());
 
         Message<byte[]> message = output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
@@ -1273,9 +1171,9 @@ class ExploreTest {
         //Perform a study creation while USER_WITH_CASE_LIMIT_NOT_EXCEEDED has reached the defined case alert threshold, a message has been sent to him
         mockMvc.perform(post("/v1/explore/studies/" + STUDY1 + "/cases/" + CASE_UUID + "?description=desc&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID)
             .param("duplicateCase", "false")
-            .header("userId", USER_WITH_CASE_LIMIT_NOT_EXCEEDED)
             .param("caseFormat", "XIIDM")
             .contentType(APPLICATION_JSON)
+            .with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
         ).andExpect(status().isOk());
 
         message = output.receive(TIMEOUT, USER_MESSAGE_DESTINATION);
@@ -1295,7 +1193,6 @@ class ExploreTest {
         elementAttributes.setElementName(STUDY1);
         mockMvc.perform(put("/v1/explore/elements/{id}",
                 ELEMENT_UUID)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1307,7 +1204,6 @@ class ExploreTest {
         elementAttributes.setElementName("new Name");
         mockMvc.perform(put("/v1/explore/elements/{id}",
                 ELEMENT_COMPOSITE_UUID)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1319,42 +1215,26 @@ class ExploreTest {
         elementAttributes.setElementName(STUDY1);
         mockMvc.perform(put("/v1/explore/elements?targetDirectoryUuid={parentDirectoryUuid}",
                 PARENT_DIRECTORY_UUID)
-                .header("userId", USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(List.of(ELEMENT_UUID, PUBLIC_STUDY_UUID)))
         ).andExpect(status().isOk());
     }
 
-    // TODO: not allowed user
     @Test
+    @WithMockUser(username = USER_NOT_ALLOWED)
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}",
-                FORBIDDEN_ELEMENT_UUID)
-                .header("userId", USER_NOT_ALLOWED)
+        mockMvc.perform(put("/v1/explore/elements/{id}", FORBIDDEN_ELEMENT_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isForbidden());
     }
 
     @Test
-    void testMoveDirectoryContainingNotOwnedSubelements() throws Exception {
-        ElementAttributes elementAttributes = new ElementAttributes();
-        elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements?targetDirectoryUuid={parentDirectoryUuid}",
-            PARENT_DIRECTORY_UUID)
-            .header("userId", USER1)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsString(List.of(DIRECTORY_NOT_OWNED_SUBELEMENT_UUID)))
-        ).andExpect(status().isConflict());
-    }
-
-    @Test
     void testGetRootDirectories(final MockWebServer server) throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/directories/root-directories")
-                        .header("userId", USER1)
-                ).andExpect(status().isOk())
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/root-directories"))
+                .andExpect(status().isOk())
                 .andReturn();
         assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
 
@@ -1363,9 +1243,9 @@ class ExploreTest {
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateRootDirectories(final MockWebServer server) throws Exception {
         MvcResult result = mockMvc.perform(post("/v1/explore/directories/root-directories")
-                        .header("userId", USER1)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(GENERIC_STRING)
                 ).andExpect(status().isOk())
@@ -1378,9 +1258,8 @@ class ExploreTest {
 
     @Test
     void testGetDirectoryElements(final MockWebServer server) throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID)
-                        .header("userId", USER1)
-                ).andExpect(status().isOk())
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk())
                 .andReturn();
         assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
 
@@ -1389,26 +1268,25 @@ class ExploreTest {
     }
 
     @Test
+    @WithMockUser(username = USER1)
     void testCreateDirectory(final MockWebServer server) throws Exception {
         String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
         MvcResult result = mockMvc.perform(post("/v1/explore/directories/{directoryUuid}/directories", PARENT_DIRECTORY_UUID2)
-                        .header("userId", USER1)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(newDirectoryAttributesAsString)
                 ).andExpect(status().isOk())
                 .andReturn();
         assertEquals(newDirectoryAttributesAsString, result.getResponse().getContentAsString());
 
-        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?allowNewName=false")
                 && r.getBody().equals(newDirectoryAttributesAsString)));
     }
 
     @Test
     void testGetElementPath(final MockWebServer server) throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/{elementUuid}/path", PARENT_DIRECTORY_UUID2)
-                        .header("userId", USER1)
-                ).andExpect(status().isOk())
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/{elementUuid}/path", PARENT_DIRECTORY_UUID2))
+                .andExpect(status().isOk())
                 .andReturn();
         assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
 
@@ -1421,9 +1299,8 @@ class ExploreTest {
         mockMvc.perform(head("/v1/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}",
                         PARENT_DIRECTORY_UUID2,
                         "elementName",
-                        "type")
-                        .header("userId", USER1)
-                ).andExpect(status().isOk());
+                        "type"))
+                .andExpect(status().isOk());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")));
@@ -1431,9 +1308,8 @@ class ExploreTest {
 
     @Test
     void testGetElementNameCandidate(final MockWebServer server) throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elementName/newNameCandidate?type=type", PARENT_DIRECTORY_UUID2)
-                        .header("userId", USER1)
-                ).andExpect(status().isOk())
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elementName/newNameCandidate?type=type", PARENT_DIRECTORY_UUID2))
+                .andExpect(status().isOk())
                 .andReturn();
         assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
 
@@ -1443,9 +1319,8 @@ class ExploreTest {
 
     @Test
     void testSearchElement(final MockWebServer server) throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/indexation-infos?userInput=userInput&directoryUuid=directoryUuid")
-                        .header("userId", USER1)
-                ).andExpect(status().isOk())
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/indexation-infos?userInput=userInput&directoryUuid=directoryUuid"))
+                .andExpect(status().isOk())
                 .andReturn();
         assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
 
@@ -1453,46 +1328,9 @@ class ExploreTest {
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/indexation-infos")));
     }
 
-    // TODO: not admin user
-    @Test
-    void testHasRights(final MockWebServer server) throws Exception {
-        // test read access allowed
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=READ")
-                .header("userId", NOT_ADMIN_USER)
-            ).andExpect(status().isOk());
-
-        var requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
-
-        // test read access forbidden
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=READ")
-            .header("userId", NOT_ADMIN_USER)
-        ).andExpect(status().isForbidden());
-
-        requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=READ&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
-
-        // test write access forbidden
-        mockMvc.perform(head("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "?permission=WRITE")
-            .header("userId", NOT_ADMIN_USER)
-        ).andExpect(status().isForbidden());
-
-        requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_FORBIDDEN + "&targetDirectoryUuid")));
-
-        // test write access allowed (admin)
-        mockMvc.perform(get("/v1/explore/elements/" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "?permission=WRITE")
-            .header("userId", USER1)
-        ).andExpect(status().isOk());
-
-        requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("v1/elements/authorized?accessType=WRITE&ids=" + TEST_ACCESS_DIRECTORY_UUID_ALLOWED + "&targetDirectoryUuid")));
-    }
-
     @Test
     void testGetProcessConfigsMetadata() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + PROCESS_CONFIG_UUID)
-                .header("userId", USER1))
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + PROCESS_CONFIG_UUID))
             .andExpect(status().isOk())
             .andReturn();
         String response = result.getResponse().getContentAsString();
@@ -1506,8 +1344,6 @@ class ExploreTest {
     @Test
     @UsesWireMock
     void testDeleteElementsFromDirectoryRevertsStatusWhenElementDeletionFails() throws Exception {
-        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/elements/authorized"))
-                .willReturn(WireMock.ok()));
         wireMockServer.stubFor(WireMock.get(WireMock.urlEqualTo("/v1/elements/" + PRIVATE_STUDY_UUID))
                 .willReturn(WireMock.ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -1537,14 +1373,5 @@ class ExploreTest {
         wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID)));
         wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + PRIVATE_STUDY_UUID + "&parentDirectoryUuid=.*")));
         wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=CREATED")));
-    }
-
-    // TODO: on doit verify les checkPermissions ??? ou le SecurityTest suffit ???
-    private void checkAuthorizationRequestDoneForDuplication(final MockWebServer server, UUID readElementUuid, UUID writeElementUuid) {
-        // check that we called 2 times the directory server to checks authorization and 1 time the server to duplicate
-        // check read authorization on the duplicated element and write authorization on the target directory
-        var requests = TestUtils.getRequestsWithBodyDone(3, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + readElementUuid + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + writeElementUuid + "&targetDirectoryUuid")));
     }
 }

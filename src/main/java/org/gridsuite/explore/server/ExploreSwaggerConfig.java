@@ -6,8 +6,11 @@
  */
 package org.gridsuite.explore.server;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,6 +26,27 @@ public class ExploreSwaggerConfig {
                 .info(new Info()
                         .title("Explore API")
                         .description("This is the documentation of the Explore REST API")
-                        .version(ExploreApi.API_VERSION));
+                        .version(ExploreApi.API_VERSION))
+                .components(new Components()
+                        .addSecuritySchemes(
+                                "userId",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.APIKEY)
+                                        .in(SecurityScheme.In.HEADER)
+                                        .name("userId")
+                        )
+                        .addSecuritySchemes(
+                                "roles",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.APIKEY)
+                                        .in(SecurityScheme.In.HEADER)
+                                        .name("roles")
+                        )
+                )
+                .addSecurityItem(
+                        new SecurityRequirement()
+                                .addList("userId")
+                                .addList("roles")
+                );
     }
 }

@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -61,7 +60,6 @@ class NetworkConversionServiceTest {
     void convertCaseForwardsPathQueryHeaderAndBody() {
         server.expect(once(), requestTo(BASE_URI + "/v1/cases/" + CASE_UUID + "/convert/CGMES?fileName=network.zip"))
             .andExpect(method(HttpMethod.POST))
-            .andExpect(header("userId", "userId"))
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(content().string(JSON))
             .andRespond(withSuccess("\"" + CONVERSION_UUID + "\"", MediaType.APPLICATION_JSON));

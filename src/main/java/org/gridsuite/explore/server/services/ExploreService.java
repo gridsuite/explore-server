@@ -240,7 +240,6 @@ public class ExploreService {
     }
 
     public void updateFilter(UUID id, String filter, String name, String description) {
-        // check if the  user have the right to update the filter
         filterService.updateFilter(id, filter);
 
         ElementAttributes elementAttributes = new ElementAttributes();
@@ -252,7 +251,6 @@ public class ExploreService {
     }
 
     public void updateContingencyList(UUID id, String content, String name, String description, ContingencyListType contingencyListType) {
-        // check if the  user have the right to update the contingency
         contingencyListService.updateContingencyList(id, content, getProperPath(contingencyListType));
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setDescription(description);

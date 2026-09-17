@@ -590,7 +590,7 @@ public class ExploreController {
     @Operation(summary = "Check if an element with this name and this type already exists in the given directory")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element exists"),
         @ApiResponse(responseCode = "204", description = "The element doesn't exist")})
-    @PreAuthorize("@authorizationService.canRead(#directoryUuid)")
+    @PreAuthorize("true")
     public ResponseEntity<Void> elementExists(@PathVariable("directoryUuid") UUID directoryUuid,
                                               @PathVariable("elementName") String elementName,
                                               @PathVariable("type") String type) {

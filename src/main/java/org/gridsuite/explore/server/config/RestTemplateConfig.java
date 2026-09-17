@@ -71,8 +71,8 @@ public class RestTemplateConfig {
                                             ClientHttpRequestExecution execution) throws IOException {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            if (authentication != null && authentication.getPrincipal() instanceof String userId) {
-                request.getHeaders().set(USER_ID_HEADER, userId);
+            if (authentication != null) {
+                request.getHeaders().set(USER_ID_HEADER, authentication.getName());
 
                 String roles = authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
