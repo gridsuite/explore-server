@@ -60,7 +60,6 @@ class SingleLineDiagramTest {
 
     private static final String BASE_URL = "/v1/explore/diagram-config";
     private static final String USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL = "/v1/network-area-diagram/config";
-    private static final String USER1 = "user1";
     private static final UUID NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID DUPLICATE_NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
@@ -94,8 +93,7 @@ class SingleLineDiagramTest {
                     .param("description", "the config description")
                     .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content("{\"depth\": 1}")
-                    .header("userId", USER1))
+                    .content("{\"depth\": 1}"))
                     .andExpect(status().isOk())
                     .andReturn();
 
@@ -117,8 +115,7 @@ class SingleLineDiagramTest {
                     .param("type", "DIAGRAM_CONFIG")
                     .param("description", "the config description")
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content("{\"depth\": 1}")
-                    .header("userId", USER1))
+                    .content("{\"depth\": 1}"))
                     .andExpect(status().isNoContent())
                     .andReturn();
 
@@ -135,8 +132,7 @@ class SingleLineDiagramTest {
                 )).getId();
 
         mockMvc.perform(post(BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate")
-                    .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                    .header("userId", USER1))
+                    .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                     .andExpect(status().isOk())
                     .andReturn();
 

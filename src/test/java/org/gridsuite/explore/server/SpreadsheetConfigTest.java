@@ -134,8 +134,7 @@ class SpreadsheetConfigTest {
                 .content(spreadsheetConfigJson)
                 .param("name", CONFIG_NAME)
                 .param("description", "comment")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID));
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
         perform.andExpect(status().isCreated());
     }
 
@@ -145,16 +144,14 @@ class SpreadsheetConfigTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
-                        .param("description", "description")
-                        .header("userId", USER_ID))
+                        .param("description", "description"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void testDuplicateSpreadsheetConfig() throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + CONFIG_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
     }
 
@@ -172,8 +169,7 @@ class SpreadsheetConfigTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -190,8 +186,7 @@ class SpreadsheetConfigTest {
         mockMvc.perform(put(BASE_URL + "/{id}", CONFIG_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigJson)
-                        .param("name", CONFIG_NAME)
-                        .header("userId", USER_ID))
+                        .param("name", CONFIG_NAME))
                 .andExpect(status().isBadRequest());
     }
 
@@ -207,16 +202,14 @@ class SpreadsheetConfigTest {
 
         mockMvc.perform(post(BASE_URL + "/duplicate")
                         .param("duplicateFrom", CONFIG_UUID.toString())
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isMethodNotAllowed());
     }
 
     @Test
     void testGetSpreadsheetConfigMetadata() throws Exception {
         mockMvc.perform(get("/v1/explore/elements/metadata")
-                        .param("ids", CONFIG_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("ids", CONFIG_UUID.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].specificMetadata.id").value(CONFIG_UUID.toString()))

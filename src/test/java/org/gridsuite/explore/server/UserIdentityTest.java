@@ -127,8 +127,7 @@ class UserIdentityTest {
         MvcResult mvcResult;
         String usersInfos;
         mvcResult = mockMvc.perform(get(BASE_URL)
-                    .param("ids", ELEMENT_UUID.toString())
-                    .header("userId", SUB))
+                    .param("ids", ELEMENT_UUID.toString()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -143,8 +142,7 @@ class UserIdentityTest {
     @Test
     void testGetSubIdentityNotFoundElement() throws Exception {
         mockMvc.perform(get(BASE_URL)
-                        .param("ids", ELEMENT_NOT_FOUND_UUID.toString())
-                        .header("userId", UNKNOWN_SUB))
+                        .param("ids", ELEMENT_NOT_FOUND_UUID.toString()))
                         .andExpect(status().isInternalServerError());
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null);
@@ -156,12 +154,9 @@ class UserIdentityTest {
                 .willReturn(WireMock.serverError())).getId();
 
         mockMvc.perform(get(BASE_URL)
-                .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString())
-                .header("userId", EXCEPTION_SUB))
+                .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> assertInstanceOf(HttpServerErrorException.class, result.getResolvedException()));
-
-        // TODO: verify ici
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);

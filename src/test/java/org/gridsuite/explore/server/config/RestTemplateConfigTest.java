@@ -6,7 +6,6 @@
  */
 package org.gridsuite.explore.server.config;
 
-import org.gridsuite.explore.server.UserAuthentication;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -22,6 +24,10 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 
@@ -145,8 +151,16 @@ class RestTemplateConfigTest {
         mockServer.verify();
     }
 
-    void setAuthentication(String userId, String roles) {
-        UserAuthentication userAuthentication = new UserAuthentication(userId, roles);
-        SecurityContextHolder.getContext().setAuthentication(userAuthentication);
+    void setAuthentication(String userId, String rolesHeader) {
+        List<GrantedAuthority> authorities = Collections.emptyList();
+        if (rolesHeader != null && !rolesHeader.isEmpty()) {
+            authorities = Arrays.stream(rolesHeader.split("\\|"))
+                    .map(String::trim)
+                    .filter(role -> !role.isEmpty())
+                    .map(SimpleGrantedAuthority::new)
+                    .map(GrantedAuthority.class::cast)
+                    .toList();
+        }
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userId, null, authorities));
     }
 }

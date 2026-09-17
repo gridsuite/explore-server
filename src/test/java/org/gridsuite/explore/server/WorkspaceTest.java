@@ -67,7 +67,6 @@ class WorkspaceTest {
     private static final UUID WORKSPACE_UUID = UUID.randomUUID();
     private static final UUID SOURCE_WORKSPACE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
-    private static final String USER_ID = "testUser";
     private static final String WORKSPACE_NAME = "Test Workspace";
 
     @BeforeEach
@@ -102,8 +101,7 @@ class WorkspaceTest {
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
                         .param("description", "Test workspace description")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
         verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
@@ -115,8 +113,7 @@ class WorkspaceTest {
         mockMvc.perform(put(BASE_URL + "/{id}", WORKSPACE_UUID)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
-                        .param("description", "Updated description")
-                        .header("userId", USER_ID))
+                        .param("description", "Updated description"))
                 .andExpect(status().isNoContent());
 
         verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
@@ -125,8 +122,7 @@ class WorkspaceTest {
     @Test
     void testDuplicateWorkspace() throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
@@ -134,8 +130,7 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspaceInSameDirectory() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
-                        .header("userId", USER_ID))
+        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
                 .andExpect(status().isCreated());
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
@@ -151,8 +146,7 @@ class WorkspaceTest {
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
                         .param("description", "Test workspace description")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -165,8 +159,7 @@ class WorkspaceTest {
         mockMvc.perform(put(BASE_URL + "/{id}", WORKSPACE_UUID)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
-                        .param("description", "Updated description")
-                        .header("userId", USER_ID))
+                        .param("description", "Updated description"))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -177,8 +170,7 @@ class WorkspaceTest {
                 .willReturn(WireMock.serverError()));
 
         mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isInternalServerError());
     }
 }

@@ -76,14 +76,12 @@ class DynamicMappingTest {
     private static final String QUERY_PARAM_NAME = "name";
     private static final String QUERY_PARAM_DESCRIPTION = "description";
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
-    private static final String QUERY_PARAM_USER_ID = "userId";
 
     private static final UUID ID = UUID.randomUUID();
     private static final UUID NEW_ID = UUID.randomUUID();
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";
     private static final UUID DIRECTORY_ID = UUID.randomUUID();
-    private static final String USER_ID = "userId";
     private static final String DYNAMIC_MAPPING = "dynamicMapping";
 
     @BeforeEach
@@ -113,7 +111,6 @@ class DynamicMappingTest {
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isOk());
@@ -133,7 +130,6 @@ class DynamicMappingTest {
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isInternalServerError());
@@ -151,7 +147,6 @@ class DynamicMappingTest {
         mockMvc.perform(put(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID)
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isOk());
@@ -169,7 +164,6 @@ class DynamicMappingTest {
         mockMvc.perform(put(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID)
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(DYNAMIC_MAPPING))
             .andExpect(status().isInternalServerError());
@@ -187,8 +181,7 @@ class DynamicMappingTest {
             .getId();
 
         mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID + "/duplicate")
-                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID))
+                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString()))
             .andExpect(status().isOk());
 
         verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, CREATED);
@@ -202,8 +195,7 @@ class DynamicMappingTest {
             .getId();
 
         mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID + "/duplicate")
-                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID))
+                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString()))
             .andExpect(status().isInternalServerError());
 
         verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(DirectoryElementStatus.class));

@@ -74,14 +74,12 @@ class MonitorTest {
     private static final String QUERY_PARAM_NAME = "name";
     private static final String QUERY_PARAM_DESCRIPTION = "description";
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
-    private static final String QUERY_PARAM_USER_ID = "userId";
 
     private static final UUID ID = UUID.randomUUID();
     private static final UUID NEW_ID = UUID.randomUUID();
     private static final String NAME = "name";
     private static final String DESCRIPTION = "description";
     private static final UUID DIRECTORY_ID = UUID.randomUUID();
-    private static final String USER_ID = "userId";
     private static final String PROCESS_CONFIG = "processConfig";
 
     @BeforeEach
@@ -111,7 +109,6 @@ class MonitorTest {
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(PROCESS_CONFIG))
             .andExpect(status().isOk())
@@ -134,7 +131,6 @@ class MonitorTest {
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
@@ -152,7 +148,6 @@ class MonitorTest {
         mockMvc.perform(put(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID)
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(PROCESS_CONFIG))
             .andExpect(status().isOk());
@@ -170,7 +165,6 @@ class MonitorTest {
         mockMvc.perform(put(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID)
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
-                .header(QUERY_PARAM_USER_ID, USER_ID)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
@@ -188,8 +182,7 @@ class MonitorTest {
             .getId();
 
         String result = mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
-                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID))
+                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString()))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
         UUID duplicatedProcessConfigId = objectMapper.readValue(result, UUID.class);
@@ -206,8 +199,7 @@ class MonitorTest {
             .getId();
 
         mockMvc.perform(post(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID + "/duplicate")
-                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString())
-                .header(QUERY_PARAM_USER_ID, USER_ID))
+                .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString()))
             .andExpect(status().isInternalServerError());
 
         verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(DirectoryElementStatus.class));

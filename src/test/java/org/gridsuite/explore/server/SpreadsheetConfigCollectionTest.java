@@ -106,10 +106,6 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?ids=.*&status=.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
-                    return new MockResponse(200);
                 }
                 return new MockResponse(404);
             }
@@ -123,8 +119,7 @@ class SpreadsheetConfigCollectionTest {
                 .content(spreadsheetConfigCollectionJson)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID));
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
         perform.andExpect(status().isCreated());
     }
 
@@ -136,8 +131,7 @@ class SpreadsheetConfigCollectionTest {
                 .content(configIds)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID));
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
         perform.andExpect(status().isCreated());
     }
 
@@ -148,8 +142,7 @@ class SpreadsheetConfigCollectionTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(configIds)
                 .param("name", COLLECTION_NAME)
-                .param("description", "Test Description")
-                .header("userId", USER_ID));
+                .param("description", "Test Description"));
         perform.andExpect(status().isNoContent());
     }
 
@@ -159,16 +152,14 @@ class SpreadsheetConfigCollectionTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
-                        .param("description", "Test Description")
-                        .header("userId", USER_ID))
+                        .param("description", "Test Description"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void testDuplicateSpreadsheetConfigCollection(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
         // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
@@ -177,8 +168,7 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollectionInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
-                        .header("userId", USER_ID))
+        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate"))
                 .andExpect(status().isCreated());
 
         // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
@@ -188,8 +178,7 @@ class SpreadsheetConfigCollectionTest {
     @Test
     void testDuplicateSpreadsheetConfigCollectionWithInvalidUUID() throws Exception {
         mockMvc.perform(post(BASE_URL + "/invalid-uuid/duplicate")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID))
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
             .andExpect(status().isInternalServerError());
     }
 
@@ -207,8 +196,7 @@ class SpreadsheetConfigCollectionTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -225,8 +213,7 @@ class SpreadsheetConfigCollectionTest {
         mockMvc.perform(put(BASE_URL + "/{id}", COLLECTION_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
-                        .param("name", COLLECTION_NAME)
-                        .header("userId", USER_ID))
+                        .param("name", COLLECTION_NAME))
                 .andExpect(status().isBadRequest());
     }
 
@@ -242,15 +229,13 @@ class SpreadsheetConfigCollectionTest {
 
         mockMvc.perform(post(BASE_URL + "/duplicate")
                         .param("duplicateFrom", COLLECTION_UUID.toString())
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isMethodNotAllowed());
     }
 
     @Test
     void testDeleteSpreadsheetConfigCollection() throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{id}", COLLECTION_UUID)
-                        .header("userId", USER_ID))
+        mockMvc.perform(delete("/v1/explore/elements/{id}", COLLECTION_UUID))
                 .andExpect(status().isOk());
     }
 }

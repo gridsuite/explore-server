@@ -68,7 +68,6 @@ class ReferencingElementInfosTest {
 
     private WireMockServer wireMockServer;
 
-    private static final String USER_ID = "userId";
     private static final String OWNER_SUB = "owner01";
     private static final String MODIFIER_SUB = "modifier01";
     private static final Instant LAST_MODIFICATION_DATE = Instant.parse("2026-07-16T10:15:30.00Z");
@@ -190,8 +189,7 @@ class ReferencingElementInfosTest {
     }
 
     private List<ReferencingElementInfos> getReferencingElementInfos() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/referencing-element-infos", SHARED_ELEMENT_UUID)
-                        .header("userId", USER_ID))
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/referencing-element-infos", SHARED_ELEMENT_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
         return objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() { });
