@@ -8,13 +8,16 @@ package org.gridsuite.explore.server.services;
 
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.NodeInfos;
+import org.gridsuite.explore.server.dto.TreeExportInfos;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -101,5 +104,14 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, Void.class);
+    }
+
+    public void importStudy(TreeExportInfos treeExportInfos) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import").toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<TreeExportInfos> request = new HttpEntity<>(treeExportInfos, headers);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
 }

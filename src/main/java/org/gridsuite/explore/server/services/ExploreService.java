@@ -146,7 +146,7 @@ public class ExploreService {
     }
 
     public void createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
-        UUID uuid = caseService.importCase(caseFile);
+        UUID uuid = caseService.importMultipartCase(caseFile);
         ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
     }
@@ -583,11 +583,11 @@ public class ExploreService {
         return newDynamicMappingUuid;
     }
 
-    private void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, Consumer<UUID> rollback) {
+    void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, Consumer<UUID> rollback) {
         executeWithRollback(() -> directoryService.createElement(elementAttributes, parentDirectoryUuid), elementAttributes.getElementUuid(), rollback);
     }
 
-    private void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, Consumer<UUID> rollback) {
+    void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, Consumer<UUID> rollback) {
         executeWithRollback(() -> directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, true), elementAttributes.getElementUuid(), rollback);
     }
 

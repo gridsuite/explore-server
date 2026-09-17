@@ -161,7 +161,7 @@ class UserIdentityTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> assertInstanceOf(HttpServerErrorException.class, result.getResolvedException()));
 
-        // TODO: verify here
+        // TODO: verify ici
 
         verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);
