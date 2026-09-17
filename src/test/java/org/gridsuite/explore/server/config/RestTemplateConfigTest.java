@@ -14,20 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.RequestContextHolder;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 
@@ -61,15 +54,13 @@ class RestTemplateConfigTest {
 
     @AfterEach
     void tearDown() {
-        // Clean up the RequestContextHolder after each test
-        RequestContextHolder.resetRequestAttributes(); // ça sert à quoi ??
+        // Clean up the SecurityContextHolder after each test
         SecurityContextHolder.clearContext();
     }
 
     @Test
+    @WithMockUser(username = TEST_USER_ID, authorities = TEST_ROLES)
     void testRoleAndUserIdHeaderIsPropagated() {
-        setAuthentication(TEST_USER_ID, TEST_ROLES);
-
         // Setup mock response for the outgoing request
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
@@ -108,9 +99,8 @@ class RestTemplateConfigTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_USER_ID, roles = {})
     void testEmptyRoleHeaderNotPropagated() {
-        setAuthentication(TEST_USER_ID, "");
-
         // Setup mock - we don't expect the roles header to be forwarded if empty
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
@@ -126,18 +116,5 @@ class RestTemplateConfigTest {
 
         // Verify
         mockServer.verify();
-    }
-
-    void setAuthentication(String userId, String rolesHeader) {
-        List<GrantedAuthority> authorities = Collections.emptyList();
-        if (rolesHeader != null && !rolesHeader.isEmpty()) {
-            authorities = Arrays.stream(rolesHeader.split("\\|"))
-                    .map(String::trim)
-                    .filter(role -> !role.isEmpty())
-                    .map(SimpleGrantedAuthority::new)
-                    .map(GrantedAuthority.class::cast)
-                    .toList();
-        }
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userId, null, authorities));
     }
 }

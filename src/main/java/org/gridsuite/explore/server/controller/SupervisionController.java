@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
 import org.gridsuite.explore.server.services.SupervisionService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping(value = "/" + ExploreApi.API_VERSION + "/supervision")
 @Tag(name = "Explore server - Supervision")
-@PreAuthorize("hasRole('ADMIN')")
 public class SupervisionController {
     private final SupervisionService supervisionService;
 
