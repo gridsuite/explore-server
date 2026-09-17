@@ -431,9 +431,11 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public void checkPermission(List<UUID> elementUuids, UUID targetDirectoryUuid, PermissionType permissionType, boolean recursiveCheck) {
+        String ids = elementUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
+
         String path = UriComponentsBuilder.fromPath(ELEMENTS_SERVER_ROOT_PATH + "/authorized")
                 .queryParam(PARAM_ACCESS_TYPE, permissionType)
-                .queryParam(PARAM_IDS, elementUuids)
+                .queryParam(PARAM_IDS, ids)
                 .queryParam(PARAM_TARGET_DIRECTORY_UUID, targetDirectoryUuid)
                 .queryParam(PARAM_RECURSIVE_CHECK, recursiveCheck)
                 .buildAndExpand()
