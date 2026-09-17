@@ -23,8 +23,12 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 public class SpringSecurityConfig {
 
     @Bean
+    @SuppressWarnings("java:S4502") // CSRF is not applicable to this stateless REST API: authentication is not based on browser cookies
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // CSRF protection is disabled because this application exposes a REST API
+            // and does not use cookie-based authentication. Requests are authenticated
+            // explicitly rather than relying on credentials automatically sent by the browser
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()

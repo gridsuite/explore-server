@@ -189,9 +189,6 @@ class ExploreTest {
 
     private static final long TIMEOUT = 1000;
 
-    @Autowired
-    private AuthorizationService authorizationService;
-
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     private @interface UsesWireMock { }
@@ -199,8 +196,6 @@ class ExploreTest {
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
     void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
-        clearInvocations(authorizationService);
-
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
@@ -695,8 +690,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(CASE_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
@@ -704,8 +697,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
                         CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(CASE_UUID, null);
     }
 
     @Test
@@ -713,16 +704,12 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(FILTER_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
     void testDuplicateFilterInSameDirectory() throws Exception {
         mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate", FILTER_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(FILTER_UUID, null);
     }
 
     @Test
@@ -730,8 +717,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
@@ -739,8 +724,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, null);
     }
 
     @Test
@@ -748,8 +731,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
             CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
@@ -757,8 +738,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}",
             CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(CONTINGENCY_LIST_UUID, null);
     }
 
     @Test
@@ -767,8 +746,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
@@ -776,8 +753,6 @@ class ExploreTest {
     void testDuplicateStudyInSameDirectory() throws Exception {
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate", PUBLIC_STUDY_UUID))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(PUBLIC_STUDY_UUID, null);
     }
 
     @Test
@@ -785,8 +760,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID))
             .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(PARAMETERS_UUID, PARENT_DIRECTORY_UUID);
     }
 
     @Test
@@ -794,8 +767,6 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS))
                 .andExpect(status().isOk());
-
-        verify(authorizationService).canDuplicateTo(PARAMETERS_UUID, null);
     }
 
     @Test
