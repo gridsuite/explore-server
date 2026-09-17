@@ -20,6 +20,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ExploreSwaggerConfig {
 
+    private static final String USER_ID = "userId";
+    private static final String ROLES = "roles";
+
     @Bean
     public OpenAPI createOpenApi() {
         return new OpenAPI()
@@ -29,24 +32,24 @@ public class ExploreSwaggerConfig {
                         .version(ExploreApi.API_VERSION))
                 .components(new Components()
                         .addSecuritySchemes(
-                                "userId",
+                                USER_ID,
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.APIKEY)
                                         .in(SecurityScheme.In.HEADER)
-                                        .name("userId")
+                                        .name(USER_ID)
                         )
                         .addSecuritySchemes(
-                                "roles",
+                                ROLES,
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.APIKEY)
                                         .in(SecurityScheme.In.HEADER)
-                                        .name("roles")
+                                        .name(ROLES)
                         )
                 )
                 .addSecurityItem(
                         new SecurityRequirement()
-                                .addList("userId")
-                                .addList("roles")
+                                .addList(USER_ID)
+                                .addList(ROLES)
                 );
     }
 }

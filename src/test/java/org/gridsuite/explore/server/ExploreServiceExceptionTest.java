@@ -73,7 +73,7 @@ class ExploreServiceExceptionTest {
         message = assertThrows(RuntimeException.class, () -> exploreService.duplicateFilter(sourceFilterId, targetDirectoryId))
                 .getMessage();
         verify(filterService, times(1)).duplicateFilter(any());
-        verify(filterService, times(1)).delete(eq(duplicatedFilterId));
+        verify(filterService, times(1)).delete(duplicatedFilterId);
         assertEquals(duplicateErrorMessage, message);
     }
 
@@ -89,7 +89,7 @@ class ExploreServiceExceptionTest {
         String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(modificationUuids, "name", "description", parentDirectoryUuid))
                 .getMessage();
         verify(networkModificationService, times(1)).createCompositeModification(any(), any());
-        verify(networkModificationService, times(1)).delete(eq(createdCompositeModificationId));
+        verify(networkModificationService, times(1)).delete(createdCompositeModificationId);
         assertEquals(creatingErrorMessage, message);
     }
 

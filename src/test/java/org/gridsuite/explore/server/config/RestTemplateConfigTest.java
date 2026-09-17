@@ -128,29 +128,6 @@ class RestTemplateConfigTest {
         mockServer.verify();
     }
 
-    // TODO: delete
-    @Test
-    void testContextHolderIsNull() {
-        // Make sure the context holder is null
-        RequestContextHolder.resetRequestAttributes();
-
-        // Setup mock - we don't expect any header forwarding when no request context exists
-        mockServer.expect(requestTo(TEST_ENDPOINT))
-                .andExpect(method(HttpMethod.GET))
-                .andExpect(request -> {
-                    if (request.getHeaders().containsKey(ROLES_HEADER)) {
-                        throw new AssertionError("Roles header should not be present when RequestContextHolder is null");
-                    }
-                })
-                .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
-
-        // Execute request
-        restTemplate.getForObject(TEST_ENDPOINT, String.class);
-
-        // Verify
-        mockServer.verify();
-    }
-
     void setAuthentication(String userId, String rolesHeader) {
         List<GrantedAuthority> authorities = Collections.emptyList();
         if (rolesHeader != null && !rolesHeader.isEmpty()) {

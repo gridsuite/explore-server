@@ -57,8 +57,8 @@ public class ElementAttributes {
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description) {
-        String owner = SecurityContextHolder.getContext().getAuthentication().getName();
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null);
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        this(elementUuid, elementName, type, userId, subdirectoriesCount, description, null, null, null, null, null);
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, Map<String, Object> specificMetadata) {
@@ -66,8 +66,8 @@ public class ElementAttributes {
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description, DirectoryElementStatus status) {
-        String owner = SecurityContextHolder.getContext().getAuthentication().getName();
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, status, null, null);
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        this(elementUuid, elementName, type, userId, subdirectoriesCount, description, null, null, status, null, null);
     }
 
     // DTO in directory-server has another property : creationDate
