@@ -62,7 +62,7 @@ class AuthorizationServiceTest {
         boolean result = authorizationService.canRead(elementUuids);
 
         assertThat(result).isTrue();
-        verify(directoryService).checkPermission( elementUuids, null, PermissionType.READ);
+        verify(directoryService).checkPermission(elementUuids, null, PermissionType.READ);
     }
 
     @Test
@@ -81,7 +81,7 @@ class AuthorizationServiceTest {
         boolean result = authorizationService.canWrite(ELEMENT_UUID);
 
         assertThat(result).isTrue();
-        verify(directoryService).checkPermission(List.of(ELEMENT_UUID),null, PermissionType.WRITE);
+        verify(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.WRITE);
     }
 
     @Test
@@ -100,7 +100,7 @@ class AuthorizationServiceTest {
         boolean result = authorizationService.canWrite(elementUuids);
 
         assertThat(result).isTrue();
-        verify(directoryService).checkPermission(elementUuids,null, PermissionType.WRITE);
+        verify(directoryService).checkPermission(elementUuids, null, PermissionType.WRITE);
     }
 
     @Test
@@ -119,8 +119,8 @@ class AuthorizationServiceTest {
         boolean result = authorizationService.canDuplicateTo(ELEMENT_UUID, TARGET_DIRECTORY_UUID);
 
         assertThat(result).isTrue();
-        verify(directoryService).checkPermission(List.of(ELEMENT_UUID),null, PermissionType.READ);
-        verify(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID),null,PermissionType.WRITE);
+        verify(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.READ);
+        verify(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
     }
 
     @Test
@@ -128,28 +128,28 @@ class AuthorizationServiceTest {
         boolean result = authorizationService.canDuplicateTo(ELEMENT_UUID, null);
 
         assertThat(result).isTrue();
-        verify(directoryService).checkPermission(List.of(ELEMENT_UUID),null, PermissionType.READ);
-        verify(directoryService).checkPermission(List.of(ELEMENT_UUID),null,PermissionType.WRITE);
+        verify(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.READ);
+        verify(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.WRITE);
     }
 
     @Test void shouldPropagateAccessDeniedExceptionWhenDuplicatingElementWithoutReadPermission() {
         doThrow(new AccessDeniedException("Access denied"))
-                .when(directoryService).checkPermission(List.of(ELEMENT_UUID),null, PermissionType.READ);
+                .when(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.READ);
 
         assertThatThrownBy(() -> authorizationService.canDuplicateTo(ELEMENT_UUID, TARGET_DIRECTORY_UUID))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(directoryService).checkPermission(List.of(ELEMENT_UUID),null,PermissionType.READ);
+        verify(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.READ);
         verify(directoryService, never()).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
     }
 
     @Test void shouldPropagateAccessDeniedExceptionWhenDuplicatingElementWithoutWritePermissionOnTargetDirectory() {
-        doNothing().when(directoryService).checkPermission(List.of(ELEMENT_UUID),null, PermissionType.READ);
+        doNothing().when(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.READ);
         doThrow(new AccessDeniedException("Access denied"))
                 .when(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
 
         assertThatThrownBy(() -> authorizationService.canDuplicateTo(ELEMENT_UUID, TARGET_DIRECTORY_UUID))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(directoryService).checkPermission(List.of(ELEMENT_UUID),null, PermissionType.READ);
+        verify(directoryService).checkPermission(List.of(ELEMENT_UUID), null, PermissionType.READ);
         verify(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
     }
 
@@ -160,7 +160,7 @@ class AuthorizationServiceTest {
         boolean result = authorizationService.canDuplicateTo(elementUuids, TARGET_DIRECTORY_UUID);
 
         assertThat(result).isTrue();
-        verify(directoryService).checkPermission(elementUuids,null, PermissionType.READ);
+        verify(directoryService).checkPermission(elementUuids, null, PermissionType.READ);
         verify(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
     }
 
@@ -168,24 +168,24 @@ class AuthorizationServiceTest {
         List<UUID> elementUuids = List.of(ELEMENT_UUID, ELEMENT_UUID_2);
 
         doThrow(new AccessDeniedException("Access denied"))
-                .when(directoryService).checkPermission(elementUuids,null, PermissionType.READ);
+                .when(directoryService).checkPermission(elementUuids, null, PermissionType.READ);
 
         assertThatThrownBy(() -> authorizationService.canDuplicateTo(elementUuids, TARGET_DIRECTORY_UUID))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(directoryService).checkPermission(elementUuids,null, PermissionType.READ);
+        verify(directoryService).checkPermission(elementUuids, null, PermissionType.READ);
         verify(directoryService, never()).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
     }
 
     @Test void shouldPropagateAccessDeniedExceptionWhenDuplicatingElementsWithoutWritePermissionOnTargetDirectory() {
         List<UUID> elementUuids = List.of(ELEMENT_UUID, ELEMENT_UUID_2);
 
-        doNothing().when(directoryService).checkPermission(elementUuids,null, PermissionType.READ);
+        doNothing().when(directoryService).checkPermission(elementUuids, null, PermissionType.READ);
         doThrow(new AccessDeniedException("Access denied"))
                 .when(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
 
         assertThatThrownBy(() -> authorizationService.canDuplicateTo(elementUuids, TARGET_DIRECTORY_UUID))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(directoryService).checkPermission(elementUuids,null, PermissionType.READ);
+        verify(directoryService).checkPermission(elementUuids, null, PermissionType.READ);
         verify(directoryService).checkPermission(List.of(TARGET_DIRECTORY_UUID), null, PermissionType.WRITE);
     }
 
