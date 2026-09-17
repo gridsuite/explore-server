@@ -53,8 +53,10 @@ public class StudyService implements IDirectoryElementsService {
             uriComponentsBuilder.queryParam("firstRootNetworkName", firstRootNetworkName);
         }
         String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(importParams), Void.class);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(importParams, headers), Void.class);
     }
 
     public UUID duplicateStudy(UUID studyId) {
@@ -62,8 +64,10 @@ public class StudyService implements IDirectoryElementsService {
                 "/studies/{uuid}/duplicate")
                 .buildAndExpand(studyId)
                 .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, UUID.class).getBody();
+        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
     }
 
     @Override
@@ -71,8 +75,10 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
 
     @Override

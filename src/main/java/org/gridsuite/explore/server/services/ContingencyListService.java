@@ -112,7 +112,9 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + element)
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(content), Void.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(content, headers), Void.class);
 
     }
 }

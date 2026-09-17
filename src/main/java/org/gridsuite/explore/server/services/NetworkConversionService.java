@@ -9,9 +9,7 @@ package org.gridsuite.explore.server.services;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -46,8 +44,12 @@ public class NetworkConversionService {
             .queryParam("fileName", fileName)
             .buildAndExpand(caseUuid, format)
             .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters), UUID.class).getBody();
+        return restTemplate
+                .exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class)
+                .getBody();
     }
 
     public ResponseEntity<Resource> downloadFile(UUID exportUuid) {
