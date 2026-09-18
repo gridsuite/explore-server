@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.WorkspaceService;
 import org.junit.jupiter.api.AfterEach;
@@ -22,12 +21,12 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -43,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AuthorizationTestConfiguration.class)
 class WorkspaceTest {
 
     @Autowired
@@ -67,7 +67,6 @@ class WorkspaceTest {
     private static final UUID WORKSPACE_UUID = UUID.randomUUID();
     private static final UUID SOURCE_WORKSPACE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
-    private static final String USER_ID = "testUser";
     private static final String WORKSPACE_NAME = "Test Workspace";
 
     @BeforeEach
@@ -102,12 +101,10 @@ class WorkspaceTest {
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
                         .param("description", "Test workspace description")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID), eq(USER_ID));
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE);
+        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
         assertEquals(WORKSPACE_UUID, elementAttributesCaptor.getValue().getElementUuid());
     }
 
@@ -116,33 +113,27 @@ class WorkspaceTest {
         mockMvc.perform(put(BASE_URL + "/{id}", WORKSPACE_UUID)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
-                        .param("description", "Updated description")
-                        .header("userId", USER_ID))
+                        .param("description", "Updated description"))
                 .andExpect(status().isNoContent());
 
-        verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture(), eq(USER_ID));
-        verify(directoryService, times(1)).checkPermission(List.of(WORKSPACE_UUID), null, USER_ID, PermissionType.WRITE);
+        verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
     }
 
     @Test
     void testDuplicateWorkspace() throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED, USER_ID);
-        verify(directoryService, times(1)).checkPermission(List.of(PARENT_DIRECTORY_UUID), null, USER_ID, PermissionType.WRITE);
-        verify(directoryService, times(1)).checkPermission(List.of(SOURCE_WORKSPACE_UUID), null, USER_ID, PermissionType.READ);
+        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
     }
 
     @Test
     void testDuplicateWorkspaceInSameDirectory() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
-                        .header("userId", USER_ID))
+        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED, USER_ID);
+        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
     }
 
     @Test
@@ -155,8 +146,7 @@ class WorkspaceTest {
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
                         .param("description", "Test workspace description")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -169,8 +159,7 @@ class WorkspaceTest {
         mockMvc.perform(put(BASE_URL + "/{id}", WORKSPACE_UUID)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
-                        .param("description", "Updated description")
-                        .header("userId", USER_ID))
+                        .param("description", "Updated description"))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -181,8 +170,7 @@ class WorkspaceTest {
                 .willReturn(WireMock.serverError()));
 
         mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isInternalServerError());
     }
 }

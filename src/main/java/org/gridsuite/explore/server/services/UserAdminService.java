@@ -11,6 +11,7 @@ import org.gridsuite.explore.server.dto.QuotaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -38,7 +39,8 @@ public class UserAdminService {
         this.restTemplate = restTemplate;
     }
 
-    public Map<QuotaType, Integer> getUserMaxQuota(String sub) {
+    public Map<QuotaType, Integer> getUserMaxQuota() {
+        String sub = SecurityContextHolder.getContext().getAuthentication().getName();
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_MAX_QUOTA_URI)
                 .buildAndExpand(sub).toUriString();
         return restTemplate.exchange(
@@ -49,8 +51,8 @@ public class UserAdminService {
                 }).getBody();
     }
 
-    public Integer getUserMaxAllowedCases(String sub) {
-        Map<QuotaType, Integer> userMaxQuotas = getUserMaxQuota(sub);
+    public Integer getUserMaxAllowedCases() {
+        Map<QuotaType, Integer> userMaxQuotas = getUserMaxQuota();
 
         return userMaxQuotas.getOrDefault(QuotaType.CASES, null);
     }

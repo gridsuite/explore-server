@@ -4,11 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server;
+package org.gridsuite.explore.server.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.jackson.JsonComponentModule;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -20,12 +19,17 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.stream.Collectors;
+
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -43,40 +47,38 @@ public class RestTemplateConfig {
             if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
                 restTemplate.getMessageConverters().set(i, mappingJackson2HttpMessageConverter());
             }
-
-            restTemplate.setInterceptors(
-                    Collections.singletonList(new RoleHeaderForwardingInterceptor())
-            );
         }
+
+        restTemplate.setInterceptors(
+            Collections.singletonList(new HeaderForwardingInterceptor())
+        );
 
         return restTemplate;
     }
 
     /**
-     * In our microservice architecture, user permissions (roles) must be preserved when
-     * one service calls another. This interceptor automatically forwards the "roles" header
+     * In our microservice architecture, user permissions (userId and roles) must be preserved when
+     * one service calls another. This interceptor automatically forwards the "userId" and "roles" headers
      * from incoming requests to any outgoing REST calls made with this RestTemplate.
      *
      * Without this interceptor, authorization information would be lost in service-to-service
      * communication.
      */
-    public static class RoleHeaderForwardingInterceptor implements ClientHttpRequestInterceptor {
-
-        private static final String ROLES_HEADER = "roles";
+    public static class HeaderForwardingInterceptor implements ClientHttpRequestInterceptor {
 
         @Override
         public ClientHttpResponse intercept(HttpRequest request, byte[] body,
                                             ClientHttpRequestExecution execution) throws IOException {
-            ServletRequestAttributes attributes =
-                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            // If we have a current request, copy its roles header to the outgoing request
-            if (attributes != null) {
-                HttpServletRequest currentRequest = attributes.getRequest();
-                String roles = currentRequest.getHeader(ROLES_HEADER);
+            if (authentication != null) {
+                request.getHeaders().set(HEADER_USER_ID, authentication.getName());
 
-                if (roles != null && !roles.isEmpty()) {
-                    request.getHeaders().set(ROLES_HEADER, roles);
+                String roles = authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.joining("|"));
+                if (!roles.isEmpty()) {
+                    request.getHeaders().set(HEADER_ROLES, roles);
                 }
             }
 

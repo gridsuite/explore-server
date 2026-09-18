@@ -61,29 +61,28 @@ public class StudyImportService {
      * @param archiveFile the zip archive file
      * @param studyName the name for the new study
      * @param description the description for the new study
-     * @param userId the user ID
      * @param parentDirectoryUuid the parent directory UUID
      */
-    public void importStudy(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+    public void importStudy(MultipartFile archiveFile, String studyName, String description, UUID parentDirectoryUuid) {
         Path tempDir = null;
         UUID createdDirectoryUuid = null;
         try {
             tempDir = extractArchiveToDisk(archiveFile);
 
-            ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
-            createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
+            ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, 0L, null);
+            createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid).getElementUuid();
 
             TreeExportInfos treeExportInfos = objectMapper.readValue(tempDir.resolve(TREE_EXPORT_FILE).toFile(), TreeExportInfos.class);
             if (treeExportInfos.getRootNetworks() == null || treeExportInfos.getRootNetworks().isEmpty()) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
 
-            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), createdDirectoryUuid, userId, description);
+            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), createdDirectoryUuid, description);
 
-            createStudy(treeExportInfos, studyName, createdDirectoryUuid, userId, description);
+            createStudy(treeExportInfos, studyName, createdDirectoryUuid, description);
         } catch (Exception e) {
             if (createdDirectoryUuid != null) {
-                directoryService.deleteElement(createdDirectoryUuid, userId);
+                directoryService.deleteElement(createdDirectoryUuid);
             }
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
@@ -121,22 +120,22 @@ public class StudyImportService {
         return tempDir;
     }
 
-    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID createdDirectoryUuid, String userId, String description) {
+    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID createdDirectoryUuid, String description) {
         treeExportInfos.getRootNetworks().forEach(rootNetwork -> {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
             UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
-            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, userId, 0L, description);
-            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, createdDirectoryUuid, userId, caseService::delete);
+            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, 0L, description);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, createdDirectoryUuid, caseService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
     }
 
-    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID createdDirectoryUuid, String userId, String description) {
+    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID createdDirectoryUuid, String description) {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-        studyService.importStudy(userId, treeExportInfos);
-        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, createdDirectoryUuid, userId, studyService::delete);
+        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
+        studyService.importStudy(treeExportInfos);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, createdDirectoryUuid, studyService::delete);
     }
 }

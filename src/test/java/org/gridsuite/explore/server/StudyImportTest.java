@@ -124,8 +124,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -149,8 +148,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -170,8 +168,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -191,8 +188,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isOk());
     }
 
@@ -212,8 +208,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -253,8 +248,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is5xxServerError());
 
         wireMockServer.verify(deleteRequestedFor(urlPathEqualTo("/v1/cases/" + CASE_UUID)));
