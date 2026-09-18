@@ -22,6 +22,8 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 
 /**
@@ -41,8 +43,6 @@ class RestTemplateConfigTest {
     private RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
-    private static final String ROLES_HEADER = "roles";
-    private static final String USER_ID_HEADER = "userId";
     private static final String TEST_ROLES = "ADMIN|USER";
     private static final String TEST_USER_ID = "user";
     private static final String TEST_ENDPOINT = "http://test-service/api/resource";
@@ -64,8 +64,8 @@ class RestTemplateConfigTest {
         // Setup mock response for the outgoing request
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
-                .andExpect(header(ROLES_HEADER, TEST_ROLES))
-                .andExpect(header(USER_ID_HEADER, TEST_USER_ID)) // This verifies our interceptor works
+                .andExpect(header(HEADER_ROLES, TEST_ROLES))
+                .andExpect(header(HEADER_USER_ID, TEST_USER_ID)) // This verifies our interceptor works
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
 
         // Execute request through our RestTemplate
@@ -82,10 +82,10 @@ class RestTemplateConfigTest {
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(req -> {
                     // Verify the header isn't present (would throw if present)
-                    if (req.getHeaders().containsKey(ROLES_HEADER)) {
+                    if (req.getHeaders().containsKey(HEADER_ROLES)) {
                         throw new AssertionError("Roles header should not be present");
                     }
-                    if (req.getHeaders().containsKey(USER_ID_HEADER)) {
+                    if (req.getHeaders().containsKey(HEADER_USER_ID)) {
                         throw new AssertionError("UserId header should not be present");
                     }
                 })
@@ -105,7 +105,7 @@ class RestTemplateConfigTest {
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(req -> {
-                    if (req.getHeaders().containsKey(ROLES_HEADER)) {
+                    if (req.getHeaders().containsKey(HEADER_ROLES)) {
                         throw new AssertionError("Roles header should not be present when empty");
                     }
                 })

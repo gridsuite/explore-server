@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
@@ -35,8 +37,6 @@ public class NotificationService {
     public static final String HEADER_UPDATE_TYPE = "updateType";
 
     public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
-
-    public static final String HEADER_USER_ID = "userId";
 
     public static final String MESSAGE_LOG = "Sending message : {}";
 

@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -63,22 +66,19 @@ public class RestTemplateConfig {
      */
     public static class HeaderForwardingInterceptor implements ClientHttpRequestInterceptor {
 
-        private static final String ROLES_HEADER = "roles";
-        private static final String USER_ID_HEADER = "userId";
-
         @Override
         public ClientHttpResponse intercept(HttpRequest request, byte[] body,
                                             ClientHttpRequestExecution execution) throws IOException {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication != null) {
-                request.getHeaders().set(USER_ID_HEADER, authentication.getName());
+                request.getHeaders().set(HEADER_USER_ID, authentication.getName());
 
                 String roles = authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.joining("|"));
                 if (!roles.isEmpty()) {
-                    request.getHeaders().set(ROLES_HEADER, roles);
+                    request.getHeaders().set(HEADER_ROLES, roles);
                 }
             }
 

@@ -18,6 +18,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -30,9 +32,6 @@ class SecurityFilterTest {
     private FilterChain filterChain;
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
-
-    private static final String HEADER_ROLES = "roles";
-    private static final String HEADER_USER_ID = "userId";
 
     @BeforeEach
     void setUp() {

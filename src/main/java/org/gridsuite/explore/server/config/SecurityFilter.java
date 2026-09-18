@@ -12,7 +12,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,13 +21,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
  */
 public class SecurityFilter extends OncePerRequestFilter {
-
-    private static final String HEADER_ROLES = "roles";
-    private static final String HEADER_USER_ID = "userId";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -38,15 +37,13 @@ public class SecurityFilter extends OncePerRequestFilter {
         String rolesHeader = request.getHeader(HEADER_ROLES);
 
         if (userId != null && !userId.isEmpty()) {
-            List<GrantedAuthority> authorities = Collections.emptyList();
-            if (rolesHeader != null && !rolesHeader.isEmpty()) {
-                authorities = Arrays.stream(rolesHeader.split("\\|"))
+            List<SimpleGrantedAuthority> authorities = rolesHeader == null
+                    ? Collections.emptyList()
+                    : Arrays.stream(rolesHeader.split("\\|"))
                         .map(String::trim)
                         .filter(role -> !role.isEmpty())
                         .map(SimpleGrantedAuthority::new)
-                        .map(GrantedAuthority.class::cast)
                         .toList();
-            }
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(userId, null, authorities));
         }
 

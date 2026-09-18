@@ -57,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -183,7 +184,6 @@ class ExploreTest {
 
     private static final String USER_MESSAGE_DESTINATION = "directory.update";
     public static final String HEADER_USER_MESSAGE = "userMessage";
-    public static final String HEADER_USER_ID = "userId";
     public static final String HEADER_UPDATE_TYPE = "updateType";
     public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
 
@@ -448,14 +448,14 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parentDirectoryPermissions);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
-                            USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                            USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
                         return new MockResponse(200);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
-                            USER_NOT_ALLOWED.equals(request.getHeaders().get("userId"))) {
+                            USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
