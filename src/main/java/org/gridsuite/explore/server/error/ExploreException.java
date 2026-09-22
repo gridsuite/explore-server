@@ -32,6 +32,12 @@ public class ExploreException extends AbstractBusinessException {
         this.businessErrorValues = businessErrorValues != null ? Map.copyOf(businessErrorValues) : Map.of();
     }
 
+    public ExploreException(ExploreBusinessErrorCode errorCode, String message, Throwable cause) {
+        super(Objects.requireNonNull(message, "message must not be null"), cause);
+        this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
+        this.businessErrorValues = Map.of();
+    }
+
     public static ExploreException of(ExploreBusinessErrorCode errorCode, String message, Object... args) {
         return new ExploreException(errorCode, args.length == 0 ? message : String.format(message, args));
     }
