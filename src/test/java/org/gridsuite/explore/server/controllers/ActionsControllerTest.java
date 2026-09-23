@@ -8,7 +8,7 @@ package org.gridsuite.explore.server.controllers;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import org.gridsuite.explore.server.AuthorizationTestConfiguration;
+import org.gridsuite.explore.server.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.ExploreApplication;
 import org.gridsuite.explore.server.services.ContingencyListService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @AutoConfigureMockMvc
-@Import(AuthorizationTestConfiguration.class)
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class ActionsControllerTest {
 
     private static final UUID CONTINGENCY_LIST_UUID = UUID.randomUUID();

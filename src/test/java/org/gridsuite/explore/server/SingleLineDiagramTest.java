@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(AuthorizationTestConfiguration.class)
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class SingleLineDiagramTest {
 
     @Autowired

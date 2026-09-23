@@ -48,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
-@Import(AuthorizationTestConfiguration.class)
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class DynamicMappingTest {
 
     @Autowired

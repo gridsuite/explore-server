@@ -77,7 +77,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockWebServerExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
-@Import(AuthorizationTestConfiguration.class)
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";

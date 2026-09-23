@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
  */
 @TestConfiguration
-public class AuthorizationTestConfiguration {
+public class AllowAllAuthorizationTestConfiguration {
 
     @Bean
     @Primary

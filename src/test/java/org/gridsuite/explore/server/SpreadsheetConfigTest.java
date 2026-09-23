@@ -45,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockWebServerExtension.class)
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @AutoConfigureMockMvc
-@Import(AuthorizationTestConfiguration.class)
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class SpreadsheetConfigTest {
 
     @Autowired
