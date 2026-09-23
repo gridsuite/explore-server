@@ -74,6 +74,8 @@ public class RestTemplateConfig {
             if (authentication != null) {
                 request.getHeaders().set(HEADER_USER_ID, authentication.getName());
 
+                // The roles are sent through a single HTTP header, so the authorities must be joined
+                // with "|" before forwarding them to the next service
                 String roles = authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.joining("|"));

@@ -35,7 +35,7 @@ public class NetworkConversionController {
     }
 
     @GetMapping(value = "/cases/{caseUuid}/import-parameters", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("@authorizationService.canRead(#caseUuid)")
+    @PreAuthorize("true")
     public ResponseEntity<String> getCaseImportParameters(@PathVariable("caseUuid") UUID caseUuid) {
         return ResponseEntity.ok(networkConversionService.getCaseImportParameters(caseUuid));
     }

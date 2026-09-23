@@ -37,6 +37,8 @@ public class SecurityFilter extends OncePerRequestFilter {
         String rolesHeader = request.getHeader(HEADER_ROLES);
 
         if (userId != null && !userId.isEmpty()) {
+            // The roles are forwarded in a single header using "|" as a separator,
+            // so they must be split back into individual authorities when building the SecurityContext
             List<SimpleGrantedAuthority> authorities = rolesHeader == null
                     ? Collections.emptyList()
                     : Arrays.stream(rolesHeader.split("\\|"))

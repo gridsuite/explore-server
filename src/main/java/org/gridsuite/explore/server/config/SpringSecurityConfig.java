@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 
@@ -23,13 +24,14 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 public class SpringSecurityConfig {
 
     @Bean
-    @SuppressWarnings("java:S4502") // CSRF is not applicable to this stateless REST API: authentication is not based on browser cookies
+    @SuppressWarnings("java:S4502") // Authentication is handled by the gateway
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // CSRF protection is disabled because this application exposes a REST API
-            // and does not use cookie-based authentication. Requests are authenticated
-            // explicitly rather than relying on credentials automatically sent by the browser
+            // Authentication is performed by the API gateway and propagated through trusted
+            // headers. This service is stateless and does not use browser cookies or sessions.
             .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
             )

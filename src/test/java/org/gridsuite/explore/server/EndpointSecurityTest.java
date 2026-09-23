@@ -39,6 +39,8 @@ class EndpointSecurityTest {
         mappings.getHandlerMethods().forEach((info, handler) -> {
             Method method = handler.getMethod();
             Class<?> controller = handler.getBeanType();
+            // Supervision endpoints are filtered by the gateway and are not directly accessible,
+            // so we don't need to check permissions for them
             if (!controller.getPackageName().equals("org.gridsuite.explore.server.controller")
                     || controller == SupervisionController.class) {
                 return;
