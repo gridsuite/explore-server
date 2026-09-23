@@ -9,11 +9,7 @@ package org.gridsuite.explore.server.services;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,7 +21,6 @@ public class NetworkConversionService {
 
     private static final String NETWORK_CONVERSION_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    private static final String HEADER_USER_ID = "userId";
 
     @Setter
     private String networkConversionServerBaseUri;
@@ -44,16 +39,17 @@ public class NetworkConversionService {
         return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
     }
 
-    public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters, String userId) {
+    public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/convert/{format}")
             .queryParam("fileName", fileName)
             .buildAndExpand(caseUuid, format)
             .toUriString();
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(HEADER_USER_ID, userId);
-        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class).getBody();
+
+        return restTemplate
+                .exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class)
+                .getBody();
     }
 
     public ResponseEntity<Resource> downloadFile(UUID exportUuid) {

@@ -60,10 +60,9 @@ public class StudyImportService {
      * @param archiveFile the zip archive file
      * @param studyName the name for the new study
      * @param description the description for the new study
-     * @param userId the user ID
      * @param parentDirectoryUuid the parent directory UUID
      */
-    public void importStudy(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+    public void importStudy(MultipartFile archiveFile, String studyName, String description, UUID parentDirectoryUuid) {
         Path tempDir = null;
         try {
             tempDir = extractArchiveToDisk(archiveFile);
@@ -72,11 +71,11 @@ public class StudyImportService {
             if (treeExportInfos.getRootNetworks() == null || treeExportInfos.getRootNetworks().isEmpty()) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
-            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), parentDirectoryUuid, userId, description);
+            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), parentDirectoryUuid, description);
 
-            createStudy(treeExportInfos, studyName, parentDirectoryUuid, userId, description);
+            createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
         } catch (Exception e) {
-            directoryService.deleteElement(parentDirectoryUuid, userId);
+            directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
             try {
@@ -113,22 +112,22 @@ public class StudyImportService {
         return tempDir;
     }
 
-    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID parentDirectoryUuid, String userId, String description) {
+    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID parentDirectoryUuid, String description) {
         treeExportInfos.getRootNetworks().forEach(rootNetwork -> {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
             UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
-            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, userId, 0L, description);
-            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, userId, caseService::delete);
+            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, 0L, description);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, caseService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
     }
 
-    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String userId, String description) {
+    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String description) {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-        studyService.importStudy(userId, treeExportInfos);
-        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
+        studyService.importStudy(treeExportInfos);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
     }
 }

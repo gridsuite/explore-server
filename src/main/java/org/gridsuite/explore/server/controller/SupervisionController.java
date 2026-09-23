@@ -25,9 +25,8 @@ public class SupervisionController {
     @DeleteMapping(value = "/explore/elements", params = "ids")
     @Operation(summary = "Remove directories/elements")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "directories/elements was successfully removed")})
-    public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid,
-                                               @RequestHeader("userId") String userId) {
-        supervisionService.deleteElements(elementsUuid, userId);
+    public ResponseEntity<Void> deleteElements(@RequestParam("ids") List<UUID> elementsUuid) {
+        supervisionService.deleteElements(elementsUuid);
         return ResponseEntity.ok().build();
     }
 }

@@ -27,11 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import java.util.UUID;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockWebServerExtension.class)
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @AutoConfigureMockMvc
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class SpreadsheetConfigCollectionTest {
 
     @Autowired
@@ -105,10 +106,6 @@ class SpreadsheetConfigCollectionTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/elements\\?ids=.*&status=.*") && "PUT".equals(request.getMethod())) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/users/" + USER_ID + "/isAdmin") && "HEAD".equals(request.getMethod())) {
-                    return new MockResponse(200);
-                } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
-                    return new MockResponse(200);
                 }
                 return new MockResponse(404);
             }
@@ -122,8 +119,7 @@ class SpreadsheetConfigCollectionTest {
                 .content(spreadsheetConfigCollectionJson)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID));
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
         perform.andExpect(status().isCreated());
     }
 
@@ -135,8 +131,7 @@ class SpreadsheetConfigCollectionTest {
                 .content(configIds)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID));
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
         perform.andExpect(status().isCreated());
     }
 
@@ -147,8 +142,7 @@ class SpreadsheetConfigCollectionTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(configIds)
                 .param("name", COLLECTION_NAME)
-                .param("description", "Test Description")
-                .header("userId", USER_ID));
+                .param("description", "Test Description"));
         perform.andExpect(status().isNoContent());
     }
 
@@ -158,43 +152,33 @@ class SpreadsheetConfigCollectionTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
-                        .param("description", "Test Description")
-                        .header("userId", USER_ID))
+                        .param("description", "Test Description"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void testDuplicateSpreadsheetConfigCollection(final MockWebServer mockWebServer) throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
-        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
-        // check read authorization on the duplicated element and write authorization on the target directory
-        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + PARENT_DIRECTORY_UUID + "&targetDirectoryUuid")));
+        // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
+        TestUtils.getRequestsWithBodyDone(2, mockWebServer);
     }
 
     @Test
     void testDuplicateSpreadsheetConfigCollectionInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
-                        .header("userId", USER_ID))
+        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate"))
                 .andExpect(status().isCreated());
 
-        // check that we called 2 times the directory server to checks authorization and 1 time spreadsheet-config to duplicate
-        // check read authorization on the duplicated element and write authorization on the target directory
-        var requests = TestUtils.getRequestsWithBodyDone(3, mockWebServer);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=READ&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements/authorized?accessType=WRITE&ids=" + COLLECTION_UUID + "&targetDirectoryUuid")));
+        // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
+        TestUtils.getRequestsWithBodyDone(2, mockWebServer);
     }
 
     @Test
     void testDuplicateSpreadsheetConfigCollectionWithInvalidUUID() throws Exception {
         mockMvc.perform(post(BASE_URL + "/invalid-uuid/duplicate")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                .header("userId", USER_ID))
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
             .andExpect(status().isInternalServerError());
     }
 
@@ -212,8 +196,7 @@ class SpreadsheetConfigCollectionTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
                         .param("name", COLLECTION_NAME)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -230,8 +213,7 @@ class SpreadsheetConfigCollectionTest {
         mockMvc.perform(put(BASE_URL + "/{id}", COLLECTION_UUID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigCollectionJson)
-                        .param("name", COLLECTION_NAME)
-                        .header("userId", USER_ID))
+                        .param("name", COLLECTION_NAME))
                 .andExpect(status().isBadRequest());
     }
 
@@ -247,15 +229,13 @@ class SpreadsheetConfigCollectionTest {
 
         mockMvc.perform(post(BASE_URL + "/duplicate")
                         .param("duplicateFrom", COLLECTION_UUID.toString())
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isMethodNotAllowed());
     }
 
     @Test
     void testDeleteSpreadsheetConfigCollection() throws Exception {
-        mockMvc.perform(delete("/v1/explore/elements/{id}", COLLECTION_UUID)
-                        .header("userId", USER_ID))
+        mockMvc.perform(delete("/v1/explore/elements/{id}", COLLECTION_UUID))
                 .andExpect(status().isOk());
     }
 }
