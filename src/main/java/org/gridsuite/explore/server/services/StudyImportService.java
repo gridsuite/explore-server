@@ -28,7 +28,6 @@ import java.util.zip.ZipEntry;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
 import static org.gridsuite.explore.server.services.ExploreService.CASE;
-import static org.gridsuite.explore.server.services.ExploreService.DIRECTORY;
 import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 
 /**
@@ -66,25 +65,18 @@ public class StudyImportService {
      */
     public void importStudy(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
         Path tempDir = null;
-        UUID createdDirectoryUuid = null;
         try {
             tempDir = extractArchiveToDisk(archiveFile);
-
-            ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
-            createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
 
             TreeExportInfos treeExportInfos = objectMapper.readValue(tempDir.resolve(TREE_EXPORT_FILE).toFile(), TreeExportInfos.class);
             if (treeExportInfos.getRootNetworks() == null || treeExportInfos.getRootNetworks().isEmpty()) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
+            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), parentDirectoryUuid, userId, description);
 
-            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), createdDirectoryUuid, userId, description);
-
-            createStudy(treeExportInfos, studyName, createdDirectoryUuid, userId, description);
+            createStudy(treeExportInfos, studyName, parentDirectoryUuid, userId, description);
         } catch (Exception e) {
-            if (createdDirectoryUuid != null) {
-                directoryService.deleteElement(createdDirectoryUuid, userId);
-            }
+            directoryService.deleteElement(parentDirectoryUuid, userId);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
             try {
@@ -121,22 +113,22 @@ public class StudyImportService {
         return tempDir;
     }
 
-    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID createdDirectoryUuid, String userId, String description) {
+    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID parentDirectoryUuid, String userId, String description) {
         treeExportInfos.getRootNetworks().forEach(rootNetwork -> {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
             UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
             ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, userId, 0L, description);
-            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, createdDirectoryUuid, userId, caseService::delete);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, userId, caseService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
     }
 
-    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID createdDirectoryUuid, String userId, String description) {
+    private void createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String userId, String description) {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
         ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
         studyService.importStudy(userId, treeExportInfos);
-        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, createdDirectoryUuid, userId, studyService::delete);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
     }
 }
