@@ -95,10 +95,10 @@ class StudyImportTest {
                         .withBody(objectMapper.writeValueAsString(new ElementAttributes(UUID.randomUUID(), STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
         wireMockServer.stubFor(get(urlPathMatching("/v1/cases-alert-threshold"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("10")));
-        // Stub user-admin-server max quota
-        wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/quota/max"))
+        // Stub user-admin-server quota state
+        wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/quota/state"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(Map.of(QuotaType.CASES, 10)))));
+                        .withBody(objectMapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(0, 10))))));
     }
 
     @AfterEach
