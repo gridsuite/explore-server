@@ -82,6 +82,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 );
         if (newName != null) {
             uriComponentsBuilder.queryParam(NAME, newName);
+        }
+        if (newDescription != null) {
             uriComponentsBuilder.queryParam(DESCRIPTION, newDescription);
         }
 
