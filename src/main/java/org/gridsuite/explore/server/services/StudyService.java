@@ -128,4 +128,15 @@ public class StudyService implements IDirectoryElementsService {
         HttpEntity<TreeExportInfos> request = new HttpEntity<>(treeExportInfos, headers);
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
     }
+
+    public void setStudyParameters(UUID studyUuid, String computationPath, String parameters, String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/{computationPath}/parameters")
+                .buildAndExpand(studyUuid, computationPath)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HEADER_USER_ID, userId);
+
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(parameters, headers), Void.class);
+    }
 }

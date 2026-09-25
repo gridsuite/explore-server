@@ -9,9 +9,12 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.CaseService;
+import org.gridsuite.explore.server.services.ContingencyListService;
 import org.gridsuite.explore.server.services.DirectoryService;
+import org.gridsuite.explore.server.services.FilterService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.junit.jupiter.api.AfterEach;
@@ -32,6 +35,8 @@ import java.util.zip.ZipOutputStream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -70,6 +75,12 @@ class StudyImportTest {
     @Autowired
     private UserAdminService userAdminService;
 
+    @Autowired
+    private FilterService filterService;
+
+    @Autowired
+    private ContingencyListService contingencyListService;
+
     @BeforeEach
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
@@ -78,6 +89,8 @@ class StudyImportTest {
         caseService.setBaseUri(wireMockServer.baseUrl());
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
+        filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
+        contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
 
         // Stub case-server
         wireMockServer.stubFor(post(urlPathMatching("/v1/cases"))
@@ -86,6 +99,9 @@ class StudyImportTest {
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("0")));
         // Stub study-server: import
         wireMockServer.stubFor(post(urlPathMatching("/v1/studies/import"))
+                .willReturn(aResponse().withStatus(200)));
+        // Stub study-server: set the study computation parameters
+        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/.*/.*/parameters"))
                 .willReturn(aResponse().withStatus(200)));
         // Stub directory-server
         wireMockServer.stubFor(get(urlPathMatching("/v1/elements/authorized"))
@@ -131,6 +147,113 @@ class StudyImportTest {
 
         // Verify the import was initiated
         assertNotNull(result);
+    }
+
+    @Test
+    void testImportStudyFiltersReferencedByFiltersAndContingencyLists() throws Exception {
+        UUID oldReferencedFilter = UUID.randomUUID();
+        UUID oldExpertFilter = UUID.randomUUID();
+        UUID oldIdentifierContingencyList = UUID.randomUUID();
+        UUID oldFilterBasedContingencyList = UUID.randomUUID();
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/identifier-contingency-lists")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters-contingency-lists")).willReturn(aResponse().withStatus(200)));
+
+        String referencedFilter = "{\"id\":\"" + oldReferencedFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"VOLTAGE_LEVEL\"}";
+        String expertFilter = "{\"id\":\"" + oldExpertFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"LINE\","
+                + "\"rules\":{\"dataType\":\"FILTER_UUID\",\"values\":[\"" + oldReferencedFilter + "\"]}}";
+        String identifiersList = "{\"metadata\":{\"id\":\"" + oldIdentifierContingencyList + "\",\"type\":\"IDENTIFIERS\"},"
+                + "\"identifierContingencyList\":{\"name\":\"" + oldIdentifierContingencyList + "\"},\"type\":\"IDENTIFIERS\"}";
+        String filtersList = "{\"metadata\":{\"id\":\"" + oldFilterBasedContingencyList + "\",\"type\":\"FILTERS\"},"
+                + "\"filters\":[{\"id\":\"" + oldReferencedFilter + "\"}],"
+                + "\"selectedEquipmentTypesByFilter\":[{\"filterId\":\"" + oldReferencedFilter + "\",\"equipmentTypes\":[\"LINE\"]}],\"type\":\"FILTERS\"}";
+        // the expert filter is written before the filter it references: the import must not depend on the order
+        byte[] archiveContent = createStudyArchiveWithDefinitions(
+                List.of(new ExportedElementInfos(oldExpertFilter, "expert", objectMapper.readTree(expertFilter)),
+                        new ExportedElementInfos(oldReferencedFilter, "referenced", objectMapper.readTree(referencedFilter))),
+                List.of(new ExportedElementInfos(oldIdentifierContingencyList, "identifiers", objectMapper.readTree(identifiersList)),
+                        new ExportedElementInfos(oldFilterBasedContingencyList, "filters", objectMapper.readTree(filtersList))));
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(new MockMultipartFile("archiveFile", "study-export.zip", "application/zip", archiveContent))
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isOk());
+
+        List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
+        assertEquals(2, filterRequests.size());
+        LoggedRequest newReferencedFilterRequest = findRequestContaining(filterRequests, "VOLTAGE_LEVEL");
+        LoggedRequest newExpertFilterRequest = findRequestContaining(filterRequests, "FILTER_UUID");
+        String newReferencedFilter = newReferencedFilterRequest.queryParameter("id").firstValue();
+        String newExpertFilter = newExpertFilterRequest.queryParameter("id").firstValue();
+        assertNotEquals(oldReferencedFilter.toString(), newReferencedFilter);
+        assertNotEquals(oldExpertFilter.toString(), newExpertFilter);
+
+        // each filter content now uses the new uuids, including the reference from the expert filter
+        assertEquals(referencedFilter.replace(oldReferencedFilter.toString(), newReferencedFilter), newReferencedFilterRequest.getBodyAsString());
+        assertEquals(expertFilter.replace(oldExpertFilter.toString(), newExpertFilter).replace(oldReferencedFilter.toString(), newReferencedFilter),
+                newExpertFilterRequest.getBodyAsString());
+
+        // the filter based contingency list references the recreated filter, in its filters and in its selected equipment types
+        List<LoggedRequest> filterBasedRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters-contingency-lists")));
+        assertEquals(1, filterBasedRequests.size());
+        String newFilterBasedContingencyList = filterBasedRequests.getFirst().queryParameter("id").firstValue();
+        assertEquals(filtersList.replace(oldFilterBasedContingencyList.toString(), newFilterBasedContingencyList).replace(oldReferencedFilter.toString(), newReferencedFilter),
+                filterBasedRequests.getFirst().getBodyAsString());
+
+        List<LoggedRequest> identifierRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/identifier-contingency-lists")));
+        assertEquals(1, identifierRequests.size());
+        String newIdentifierContingencyList = identifierRequests.getFirst().queryParameter("id").firstValue();
+        assertEquals(identifiersList.replace(oldIdentifierContingencyList.toString(), newIdentifierContingencyList), identifierRequests.getFirst().getBodyAsString());
+    }
+
+    @Test
+    void testImportStudyComputationParameters() throws Exception {
+        UUID oldFilter = UUID.randomUUID();
+        UUID oldContingencyList = UUID.randomUUID();
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/identifier-contingency-lists")).willReturn(aResponse().withStatus(200)));
+        String filter = "{\"id\":\"" + oldFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"GENERATOR\"}";
+        String contingencyList = "{\"id\":\"" + oldContingencyList + "\",\"type\":\"IDENTIFIERS\"}";
+        String loadFlowParameters = "{\"provider\":\"OpenLoadFlow\"}";
+        String securityAnalysisParameters = "{\"contingencyListsInfos\":[{\"contingencyLists\":[\"" + oldContingencyList + "\"],\"activated\":true}]}";
+        String voltageInitParameters = "{\"variableQGenerators\":[{\"filterId\":\"" + oldFilter + "\",\"filterName\":\"generators\"}]}";
+        byte[] archiveContent = createStudyArchiveWithDefinitions(
+                List.of(new ExportedElementInfos(oldFilter, "generators", objectMapper.readTree(filter))),
+                List.of(new ExportedElementInfos(oldContingencyList, "identifiers", objectMapper.readTree(contingencyList))),
+                Map.of("LOAD_FLOW", loadFlowParameters, "SECURITY_ANALYSIS", securityAnalysisParameters, "VOLTAGE_INITIALIZATION", voltageInitParameters));
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(new MockMultipartFile("archiveFile", "study-export.zip", "application/zip", archiveContent))
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isOk());
+
+        String newFilter = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters"))).getFirst().queryParameter("id").firstValue();
+        String newContingencyList = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/identifier-contingency-lists"))).getFirst().queryParameter("id").firstValue();
+
+        // only the exported computation parameters are set, with the uuids of the imported filters and contingency lists
+        wireMockServer.verify(3, postRequestedFor(urlPathMatching("/v1/studies/.*/.*/parameters")).withHeader("userId", equalTo(USER_ID)));
+        wireMockServer.verify(0, postRequestedFor(urlPathMatching("/v1/studies/.*/(sensitivity-analysis|pcc-min|short-circuit-analysis)/parameters")));
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1/studies/.*/loadflow/parameters"))
+                .withRequestBody(equalToJson(loadFlowParameters)));
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1/studies/.*/security-analysis/parameters"))
+                .withRequestBody(equalToJson(securityAnalysisParameters.replace(oldContingencyList.toString(), newContingencyList))));
+        // the voltage init parameters are wrapped in the study voltage init parameters
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1/studies/.*/voltage-init/parameters"))
+                .withRequestBody(equalToJson("{\"computationParameters\":" + voltageInitParameters.replace(oldFilter.toString(), newFilter)
+                        + ",\"applyModifications\":true}")));
+    }
+
+    private static LoggedRequest findRequestContaining(List<LoggedRequest> requests, String marker) {
+        return requests.stream()
+                .filter(request -> request.getBodyAsString().contains(marker))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No request containing " + marker));
     }
 
     @Test
@@ -270,6 +393,25 @@ class StudyImportTest {
             // Add case file
             String caseName = "testCase.xiidm";
             addFileEntry(zos, "cases/" + CASE_UUID + "/" + caseName, "<network></network>".getBytes());
+        }
+        return baos.toByteArray();
+    }
+
+    private byte[] createStudyArchiveWithDefinitions(List<ExportedElementInfos> filters, List<ExportedElementInfos> contingencyLists) throws IOException {
+        return createStudyArchiveWithDefinitions(filters, contingencyLists, Map.of());
+    }
+
+    private byte[] createStudyArchiveWithDefinitions(List<ExportedElementInfos> filters, List<ExportedElementInfos> contingencyLists,
+                                                     Map<String, String> parametersByType) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            addJsonEntry(zos, createStudyExportInfos());
+            addFileEntry(zos, "cases/" + CASE_UUID + "/testCase.xiidm", "<network></network>".getBytes());
+            addFileEntry(zos, "computationParameters/filters.json", objectMapper.writeValueAsBytes(filters));
+            addFileEntry(zos, "computationParameters/contingencyList.json", objectMapper.writeValueAsBytes(contingencyLists));
+            for (Map.Entry<String, String> parameters : parametersByType.entrySet()) {
+                addFileEntry(zos, "computationParameters/" + parameters.getKey() + ".json", parameters.getValue().getBytes());
+            }
         }
         return baos.toByteArray();
     }
