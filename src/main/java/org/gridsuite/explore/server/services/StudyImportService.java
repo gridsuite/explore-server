@@ -9,11 +9,10 @@ package org.gridsuite.explore.server.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.SecuredZipInputStream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,19 +27,15 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
-import static org.gridsuite.explore.server.services.ExploreService.CASE;
-import static org.gridsuite.explore.server.services.ExploreService.CONTINGENCY_LIST;
-import static org.gridsuite.explore.server.services.ExploreService.DIRECTORY;
-import static org.gridsuite.explore.server.services.ExploreService.FILTER;
-import static org.gridsuite.explore.server.services.ExploreService.STUDY;
+import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
  */
+@Slf4j
 @Service
 public class StudyImportService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StudyImportService.class);
     public static final long MAX_UNCOMPRESSED_ARCHIVE_SIZE = 10000000000L;
     public static final int MAX_ARCHIVE_ENTRIES = 5000;
     public static final String TREE_EXPORT_FILE = "tree.json";
@@ -91,31 +86,23 @@ public class StudyImportService {
      * @param archiveFile the zip archive file
      * @param studyName the name for the new study
      * @param description the description for the new study
-     * @param userId the user ID
      * @param parentDirectoryUuid the parent directory UUID
      */
-    public void importStudy(MultipartFile archiveFile, String studyName, String description, String userId, UUID parentDirectoryUuid) {
+    public void importStudy(MultipartFile archiveFile, String studyName, String description, UUID parentDirectoryUuid) {
         Path tempDir = null;
-        UUID createdDirectoryUuid = null;
         try {
             tempDir = extractArchiveToDisk(archiveFile);
-
-            ElementAttributes directoryAttributes = new ElementAttributes(UUID.randomUUID(), studyName, DIRECTORY, userId, 0L, null);
-            createdDirectoryUuid = directoryService.createElement(directoryAttributes, parentDirectoryUuid, userId).getElementUuid();
 
             TreeExportInfos treeExportInfos = objectMapper.readValue(tempDir.resolve(TREE_EXPORT_FILE).toFile(), TreeExportInfos.class);
             if (treeExportInfos.getRootNetworks() == null || treeExportInfos.getRootNetworks().isEmpty()) {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
+            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), parentDirectoryUuid, description);
 
-            createCases(treeExportInfos, tempDir.resolve(CASES_DIR), createdDirectoryUuid, userId, description);
-
-            UUID studyUuid = createStudy(treeExportInfos, studyName, createdDirectoryUuid, userId, description);
-            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), createdDirectoryUuid, studyUuid, userId, description);
+            UUID studyUuid = createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
+            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, description);
         } catch (Exception e) {
-            if (createdDirectoryUuid != null) {
-                directoryService.deleteElement(createdDirectoryUuid, userId);
-            }
+            directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
             try {
@@ -123,7 +110,7 @@ public class StudyImportService {
                     FileUtils.deleteDirectory(tempDir.toFile());
                 }
             } catch (IOException e) {
-                LOGGER.error("Error cleaning up temporary directory: " + tempDir, e);
+                log.error("Error cleaning up temporary directory: " + tempDir, e);
             }
         }
     }
@@ -152,36 +139,36 @@ public class StudyImportService {
         return tempDir;
     }
 
-    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID parentDirectoryUuid, String userId, String description) {
+    private void createCases(TreeExportInfos treeExportInfos, Path casesDir, UUID parentDirectoryUuid, String description) {
         treeExportInfos.getRootNetworks().forEach(rootNetwork -> {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
             UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
-            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, userId, 0L, description);
-            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, userId, caseService::delete);
+            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, 0L, description);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, caseService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
     }
 
-    private UUID createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String userId, String description) {
+    private UUID createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String description) {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, userId, 0L, description, DirectoryElementStatus.CREATING);
-        studyService.importStudy(userId, treeExportInfos);
-        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, studyService::delete);
+        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
+        studyService.importStudy(treeExportInfos);
+        exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
         return createdStudyUuid;
     }
 
-    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String userId, String description) throws IOException {
+    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String description) throws IOException {
         List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
         List<ExportedElementInfos> contingencyLists = readExportedElements(parametersDir.resolve(CONTINGENCY_LISTS_FILE));
         Map<UUID, UUID> uuidMapping = new HashMap<>();
         filters.forEach(filter -> uuidMapping.put(filter.uuid(), UUID.randomUUID()));
         contingencyLists.forEach(contingencyList -> uuidMapping.put(contingencyList.uuid(), UUID.randomUUID()));
 
-        filters.forEach(filter -> importFilter(filter, uuidMapping, parentDirectoryUuid, userId, description));
-        contingencyLists.forEach(contingencyList -> importContingencyList(contingencyList, uuidMapping, parentDirectoryUuid, userId, description));
-        importComputationParametersFiles(parametersDir, studyUuid, userId, uuidMapping);
+        filters.forEach(filter -> importFilter(filter, uuidMapping, parentDirectoryUuid, description));
+        contingencyLists.forEach(contingencyList -> importContingencyList(contingencyList, uuidMapping, parentDirectoryUuid, description));
+        importComputationParametersFiles(parametersDir, studyUuid, uuidMapping);
     }
 
     private List<ExportedElementInfos> readExportedElements(Path file) {
@@ -195,15 +182,15 @@ public class StudyImportService {
         }
     }
 
-    private void importFilter(ExportedElementInfos filter, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String userId, String description) {
+    private void importFilter(ExportedElementInfos filter, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
         UUID newFilterUuid = uuidMapping.get(filter.uuid());
-        filterService.insertFilter(remapUuids(filter.content().toString(), uuidMapping), newFilterUuid, userId);
+        filterService.insertFilter(remapUuids(filter.content().toString(), uuidMapping), newFilterUuid);
         ElementAttributes elementAttributes = new ElementAttributes(newFilterUuid, Objects.requireNonNullElse(filter.name(), filter.uuid().toString()),
-                FILTER, userId, 0L, description);
-        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, filterService::delete);
+                FILTER, 0L, description);
+        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, filterService::delete);
     }
 
-    private void importContingencyList(ExportedElementInfos contingencyList, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String userId, String description) {
+    private void importContingencyList(ExportedElementInfos contingencyList, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
         UUID newContingencyListUuid = uuidMapping.get(contingencyList.uuid());
         String remappedContent = remapUuids(contingencyList.content().toString(), uuidMapping);
         String type = contingencyList.content().path("type").asText();
@@ -213,11 +200,11 @@ public class StudyImportService {
             default -> throw new ExploreException(IMPORT_STUDY_FAILED, "Unknown type '" + type + "' for contingency list " + contingencyList.uuid());
         }
         ElementAttributes elementAttributes = new ElementAttributes(newContingencyListUuid, Objects.requireNonNullElse(contingencyList.name(), contingencyList.uuid().toString()),
-                CONTINGENCY_LIST, userId, 0L, description);
-        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, userId, contingencyListService::delete);
+                CONTINGENCY_LIST, 0L, description);
+        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
     }
 
-    private void importComputationParametersFiles(Path parametersDir, UUID studyUuid, String userId, Map<UUID, UUID> uuidMapping) throws IOException {
+    private void importComputationParametersFiles(Path parametersDir, UUID studyUuid, Map<UUID, UUID> uuidMapping) throws IOException {
         for (Map.Entry<String, String> computation : COMPUTATION_TYPE_TO_STUDY_PATH.entrySet()) {
             Path file = parametersDir.resolve(computation.getKey() + ".json");
             if (Files.exists(file)) {
@@ -226,7 +213,7 @@ public class StudyImportService {
                     // the study voltage init parameters wrap the computation parameters, applyModifications is not exported and keeps its default value
                     parameters = objectMapper.writeValueAsString(Map.of("computationParameters", objectMapper.readTree(parameters), "applyModifications", true));
                 }
-                studyService.setStudyParameters(studyUuid, computation.getValue(), parameters, userId);
+                studyService.setStudyParameters(studyUuid, computation.getValue(), parameters);
             }
         }
     }

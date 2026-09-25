@@ -37,10 +37,10 @@ class SupervisionTest {
     @Test
     void testDeleteElements() {
         List<UUID> uuidsToDelete = List.of(filter.getElementUuid(), study.getElementUuid());
-        supervisionService.deleteElements(uuidsToDelete, "userId");
+        supervisionService.deleteElements(uuidsToDelete);
         // deletions of both elements with foreach towards respective microservice
-        verify(directoryService, times(1)).deleteElement(filter.getElementUuid(), "userId");
-        verify(directoryService, times(1)).deleteElement(study.getElementUuid(), "userId");
+        verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
+        verify(directoryService, times(1)).deleteElement(study.getElementUuid());
         // deletions of both elements in directory server
         verify(restTemplate, times(1)).exchange(matches(".*/supervision/.*"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class));
     }
@@ -50,12 +50,12 @@ class SupervisionTest {
         List<UUID> uuidsToDelete = List.of(filter.getElementUuid(), study.getElementUuid());
 
         // one deletion will fail, this test checks deletions does not stop even when one of them is throwing       an exception
-        doThrow(new RuntimeException("An error occured when deleting filter")).when(directoryService).deleteElement(filter.getElementUuid(), "userId");
+        doThrow(new RuntimeException("An error occured when deleting filter")).when(directoryService).deleteElement(filter.getElementUuid());
 
-        supervisionService.deleteElements(uuidsToDelete, "userId");
+        supervisionService.deleteElements(uuidsToDelete);
         // deletions of both elements with foreach towards respective microservice
-        verify(directoryService, times(1)).deleteElement(filter.getElementUuid(), "userId");
-        verify(directoryService, times(1)).deleteElement(study.getElementUuid(), "userId");
+        verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
+        verify(directoryService, times(1)).deleteElement(study.getElementUuid());
         // deletions of both elements in directory server
         verify(restTemplate, times(1)).exchange(matches(".*/supervision/.*"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class));
     }

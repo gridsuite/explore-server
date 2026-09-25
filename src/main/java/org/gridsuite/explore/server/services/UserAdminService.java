@@ -7,10 +7,12 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.QuotaState;
 import org.gridsuite.explore.server.dto.QuotaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,7 +27,7 @@ public class UserAdminService {
 
     private static final String USER_ADMIN_API_VERSION = "v1";
     private static final String USERS_QUOTA_URI = "/users/{sub}/quota";
-    private static final String USERS_MAX_QUOTA_URI = USERS_QUOTA_URI + "/max";
+    private static final String USERS_QUOTA_STATE_URI = USERS_QUOTA_URI + "/state";
     private static final String CASES_ALERT_THRESHOLD_URI = "/cases-alert-threshold";
     private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
@@ -38,21 +40,26 @@ public class UserAdminService {
         this.restTemplate = restTemplate;
     }
 
-    public Map<QuotaType, Integer> getUserMaxQuota(String sub) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_MAX_QUOTA_URI)
+    public Map<QuotaType, QuotaState> getUserQuotaState() {
+        String sub = SecurityContextHolder.getContext().getAuthentication().getName();
+        String path = UriComponentsBuilder.fromPath(DELIMITER + USER_ADMIN_API_VERSION + USERS_QUOTA_STATE_URI)
                 .buildAndExpand(sub).toUriString();
         return restTemplate.exchange(
                 userAdminServerBaseUri + path,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<Map<QuotaType, Integer>>() {
+                new ParameterizedTypeReference<Map<QuotaType, QuotaState>>() {
                 }).getBody();
     }
 
-    public Integer getUserMaxAllowedCases(String sub) {
-        Map<QuotaType, Integer> userMaxQuotas = getUserMaxQuota(sub);
+    public Integer getUserMaxAllowedCases() {
+        Map<QuotaType, QuotaState> userMaxQuotas = getUserQuotaState();
 
-        return userMaxQuotas.getOrDefault(QuotaType.CASES, null);
+        QuotaState stateCases = userMaxQuotas.getOrDefault(QuotaType.CASES, null);
+        if (stateCases != null) {
+            return stateCases.max();
+        }
+        return null;
     }
 
     public Integer getCasesAlertThreshold() {

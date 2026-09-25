@@ -111,10 +111,10 @@ class StudyImportTest {
                         .withBody(objectMapper.writeValueAsString(new ElementAttributes(UUID.randomUUID(), STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
         wireMockServer.stubFor(get(urlPathMatching("/v1/cases-alert-threshold"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("10")));
-        // Stub user-admin-server max quota
-        wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/quota/max"))
+        // Stub user-admin-server quota state
+        wireMockServer.stubFor(get(urlPathMatching("/v1/users/.*/quota/state"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(Map.of(QuotaType.CASES, 10)))));
+                        .withBody(objectMapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(0, 10))))));
     }
 
     @AfterEach
@@ -140,8 +140,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -272,8 +271,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -293,8 +291,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -314,8 +311,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isOk());
     }
 
@@ -335,8 +331,7 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -350,20 +345,14 @@ class StudyImportTest {
                 archiveContent
         );
 
-        UUID importDirectoryUuid = UUID.randomUUID();
         wireMockServer.stubFor(post(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
                 .atPriority(1)
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(importDirectoryUuid, STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/directories/" + importDirectoryUuid + "/elements"))
-                .atPriority(1)
-                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
                         .withBody(objectMapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case-valid.xiidm", "CASE", USER_ID, 0L, DESCRIPTION)))));
-
-        wireMockServer.stubFor(get(urlPathEqualTo("/v1/elements/" + importDirectoryUuid))
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/elements/" + PARENT_DIRECTORY_UUID))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(importDirectoryUuid, STUDY_NAME, "DIRECTORY", USER_ID, 0L, null)))));
-        wireMockServer.stubFor(get(urlPathEqualTo("/v1/directories/" + importDirectoryUuid + "/elements"))
+                        .withBody(objectMapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "Parent directory", "DIRECTORY", USER_ID, 0L, null)))));
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
                         .withBody(objectMapper.writeValueAsString(List.of(new ElementAttributes(CASE_UUID, "case-valid.xiidm", "CASE", USER_ID, 0L, DESCRIPTION))))));
         wireMockServer.stubFor(get(urlPathEqualTo("/v1/elements/" + CASE_UUID))
@@ -376,10 +365,11 @@ class StudyImportTest {
                         .file(archiveFile)
                         .param("studyName", STUDY_NAME)
                         .param("description", DESCRIPTION)
-                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
-                        .header("userId", USER_ID))
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().is5xxServerError());
 
+        wireMockServer.verify(getRequestedFor(urlPathEqualTo("/v1/elements/" + PARENT_DIRECTORY_UUID)));
+        wireMockServer.verify(getRequestedFor(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")));
         wireMockServer.verify(deleteRequestedFor(urlPathEqualTo("/v1/cases/" + CASE_UUID)));
     }
 
