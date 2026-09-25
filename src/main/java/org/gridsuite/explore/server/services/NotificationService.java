@@ -15,9 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.UUID;
+
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
@@ -34,8 +37,6 @@ public class NotificationService {
     public static final String HEADER_UPDATE_TYPE = "updateType";
 
     public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
-
-    public static final String HEADER_USER_ID = "userId";
 
     public static final String MESSAGE_LOG = "Sending message : {}";
 
@@ -65,7 +66,8 @@ public class NotificationService {
         updatePublisher.send(bindingName, message);
     }
 
-    public void emitUserMessage(String sub, String messageId, CaseAlertThresholdMessage message) {
+    public void emitUserMessage(String messageId, CaseAlertThresholdMessage message) {
+        String sub = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
             sendMessage(MessageBuilder.withPayload(objectMapper.writeValueAsString(message))
                 .setHeader(HEADER_USER_MESSAGE, messageId)
@@ -77,7 +79,8 @@ public class NotificationService {
         }
     }
 
-    public void emitElementUpdated(UUID elementUuid, String modifiedBy) {
+    public void emitElementUpdated(UUID elementUuid) {
+        String modifiedBy = SecurityContextHolder.getContext().getAuthentication().getName();
         sendMessage(MessageBuilder.withPayload("")
             .setHeader(HEADER_ELEMENT_UUID, elementUuid)
             .setHeader(HEADER_MODIFIED_BY, modifiedBy)

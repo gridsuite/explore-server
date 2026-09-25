@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AllowAllAuthorizationTestConfiguration.class)
 class UserIdentityTest {
 
     @Autowired
@@ -76,7 +78,7 @@ class UserIdentityTest {
         wireMockServer.start();
         userIdentityService.setUserIdentityServerBaseUri(wireMockServer.baseUrl());
 
-        when(directoryService.getElementsInfos(List.of(ELEMENT_UUID), null, SUB)).thenReturn(List.of(new ElementAttributes(
+        when(directoryService.getElementsInfos(List.of(ELEMENT_UUID), null)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_UUID,
             ELEMENT_NAME,
             "SOME TYPE",
@@ -84,7 +86,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null, UNKNOWN_SUB)).thenReturn(List.of(new ElementAttributes(
+        when(directoryService.getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_UNKNOWN_SUB_UUID,
             ELEMENT_UNKNOWN_SUB_NAME,
             "SOME TYPE",
@@ -92,7 +94,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null, EXCEPTION_SUB)).thenReturn(List.of(new ElementAttributes(
+        when(directoryService.getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_EXCEPTION_SUB_UUID,
             "exception",
             "SOME TYPE",
@@ -100,7 +102,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB))
+        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null))
                 .thenThrow(new RuntimeException(String.format("Element '%s' not found", ELEMENT_NOT_FOUND_UUID)));
     }
 
@@ -125,8 +127,7 @@ class UserIdentityTest {
         MvcResult mvcResult;
         String usersInfos;
         mvcResult = mockMvc.perform(get(BASE_URL)
-                    .param("ids", ELEMENT_UUID.toString())
-                    .header("userId", SUB))
+                    .param("ids", ELEMENT_UUID.toString()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -134,18 +135,17 @@ class UserIdentityTest {
         assertTrue(usersInfos.contains("userFirstName"));
         assertTrue(usersInfos.contains("userLastName"));
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_UUID), null, SUB);
+        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_UUID), null);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(SUB)), false);
     }
 
     @Test
     void testGetSubIdentityNotFoundElement() throws Exception {
         mockMvc.perform(get(BASE_URL)
-                        .param("ids", ELEMENT_NOT_FOUND_UUID.toString())
-                        .header("userId", UNKNOWN_SUB))
+                        .param("ids", ELEMENT_NOT_FOUND_UUID.toString()))
                         .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null, UNKNOWN_SUB);
+        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null);
     }
 
     @Test
@@ -154,12 +154,11 @@ class UserIdentityTest {
                 .willReturn(WireMock.serverError())).getId();
 
         mockMvc.perform(get(BASE_URL)
-                .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString())
-                .header("userId", EXCEPTION_SUB))
+                .param("ids", ELEMENT_EXCEPTION_SUB_UUID.toString()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> assertInstanceOf(HttpServerErrorException.class, result.getResolvedException()));
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null, EXCEPTION_SUB);
+        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);
     }
 
