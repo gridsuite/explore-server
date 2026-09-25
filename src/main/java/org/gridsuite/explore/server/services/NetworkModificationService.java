@@ -30,6 +30,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     public static final String UUIDS = "uuids";
     public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     @Setter
@@ -75,12 +76,15 @@ public class NetworkModificationService implements IDirectoryElementsService {
     /**
      * @param newName null if the name shouldn't be updated
      */
-    public void updateCompositeModification(UUID compositeModificationId, String newName) {
+    public void updateCompositeModification(UUID compositeModificationId, String newName, String newDescription) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
                 DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId
                 );
         if (newName != null) {
             uriComponentsBuilder.queryParam(NAME, newName);
+        }
+        if (newDescription != null) {
+            uriComponentsBuilder.queryParam(DESCRIPTION, newDescription);
         }
 
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
