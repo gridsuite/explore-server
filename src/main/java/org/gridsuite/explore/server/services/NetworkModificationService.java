@@ -75,6 +75,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
 
     /**
      * @param newName null if the name shouldn't be updated
+     * @param newDescription null if the description shouldn't be updated
      */
     public void updateCompositeModification(UUID compositeModificationId, String newName, String newDescription) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
@@ -83,14 +84,11 @@ public class NetworkModificationService implements IDirectoryElementsService {
         if (newName != null) {
             uriComponentsBuilder.queryParam(NAME, newName);
         }
-        if (newDescription != null) {
-            uriComponentsBuilder.queryParam(DESCRIPTION, newDescription);
-        }
 
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(newDescription, headers), Void.class);
     }
 
     @Override
