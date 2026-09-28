@@ -38,9 +38,8 @@ public class CaseController {
 
     @PostMapping(value = "/cases", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("true")
-    public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file,
-                                           @RequestParam(value = "withExpiration", required = false, defaultValue = "false") boolean withExpiration) {
-        return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file, withExpiration));
+    public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file));
     }
 
     @DeleteMapping(value = "/cases/{caseUuid}")

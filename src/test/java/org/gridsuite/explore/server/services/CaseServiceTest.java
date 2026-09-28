@@ -60,12 +60,10 @@ class CaseServiceTest {
         server.expect(once(), requestTo(BASE_URI + "/v1/cases"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(content().contentTypeCompatibleWith(MediaType.MULTIPART_FORM_DATA))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("withExpiration")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("true")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("case")))
             .andRespond(withSuccess("\"" + CASE_UUID + "\"", MediaType.APPLICATION_JSON));
 
-        UUID response = caseService.importCaseWithoutDirectoryElementCreation(file, true);
+        UUID response = caseService.importCaseWithoutDirectoryElementCreation(file);
 
         assertEquals(CASE_UUID, response);
         server.verify();

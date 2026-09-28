@@ -40,11 +40,11 @@ class CaseControllerTest {
     @Test
     void importCaseForwardsFileAndExpirationFlag() {
         UUID response = CASE_UUID;
-        when(caseService.importCaseWithoutDirectoryElementCreation(file, true)).thenReturn(response);
+        when(caseService.importCaseWithoutDirectoryElementCreation(file)).thenReturn(response);
 
-        assertSame(response, controller.importCase(file, true).getBody());
+        assertSame(response, controller.importCase(file).getBody());
 
-        verify(caseService).importCaseWithoutDirectoryElementCreation(file, true);
+        verify(caseService).importCaseWithoutDirectoryElementCreation(file);
     }
 
     @Test
