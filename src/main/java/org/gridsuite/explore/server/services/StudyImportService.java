@@ -59,11 +59,7 @@ public class StudyImportService {
             "VOLTAGE_INITIALIZATION", "voltage-init",
             "SECURITY_ANALYSIS", "security-analysis",
             "SENSITIVITY_ANALYSIS", "sensitivity-analysis",
-            "PCC_MIN", "pcc-min",
-            "DYNAMIC_SIMULATION", "dynamic-simulation",
-            "DYNAMIC_SECURITY_ANALYSIS", "dynamic-security-analysis",
-            "DYNAMIC_MARGIN_CALCULATION", "dynamic-margin-calculation",
-            "STATE_ESTIMATION", "state-estimation"
+            "PCC_MIN", "pcc-min"
     );
 
     private final CaseService caseService;
