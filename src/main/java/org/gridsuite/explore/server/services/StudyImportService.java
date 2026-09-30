@@ -7,11 +7,13 @@
 package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,8 @@ public class StudyImportService {
     public static final String PARAMETERS_DIR = "computationParameters";
     public static final String FILTERS_FILE = "filters.json";
     public static final String CONTINGENCY_LISTS_FILE = "contingencyList.json";
+    public static final String MODIFICATIONS_DIR = "networkModifications";
+    public static final String LOAD_FLOW_PARAMETERS_FILE = "loadFlowParameters.json";
     private static final String IDENTIFIERS_CONTINGENCY_LIST_TYPE = "IDENTIFIERS";
     private static final String FILTERS_CONTINGENCY_LIST_TYPE = "FILTERS";
 
@@ -69,9 +73,12 @@ public class StudyImportService {
     private final DirectoryService directoryService;
     private final FilterService filterService;
     private final ContingencyListService contingencyListService;
+    private final ParametersService parametersService;
+    private final NetworkModificationService networkModificationService;
 
     public StudyImportService(CaseService caseService, StudyService studyService, ObjectMapper objectMapper, ExploreService exploreService,
-                              DirectoryService directoryService, FilterService filterService, ContingencyListService contingencyListService) {
+                              DirectoryService directoryService, FilterService filterService, ContingencyListService contingencyListService,
+                              ParametersService parametersService, NetworkModificationService networkModificationService) {
         this.caseService = caseService;
         this.studyService = studyService;
         this.objectMapper = objectMapper;
@@ -79,6 +86,8 @@ public class StudyImportService {
         this.directoryService = directoryService;
         this.filterService = filterService;
         this.contingencyListService = contingencyListService;
+        this.parametersService = parametersService;
+        this.networkModificationService = networkModificationService;
     }
 
     /**
@@ -99,8 +108,14 @@ public class StudyImportService {
             }
             createCases(treeExportInfos, tempDir.resolve(CASES_DIR), parentDirectoryUuid, description);
 
+            Map<UUID, UUID> groupUuidMapping = new HashMap<>();
+            treeExportInfos.setNodeTree(remapModificationGroups(treeExportInfos.getNodeTree(), groupUuidMapping));
+
             UUID studyUuid = createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
-            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, description);
+            // old -> new uuids of the imported filters, contingency lists and load flow parameters, shared by the parameters and the modifications
+            Map<UUID, UUID> uuidMapping = new HashMap<>();
+            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, description, uuidMapping);
+            importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), groupUuidMapping, uuidMapping, parentDirectoryUuid, description);
         } catch (Exception e) {
             directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
@@ -159,16 +174,61 @@ public class StudyImportService {
         return createdStudyUuid;
     }
 
-    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String description) throws IOException {
-        List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
-        List<ExportedElementInfos> contingencyLists = readExportedElements(parametersDir.resolve(CONTINGENCY_LISTS_FILE));
-        Map<UUID, UUID> uuidMapping = new HashMap<>();
+    private NodeTreeExportInfos remapModificationGroups(NodeTreeExportInfos node, Map<UUID, UUID> groupUuidMapping) {
+        if (node == null) {
+            return null;
+        }
+        UUID newGroupUuid = null;
+        if (node.modificationGroupUuid() != null) {
+            newGroupUuid = UUID.randomUUID();
+            groupUuidMapping.put(node.modificationGroupUuid(), newGroupUuid);
+        }
+        List<NodeTreeExportInfos> children = node.children() == null ? null
+                : node.children().stream().map(child -> remapModificationGroups(child, groupUuidMapping)).toList();
+        return new NodeTreeExportInfos(node.name(), node.type(), newGroupUuid, node.nodeType(), children);
+    }
+
+    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String description,
+                                             Map<UUID, UUID> uuidMapping) throws IOException {
+        importFiltersAndContingencyLists(parametersDir, uuidMapping, parentDirectoryUuid, description);
+        importComputationParametersFiles(parametersDir, studyUuid, uuidMapping);
+    }
+
+    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> groupUuidMapping, Map<UUID, UUID> uuidMapping,
+                                            UUID parentDirectoryUuid, String description) throws IOException {
+        importFiltersAndContingencyLists(modificationsDir, uuidMapping, parentDirectoryUuid, description);
+        importLoadFlowParameters(modificationsDir.resolve(LOAD_FLOW_PARAMETERS_FILE), uuidMapping, parentDirectoryUuid, description);
+        for (Map.Entry<UUID, UUID> group : groupUuidMapping.entrySet()) {
+            Path file = modificationsDir.resolve(group.getKey() + ".json");
+            if (Files.exists(file)) {
+                for (JsonNode modification : objectMapper.readTree(remapUuids(Files.readString(file), uuidMapping))) {
+                    networkModificationService.createModification(group.getValue(), modification);
+                }
+            }
+        }
+    }
+
+    private void importFiltersAndContingencyLists(Path directory, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
+        List<ExportedElementInfos> filters = readExportedElements(directory.resolve(FILTERS_FILE)).stream()
+                .filter(filter -> !uuidMapping.containsKey(filter.uuid())).toList();
+        List<ExportedElementInfos> contingencyLists = readExportedElements(directory.resolve(CONTINGENCY_LISTS_FILE)).stream()
+                .filter(contingencyList -> !uuidMapping.containsKey(contingencyList.uuid())).toList();
         filters.forEach(filter -> uuidMapping.put(filter.uuid(), UUID.randomUUID()));
         contingencyLists.forEach(contingencyList -> uuidMapping.put(contingencyList.uuid(), UUID.randomUUID()));
 
         filters.forEach(filter -> importFilter(filter, uuidMapping, parentDirectoryUuid, description));
         contingencyLists.forEach(contingencyList -> importContingencyList(contingencyList, uuidMapping, parentDirectoryUuid, description));
-        importComputationParametersFiles(parametersDir, studyUuid, uuidMapping);
+    }
+
+    private void importLoadFlowParameters(Path file, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
+        for (ExportedElementInfos loadFlowParameters : readExportedElements(file)) {
+            UUID newParametersUuid = parametersService.createParameters(loadFlowParameters.content().toString(), ParametersType.LOADFLOW_PARAMETERS);
+            ElementAttributes elementAttributes = new ElementAttributes(newParametersUuid,
+                    Objects.requireNonNullElse(loadFlowParameters.name(), loadFlowParameters.uuid().toString()),
+                    ParametersType.LOADFLOW_PARAMETERS.name(), 0L, description);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, parametersService::delete);
+            uuidMapping.put(loadFlowParameters.uuid(), newParametersUuid);
+        }
     }
 
     private List<ExportedElementInfos> readExportedElements(Path file) {
