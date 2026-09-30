@@ -259,6 +259,55 @@ class StudyImportTest {
     }
 
     @Test
+    void testImportStudyShortCircuitAndSensitivityNodesParameters() throws Exception {
+        UUID oldClusterFilter = UUID.randomUUID();
+        UUID oldNodeClusterFilter = UUID.randomUUID();
+        UUID oldVoltageLevelsFilter = UUID.randomUUID();
+        UUID oldContingencyList = UUID.randomUUID();
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/identifier-contingency-lists")).willReturn(aResponse().withStatus(200)));
+        // the short-circuit specific parameters values are json strings
+        String shortCircuitParameters = objectMapper.writeValueAsString(Map.of("provider", "Courcirc", "specificParametersPerProvider", Map.of("Courcirc", Map.of(
+                "powerElectronicsClusters", "[{\"filters\":[{\"filterId\":\"" + oldClusterFilter + "\",\"filterName\":\"cluster\"}],\"active\":true}]",
+                "nodeClusterFilterIds", "[{\"filterId\":\"" + oldNodeClusterFilter + "\",\"filterName\":\"node\"}]"))));
+        String sensitivityParameters = "{\"sensitivityNodes\":[{\"monitoredVoltageLevels\":[\"" + oldVoltageLevelsFilter + "\"],"
+                + "\"equipmentsInVoltageRegulation\":[],\"contingencies\":[\"" + oldContingencyList + "\"],\"activated\":true}]}";
+        byte[] archiveContent = createStudyArchiveWithDefinitions(
+                List.of(expertFilter(oldClusterFilter, "cluster", "GENERATOR"),
+                        expertFilter(oldNodeClusterFilter, "node", "BUS"),
+                        expertFilter(oldVoltageLevelsFilter, "vl", "VOLTAGE_LEVEL")),
+                List.of(new ExportedElementInfos(oldContingencyList, "identifiers", objectMapper.readTree("{\"id\":\"" + oldContingencyList + "\",\"type\":\"IDENTIFIERS\"}"))),
+                Map.of("SHORT_CIRCUIT", shortCircuitParameters, "SENSITIVITY_ANALYSIS", sensitivityParameters));
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(new MockMultipartFile("archiveFile", "study-export.zip", "application/zip", archiveContent))
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isOk());
+
+        List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
+        String newClusterFilter = findRequestContaining(filterRequests, "GENERATOR").queryParameter("id").firstValue();
+        String newNodeClusterFilter = findRequestContaining(filterRequests, "BUS").queryParameter("id").firstValue();
+        String newVoltageLevelsFilter = findRequestContaining(filterRequests, "VOLTAGE_LEVEL").queryParameter("id").firstValue();
+        String newContingencyList = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/identifier-contingency-lists")))
+                .getFirst().queryParameter("id").firstValue();
+
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1/studies/.*/short-circuit-analysis/parameters"))
+                .withRequestBody(equalToJson(shortCircuitParameters.replace(oldClusterFilter.toString(), newClusterFilter)
+                        .replace(oldNodeClusterFilter.toString(), newNodeClusterFilter))));
+        wireMockServer.verify(postRequestedFor(urlPathMatching("/v1/studies/.*/sensitivity-analysis/parameters"))
+                .withRequestBody(equalToJson(sensitivityParameters.replace(oldVoltageLevelsFilter.toString(), newVoltageLevelsFilter)
+                        .replace(oldContingencyList.toString(), newContingencyList))));
+    }
+
+    private ExportedElementInfos expertFilter(UUID uuid, String name, String equipmentType) throws JsonProcessingException {
+        return new ExportedElementInfos(uuid, name,
+                objectMapper.readTree("{\"id\":\"" + uuid + "\",\"type\":\"EXPERT\",\"equipmentType\":\"" + equipmentType + "\"}"));
+    }
+
+    @Test
     void testImportStudyNetworkModifications() throws Exception {
         UUID oldGroup = UUID.randomUUID();
         UUID oldSharedFilter = UUID.randomUUID();
