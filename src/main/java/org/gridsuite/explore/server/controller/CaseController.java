@@ -42,13 +42,6 @@ public class CaseController {
         return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file));
     }
 
-    @DeleteMapping(value = "/cases/{caseUuid}")
-    @PreAuthorize("true")
-    public ResponseEntity<Void> deleteCase(@PathVariable("caseUuid") UUID caseUuid) {
-        caseService.deleteCase(caseUuid);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping(value = "/cases/{caseUuid}")
     @PreAuthorize("@authorizationService.canRead(#caseUuid)")
     public ResponseEntity<Resource> downloadCase(@PathVariable("caseUuid") UUID caseUuid) {

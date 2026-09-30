@@ -48,13 +48,6 @@ class CaseControllerTest {
     }
 
     @Test
-    void deleteCaseForwardsCaseUuid() {
-        controller.deleteCase(CASE_UUID);
-
-        verify(caseService).deleteCase(CASE_UUID);
-    }
-
-    @Test
     void downloadCaseForwardsCaseUuid() {
         ResponseEntity<ByteArrayResource> response = ResponseEntity.ok(new ByteArrayResource("case".getBytes()));
         when(caseService.downloadCase(CASE_UUID)).thenReturn(ResponseEntity.ok(response.getBody()));

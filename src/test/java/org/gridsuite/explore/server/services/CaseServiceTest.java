@@ -60,6 +60,8 @@ class CaseServiceTest {
         server.expect(once(), requestTo(BASE_URI + "/v1/cases"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(content().contentTypeCompatibleWith(MediaType.MULTIPART_FORM_DATA))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("withExpiration")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("true")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("case")))
             .andRespond(withSuccess("\"" + CASE_UUID + "\"", MediaType.APPLICATION_JSON));
 
@@ -82,17 +84,6 @@ class CaseServiceTest {
         assertEquals("attachment; filename=network.xiidm", response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
         assertNotNull(response.getBody());
         assertEquals("case", new String(response.getBody().getContentAsByteArray()));
-        server.verify();
-    }
-
-    @Test
-    void deleteCaseForwardsCaseUuid() {
-        server.expect(once(), requestTo(BASE_URI + "/v1/cases/" + CASE_UUID))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withSuccess());
-
-        caseService.deleteCase(CASE_UUID);
-
         server.verify();
     }
 
