@@ -84,7 +84,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public void updateCompositeModificationMetadata(UUID compositeModificationId, String newName, String newDescription) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
                 DELIMITER + NETWORK_MODIFICATION_API_VERSION +
-                        DELIMITER  + NETWORK_MODIFICATIONS_PATH +
+                        DELIMITER + NETWORK_MODIFICATIONS_PATH +
                         DELIMITER + "name-and-description" +
                         DELIMITER + compositeModificationId
                 );

@@ -457,6 +457,8 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
+                    } else if (path.matches("/v1/network-modifications/name-and-description/" + ELEMENT_COMPOSITE_UUID)) {
+                        return new MockResponse(200);
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -1162,8 +1164,8 @@ class ExploreTest {
     void testUpdateElement() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}",
-                ELEMENT_UUID)
+        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+                ELEMENT_UUID, "STUDY")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1173,8 +1175,8 @@ class ExploreTest {
     void testUpdateCompositeName() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName("new Name");
-        mockMvc.perform(put("/v1/explore/elements/{id}",
-                ELEMENT_COMPOSITE_UUID)
+        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+                ELEMENT_COMPOSITE_UUID, "MODIFICATION")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1196,7 +1198,8 @@ class ExploreTest {
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}", FORBIDDEN_ELEMENT_UUID)
+        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+                FORBIDDEN_ELEMENT_UUID, "STUDY")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isForbidden());

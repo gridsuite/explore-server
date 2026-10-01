@@ -55,7 +55,7 @@ interface IDirectoryElementsService {
     }
 
     private ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        if (metadataItem != null && metadataItem.containsKey("description")) {
+        if (metadataItem != null && metadataItem.containsKey("description") && metadataItem.get("description") != null) {
             elementAttributes.setDescription(metadataItem.get("description").toString());
         }
         elementAttributes.setSpecificMetadata(metadataItem);
