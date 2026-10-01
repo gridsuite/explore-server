@@ -13,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,16 +37,8 @@ public class CaseController {
 
     @PostMapping(value = "/cases", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("true")
-    public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file,
-                                           @RequestParam(value = "withExpiration", required = false, defaultValue = "false") boolean withExpiration) {
-        return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file, withExpiration));
-    }
-
-    @DeleteMapping(value = "/cases/{caseUuid}")
-    @PreAuthorize("true")
-    public ResponseEntity<Void> deleteCase(@PathVariable("caseUuid") UUID caseUuid) {
-        caseService.deleteCase(caseUuid);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file));
     }
 
     @GetMapping(value = "/cases/{caseUuid}")
