@@ -423,22 +423,23 @@ public class ExploreService {
         }
     }
 
-    public void updateElement(UUID id, ElementAttributes elementAttributes) {
-        // The check to know if the  user have the right to update the element is done in the directory-server
-        directoryService.updateElement(id, elementAttributes);
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        notifyElementUpdated(elementsInfos);
+    public void updateElement(UUID id, String type, ElementAttributes updatedElementAttributes) {
+        switch (type) {
+            case MODIFICATION:
+                networkModificationService.updateCompositeModificationMetadata(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
+                break;
+            default:
+                directoryService.updateElement(id, updatedElementAttributes);
+                ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+                notifyElementUpdated(elementsInfos);
+                break;
+        }
     }
 
     private void notifyElementUpdated(ElementAttributes element) {
         // send notification if the study name was updated
         if (STUDY.equals(element.getType())) {
             studyService.notifyStudyUpdate(element.getElementUuid());
-        }
-
-        // the composite modification name has to be updated in order to match the new element name
-        if (MODIFICATION.equals(element.getType())) {
-            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName(), element.getDescription());
         }
     }
 
