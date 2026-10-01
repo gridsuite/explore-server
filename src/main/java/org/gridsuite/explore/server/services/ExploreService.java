@@ -424,15 +424,12 @@ public class ExploreService {
     }
 
     public void updateElement(UUID id, String type, ElementAttributes updatedElementAttributes) {
-        switch (type) {
-            case MODIFICATION:
-                networkModificationService.updateCompositeModificationMetadata(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
-                break;
-            default:
-                directoryService.updateElement(id, updatedElementAttributes);
-                ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-                notifyElementUpdated(elementsInfos);
-                break;
+        if (type.equals(MODIFICATION)) {
+            networkModificationService.updateCompositeModificationMetadata(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
+        } else {
+            directoryService.updateElement(id, updatedElementAttributes);
+            ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+            notifyElementUpdated(elementsInfos);
         }
     }
 
