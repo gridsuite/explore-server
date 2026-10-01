@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 interface IDirectoryElementsService {
     Logger LOGGER = LoggerFactory.getLogger(IDirectoryElementsService.class);
 
-    String DESCRIPTION = "description" ;
+    String DESCRIPTION = "description";
 
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
