@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 interface IDirectoryElementsService {
     Logger LOGGER = LoggerFactory.getLogger(IDirectoryElementsService.class);
 
-    String DESCRIPTION = "description";
-
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
     }
@@ -56,10 +54,7 @@ interface IDirectoryElementsService {
         }
     }
 
-    private ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        if (metadataItem != null && metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
-            elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
-        }
+    default ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;
     }

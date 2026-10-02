@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.ModificationMetadata;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -133,5 +134,17 @@ public class NetworkModificationService implements IDirectoryElementsService {
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
                 new ParameterizedTypeReference<Map<UUID, List<Object>>>() {
                 }).getBody();
+    }
+
+    @Override
+    public ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        if (metadataItem != null && metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
+            elementAttributes.setElementName(metadataItem.get(NAME).toString());
+        }
+        if (metadataItem != null && metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
+            elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
+        }
+        elementAttributes.setSpecificMetadata(metadataItem);
+        return elementAttributes;
     }
 }
