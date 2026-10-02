@@ -54,7 +54,7 @@ interface IDirectoryElementsService {
         }
     }
 
-    private ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+    default ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;
     }

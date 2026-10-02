@@ -126,6 +126,11 @@ class ExploreTest {
     private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
     private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
     private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
+    private final Map<String, Object> compositeModificationSpecificMetadata = Map.of(
+            "id", COMPOSITE_MODIFICATION_UUID,
+            "type", "COMPOSITE",
+            "name", "compositeName",
+            "description", "compositeDescription");
     private final Map<UUID, List<Map<String, Object>>> compositeModificationMetadata = Map.of(COMPOSITE_MODIFICATION_UUID, List.of(
             Map.of(
             "uuid", MODIFICATION_UUID,
@@ -242,6 +247,8 @@ class ExploreTest {
         String caseInfosAttributesAsString = mapper.writeValueAsString(List.of(caseSpecificMetadata));
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
+        String compositeModificationSpecificMetadataAsString = mapper.writeValueAsString(List.of(compositeModificationSpecificMetadata));
+        String compositeModificationAsString = mapper.writeValueAsString(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "a composite", MODIFICATION, USER1, 0, null));
         String compositeModificationIdAsString = mapper.writeValueAsString(MODIFICATION_UUID);
         String newStudyUuidAsString = mapper.writeValueAsString(STUDY_COPY_UUID);
         String newCaseUuidAsString = mapper.writeValueAsString(CASE_COPY_UUID);
@@ -329,6 +336,8 @@ class ExploreTest {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + caseElementAttributesAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + modificationElementAttributesAsString + "]");
+                } else if (path.matches("/v1/elements\\?ids=" + COMPOSITE_MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + compositeModificationAsString + "]");
                 } else if (path.matches("/v1/elements\\?ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + contingencyListMetadataErrorAttributesAsString + "]");
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
@@ -413,6 +422,10 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 modificationInfosAttributesAsString);
+                    } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + COMPOSITE_MODIFICATION_UUID)) {
+                        return new MockResponse(200,
+                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                                compositeModificationSpecificMetadataAsString);
                     } else if (path.matches("/v1/network-composite-modifications/network-modifications[?]uuids=" + COMPOSITE_MODIFICATION_UUID)) {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
@@ -457,6 +470,8 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
+                    } else if (path.matches("/v1/network-modifications/name-and-description/" + ELEMENT_COMPOSITE_UUID)) {
+                        return new MockResponse(200);
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
@@ -1162,8 +1177,8 @@ class ExploreTest {
     void testUpdateElement() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}",
-                ELEMENT_UUID)
+        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+                ELEMENT_UUID, "STUDY")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1173,8 +1188,8 @@ class ExploreTest {
     void testUpdateCompositeName() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName("new Name");
-        mockMvc.perform(put("/v1/explore/elements/{id}",
-                ELEMENT_COMPOSITE_UUID)
+        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+                ELEMENT_COMPOSITE_UUID, "MODIFICATION")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1196,7 +1211,8 @@ class ExploreTest {
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}", FORBIDDEN_ELEMENT_UUID)
+        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+                FORBIDDEN_ELEMENT_UUID, "STUDY")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isForbidden());
@@ -1344,5 +1360,18 @@ class ExploreTest {
         wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlEqualTo("/v1/studies/" + PRIVATE_STUDY_UUID)));
         wireMockServer.verify(1, WireMock.deleteRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + PRIVATE_STUDY_UUID + "&parentDirectoryUuid=.*")));
         wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlMatching("/v1/elements\\?ids=" + FILTER_UUID + "&status=CREATED")));
+    }
+
+    @Test
+    void testGetElementsMetadataForModification() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + COMPOSITE_MODIFICATION_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+        String res = result.getResponse().getContentAsString();
+        List<ElementAttributes> elementsMetadata = mapper.readValue(res, new TypeReference<>() { });
+        String compositeModificationAttributesAsString = mapper.writeValueAsString(new ElementAttributes(COMPOSITE_MODIFICATION_UUID,
+                "compositeName", "MODIFICATION", USER1, 0L, "compositeDescription", compositeModificationSpecificMetadata));
+        assertEquals(1, elementsMetadata.size());
+        assertEquals(mapper.writeValueAsString(elementsMetadata.getFirst()), compositeModificationAttributesAsString);
     }
 }
