@@ -38,6 +38,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public static final String DESCRIPTION = "description";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
+    private static final String CONTAINERS_PATH = "containers";
     @Setter
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
@@ -125,10 +126,11 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .fromPath(DELIMITER +
                         NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER +
-                        NETWORK_COMPOSITE_MODIFICATIONS_PATH +
+                        CONTAINERS_PATH +
                         DELIMITER +
                         NETWORK_MODIFICATIONS_PATH)
                 .queryParam(UUIDS, List.of(compositeModificationId))
+                .queryParam("onlyMetadata", true)
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
