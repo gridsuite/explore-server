@@ -1177,7 +1177,7 @@ class ExploreTest {
     void testUpdateElement() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
                 ELEMENT_UUID, "STUDY")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
@@ -1188,7 +1188,7 @@ class ExploreTest {
     void testUpdateCompositeName() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName("new Name");
-        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
                 ELEMENT_COMPOSITE_UUID, "MODIFICATION")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
@@ -1211,7 +1211,7 @@ class ExploreTest {
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}/type/{type}",
+        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
                 FORBIDDEN_ELEMENT_UUID, "STUDY")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))

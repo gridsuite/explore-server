@@ -497,7 +497,7 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "/explore/elements/{id}/type/{type}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/explore/elements/{id}/types/{type}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
     @PreAuthorize("@authorizationService.canWrite(#id)")
