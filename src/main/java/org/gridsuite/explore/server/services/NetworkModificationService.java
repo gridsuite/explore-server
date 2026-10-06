@@ -87,8 +87,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
                 DELIMITER + NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER + NETWORK_MODIFICATIONS_PATH +
-                        DELIMITER + "name-and-description" +
-                        DELIMITER + compositeModificationId
+                        DELIMITER + compositeModificationId +
+                        DELIMITER + "name-and-description"
                 );
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();

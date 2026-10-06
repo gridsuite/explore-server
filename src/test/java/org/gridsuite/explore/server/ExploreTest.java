@@ -470,7 +470,7 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
-                    } else if (path.matches("/v1/network-modifications/name-and-description/" + ELEMENT_COMPOSITE_UUID)) {
+                    } else if (path.matches("/v1/network-modifications/" + ELEMENT_COMPOSITE_UUID + "/name-and-description")) {
                         return new MockResponse(200);
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
