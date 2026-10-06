@@ -69,7 +69,7 @@ public class CaseService implements IDirectoryElementsService {
         return importCaseResource(new FileSystemResource(file));
     }
 
-    public UUID importCaseWithoutDirectoryElementCreation(MultipartFile multipartFile, boolean withExpiration) {
+    public UUID importCaseWithoutDirectoryElementCreation(MultipartFile multipartFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -77,7 +77,7 @@ public class CaseService implements IDirectoryElementsService {
             Objects.requireNonNull(multipartFile.getOriginalFilename());
             body.add("file", multipartFile.getResource());
         }
-        body.add("withExpiration", withExpiration);
+        body.add("withExpiration", true);
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
 
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
@@ -92,14 +92,6 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.GET, null, Resource.class);
-    }
-
-    public Void deleteCase(UUID caseUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{caseUuid}")
-            .buildAndExpand(caseUuid)
-            .toUriString();
-
-        return restTemplate.exchange(caseServerBaseUri + path, HttpMethod.DELETE, null, Void.class).getBody();
     }
 
     public String getBaseName(String caseName) {
