@@ -52,15 +52,19 @@ public class StudyImportService {
     public static final String JSON = ".json";
     public static final String TYPE = "type";
     private static final String VOLTAGE_INITIALIZATION = "VOLTAGE_INITIALIZATION";
-
+    public static final String LOAD_FLOW = "LOAD_FLOW";
+    public static final String SHORT_CIRCUIT = "SHORT_CIRCUIT";
+    public static final String SECURITY_ANALYSIS = "SECURITY_ANALYSIS";
+    public static final String SENSITIVITY_ANALYSIS = "SENSITIVITY_ANALYSIS";
+    public static final String PCC_MIN = "PCC_MIN";
     // exported computation type -> study-server path used to set the study parameters
     private static final Map<String, String> COMPUTATION_TYPE_TO_STUDY_PATH = Map.of(
-            "LOAD_FLOW", "loadflow",
-            "SHORT_CIRCUIT", "short-circuit-analysis",
-            "VOLTAGE_INITIALIZATION", "voltage-init",
-            "SECURITY_ANALYSIS", "security-analysis",
-            "SENSITIVITY_ANALYSIS", "sensitivity-analysis",
-            "PCC_MIN", "pcc-min"
+            LOAD_FLOW, "loadflow",
+            SHORT_CIRCUIT, "short-circuit-analysis",
+            VOLTAGE_INITIALIZATION, "voltage-init",
+            SECURITY_ANALYSIS, "security-analysis",
+            SENSITIVITY_ANALYSIS, "sensitivity-analysis",
+            PCC_MIN, "pcc-min"
     );
 
     private final CaseService caseService;
