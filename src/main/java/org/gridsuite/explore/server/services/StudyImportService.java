@@ -9,11 +9,10 @@ package org.gridsuite.explore.server.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.SecuredZipInputStream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +24,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
@@ -36,10 +36,10 @@ import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
  */
+@Slf4j
 @Service
 public class StudyImportService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StudyImportService.class);
     public static final long MAX_UNCOMPRESSED_ARCHIVE_SIZE = 10000000000L;
     public static final int MAX_ARCHIVE_ENTRIES = 5000;
     public static final String TREE_EXPORT_FILE = "tree.json";
@@ -49,7 +49,8 @@ public class StudyImportService {
     public static final String CONTINGENCY_LISTS_FILE = "contingencyList.json";
     private static final String IDENTIFIERS_CONTINGENCY_LIST_TYPE = "IDENTIFIERS";
     private static final String FILTERS_CONTINGENCY_LIST_TYPE = "FILTERS";
-
+    public static final String JSON = ".json";
+    public static final String TYPE = "type";
     private static final String VOLTAGE_INITIALIZATION = "VOLTAGE_INITIALIZATION";
 
     // exported computation type -> study-server path used to set the study parameters
@@ -110,7 +111,7 @@ public class StudyImportService {
                     FileUtils.deleteDirectory(tempDir.toFile());
                 }
             } catch (IOException e) {
-                LOGGER.error("Error cleaning up temporary directory: " + tempDir, e);
+                log.error("Error cleaning up temporary directory: " + tempDir, e);
             }
         }
     }
@@ -160,15 +161,41 @@ public class StudyImportService {
     }
 
     private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String description) throws IOException {
-        List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
-        List<ExportedElementInfos> contingencyLists = readExportedElements(parametersDir.resolve(CONTINGENCY_LISTS_FILE));
         Map<UUID, UUID> uuidMapping = new HashMap<>();
-        filters.forEach(filter -> uuidMapping.put(filter.uuid(), UUID.randomUUID()));
-        contingencyLists.forEach(contingencyList -> uuidMapping.put(contingencyList.uuid(), UUID.randomUUID()));
-
-        filters.forEach(filter -> importFilter(filter, uuidMapping, parentDirectoryUuid, description));
-        contingencyLists.forEach(contingencyList -> importContingencyList(contingencyList, uuidMapping, parentDirectoryUuid, description));
+        importFilters(parametersDir, uuidMapping, parentDirectoryUuid, description);
+        importContingencyLists(parametersDir, uuidMapping, parentDirectoryUuid, description);
         importComputationParametersFiles(parametersDir, studyUuid, uuidMapping);
+    }
+
+    private void importFilters(Path parametersDir, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
+        List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
+        addNewUuids(filters, uuidMapping);
+        for (ExportedElementInfos filter : filters) {
+            UUID newFilterUuid = uuidMapping.get(filter.uuid());
+            filterService.insertFilter(remapUuids(filter.content().toString(), uuidMapping), newFilterUuid);
+            createDirectoryElement(filter, newFilterUuid, FILTER, parentDirectoryUuid, description, filterService::delete);
+        }
+    }
+
+    private void importContingencyLists(Path parametersDir, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
+        List<ExportedElementInfos> contingencyLists = readExportedElements(parametersDir.resolve(CONTINGENCY_LISTS_FILE));
+        addNewUuids(contingencyLists, uuidMapping);
+        for (ExportedElementInfos contingencyList : contingencyLists) {
+            UUID newContingencyListUuid = uuidMapping.get(contingencyList.uuid());
+            String remappedContent = remapUuids(contingencyList.content().toString(), uuidMapping);
+            switch (contingencyList.content().path(TYPE).asText()) {
+                case IDENTIFIERS_CONTINGENCY_LIST_TYPE -> contingencyListService.insertIdentifierContingencyList(newContingencyListUuid, remappedContent);
+                case FILTERS_CONTINGENCY_LIST_TYPE -> contingencyListService.insertFilterBasedContingencyList(newContingencyListUuid, remappedContent);
+                default -> throw new ExploreException(IMPORT_STUDY_FAILED, "Unknown type for contingency list " + contingencyList.uuid());
+            }
+            createDirectoryElement(contingencyList, newContingencyListUuid, CONTINGENCY_LIST, parentDirectoryUuid, description, contingencyListService::delete);
+        }
+    }
+
+    private void createDirectoryElement(ExportedElementInfos element, UUID newUuid, String type, UUID parentDirectoryUuid, String description, Consumer<UUID> rollback) {
+        String name = Objects.requireNonNullElse(element.name(), element.uuid().toString());
+        ElementAttributes elementAttributes = new ElementAttributes(newUuid, name, type, 0L, description);
+        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, rollback);
     }
 
     private List<ExportedElementInfos> readExportedElements(Path file) {
@@ -182,31 +209,15 @@ public class StudyImportService {
         }
     }
 
-    private void importFilter(ExportedElementInfos filter, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
-        UUID newFilterUuid = uuidMapping.get(filter.uuid());
-        filterService.insertFilter(remapUuids(filter.content().toString(), uuidMapping), newFilterUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(newFilterUuid, Objects.requireNonNullElse(filter.name(), filter.uuid().toString()),
-                FILTER, 0L, description);
-        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, filterService::delete);
-    }
-
-    private void importContingencyList(ExportedElementInfos contingencyList, Map<UUID, UUID> uuidMapping, UUID parentDirectoryUuid, String description) {
-        UUID newContingencyListUuid = uuidMapping.get(contingencyList.uuid());
-        String remappedContent = remapUuids(contingencyList.content().toString(), uuidMapping);
-        String type = contingencyList.content().path("type").asText();
-        switch (type) {
-            case IDENTIFIERS_CONTINGENCY_LIST_TYPE -> contingencyListService.insertIdentifierContingencyList(newContingencyListUuid, remappedContent);
-            case FILTERS_CONTINGENCY_LIST_TYPE -> contingencyListService.insertFilterBasedContingencyList(newContingencyListUuid, remappedContent);
-            default -> throw new ExploreException(IMPORT_STUDY_FAILED, "Unknown type '" + type + "' for contingency list " + contingencyList.uuid());
+    private void addNewUuids(List<ExportedElementInfos> elements, Map<UUID, UUID> uuidMapping) {
+        for (ExportedElementInfos element : elements) {
+            uuidMapping.put(element.uuid(), UUID.randomUUID());
         }
-        ElementAttributes elementAttributes = new ElementAttributes(newContingencyListUuid, Objects.requireNonNullElse(contingencyList.name(), contingencyList.uuid().toString()),
-                CONTINGENCY_LIST, 0L, description);
-        exploreService.createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
     }
 
     private void importComputationParametersFiles(Path parametersDir, UUID studyUuid, Map<UUID, UUID> uuidMapping) throws IOException {
         for (Map.Entry<String, String> computation : COMPUTATION_TYPE_TO_STUDY_PATH.entrySet()) {
-            Path file = parametersDir.resolve(computation.getKey() + ".json");
+            Path file = parametersDir.resolve(computation.getKey() + JSON);
             if (Files.exists(file)) {
                 String parameters = remapUuids(Files.readString(file), uuidMapping);
                 if (VOLTAGE_INITIALIZATION.equals(computation.getKey())) {
