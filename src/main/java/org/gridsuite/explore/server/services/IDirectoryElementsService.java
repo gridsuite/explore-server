@@ -43,18 +43,18 @@ interface IDirectoryElementsService {
                     item = metadataItem.getOrDefault("uuid", "");
                 }
                 ElementAttributes e = mapElementAttribute.get(item.toString());
-                return populateMedataItem(e, metadataItem);
+                return populateMetadataItem(e, metadataItem);
             }).collect(Collectors.toList());
         } catch (ResourceAccessException e) {
             String elementType = lstElementAttribute.isEmpty() ? "UNKNOWN" : lstElementAttribute.getFirst().getType();
             LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
             return lstElementAttribute.stream()
-                    .map(elementAttributes -> populateMedataItem(elementAttributes, Map.of()))
+                    .map(elementAttributes -> populateMetadataItem(elementAttributes, Map.of()))
                     .collect(Collectors.toList());
         }
     }
 
-    default ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+    default ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;
     }

@@ -139,12 +139,14 @@ public class NetworkModificationService implements IDirectoryElementsService {
     }
 
     @Override
-    public ElementAttributes populateMedataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        if (metadataItem != null && metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
-            elementAttributes.setElementName(metadataItem.get(NAME).toString());
-        }
-        if (metadataItem != null && metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
-            elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
+    public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        if (metadataItem != null) {
+            if (metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
+                elementAttributes.setElementName(metadataItem.get(NAME).toString());
+            }
+            if (metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
+                elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
+            }
         }
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;
