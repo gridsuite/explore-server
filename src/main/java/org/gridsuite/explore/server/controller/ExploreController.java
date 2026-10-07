@@ -676,7 +676,7 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/explore/process-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/explore/process-configs")
     @Operation(summary = "Create a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully created")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryId)")
