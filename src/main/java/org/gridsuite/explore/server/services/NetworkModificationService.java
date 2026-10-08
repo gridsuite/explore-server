@@ -33,6 +33,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public static final String NAME = "name";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
+    private static final String CONTAINERS_PATH = "containers";
     @Setter
     private String networkModificationServerBaseUri;
     private final RestTemplate restTemplate;
@@ -63,7 +64,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .getBody();
     }
 
-    public void createModification(UUID groupUuid, JsonNode modification) {
+    public UUID createModification(UUID groupUuid, JsonNode modification) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .queryParam("groupUuid", groupUuid)
                 .buildAndExpand()
@@ -71,7 +72,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         Map<String, Object> body = Map.of("first", modification, "second", List.of());
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), Void.class);
+        JsonNode result = restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), JsonNode.class).getBody();
+        return UUID.fromString(result.path("modificationUuids").get(0).asText());
     }
 
     public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
@@ -128,10 +130,11 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .fromPath(DELIMITER +
                         NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER +
-                        NETWORK_COMPOSITE_MODIFICATIONS_PATH +
+                        CONTAINERS_PATH +
                         DELIMITER +
                         NETWORK_MODIFICATIONS_PATH)
                 .queryParam(UUIDS, List.of(compositeModificationId))
+                .queryParam("onlyMetadata", true)
                 .buildAndExpand()
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
