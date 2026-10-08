@@ -266,9 +266,7 @@ public class ExploreService {
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
-        Map<UUID, List<Object>> compositeContent = networkModificationService.getCompositeModificationContent(compositeModificationId);
-        List<Object> requestedContent = compositeContent.get(compositeModificationId);
-        return requestedContent != null ? requestedContent : List.of();
+        return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description) {

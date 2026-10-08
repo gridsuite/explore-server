@@ -112,20 +112,21 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 }).getBody();
     }
 
-    public Map<UUID, List<Object>> getCompositeModificationContent(UUID compositeModificationId) {
+    public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         String path = UriComponentsBuilder
                 .fromPath(DELIMITER +
                         NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER +
                         CONTAINERS_PATH +
                         DELIMITER +
+                        "{containerUuid}" +
+                        DELIMITER +
                         NETWORK_MODIFICATIONS_PATH)
-                .queryParam(UUIDS, List.of(compositeModificationId))
                 .queryParam("onlyMetadata", true)
-                .buildAndExpand()
+                .buildAndExpand(compositeModificationId)
                 .toUriString();
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<Map<UUID, List<Object>>>() {
+                new ParameterizedTypeReference<List<Object>>() {
                 }).getBody();
     }
 }
