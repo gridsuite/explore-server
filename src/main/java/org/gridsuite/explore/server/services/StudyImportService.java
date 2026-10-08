@@ -121,9 +121,8 @@ public class StudyImportService {
             Map<UUID, UUID> oldGroupUuidsToNewGroupUuids = new HashMap<>();
             treeExportInfos.setNodeTree(replaceModificationGroupUuids(treeExportInfos.getNodeTree(), oldGroupUuidsToNewGroupUuids));
             UUID studyUuid = createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
-            Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
-            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), oldUuidsToNewUuids, parentDirectoryUuid, studyUuid, description);
-            importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids, parentDirectoryUuid, description);
+            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, description);
+            importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldGroupUuidsToNewGroupUuids, parentDirectoryUuid, description);
         } catch (Exception e) {
             directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
@@ -201,14 +200,15 @@ public class StudyImportService {
         return new NodeTreeExportInfos(node.name(), node.type(), newGroupUuid, node.nodeType(), children);
     }
 
-    private void importComputationParameters(Path parametersDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, UUID studyUuid, String description) throws IOException {
+    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String description) throws IOException {
+        Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
         importFilters(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
         importContingencyLists(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
         importComputationParametersFiles(parametersDir, studyUuid, oldUuidsToNewUuids);
     }
 
     private void importFilters(Path parametersDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
-        List<ExportedElementInfos> filters = getNotImportedElements(readExportedElements(parametersDir.resolve(FILTERS_FILE)), oldUuidsToNewUuids);
+        List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
         addNewUuids(filters, oldUuidsToNewUuids);
         for (ExportedElementInfos filter : filters) {
             UUID newFilterUuid = oldUuidsToNewUuids.get(filter.uuid());
@@ -218,7 +218,7 @@ public class StudyImportService {
     }
 
     private void importContingencyLists(Path parametersDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
-        List<ExportedElementInfos> contingencyLists = getNotImportedElements(readExportedElements(parametersDir.resolve(CONTINGENCY_LISTS_FILE)), oldUuidsToNewUuids);
+        List<ExportedElementInfos> contingencyLists = readExportedElements(parametersDir.resolve(CONTINGENCY_LISTS_FILE));
         addNewUuids(contingencyLists, oldUuidsToNewUuids);
         for (ExportedElementInfos contingencyList : contingencyLists) {
             UUID newContingencyListUuid = oldUuidsToNewUuids.get(contingencyList.uuid());
@@ -249,16 +249,6 @@ public class StudyImportService {
         }
     }
 
-    private List<ExportedElementInfos> getNotImportedElements(List<ExportedElementInfos> elements, Map<UUID, UUID> oldUuidsToNewUuids) {
-        List<ExportedElementInfos> notImportedElements = new ArrayList<>();
-        for (ExportedElementInfos element : elements) {
-            if (!oldUuidsToNewUuids.containsKey(element.uuid())) {
-                notImportedElements.add(element);
-            }
-        }
-        return notImportedElements;
-    }
-
     private void addNewUuids(List<ExportedElementInfos> elements, Map<UUID, UUID> oldUuidsToNewUuids) {
         for (ExportedElementInfos element : elements) {
             oldUuidsToNewUuids.put(element.uuid(), UUID.randomUUID());
@@ -287,8 +277,8 @@ public class StudyImportService {
         return result;
     }
 
-    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, Map<UUID, UUID> oldUuidsToNewUuids,
-                                            UUID parentDirectoryUuid, String description) throws IOException {
+    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, UUID parentDirectoryUuid, String description) throws IOException {
+        Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
         importFilters(modificationsDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
         importLoadFlowParameters(modificationsDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
         importNetworkModificationsFiles(modificationsDir, oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids, parentDirectoryUuid, description);
