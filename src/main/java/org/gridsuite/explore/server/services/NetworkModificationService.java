@@ -7,11 +7,14 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.ModificationMetadata;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -20,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 
 /**
  * @author David Braquart <david.braquart at rte-france.com>
@@ -30,6 +35,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     public static final String UUIDS = "uuids";
     public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private static final String CONTAINERS_PATH = "containers";
@@ -75,19 +81,22 @@ public class NetworkModificationService implements IDirectoryElementsService {
 
     /**
      * @param newName null if the name shouldn't be updated
+     * @param newDescription null if the description shouldn't be updated
      */
-    public void updateCompositeModification(UUID compositeModificationId, String newName) {
+    public void updateCompositeModificationMetadata(UUID compositeModificationId, String newName, String newDescription) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
-                DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId
+                DELIMITER + NETWORK_MODIFICATION_API_VERSION +
+                        DELIMITER + NETWORK_MODIFICATIONS_PATH +
+                        DELIMITER + compositeModificationId +
+                        DELIMITER + "name-and-description"
                 );
-        if (newName != null) {
-            uriComponentsBuilder.queryParam(NAME, newName);
-        }
-
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
+        headers.set(HEADER_USER_ID, userId);
+        ModificationMetadata modificationMetadata = new ModificationMetadata(compositeModificationId, newName, newDescription);
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(modificationMetadata, headers), Void.class);
     }
 
     @Override
@@ -127,5 +136,19 @@ public class NetworkModificationService implements IDirectoryElementsService {
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
                 new ParameterizedTypeReference<Map<UUID, List<Object>>>() {
                 }).getBody();
+    }
+
+    @Override
+    public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        if (metadataItem != null) {
+            if (metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
+                elementAttributes.setElementName(metadataItem.get(NAME).toString());
+            }
+            if (metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
+                elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
+            }
+        }
+        elementAttributes.setSpecificMetadata(metadataItem);
+        return elementAttributes;
     }
 }
