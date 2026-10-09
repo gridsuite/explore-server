@@ -15,6 +15,8 @@ import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.ContingencyListService;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.FilterService;
+import org.gridsuite.explore.server.services.NetworkModificationService;
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.junit.jupiter.api.AfterEach;
@@ -81,6 +83,12 @@ class StudyImportTest {
     @Autowired
     private ContingencyListService contingencyListService;
 
+    @Autowired
+    private NetworkModificationService networkModificationService;
+
+    @Autowired
+    private RemoteServicesProperties remoteServicesProperties;
+
     @BeforeEach
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
@@ -91,6 +99,8 @@ class StudyImportTest {
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
         filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
         contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
+        networkModificationService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
+        remoteServicesProperties.getServices().forEach(service -> service.setBaseUri(wireMockServer.baseUrl()));
 
         // Stub case-server
         wireMockServer.stubFor(post(urlPathMatching("/v1/cases"))
@@ -420,6 +430,91 @@ class StudyImportTest {
         wireMockServer.verify(getRequestedFor(urlPathEqualTo("/v1/elements/" + PARENT_DIRECTORY_UUID)));
         wireMockServer.verify(getRequestedFor(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")));
         wireMockServer.verify(deleteRequestedFor(urlPathEqualTo("/v1/cases/" + CASE_UUID)));
+    }
+
+    @Test
+    void testImportStudyNetworkModifications() throws Exception {
+        UUID oldGroup = UUID.randomUUID();
+        UUID oldSharedFilter = UUID.randomUUID();
+        UUID oldModificationFilter = UUID.randomUUID();
+        UUID oldLoadFlowParameters = UUID.randomUUID();
+        UUID newLoadFlowParameters = UUID.randomUUID();
+        UUID newCompositeInGroup = UUID.randomUUID();
+        UUID newCompositeInDirectory = UUID.randomUUID();
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/parameters"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(newLoadFlowParameters))));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/network-modifications"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
+                        .withBody("{\"modificationUuids\":[\"" + newCompositeInGroup + "\"],\"modificationResults\":[]}")));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/network-composite-modifications"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(newCompositeInDirectory))));
+
+        String sharedFilter = "{\"id\":\"" + oldSharedFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"GENERATOR\"}";
+        String modificationFilter = "{\"id\":\"" + oldModificationFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"LINE\"}";
+        String loadFlowParameters = "{\"provider\":\"OpenLoadFlow\"}";
+        String byFilterDeletion = "{\"type\":\"BY_FILTER_DELETION\",\"filters\":[{\"id\":\"" + oldSharedFilter + "\"},{\"id\":\"" + oldModificationFilter + "\"}]}";
+        String balancesAdjustment = "{\"type\":\"BALANCES_ADJUSTMENT_MODIFICATION\",\"loadFlowParametersId\":\"" + oldLoadFlowParameters + "\"}";
+        String composite = "{\"type\":\"COMPOSITE_MODIFICATION\",\"name\":\"my composite\","
+                + "\"modificationsInfos\":[{\"type\":\"BY_FILTER_DELETION\",\"filters\":[{\"id\":\"" + oldModificationFilter + "\"}]}]}";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            TreeExportInfos exportInfos = createStudyExportInfos();
+            exportInfos.setNodeTree(new NodeTreeExportInfos("Root", "ROOT", null, null,
+                    List.of(new NodeTreeExportInfos("Node 1", "NETWORK_MODIFICATION", oldGroup, "CONSTRUCTION", List.of()))));
+            addJsonEntry(zos, exportInfos);
+            addFileEntry(zos, "cases/" + CASE_UUID + "/testCase.xiidm", "<network></network>".getBytes());
+            addFileEntry(zos, "computationParameters/filters.json",
+                    objectMapper.writeValueAsBytes(List.of(new ExportedElementInfos(oldSharedFilter, "shared", objectMapper.readTree(sharedFilter)))));
+            addFileEntry(zos, "networkModifications/filters.json", objectMapper.writeValueAsBytes(List.of(
+                    new ExportedElementInfos(oldSharedFilter, "shared", objectMapper.readTree(sharedFilter)),
+                    new ExportedElementInfos(oldModificationFilter, "lines", objectMapper.readTree(modificationFilter)))));
+            addFileEntry(zos, "networkModifications/contingencyList.json", "[]".getBytes());
+            addFileEntry(zos, "networkModifications/loadFlowParameters.json", objectMapper.writeValueAsBytes(List.of(
+                    new ExportedElementInfos(oldLoadFlowParameters, "lf", objectMapper.readTree(loadFlowParameters)))));
+            addFileEntry(zos, "networkModifications/" + oldGroup + ".json", ("[" + byFilterDeletion + "," + balancesAdjustment + "," + composite + "]").getBytes());
+        }
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(new MockMultipartFile("archiveFile", "study-export.zip", "application/zip", baos.toByteArray()))
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isOk());
+
+        TreeExportInfos importedTree = objectMapper.readValue(
+                wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/studies/import"))).getFirst().getBodyAsString(), TreeExportInfos.class);
+        UUID newGroup = importedTree.getNodeTree().children().getFirst().modificationGroupUuid();
+        assertNotNull(newGroup);
+        assertNotEquals(oldGroup, newGroup);
+
+        List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
+        assertEquals(3, filterRequests.size());
+        List<LoggedRequest> modificationFilterRequests = filterRequests.subList(1, 3);
+        String newSharedFilter = findRequestContaining(modificationFilterRequests, "GENERATOR").queryParameter("id").firstValue();
+        String newModificationFilter = findRequestContaining(modificationFilterRequests, "LINE").queryParameter("id").firstValue();
+        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/parameters")).withRequestBody(equalToJson(loadFlowParameters)));
+
+        List<LoggedRequest> modificationRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/network-modifications")));
+        assertEquals(3, modificationRequests.size());
+        modificationRequests.forEach(request -> assertEquals(newGroup.toString(), request.queryParameter("groupUuid").firstValue()));
+        assertEquals(objectMapper.readTree("{\"first\":" + byFilterDeletion.replace(oldSharedFilter.toString(), newSharedFilter)
+                        .replace(oldModificationFilter.toString(), newModificationFilter) + ",\"second\":[]}"),
+                objectMapper.readTree(modificationRequests.get(0).getBodyAsString()));
+        assertEquals(objectMapper.readTree("{\"first\":" + balancesAdjustment.replace(oldLoadFlowParameters.toString(), newLoadFlowParameters.toString()) + ",\"second\":[]}"),
+                objectMapper.readTree(modificationRequests.get(1).getBodyAsString()));
+        assertEquals(objectMapper.readTree("{\"first\":" + composite.replace(oldModificationFilter.toString(), newModificationFilter) + ",\"second\":[]}"),
+                objectMapper.readTree(modificationRequests.get(2).getBodyAsString()));
+
+        // only the composite modification is also created as a modification element in the directory
+        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/network-composite-modifications"))
+                .withQueryParam("name", equalTo("my composite"))
+                .withRequestBody(equalToJson("[\"" + newCompositeInGroup + "\"]")));
+        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
+                .withRequestBody(matchingJsonPath("$.elementUuid", equalTo(newCompositeInDirectory.toString())))
+                .withRequestBody(matchingJsonPath("$.type", equalTo("MODIFICATION"))));
     }
 
     private byte[] createValidStudyArchive() throws IOException {

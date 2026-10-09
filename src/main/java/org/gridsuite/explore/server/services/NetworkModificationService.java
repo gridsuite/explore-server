@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -61,6 +62,18 @@ public class NetworkModificationService implements IDirectoryElementsService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<UUID>() { })
                 .getBody();
+    }
+
+    public UUID createModification(UUID groupUuid, JsonNode modification) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+                .queryParam("groupUuid", groupUuid)
+                .buildAndExpand()
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, Object> body = Map.of("first", modification, "second", List.of());
+        JsonNode result = restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), JsonNode.class).getBody();
+        return UUID.fromString(result.path("modificationUuids").get(0).asText());
     }
 
     public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
