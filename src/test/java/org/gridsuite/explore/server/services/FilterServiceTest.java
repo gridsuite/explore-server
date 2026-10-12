@@ -6,12 +6,18 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.config.RestClientConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
 
@@ -21,20 +27,25 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+@ExtendWith(SpringExtension.class)
+@AutoConfigureWebClient
+@ContextConfiguration(classes = RestClientConfig.class)
 class FilterServiceTest {
 
     private static final String BASE_URI = "http://filter-server";
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final String FILTER = "{\"name\":\"filter\"}";
 
+    @Autowired
+    private RestClient.Builder restClientBuilder;
+
     private FilterService filterService;
     private MockRestServiceServer server;
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        server = MockRestServiceServer.bindTo(restTemplate).build();
-        filterService = new FilterService(restTemplate, new RemoteServicesProperties());
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
+        filterService = new FilterService(restClientBuilder, new RemoteServicesProperties());
         filterService.setFilterServerBaseUri(BASE_URI);
     }
 

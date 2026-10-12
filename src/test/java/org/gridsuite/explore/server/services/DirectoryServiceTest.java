@@ -6,49 +6,56 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
-import java.net.URI;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @SpringBootTest
 class DirectoryServiceTest {
-
-    @MockitoBean
-    private RestTemplate restTemplate;
-
-    @Mock
-    private ResponseEntity<String> responseEntity;
+    private static final String DIRECTORY_SERVER_BASE_URI = "http://directory-server";
 
     @Autowired
     private DirectoryService directoryService;
+
+    @Autowired
+    private RestClient.Builder restClientBuilder;
+
+    private MockRestServiceServer mockServer;
+
+    @BeforeEach
+    void setUp() {
+        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+
+        /*
+         * DirectoryService creates its RestClient from RestClient.Builder.
+         * Rebuild it after MockRestServiceServer has been bound to the builder.
+         */
+        directoryService.setDirectoryServerBaseUri(DIRECTORY_SERVER_BASE_URI);
+    }
 
     @Test
     void testSearchElementsWithSpecialCharacters() {
         String userInput = "a+éè{}\\`b";
         String directoryUuid = UUID.randomUUID().toString();
-        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenReturn(responseEntity);
+
+        mockServer.expect(requestTo(
+            DIRECTORY_SERVER_BASE_URI
+                + "/v1/elements/indexation-infos"
+                + "?directoryUuid=" + directoryUuid
+                + "&userInput=a%2B%C3%A9%C3%A8%7B%7D%5C%60b"))
+            .andRespond(withSuccess("", MediaType.TEXT_PLAIN));
 
         directoryService.searchElements(userInput, directoryUuid);
 
-        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
-        verify(restTemplate).exchange(uriCaptor.capture(), any(), any(), any(Class.class));
-        String uriString = uriCaptor.getValue().toString();
-        assertTrue(uriString.contains("userInput=a%2B%C3%A9%C3%A8%7B%7D%5C%60b"));
+        mockServer.verify();
     }
 }

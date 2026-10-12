@@ -8,11 +8,8 @@ package org.gridsuite.explore.server.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -27,7 +24,7 @@ public class SupervisionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupervisionService.class);
     private final DirectoryService directoryService;
     private final String directoryServerBaseUri;
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private static final String DIRECTORY_SERVER_API_VERSION = "v1";
     private static final String DELIMITER = "/";
@@ -35,10 +32,12 @@ public class SupervisionService {
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + SUPERVISION_PATH + DELIMITER
         + "elements";
 
-    public SupervisionService(DirectoryService directoryService, RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public SupervisionService(DirectoryService directoryService, RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.directoryService = directoryService;
-        this.restTemplate = restTemplate;
+        this.restClient = restClientBuilder
+            .baseUrl(directoryServerBaseUri)
+            .build();
     }
 
     public void deleteElements(List<UUID> uuids) {
@@ -62,7 +61,10 @@ public class SupervisionService {
             .queryParam("ids", ids)
             .buildAndExpand()
             .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        restTemplate.exchange(directoryServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+
+        restClient.delete()
+            .uri(path)
+            .retrieve()
+            .toBodilessEntity();
     }
 }

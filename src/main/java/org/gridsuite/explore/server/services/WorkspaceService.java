@@ -6,14 +6,9 @@
  */
 package org.gridsuite.explore.server.services;
 
-import lombok.Setter;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.client.RestClient;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -29,57 +24,53 @@ public class WorkspaceService implements IDirectoryElementsService {
     private static final String WORKSPACES_PATH = DELIMITER + WORKSPACES_API_VERSION + DELIMITER + "workspaces";
     private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
 
-    private final RestTemplate restTemplate;
+    private final RestClient.Builder restClientBuilder;
+    private RestClient restClient;
 
-    @Setter
     private String studyConfigServerBaseUri;
 
-    public WorkspaceService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public WorkspaceService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
+        this.restClientBuilder = restClientBuilder;
         this.studyConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClientBuilder.baseUrl(studyConfigServerBaseUri).build();
+    }
+
+    public void setStudyConfigServerBaseUri(String studyConfigServerBaseUri) {
+        this.studyConfigServerBaseUri = studyConfigServerBaseUri;
+        this.restClient = restClientBuilder.baseUrl(studyConfigServerBaseUri).build();
     }
 
     public UUID duplicateWorkspace(UUID sourceWorkspaceId) {
         Objects.requireNonNull(sourceWorkspaceId);
 
-        var path = UriComponentsBuilder
-                .fromPath(WORKSPACES_PATH + "/{uuid}/duplicate")
-                .buildAndExpand(sourceWorkspaceId)
-                .toUriString();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-
-        return restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+        return restClient.post()
+            .uri(WORKSPACES_PATH + "/{uuid}/duplicate", sourceWorkspaceId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void replaceWorkspace(UUID workspaceId, UUID sourceWorkspaceId) {
         Objects.requireNonNull(workspaceId);
         Objects.requireNonNull(sourceWorkspaceId);
 
-        var path = UriComponentsBuilder
-                .fromPath(WORKSPACES_PATH + DELIMITER + workspaceId + "/replace")
+        restClient.put()
+            .uri(uriBuilder -> uriBuilder
+                .path(WORKSPACES_PATH + DELIMITER + "{uuid}/replace")
                 .queryParam(DUPLICATE_FROM_PARAMETER, sourceWorkspaceId)
-                .buildAndExpand()
-                .toUriString();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-
-        restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+                .build(workspaceId))
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
     public void delete(UUID workspaceUuid) {
         Objects.requireNonNull(workspaceUuid);
 
-        var path = UriComponentsBuilder
-                .fromPath(WORKSPACES_PATH + DELIMITER + workspaceUuid)
-                .buildAndExpand()
-                .toUriString();
-
-        restTemplate.exchange(studyConfigServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient.delete()
+            .uri(WORKSPACES_PATH + DELIMITER + "{uuid}", workspaceUuid)
+            .retrieve()
+            .toBodilessEntity();
     }
 }

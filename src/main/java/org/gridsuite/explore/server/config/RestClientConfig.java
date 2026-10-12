@@ -9,7 +9,6 @@ package org.gridsuite.explore.server.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.boot.jackson.JsonComponentModule;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpRequest;
@@ -22,10 +21,9 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
@@ -35,25 +33,22 @@ import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Configuration
-public class RestTemplateConfig {
+public class RestClientConfig {
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
-        final RestTemplate restTemplate = restTemplateBuilder.build();
-
+    public RestClient restClient(RestClient.Builder builder) {
         //find and replace Jackson message converter with our own
-        for (int i = 0; i < restTemplate.getMessageConverters().size(); i++) {
-            final HttpMessageConverter<?> httpMessageConverter = restTemplate.getMessageConverters().get(i);
-            if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
-                restTemplate.getMessageConverters().set(i, mappingJackson2HttpMessageConverter());
-            }
-        }
-
-        restTemplate.setInterceptors(
-            Collections.singletonList(new HeaderForwardingInterceptor())
-        );
-
-        return restTemplate;
+        return builder
+            .messageConverters(messageConverters -> {
+                for (int i = 0; i < messageConverters.size(); i++) {
+                    final HttpMessageConverter<?> httpMessageConverter = messageConverters.get(i);
+                    if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
+                        messageConverters.set(i, mappingJackson2HttpMessageConverter());
+                    }
+                }
+            })
+            .requestInterceptor(new HeaderForwardingInterceptor())
+            .build();
     }
 
     /**

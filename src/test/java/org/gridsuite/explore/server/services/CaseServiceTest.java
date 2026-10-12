@@ -6,16 +6,22 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.config.RestClientConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -30,20 +36,26 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+@ExtendWith(SpringExtension.class)
+@AutoConfigureWebClient
+@ContextConfiguration(classes = RestClientConfig.class)
 class CaseServiceTest {
 
     private static final String BASE_URI = "http://case-server";
     private static final UUID CASE_UUID = UUID.randomUUID();
     private static final String CASE_NAME = "network.xiidm";
 
+    @Autowired
+    private RestClient.Builder restClientBuilder;
+
     private CaseService caseService;
     private MockRestServiceServer server;
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        server = MockRestServiceServer.bindTo(restTemplate).build();
-        caseService = new CaseService(BASE_URI, restTemplate);
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
+        caseService = new CaseService(BASE_URI, restClientBuilder);
+        caseService.setBaseUri(BASE_URI);
     }
 
     @Test

@@ -1,9 +1,8 @@
 package org.gridsuite.explore.server.services;
 
-import lombok.Setter;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Objects;
@@ -16,14 +15,20 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH = DELIMITER + SINGLE_LINE_DIAGRAM_API_VERSION + DELIMITER + "network-area-diagram/config";
 
-    @Setter
+    private final RestClient.Builder restClientBuilder;
+    private RestClient restClient;
+
     String singleLineDiagramServerBaseUri;
 
-    private final RestTemplate restTemplate;
-
-    public SingleLineDiagramService(RemoteServicesProperties remoteServicesProperties, RestTemplate restTemplate) {
+    public SingleLineDiagramService(RemoteServicesProperties remoteServicesProperties, RestClient.Builder restClientBuilder) {
+        this.restClientBuilder = restClientBuilder;
         this.singleLineDiagramServerBaseUri = remoteServicesProperties.getServiceUri("single-line-diagram-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClientBuilder.baseUrl(singleLineDiagramServerBaseUri).build();
+    }
+
+    public void setSingleLineDiagramServerBaseUri(String singleLineDiagramServerBaseUri) {
+        this.singleLineDiagramServerBaseUri = singleLineDiagramServerBaseUri;
+        this.restClient = restClientBuilder.baseUrl(singleLineDiagramServerBaseUri).build();
     }
 
     @Override
@@ -35,7 +40,10 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
             .buildAndExpand()
             .toUriString();
 
-        restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient.delete()
+            .uri(path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public UUID createDiagramConfig(String diagramConfig) {
@@ -46,12 +54,12 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
             .buildAndExpand()
             .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(diagramConfig, headers);
-
-        return restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+        return restClient.post()
+            .uri(path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(diagramConfig)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public UUID duplicateDiagramConfig(UUID sourceUuid) {
@@ -60,10 +68,12 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(SINGLE_LINE_DIAGRAM_CONFIG_ROOT_PATH + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
             .buildAndExpand(sourceUuid)
             .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class)
-            .getBody();
+
+        return restClient.post()
+            .uri(path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void updateDiagramConfig(UUID configUuid, String diagramConfig) {
@@ -75,11 +85,11 @@ public class SingleLineDiagramService implements IDirectoryElementsService {
             .buildAndExpand()
             .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(diagramConfig, headers);
-
-        restTemplate.exchange(singleLineDiagramServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+        restClient.put()
+            .uri(path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(diagramConfig)
+            .retrieve()
+            .toBodilessEntity();
     }
 }

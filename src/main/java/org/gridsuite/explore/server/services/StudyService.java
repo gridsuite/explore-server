@@ -12,7 +12,7 @@ import org.gridsuite.explore.server.dto.TreeExportInfos;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -29,45 +29,55 @@ public class StudyService implements IDirectoryElementsService {
 
     private static final String DELIMITER = "/";
     private static final String NOTIFICATION_TYPE_METADATA_UPDATED = "metadata_updated";
-    private final RestTemplate restTemplate;
+    private final RestClient.Builder restClientBuilder;
+    private RestClient restClient;
     private String studyServerBaseUri;
 
-    public StudyService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public StudyService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
+        this.restClientBuilder = restClientBuilder;
         this.studyServerBaseUri = remoteServicesProperties.getServiceUri("study-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClientBuilder.baseUrl(studyServerBaseUri).build();
     }
 
     public void setStudyServerBaseUri(String studyServerBaseUri) {
         this.studyServerBaseUri = studyServerBaseUri;
+        this.restClient = restClientBuilder.baseUrl(studyServerBaseUri).build();
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, UUID caseUuid, String caseFormat,
             Map<String, Object> importParams, Boolean duplicateCase, String firstRootNetworkName) {
         var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                 "/studies/cases/{caseUuid}")
-                .queryParam("studyUuid", studyUuid)
-                .queryParam("duplicateCase", duplicateCase)
-                .queryParam("caseFormat", caseFormat);
+            .queryParam("studyUuid", studyUuid)
+            .queryParam("duplicateCase", duplicateCase)
+            .queryParam("caseFormat", caseFormat);
 
         if (!StringUtils.isBlank(firstRootNetworkName)) {
             uriComponentsBuilder.queryParam("firstRootNetworkName", firstRootNetworkName);
         }
-        String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(importParams, headers), Void.class);
+        String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
+        var request = restClient.post()
+            .uri(path)
+            .contentType(MediaType.APPLICATION_JSON);
+        if (importParams != null) {
+            request.body(importParams);
+        }
+
+        request.retrieve().toBodilessEntity();
     }
 
     public UUID duplicateStudy(UUID studyId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                 "/studies/{uuid}/duplicate")
-                .buildAndExpand(studyId)
-                .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+            .buildAndExpand(studyId)
+            .toUriString();
 
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
+        return restClient.post()
+            .uri(path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .body(UUID.class);
     }
 
     @Override
@@ -75,10 +85,10 @@ public class StudyService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
                 .buildAndExpand(studyUuid)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        restClient.delete()
+            .uri(path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
@@ -88,9 +98,11 @@ public class StudyService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+
+        return restClient.get()
+            .uri(path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
     public List<NodeInfos> getNodesInfos(List<UUID> nodeUuids) {
@@ -98,9 +110,11 @@ public class StudyService implements IDirectoryElementsService {
                 .queryParam("ids", nodeUuids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<NodeInfos>>() {
-                }).getBody();
+
+        return restClient.get()
+            .uri(path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
     public ResponseEntity<Void> notifyStudyUpdate(UUID studyUuid) {
@@ -109,25 +123,33 @@ public class StudyService implements IDirectoryElementsService {
                 .buildAndExpand(studyUuid, NOTIFICATION_TYPE_METADATA_UPDATED)
                 .toUriString();
 
-        return restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, Void.class);
+        return restClient.post()
+            .uri(path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public void importStudy(TreeExportInfos treeExportInfos) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import").toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<TreeExportInfos> request = new HttpEntity<>(treeExportInfos, headers);
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, request, Void.class);
+        restClient.post()
+                    .uri(path)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(treeExportInfos)
+                    .retrieve()
+                    .toBodilessEntity();
     }
 
     public void setStudyParameters(UUID studyUuid, String computationPath, String parameters) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/{computationPath}/parameters")
                 .buildAndExpand(studyUuid, computationPath)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(parameters, headers), Void.class);
+        restClient.post()
+                    .uri(path)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(parameters)
+                    .retrieve()
+                    .toBodilessEntity();
     }
 }

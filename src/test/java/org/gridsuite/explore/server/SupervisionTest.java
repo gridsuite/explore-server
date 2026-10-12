@@ -2,15 +2,13 @@ package org.gridsuite.explore.server;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.services.SupervisionService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,17 +20,39 @@ import static org.mockito.Mockito.*;
  */
 @SpringBootTest
 class SupervisionTest {
-    @Autowired
     private SupervisionService supervisionService;
-
-    @MockitoBean
     private DirectoryService directoryService;
-
-    @MockitoBean
-    private RestTemplate restTemplate;
+    private RestClient.Builder restClientBuilder;
+    private RestClient restClient;
+    private RestClient.RequestHeadersUriSpec<?> deleteSpec;
+    private RestClient.RequestHeadersSpec<?> requestSpec;
+    private RestClient.ResponseSpec responseSpec;
+    private RemoteServicesProperties remoteServicesProperties;
 
     private final ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", "userId", 0L, null);
     private final ElementAttributes study = new ElementAttributes(UUID.randomUUID(), "study", "STUDY", "userId", 0L, null);
+
+    @BeforeEach
+    void setUp() {
+        directoryService = mock(DirectoryService.class);
+        restClientBuilder = mock(RestClient.Builder.class);
+        restClient = mock(RestClient.class);
+        deleteSpec = mock(RestClient.RequestHeadersUriSpec.class);
+        requestSpec = mock(RestClient.RequestHeadersSpec.class);
+        responseSpec = mock(RestClient.ResponseSpec.class);
+        remoteServicesProperties = mock(RemoteServicesProperties.class);
+
+        when(remoteServicesProperties.getServiceUri("directory-server")).thenReturn("http://directory-server");
+        when(restClientBuilder.baseUrl(anyString())).thenReturn(restClientBuilder);
+        when(restClientBuilder.build()).thenReturn(restClient);
+
+        doReturn(deleteSpec).when(restClient).delete();
+
+        doReturn(requestSpec).when(deleteSpec).uri(anyString());
+        when(requestSpec.retrieve()).thenReturn(responseSpec);
+
+        supervisionService = new SupervisionService(directoryService, restClientBuilder, remoteServicesProperties);
+    }
 
     @Test
     void testDeleteElements() {
@@ -42,7 +62,7 @@ class SupervisionTest {
         verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
         verify(directoryService, times(1)).deleteElement(study.getElementUuid());
         // deletions of both elements in directory server
-        verify(restTemplate, times(1)).exchange(matches(".*/supervision/.*"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class));
+        verify(restClient, times(1)).delete();
     }
 
     @Test
@@ -57,12 +77,12 @@ class SupervisionTest {
         verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
         verify(directoryService, times(1)).deleteElement(study.getElementUuid());
         // deletions of both elements in directory server
-        verify(restTemplate, times(1)).exchange(matches(".*/supervision/.*"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class));
+        verify(restClient, times(1)).delete();
     }
 
     @AfterEach
     void verifyNoMoreInteractionsMocks() {
-        verifyNoMoreInteractions(restTemplate);
+        verifyNoMoreInteractions(restClient);
         verifyNoMoreInteractions(directoryService);
     }
 }
