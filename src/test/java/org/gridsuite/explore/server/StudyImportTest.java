@@ -508,12 +508,10 @@ class StudyImportTest {
         assertEquals(objectMapper.readTree("{\"first\":" + composite.replace(oldModificationFilter.toString(), newModificationFilter) + ",\"second\":[]}"),
                 objectMapper.readTree(modificationRequests.get(2).getBodyAsString()));
 
-        // only the composite modification is also created as a modification element in the directory
         wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/network-composite-modifications"))
                 .withQueryParam("name", equalTo("my composite"))
                 .withRequestBody(equalToJson("[\"" + newCompositeInGroup + "\"]")));
-        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
-                .withRequestBody(matchingJsonPath("$.elementUuid", equalTo(newCompositeInDirectory.toString())))
+        wireMockServer.verify(0, postRequestedFor(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
                 .withRequestBody(matchingJsonPath("$.type", equalTo("MODIFICATION"))));
     }
 

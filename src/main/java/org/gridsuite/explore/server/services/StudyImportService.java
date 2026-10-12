@@ -280,21 +280,19 @@ public class StudyImportService {
     private void importNetworkModifications(Path modificationsDir, UUID parentDirectoryUuid, Map<UUID, UUID> oldUuidsToNewUuids,
                                             Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, String description) throws IOException {
         importFilters(modificationsDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
-        importLoadFlowParameters(modificationsDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
-        importNetworkModificationsFiles(modificationsDir, oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids, parentDirectoryUuid, description);
+        importLoadFlowParameters(modificationsDir, oldUuidsToNewUuids);
+        importModificationsGroups(modificationsDir, oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids);
     }
 
-    private void importLoadFlowParameters(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
+    private void importLoadFlowParameters(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids) {
         List<ExportedElementInfos> loadFlowParameters = readExportedElements(modificationsDir.resolve(LOAD_FLOW_PARAMETERS_FILE));
         for (ExportedElementInfos parameters : loadFlowParameters) {
             UUID newParametersUuid = parametersService.createParameters(parameters.content().toString(), ParametersType.LOADFLOW_PARAMETERS);
             oldUuidsToNewUuids.put(parameters.uuid(), newParametersUuid);
-            createDirectoryElement(parameters, newParametersUuid, ParametersType.LOADFLOW_PARAMETERS.name(), parentDirectoryUuid, description, parametersService::delete);
         }
     }
 
-    private void importNetworkModificationsFiles(Path modificationsDir, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, Map<UUID, UUID> oldUuidsToNewUuids,
-                                                 UUID parentDirectoryUuid, String description) throws IOException {
+    private void importModificationsGroups(Path modificationsDir, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, Map<UUID, UUID> oldUuidsToNewUuids) throws IOException {
         for (Map.Entry<UUID, UUID> group : oldGroupUuidsToNewGroupUuids.entrySet()) {
             Path file = modificationsDir.resolve(group.getKey() + JSON);
             if (Files.exists(file)) {
@@ -302,7 +300,7 @@ public class StudyImportService {
                 for (JsonNode modification : objectMapper.readTree(modifications)) {
                     UUID newModificationUuid = networkModificationService.createModification(group.getValue(), modification);
                     if (COMPOSITE_MODIFICATION_TYPE.equals(modification.path(TYPE).asText())) {
-                        exploreService.createCompositeModification(List.of(newModificationUuid), modification.path(NAME).asText(), description, parentDirectoryUuid);
+                        networkModificationService.createCompositeModification(List.of(newModificationUuid), modification.path(NAME).asText());
                     }
                 }
             }
