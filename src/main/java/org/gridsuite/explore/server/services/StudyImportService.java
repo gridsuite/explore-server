@@ -59,8 +59,6 @@ public class StudyImportService {
     public static final String APPLY_MODIFICATIONS = "applyModifications";
     public static final String JSON = ".json";
     public static final String TYPE = "type";
-    public static final String NAME = "name";
-    private static final String COMPOSITE_MODIFICATION_TYPE = "COMPOSITE_MODIFICATION";
     private static final String VOLTAGE_INITIALIZATION = "VOLTAGE_INITIALIZATION";
     public static final String LOAD_FLOW = "LOAD_FLOW";
     public static final String SHORT_CIRCUIT = "SHORT_CIRCUIT";
