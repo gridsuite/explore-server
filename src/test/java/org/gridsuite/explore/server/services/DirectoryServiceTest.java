@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
 
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -26,19 +27,29 @@ class DirectoryServiceTest {
     @Autowired
     private DirectoryService directoryService;
 
-    @Autowired
-    private RestClient.Builder restClientBuilder;
-
     private MockRestServiceServer mockServer;
 
     @BeforeEach
     void setUp() {
+        // The mock server must be bound to the very same builder that DirectoryService uses to build its RestClient
+        RestClient.Builder restClientBuilder = RestClient.builder();
         mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
 
-        /*
-         * DirectoryService creates its RestClient from RestClient.Builder.
-         * Rebuild it after MockRestServiceServer has been bound to the builder.
-         */
+        directoryService = new DirectoryService(
+            mock(FilterService.class),
+            mock(ContingencyListService.class),
+            mock(StudyService.class),
+            mock(NetworkModificationService.class),
+            mock(CaseService.class),
+            mock(SpreadsheetConfigService.class),
+            mock(SpreadsheetConfigCollectionService.class),
+            mock(ParametersService.class),
+            mock(SingleLineDiagramService.class),
+            mock(WorkspaceService.class),
+            mock(MonitorService.class),
+            mock(DynamicMappingService.class),
+            restClientBuilder,
+            new RemoteServicesProperties());
         directoryService.setDirectoryServerBaseUri(DIRECTORY_SERVER_BASE_URI);
     }
 

@@ -52,7 +52,8 @@ class RestClientConfigTest {
     void setUp() {
         RestClientConfig restClientConfig = new RestClientConfig();
         mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
-        restClient = restClientConfig.restClient(restClientBuilder);
+        restClientConfig.restClientCustomizer().customize(restClientBuilder);
+        restClient = restClientBuilder.build();
     }
 
     @AfterEach

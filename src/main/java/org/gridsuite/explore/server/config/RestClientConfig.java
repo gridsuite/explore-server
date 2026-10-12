@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.boot.jackson.JsonComponentModule;
+import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpRequest;
@@ -21,7 +22,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -35,11 +35,17 @@ import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 @Configuration
 public class RestClientConfig {
 
+    /**
+     * RestClient.Builder is a prototype bean: every service gets its own instance.
+     * Customizing one builder inside a RestClient bean therefore has no effect on the builders
+     * injected elsewhere. A RestClientCustomizer is applied by Spring Boot to every builder it
+     * creates, so all RestClients built from them get the interceptor and the Jackson converter.
+     */
     @Bean
-    public RestClient restClient(RestClient.Builder builder) {
-        //find and replace Jackson message converter with our own
-        return builder
+    public RestClientCustomizer restClientCustomizer() {
+        return builder -> builder
             .messageConverters(messageConverters -> {
+                //find and replace Jackson message converter with our own
                 for (int i = 0; i < messageConverters.size(); i++) {
                     final HttpMessageConverter<?> httpMessageConverter = messageConverters.get(i);
                     if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
@@ -47,8 +53,7 @@ public class RestClientConfig {
                     }
                 }
             })
-            .requestInterceptor(new HeaderForwardingInterceptor())
-            .build();
+            .requestInterceptor(new HeaderForwardingInterceptor());
     }
 
     /**
