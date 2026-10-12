@@ -440,15 +440,12 @@ class StudyImportTest {
         UUID oldLoadFlowParameters = UUID.randomUUID();
         UUID newLoadFlowParameters = UUID.randomUUID();
         UUID newCompositeInGroup = UUID.randomUUID();
-        UUID newCompositeInDirectory = UUID.randomUUID();
         wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
         wireMockServer.stubFor(post(urlPathEqualTo("/v1/parameters"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(newLoadFlowParameters))));
         wireMockServer.stubFor(post(urlPathEqualTo("/v1/network-modifications"))
                 .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json")
                         .withBody("{\"modificationUuids\":[\"" + newCompositeInGroup + "\"],\"modificationResults\":[]}")));
-        wireMockServer.stubFor(post(urlPathEqualTo("/v1/network-composite-modifications"))
-                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(newCompositeInDirectory))));
 
         String sharedFilter = "{\"id\":\"" + oldSharedFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"GENERATOR\"}";
         String modificationFilter = "{\"id\":\"" + oldModificationFilter + "\",\"type\":\"EXPERT\",\"equipmentType\":\"LINE\"}";
@@ -508,9 +505,7 @@ class StudyImportTest {
         assertEquals(objectMapper.readTree("{\"first\":" + composite.replace(oldModificationFilter.toString(), newModificationFilter) + ",\"second\":[]}"),
                 objectMapper.readTree(modificationRequests.get(2).getBodyAsString()));
 
-        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/network-composite-modifications"))
-                .withQueryParam("name", equalTo("my composite"))
-                .withRequestBody(equalToJson("[\"" + newCompositeInGroup + "\"]")));
+        wireMockServer.verify(0, postRequestedFor(urlPathEqualTo("/v1/network-composite-modifications")));
         wireMockServer.verify(0, postRequestedFor(urlPathEqualTo("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements"))
                 .withRequestBody(matchingJsonPath("$.type", equalTo("MODIFICATION"))));
     }

@@ -64,7 +64,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .getBody();
     }
 
-    public UUID createModification(UUID groupUuid, JsonNode modification) {
+    public void createModification(UUID groupUuid, JsonNode modification) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .queryParam("groupUuid", groupUuid)
                 .buildAndExpand()
@@ -72,8 +72,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         Map<String, Object> body = Map.of("first", modification, "second", List.of());
-        JsonNode result = restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), JsonNode.class).getBody();
-        return UUID.fromString(result.path("modificationUuids").get(0).asText());
+        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), JsonNode.class).getBody();
     }
 
     public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {

@@ -298,10 +298,7 @@ public class StudyImportService {
             if (Files.exists(file)) {
                 String modifications = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
                 for (JsonNode modification : objectMapper.readTree(modifications)) {
-                    UUID newModificationUuid = networkModificationService.createModification(group.getValue(), modification);
-                    if (COMPOSITE_MODIFICATION_TYPE.equals(modification.path(TYPE).asText())) {
-                        networkModificationService.createCompositeModification(List.of(newModificationUuid), modification.path(NAME).asText());
-                    }
+                    networkModificationService.createModification(group.getValue(), modification);
                 }
             }
         }
