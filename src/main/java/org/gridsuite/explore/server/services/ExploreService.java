@@ -554,6 +554,10 @@ public class ExploreService {
         return processConfigUuid;
     }
 
+    public String getProcessConfig(UUID uuid) {
+        return monitorService.getProcessConfig(uuid);
+    }
+
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description) {
         monitorService.updateProcessConfig(uuid, processConfig);
         updateElementNameAndDescription(uuid, name, description);

@@ -686,6 +686,14 @@ public class ExploreController {
         return ResponseEntity.ok().body(exploreService.createProcessConfig(name, processConfig, description, parentDirectoryId));
     }
 
+    @GetMapping(value = "/explore/process-configs/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a process config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The process config")})
+    @PreAuthorize("@authorizationService.canRead(#id)")
+    public ResponseEntity<String> getProcessConfig(@PathVariable UUID id) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getProcessConfig(id));
+    }
+
     @PutMapping(value = "/explore/process-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify a process config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Process config has been successfully modified")})

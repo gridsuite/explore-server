@@ -36,8 +36,10 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -137,6 +139,35 @@ class MonitorTest {
 
         verify(directoryService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(boolean.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
+    }
+
+    @Test
+    void getProcessConfig() throws Exception {
+        String processConfig = "{\"name\":\"process config\"}";
+        UUID stubId = wireMockServer.stubFor(WireMock.get(urlPathEqualTo(URL_PROCESS_CONFIGS + "/" + ID))
+            .willReturn(WireMock.ok()
+                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .withBody(processConfig)))
+            .getId();
+
+        mockMvc.perform(get(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().string(processConfig));
+
+        wireMockUtils.verifyGetRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
+    }
+
+    @Test
+    void getProcessConfigServerError() throws Exception {
+        UUID stubId = wireMockServer.stubFor(WireMock.get(urlPathEqualTo(URL_PROCESS_CONFIGS + "/" + ID))
+            .willReturn(WireMock.serverError()))
+            .getId();
+
+        mockMvc.perform(get(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID))
+            .andExpect(status().isInternalServerError());
+
+        wireMockUtils.verifyGetRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
     }
 
     @Test
