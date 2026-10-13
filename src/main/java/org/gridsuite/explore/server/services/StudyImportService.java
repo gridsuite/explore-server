@@ -209,7 +209,6 @@ public class StudyImportService {
     }
 
     private void importFilters(Path tempDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
-        // a filter used in several places is exported in several filters files, it must be imported only once
         Map<UUID, ExportedElementInfos> filtersByUuid = new LinkedHashMap<>();
         for (String directory : List.of(PARAMETERS_DIR, MODIFICATIONS_DIR, SPREADSHEETS_DIR)) {
             for (ExportedElementInfos filter : readExportedElements(tempDir.resolve(directory).resolve(FILTERS_FILE))) {
