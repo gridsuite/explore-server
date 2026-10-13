@@ -34,13 +34,6 @@ import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
  */
 @Configuration
 public class RestClientConfig {
-
-    /**
-     * RestClient.Builder is a prototype bean: every service gets its own instance.
-     * Customizing one builder inside a RestClient bean therefore has no effect on the builders
-     * injected elsewhere. A RestClientCustomizer is applied by Spring Boot to every builder it
-     * creates, so all RestClients built from them get the interceptor and the Jackson converter.
-     */
     @Bean
     public RestClientCustomizer restClientCustomizer() {
         return builder -> builder
