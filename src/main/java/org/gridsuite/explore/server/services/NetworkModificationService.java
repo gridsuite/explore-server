@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -69,6 +70,22 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .body(modificationUuids)
             .retrieve()
             .body(UUID.class);
+    }
+
+    public void createModification(UUID groupUuid, JsonNode modification) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+                .queryParam("groupUuid", groupUuid)
+                .buildAndExpand()
+                .toUriString();
+
+        Map<String, Object> body = Map.of("first", modification, "second", List.of());
+
+        restClient.post()
+            .uri(path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(body)
+            .retrieve()
+            .body(JsonNode.class);
     }
 
     public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
