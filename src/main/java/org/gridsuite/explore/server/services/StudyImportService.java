@@ -55,6 +55,8 @@ public class StudyImportService {
     private static final String FILTERS_CONTINGENCY_LIST_TYPE = "FILTERS";
     public static final String MODIFICATIONS_DIR = "networkModifications";
     public static final String LOAD_FLOW_PARAMETERS_FILE = "loadFlowParameters.json";
+    public static final String SPREADSHEET_CONFIG_COLLECTION_FILE = "spreadsheetConfigCollection.json";
+    public static final String SPREADSHEETS_DIR = "spreadsheets";
     public static final String COMPUTATION_PARAMETERS = "computationParameters";
     public static final String APPLY_MODIFICATIONS = "applyModifications";
     public static final String JSON = ".json";
@@ -120,8 +122,10 @@ public class StudyImportService {
             treeExportInfos.setNodeTree(replaceModificationGroupUuids(treeExportInfos.getNodeTree(), oldGroupUuidsToNewGroupUuids));
             UUID studyUuid = createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
             Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
+            importFilters(tempDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
             importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, oldUuidsToNewUuids, description);
-            importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), parentDirectoryUuid, oldUuidsToNewUuids, oldGroupUuidsToNewGroupUuids, description);
+            importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldUuidsToNewUuids, oldGroupUuidsToNewGroupUuids);
+            importSpreadsheetConfigCollection(tempDir.resolve(SPREADSHEETS_DIR), studyUuid, oldUuidsToNewUuids);
         } catch (Exception e) {
             directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
@@ -200,13 +204,19 @@ public class StudyImportService {
     }
 
     private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, Map<UUID, UUID> oldUuidsToNewUuids, String description) throws IOException {
-        importFilters(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
         importContingencyLists(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
         importComputationParametersFiles(parametersDir, studyUuid, oldUuidsToNewUuids);
     }
 
-    private void importFilters(Path parametersDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
-        List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
+    private void importFilters(Path tempDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
+        // a filter used in several places is exported in several filters files, it must be imported only once
+        Map<UUID, ExportedElementInfos> filtersByUuid = new LinkedHashMap<>();
+        for (String directory : List.of(PARAMETERS_DIR, MODIFICATIONS_DIR, SPREADSHEETS_DIR)) {
+            for (ExportedElementInfos filter : readExportedElements(tempDir.resolve(directory).resolve(FILTERS_FILE))) {
+                filtersByUuid.putIfAbsent(filter.uuid(), filter);
+            }
+        }
+        List<ExportedElementInfos> filters = new ArrayList<>(filtersByUuid.values());
         addNewUuids(filters, oldUuidsToNewUuids);
         for (ExportedElementInfos filter : filters) {
             UUID newFilterUuid = oldUuidsToNewUuids.get(filter.uuid());
@@ -275,9 +285,8 @@ public class StudyImportService {
         return result;
     }
 
-    private void importNetworkModifications(Path modificationsDir, UUID parentDirectoryUuid, Map<UUID, UUID> oldUuidsToNewUuids,
-                                            Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, String description) throws IOException {
-        importFilters(modificationsDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
+    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids,
+                                            Map<UUID, UUID> oldGroupUuidsToNewGroupUuids) throws IOException {
         importLoadFlowParameters(modificationsDir, oldUuidsToNewUuids);
         importModificationsGroups(modificationsDir, oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids);
     }
@@ -300,5 +309,14 @@ public class StudyImportService {
                 }
             }
         }
+    }
+
+    private void importSpreadsheetConfigCollection(Path spreadsheetsDir, UUID studyUuid, Map<UUID, UUID> oldUuidsToNewUuids) throws IOException {
+        Path file = spreadsheetsDir.resolve(SPREADSHEET_CONFIG_COLLECTION_FILE);
+        if (!Files.exists(file)) {
+            return;
+        }
+        String spreadsheetConfigCollection = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
+        studyService.setSpreadsheetConfigCollection(studyUuid, spreadsheetConfigCollection);
     }
 }

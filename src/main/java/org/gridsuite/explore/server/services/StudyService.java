@@ -130,4 +130,14 @@ public class StudyService implements IDirectoryElementsService {
 
         restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(parameters, headers), Void.class);
     }
+
+    public void setSpreadsheetConfigCollection(UUID studyUuid, String spreadsheetConfigCollection) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/spreadsheet-config-collection")
+                .buildAndExpand(studyUuid)
+                .toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        restTemplate.exchange(studyServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(spreadsheetConfigCollection, headers), Void.class);
+    }
 }

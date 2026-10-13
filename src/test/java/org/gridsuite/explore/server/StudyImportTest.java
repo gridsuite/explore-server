@@ -159,6 +159,44 @@ class StudyImportTest {
     }
 
     @Test
+    void testImportStudySpreadsheetConfigCollection() throws Exception {
+        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/.*/spreadsheet-config-collection")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        UUID oldFilter = UUID.randomUUID();
+        String column = "{\"name\":\"ID\",\"id\":\"id\",\"columnFilterInfos\":{\"filterDataType\":\"text\",\"filterType\":\"contains\",\"filterValue\":\"L1\"}}";
+        String globalFilters = "{\"uuid\":\"%s\",\"filterType\":\"genericFilter\",\"label\":\"lines\",\"deleted\":false},{\"filterType\":\"country\",\"label\":\"FR\",\"deleted\":false}";
+        String spreadsheetConfigCollection = "{\"spreadsheetConfigs\":[{\"name\":\"Lines\",\"sheetType\":\"LINE\",\"columns\":[" + column + "],\"globalFilters\":[" + globalFilters + "],"
+                + "\"nodeAliases\":[\"N1\"],\"sortConfig\":{\"colId\":\"id\",\"sort\":\"asc\"}}],\"nodeAliases\":[\"N1\"]}";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            addJsonEntry(zos, createStudyExportInfos());
+            addFileEntry(zos, "cases/" + CASE_UUID + "/testCase.xiidm", "<network></network>".getBytes());
+            addFileEntry(zos, "spreadsheets/spreadsheetConfigCollection.json", String.format(spreadsheetConfigCollection, oldFilter).getBytes());
+            addFileEntry(zos, "spreadsheets/filters.json", objectMapper.writeValueAsBytes(List.of(expertFilter(oldFilter, "lines", "LINE"))));
+        }
+        MockMultipartFile archiveFile = new MockMultipartFile("archiveFile", "study-export.zip", "application/zip", baos.toByteArray());
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(archiveFile)
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isOk());
+
+        // the filter referenced by the global filter is imported with a new uuid
+        List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
+        assertEquals(1, filterRequests.size());
+        String newFilter = filterRequests.getFirst().queryParameter("id").firstValue();
+        assertNotEquals(oldFilter.toString(), newFilter);
+        // the whole collection is set on the imported study, its global filter references the imported filter
+        wireMockServer.verify(1, postRequestedFor(urlPathMatching("/v1/studies/.*/spreadsheet-config-collection"))
+                .withHeader("userId", equalTo(USER_ID))
+                .withRequestBody(equalToJson(String.format(spreadsheetConfigCollection, newFilter))));
+    }
+
+    @Test
     void testImportStudyFiltersReferencedByFiltersAndContingencyLists() throws Exception {
         UUID oldReferencedFilter = UUID.randomUUID();
         UUID oldExpertFilter = UUID.randomUUID();
@@ -488,10 +526,10 @@ class StudyImportTest {
         assertNotEquals(oldGroup, newGroup);
 
         List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
-        assertEquals(3, filterRequests.size());
-        List<LoggedRequest> modificationFilterRequests = filterRequests.subList(1, 3);
-        String newSharedFilter = findRequestContaining(modificationFilterRequests, "GENERATOR").queryParameter("id").firstValue();
-        String newModificationFilter = findRequestContaining(modificationFilterRequests, "LINE").queryParameter("id").firstValue();
+        // the shared filter is exported with the computation parameters and with the network modifications, but imported only once
+        assertEquals(2, filterRequests.size());
+        String newSharedFilter = findRequestContaining(filterRequests, "GENERATOR").queryParameter("id").firstValue();
+        String newModificationFilter = findRequestContaining(filterRequests, "LINE").queryParameter("id").firstValue();
         wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/parameters")).withRequestBody(equalToJson(loadFlowParameters)));
 
         List<LoggedRequest> modificationRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/network-modifications")));
