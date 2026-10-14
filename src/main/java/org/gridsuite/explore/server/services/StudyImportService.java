@@ -31,10 +31,7 @@ import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
-import static org.gridsuite.explore.server.services.ExploreService.CASE;
-import static org.gridsuite.explore.server.services.ExploreService.CONTINGENCY_LIST;
-import static org.gridsuite.explore.server.services.ExploreService.FILTER;
-import static org.gridsuite.explore.server.services.ExploreService.STUDY;
+import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
@@ -57,6 +54,7 @@ public class StudyImportService {
     public static final String LOAD_FLOW_PARAMETERS_FILE = "loadFlowParameters.json";
     public static final String SPREADSHEET_CONFIG_COLLECTION_FILE = "spreadsheetConfigCollection.json";
     public static final String SPREADSHEETS_DIR = "spreadsheets";
+    public static final String SPREADSHEET_CONFIG_COLLECTION_ELEMENT_NAME = "spreadsheetConfigCollection";
     public static final String COMPUTATION_PARAMETERS = "computationParameters";
     public static final String APPLY_MODIFICATIONS = "applyModifications";
     public static final String JSON = ".json";
@@ -86,10 +84,11 @@ public class StudyImportService {
     private final ContingencyListService contingencyListService;
     private final ParametersService parametersService;
     private final NetworkModificationService networkModificationService;
+    private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
 
     public StudyImportService(CaseService caseService, StudyService studyService, ObjectMapper objectMapper, ExploreService exploreService,
                               DirectoryService directoryService, FilterService filterService, ContingencyListService contingencyListService,
-                              ParametersService parametersService, NetworkModificationService networkModificationService) {
+                              ParametersService parametersService, NetworkModificationService networkModificationService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
         this.caseService = caseService;
         this.studyService = studyService;
         this.objectMapper = objectMapper;
@@ -99,6 +98,7 @@ public class StudyImportService {
         this.contingencyListService = contingencyListService;
         this.parametersService = parametersService;
         this.networkModificationService = networkModificationService;
+        this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
     }
 
     /**
@@ -126,7 +126,7 @@ public class StudyImportService {
             importContingencyLists(tempDir.resolve(PARAMETERS_DIR), oldUuidsToNewUuids, parentDirectoryUuid, description);
             importComputationParametersFiles(tempDir.resolve(PARAMETERS_DIR), studyUuid, oldUuidsToNewUuids);
             importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldUuidsToNewUuids, oldGroupUuidsToNewGroupUuids);
-            importSpreadsheetConfigCollection(tempDir.resolve(SPREADSHEETS_DIR), studyUuid, oldUuidsToNewUuids);
+            importSpreadsheetConfigCollection(tempDir.resolve(SPREADSHEETS_DIR), studyUuid, oldUuidsToNewUuids, parentDirectoryUuid, description);
         } catch (Exception e) {
             directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
@@ -305,12 +305,15 @@ public class StudyImportService {
         }
     }
 
-    private void importSpreadsheetConfigCollection(Path spreadsheetsDir, UUID studyUuid, Map<UUID, UUID> oldUuidsToNewUuids) throws IOException {
+    private void importSpreadsheetConfigCollection(Path spreadsheetsDir, UUID studyUuid, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) throws IOException {
         Path file = spreadsheetsDir.resolve(SPREADSHEET_CONFIG_COLLECTION_FILE);
         if (!Files.exists(file)) {
             return;
         }
         String spreadsheetConfigCollection = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
         studyService.setSpreadsheetConfigCollection(studyUuid, spreadsheetConfigCollection);
+        UUID newCollectionUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollection(spreadsheetConfigCollection);
+        ElementAttributes collectionElementAttributes = new ElementAttributes(newCollectionUuid, SPREADSHEET_CONFIG_COLLECTION_ELEMENT_NAME, SPREADSHEET_CONFIG_COLLECTION, 0L, description);
+        exploreService.createDirectoryElementWithNewNameOrDeleteElement(collectionElementAttributes, parentDirectoryUuid, spreadsheetConfigCollectionService::delete);
     }
 }

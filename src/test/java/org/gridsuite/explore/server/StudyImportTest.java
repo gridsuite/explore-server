@@ -17,6 +17,7 @@ import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.FilterService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.gridsuite.explore.server.services.RemoteServicesProperties;
+import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.junit.jupiter.api.AfterEach;
@@ -87,6 +88,9 @@ class StudyImportTest {
     private NetworkModificationService networkModificationService;
 
     @Autowired
+    private SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
+
+    @Autowired
     private RemoteServicesProperties remoteServicesProperties;
 
     @BeforeEach
@@ -100,6 +104,7 @@ class StudyImportTest {
         filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
         contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
         networkModificationService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
+        spreadsheetConfigCollectionService.setSpreadsheetConfigServerBaseUri(wireMockServer.baseUrl());
         remoteServicesProperties.getServices().forEach(service -> service.setBaseUri(wireMockServer.baseUrl()));
 
         // Stub case-server
@@ -162,6 +167,8 @@ class StudyImportTest {
     void testImportStudySpreadsheetConfigCollection() throws Exception {
         wireMockServer.stubFor(post(urlPathMatching("/v1/studies/.*/spreadsheet-config-collection")).willReturn(aResponse().withStatus(200)));
         wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/spreadsheet-config-collections"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(UUID.randomUUID()))));
         UUID oldFilter = UUID.randomUUID();
         String column = "{\"name\":\"ID\",\"id\":\"id\",\"columnFilterInfos\":{\"filterDataType\":\"text\",\"filterType\":\"contains\",\"filterValue\":\"L1\"}}";
         String globalFilters = "{\"uuid\":\"%s\",\"filterType\":\"genericFilter\",\"label\":\"lines\",\"deleted\":false},{\"filterType\":\"country\",\"label\":\"FR\",\"deleted\":false}";
@@ -193,6 +200,9 @@ class StudyImportTest {
         // the whole collection is set on the imported study, its global filter references the imported filter
         wireMockServer.verify(1, postRequestedFor(urlPathMatching("/v1/studies/.*/spreadsheet-config-collection"))
                 .withHeader("userId", equalTo(USER_ID))
+                .withRequestBody(equalToJson(String.format(spreadsheetConfigCollection, newFilter))));
+        // the collection is also created as a directory element, with the same content
+        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/spreadsheet-config-collections"))
                 .withRequestBody(equalToJson(String.format(spreadsheetConfigCollection, newFilter))));
     }
 
