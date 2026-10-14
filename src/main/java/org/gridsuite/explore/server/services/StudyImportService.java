@@ -123,7 +123,8 @@ public class StudyImportService {
             UUID studyUuid = createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
             Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
             importFilters(tempDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
-            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, oldUuidsToNewUuids, description);
+            importContingencyLists(tempDir.resolve(PARAMETERS_DIR), oldUuidsToNewUuids, parentDirectoryUuid, description);
+            importComputationParametersFiles(tempDir.resolve(PARAMETERS_DIR), studyUuid, oldUuidsToNewUuids);
             importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldUuidsToNewUuids, oldGroupUuidsToNewGroupUuids);
             importSpreadsheetConfigCollection(tempDir.resolve(SPREADSHEETS_DIR), studyUuid, oldUuidsToNewUuids);
         } catch (Exception e) {
@@ -203,11 +204,6 @@ public class StudyImportService {
         return new NodeTreeExportInfos(node.name(), node.type(), newGroupUuid, node.nodeType(), children);
     }
 
-    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, Map<UUID, UUID> oldUuidsToNewUuids, String description) throws IOException {
-        importContingencyLists(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
-        importComputationParametersFiles(parametersDir, studyUuid, oldUuidsToNewUuids);
-    }
-
     private void importFilters(Path tempDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
         Map<UUID, ExportedElementInfos> filtersByUuid = new LinkedHashMap<>();
         for (String directory : List.of(PARAMETERS_DIR, MODIFICATIONS_DIR, SPREADSHEETS_DIR)) {
@@ -284,8 +280,7 @@ public class StudyImportService {
         return result;
     }
 
-    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids,
-                                            Map<UUID, UUID> oldGroupUuidsToNewGroupUuids) throws IOException {
+    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids) throws IOException {
         importLoadFlowParameters(modificationsDir, oldUuidsToNewUuids);
         importModificationsGroups(modificationsDir, oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids);
     }
