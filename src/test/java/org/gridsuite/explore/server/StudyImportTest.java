@@ -488,10 +488,10 @@ class StudyImportTest {
         assertNotEquals(oldGroup, newGroup);
 
         List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
-        assertEquals(3, filterRequests.size());
-        List<LoggedRequest> modificationFilterRequests = filterRequests.subList(1, 3);
-        String newSharedFilter = findRequestContaining(modificationFilterRequests, "GENERATOR").queryParameter("id").firstValue();
-        String newModificationFilter = findRequestContaining(modificationFilterRequests, "LINE").queryParameter("id").firstValue();
+        // the filter exported in both directories is imported only once
+        assertEquals(2, filterRequests.size());
+        String newSharedFilter = findRequestContaining(filterRequests, "GENERATOR").queryParameter("id").firstValue();
+        String newModificationFilter = findRequestContaining(filterRequests, "LINE").queryParameter("id").firstValue();
         wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/parameters")).withRequestBody(equalToJson(loadFlowParameters)));
 
         List<LoggedRequest> modificationRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/network-modifications")));
