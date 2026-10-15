@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
@@ -965,20 +965,21 @@ class ExploreTest {
                         .param("duplicateCase", "false")
                         .param("caseFormat", "XIIDM")
                         .contentType(APPLICATION_JSON)
+                        .with(user(USER_WITH_CASE_LIMIT_EXCEEDED))
                 ).andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a study with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
+                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID).with(user(USER_WITH_CASE_LIMIT_EXCEEDED)))
                 .andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
 
         //test duplicate a case with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID))
+                        CASE_UUID, PARENT_DIRECTORY_UUID).with(user(USER_WITH_CASE_LIMIT_EXCEEDED)))
                 .andExpect(status().isForbidden())
                 .andReturn();
         assertTrue(result.getResponse().getContentAsString().contains(EXPLORE_MAX_ELEMENTS_EXCEEDED.value()));
@@ -989,6 +990,7 @@ class ExploreTest {
 
             result = mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .with(user(USER_WITH_CASE_LIMIT_EXCEEDED))
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isForbidden())
@@ -1001,6 +1003,7 @@ class ExploreTest {
         //test persist a case with a user that already exceeded his cases limit
         result = mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .with(user(USER_WITH_CASE_LIMIT_EXCEEDED))
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andReturn();
@@ -1015,16 +1018,17 @@ class ExploreTest {
                         .param("duplicateCase", "false")
                         .param("caseFormat", "XIIDM")
                         .contentType(APPLICATION_JSON)
+                        .with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
                 ).andExpect(status().isOk());
 
         //test duplicate a study with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
+                        PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID).with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED)))
                 .andExpect(status().isOk());
 
         //test duplicate a case with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID))
+                        CASE_UUID, PARENT_DIRECTORY_UUID).with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED)))
                 .andExpect(status().isOk());
 
         //test create a case with a user that hasn't already exceeded his cases limit
@@ -1033,6 +1037,7 @@ class ExploreTest {
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isOk())
@@ -1042,6 +1047,7 @@ class ExploreTest {
         //test persist a case with a user that hasn't already exceeded his cases limit
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .with(user(USER_WITH_CASE_LIMIT_NOT_EXCEEDED))
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(status().isOk());
@@ -1055,16 +1061,17 @@ class ExploreTest {
                 .param("duplicateCase", "false")
                 .param("caseFormat", "XIIDM")
                 .contentType(APPLICATION_JSON)
+                .with(user(USER_NOT_FOUND))
         ).andExpect(status().isOk());
 
         //test duplicate a study with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
+                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID).with(user(USER_NOT_FOUND))
         ).andExpect(status().isOk());
 
         //test duplicate a case with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID))
+                        CASE_UUID, PARENT_DIRECTORY_UUID).with(user(USER_NOT_FOUND)))
                 .andExpect(status().isOk());
 
         //test create a case with a user that has no profile to limit his case creation
@@ -1073,6 +1080,7 @@ class ExploreTest {
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .with(user(USER_NOT_FOUND))
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isOk())
@@ -1082,6 +1090,7 @@ class ExploreTest {
         //test persist a case with a user that has no profile to limit his case creation
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .with(user(USER_NOT_FOUND))
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(status().isOk());
@@ -1095,16 +1104,17 @@ class ExploreTest {
                 .param("duplicateCase", "false")
                 .param("caseFormat", "XIIDM")
                 .contentType(APPLICATION_JSON)
+                .with(user(USER_UNEXPECTED_ERROR))
         ).andExpect(status().isInternalServerError());
 
         //test duplicate a study with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID)
+                PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID).with(user(USER_UNEXPECTED_ERROR))
         ).andExpect(status().isInternalServerError());
 
         //test duplicate a case with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
-                        CASE_UUID, PARENT_DIRECTORY_UUID))
+                        CASE_UUID, PARENT_DIRECTORY_UUID).with(user(USER_UNEXPECTED_ERROR)))
                 .andExpect(status().isInternalServerError());
 
         //test create a case with a remote unexpected exception
@@ -1113,6 +1123,7 @@ class ExploreTest {
 
             mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
+                            .with(user(USER_UNEXPECTED_ERROR))
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
                     .andExpect(status().isInternalServerError());
@@ -1121,6 +1132,7 @@ class ExploreTest {
         //test persist a case with a remote unexpected exception
         mockMvc.perform(post("/v1/explore/cases/{caseName}/persist?caseUuid={caseUuid}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                         STUDY1, CASE_UUID, "description", PARENT_DIRECTORY_UUID)
+                        .with(user(USER_UNEXPECTED_ERROR))
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(status().isInternalServerError());

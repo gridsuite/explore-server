@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
+import org.springframework.boot.restclient.test.autoconfigure.AutoConfigureRestClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +35,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 // it's also resttemplatebuilder that we need.
 // And other builders are also registered but without consequences, they're just unused.
 // In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
-@AutoConfigureWebClient
+@AutoConfigureRestClient
 @ContextConfiguration(classes = {RestTemplateConfig.class})
 class RestTemplateConfigTest {
 
@@ -82,10 +82,10 @@ class RestTemplateConfigTest {
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(req -> {
                     // Verify the header isn't present (would throw if present)
-                    if (req.getHeaders().containsKey(HEADER_ROLES)) {
+                    if (req.getHeaders().get(HEADER_ROLES) != null) {
                         throw new AssertionError("Roles header should not be present");
                     }
-                    if (req.getHeaders().containsKey(HEADER_USER_ID)) {
+                    if (req.getHeaders().get(HEADER_USER_ID) != null) {
                         throw new AssertionError("UserId header should not be present");
                     }
                 })
@@ -105,7 +105,7 @@ class RestTemplateConfigTest {
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(req -> {
-                    if (req.getHeaders().containsKey(HEADER_ROLES)) {
+                    if (req.getHeaders().get(HEADER_ROLES) != null) {
                         throw new AssertionError("Roles header should not be present when empty");
                     }
                 })

@@ -8,8 +8,8 @@ package org.gridsuite.explore.server.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.springframework.boot.jackson.JsonComponentModule;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.jackson2.JsonComponentModule;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpRequest;
