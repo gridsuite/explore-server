@@ -7,11 +7,13 @@
 package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -51,6 +53,8 @@ public class StudyImportService {
     public static final String CONTINGENCY_LISTS_FILE = "contingencyList.json";
     private static final String IDENTIFIERS_CONTINGENCY_LIST_TYPE = "IDENTIFIERS";
     private static final String FILTERS_CONTINGENCY_LIST_TYPE = "FILTERS";
+    public static final String MODIFICATIONS_DIR = "networkModifications";
+    public static final String LOAD_FLOW_PARAMETERS_FILE = "loadFlowParameters.json";
     public static final String COMPUTATION_PARAMETERS = "computationParameters";
     public static final String APPLY_MODIFICATIONS = "applyModifications";
     public static final String JSON = ".json";
@@ -78,9 +82,12 @@ public class StudyImportService {
     private final DirectoryService directoryService;
     private final FilterService filterService;
     private final ContingencyListService contingencyListService;
+    private final ParametersService parametersService;
+    private final NetworkModificationService networkModificationService;
 
     public StudyImportService(CaseService caseService, StudyService studyService, ObjectMapper objectMapper, ExploreService exploreService,
-                              DirectoryService directoryService, FilterService filterService, ContingencyListService contingencyListService) {
+                              DirectoryService directoryService, FilterService filterService, ContingencyListService contingencyListService,
+                              ParametersService parametersService, NetworkModificationService networkModificationService) {
         this.caseService = caseService;
         this.studyService = studyService;
         this.objectMapper = objectMapper;
@@ -88,6 +95,8 @@ public class StudyImportService {
         this.directoryService = directoryService;
         this.filterService = filterService;
         this.contingencyListService = contingencyListService;
+        this.parametersService = parametersService;
+        this.networkModificationService = networkModificationService;
     }
 
     /**
@@ -107,9 +116,14 @@ public class StudyImportService {
                 throw new ExploreException(IMPORT_STUDY_FAILED, "No root networks found in archive");
             }
             createCases(treeExportInfos, tempDir.resolve(CASES_DIR), parentDirectoryUuid, description);
-
+            Map<UUID, UUID> oldGroupUuidsToNewGroupUuids = new HashMap<>();
+            treeExportInfos.setNodeTree(replaceModificationGroupUuids(treeExportInfos.getNodeTree(), oldGroupUuidsToNewGroupUuids));
             UUID studyUuid = createStudy(treeExportInfos, studyName, parentDirectoryUuid, description);
-            importComputationParameters(tempDir.resolve(PARAMETERS_DIR), parentDirectoryUuid, studyUuid, description);
+            Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
+            importFilters(tempDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
+            importContingencyLists(tempDir.resolve(PARAMETERS_DIR), oldUuidsToNewUuids, parentDirectoryUuid, description);
+            importComputationParametersFiles(tempDir.resolve(PARAMETERS_DIR), studyUuid, oldUuidsToNewUuids);
+            importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldUuidsToNewUuids, oldGroupUuidsToNewGroupUuids);
         } catch (Exception e) {
             directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
@@ -168,15 +182,33 @@ public class StudyImportService {
         return createdStudyUuid;
     }
 
-    private void importComputationParameters(Path parametersDir, UUID parentDirectoryUuid, UUID studyUuid, String description) throws IOException {
-        Map<UUID, UUID> oldUuidsToNewUuids = new HashMap<>();
-        importFilters(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
-        importContingencyLists(parametersDir, oldUuidsToNewUuids, parentDirectoryUuid, description);
-        importComputationParametersFiles(parametersDir, studyUuid, oldUuidsToNewUuids);
+    private NodeTreeExportInfos replaceModificationGroupUuids(NodeTreeExportInfos node, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids) {
+        if (node == null) {
+            return null;
+        }
+        UUID newGroupUuid = null;
+        if (node.modificationGroupUuid() != null) {
+            newGroupUuid = UUID.randomUUID();
+            oldGroupUuidsToNewGroupUuids.put(node.modificationGroupUuid(), newGroupUuid);
+        }
+        List<NodeTreeExportInfos> children = null;
+        if (node.children() != null) {
+            children = new ArrayList<>();
+            for (NodeTreeExportInfos child : node.children()) {
+                children.add(replaceModificationGroupUuids(child, oldGroupUuidsToNewGroupUuids));
+            }
+        }
+        return new NodeTreeExportInfos(node.name(), node.type(), newGroupUuid, node.nodeType(), children);
     }
 
-    private void importFilters(Path parametersDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
-        List<ExportedElementInfos> filters = readExportedElements(parametersDir.resolve(FILTERS_FILE));
+    private void importFilters(Path tempDir, Map<UUID, UUID> oldUuidsToNewUuids, UUID parentDirectoryUuid, String description) {
+        Map<UUID, ExportedElementInfos> filtersByUuid = new LinkedHashMap<>();
+        for (String directory : List.of(PARAMETERS_DIR, MODIFICATIONS_DIR)) {
+            for (ExportedElementInfos filter : readExportedElements(tempDir.resolve(directory).resolve(FILTERS_FILE))) {
+                filtersByUuid.putIfAbsent(filter.uuid(), filter);
+            }
+        }
+        List<ExportedElementInfos> filters = new ArrayList<>(filtersByUuid.values());
         addNewUuids(filters, oldUuidsToNewUuids);
         for (ExportedElementInfos filter : filters) {
             UUID newFilterUuid = oldUuidsToNewUuids.get(filter.uuid());
@@ -243,5 +275,30 @@ public class StudyImportService {
             result = result.replace(entry.getKey().toString(), entry.getValue().toString());
         }
         return result;
+    }
+
+    private void importNetworkModifications(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids) throws IOException {
+        importLoadFlowParameters(modificationsDir, oldUuidsToNewUuids);
+        importModificationsGroups(modificationsDir, oldGroupUuidsToNewGroupUuids, oldUuidsToNewUuids);
+    }
+
+    private void importLoadFlowParameters(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids) {
+        List<ExportedElementInfos> loadFlowParameters = readExportedElements(modificationsDir.resolve(LOAD_FLOW_PARAMETERS_FILE));
+        for (ExportedElementInfos parameters : loadFlowParameters) {
+            UUID newParametersUuid = parametersService.createParameters(parameters.content().toString(), ParametersType.LOADFLOW_PARAMETERS);
+            oldUuidsToNewUuids.put(parameters.uuid(), newParametersUuid);
+        }
+    }
+
+    private void importModificationsGroups(Path modificationsDir, Map<UUID, UUID> oldGroupUuidsToNewGroupUuids, Map<UUID, UUID> oldUuidsToNewUuids) throws IOException {
+        for (Map.Entry<UUID, UUID> group : oldGroupUuidsToNewGroupUuids.entrySet()) {
+            Path file = modificationsDir.resolve(group.getKey() + JSON);
+            if (Files.exists(file)) {
+                String modifications = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
+                for (JsonNode modification : objectMapper.readTree(modifications)) {
+                    networkModificationService.createModification(group.getValue(), modification);
+                }
+            }
+        }
     }
 }
