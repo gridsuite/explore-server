@@ -49,12 +49,13 @@ public class NetworkConversionService {
             .buildAndExpand(caseUuid, format)
             .toUriString();
 
-        return restClient.post()
+        var request = restClient.post()
             .uri(networkConversionServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(formatParameters)
-            .retrieve()
-            .body(UUID.class);
+            .contentType(MediaType.APPLICATION_JSON);
+        if (formatParameters != null) {
+            request.body(formatParameters);
+        }
+        return request.retrieve().body(UUID.class);
     }
 
     public ResponseEntity<Resource> downloadFile(UUID exportUuid) {

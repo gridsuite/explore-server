@@ -53,12 +53,13 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .buildAndExpand(id)
                 .toUriString();
 
-        restClient.post()
+        var request = restClient.post()
             .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(content)
-            .retrieve()
-            .toBodilessEntity();
+            .contentType(MediaType.APPLICATION_JSON);
+        if (content != null) {
+            request.body(content);
+        }
+        request.retrieve().toBodilessEntity();
     }
 
     public void insertFilterBasedContingencyList(UUID id, String content) {
@@ -66,12 +67,13 @@ public class ContingencyListService implements IDirectoryElementsService {
             .buildAndExpand(id)
             .toUriString();
 
-        restClient.post()
+        var request = restClient.post()
             .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(content)
-            .retrieve()
-            .toBodilessEntity();
+            .contentType(MediaType.APPLICATION_JSON);
+        if (content != null) {
+            request.body(content);
+        }
+        request.retrieve().toBodilessEntity();
     }
 
     public UUID duplicateIdentifierContingencyList(UUID identifierContingencyListsId) {
