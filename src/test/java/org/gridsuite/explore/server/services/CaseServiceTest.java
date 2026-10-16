@@ -15,7 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -41,9 +41,9 @@ class CaseServiceTest {
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        server = MockRestServiceServer.bindTo(restTemplate).build();
-        caseService = new CaseService(BASE_URI, restTemplate);
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
+        caseService = new CaseService(BASE_URI, restClientBuilder.build());
     }
 
     @Test

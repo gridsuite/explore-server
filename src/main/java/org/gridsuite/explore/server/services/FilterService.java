@@ -7,12 +7,9 @@
 package org.gridsuite.explore.server.services;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -32,11 +29,11 @@ public class FilterService implements IDirectoryElementsService {
 
     private String filterServerBaseUri;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public FilterService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public FilterService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.restClient = restClient;
         this.filterServerBaseUri = remoteServicesProperties.getServiceUri("filter-server");
-        this.restTemplate = restTemplate;
     }
 
     public void setFilterServerBaseUri(String filterServerBaseUri) {
@@ -49,27 +46,35 @@ public class FilterService implements IDirectoryElementsService {
                 .buildAndExpand(id)
                 .toUriString();
 
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient.delete()
+            .uri(filterServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public void insertFilter(String filter, UUID filterId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters?id={id}")
                 .buildAndExpand(filterId)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(filter, headers), Void.class);
+        restClient.post()
+            .uri(filterServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(filter)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public UUID duplicateFilter(UUID filterId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/{uuid}/duplicate")
                 .buildAndExpand(filterId)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(headers), UUID.class).getBody();
+        return restClient.post()
+            .uri(filterServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .body(UUID.class);
     }
 
     @Override
@@ -79,25 +84,34 @@ public class FilterService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() { }).getBody();
+
+        return restClient.get()
+            .uri(filterServerBaseUri + path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
     public void updateFilter(UUID id, String filter) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + FILTERS_ID_URL)
                 .buildAndExpand(id)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.exchange(filterServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(filter, headers), Void.class);
-
+        restClient.put()
+            .uri(filterServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(filter)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public String getFilter(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + FILTERS_ID_URL)
                 .buildAndExpand(id)
                 .toUriString();
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, HttpEntity.EMPTY, String.class).getBody();
+
+        return restClient.get()
+            .uri(filterServerBaseUri + path)
+            .retrieve()
+            .body(String.class);
     }
 }

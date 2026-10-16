@@ -9,12 +9,9 @@ package org.gridsuite.explore.server.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -36,21 +33,24 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String CONTAINERS_PATH = "containers";
     @Setter
     private String networkModificationServerBaseUri;
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public NetworkModificationService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.restClient = restClient;
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
-        this.restTemplate = restTemplate;
     }
 
     public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + "duplication")
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<Map<UUID, UUID>>() { })
-            .getBody();
+
+        return restClient.post()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationUuids)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
     public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName) {
@@ -58,10 +58,13 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam(NAME, compositeModificationName)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<UUID>() { })
-                .getBody();
+
+        return restClient.post()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationUuids)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void createModification(UUID groupUuid, JsonNode modification) {
@@ -69,10 +72,15 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam("groupUuid", groupUuid)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+
         Map<String, Object> body = Map.of("first", modification, "second", List.of());
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), JsonNode.class).getBody();
+
+        restClient.post()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(body)
+            .retrieve()
+            .body(JsonNode.class);
     }
 
     public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
@@ -80,9 +88,13 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam(NAME, newName)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(modificationUuids, headers), Void.class);
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationUuids)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     /**
@@ -97,9 +109,12 @@ public class NetworkModificationService implements IDirectoryElementsService {
         }
 
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
@@ -109,7 +124,10 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
 
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient.delete()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
@@ -119,9 +137,11 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+
+        return restClient.get()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
@@ -137,8 +157,9 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam("onlyMetadata", true)
                 .buildAndExpand(compositeModificationId)
                 .toUriString();
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Object>>() {
-                }).getBody();
+        return restClient.get()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 }

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
 
@@ -32,9 +32,9 @@ class FilterServiceTest {
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        server = MockRestServiceServer.bindTo(restTemplate).build();
-        filterService = new FilterService(restTemplate, new RemoteServicesProperties());
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
+        filterService = new FilterService(restClientBuilder.build(), new RemoteServicesProperties());
         filterService.setFilterServerBaseUri(BASE_URI);
     }
 
