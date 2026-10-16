@@ -60,10 +60,9 @@ public class ParametersService implements IDirectoryElementsService {
     }
 
     public UUID createParameters(String parameters, ParametersType parametersType) {
-        Objects.requireNonNull(parameters);
-
         ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
+        Objects.requireNonNull(parameters);
 
         var path = UriComponentsBuilder
                 .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl())
@@ -80,11 +79,9 @@ public class ParametersService implements IDirectoryElementsService {
     }
 
     public void updateParameters(UUID parametersUuid, String parameters, ParametersType parametersType) {
-        Objects.requireNonNull(parametersUuid);
-        Objects.requireNonNull(parameters);
-
         ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
+        Objects.requireNonNull(parameters);
 
         var path = UriComponentsBuilder
                 .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + "/{parametersUuid}")
@@ -101,10 +98,9 @@ public class ParametersService implements IDirectoryElementsService {
     }
 
     public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {
-        Objects.requireNonNull(sourceParametersUuid);
-
         ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
+        Objects.requireNonNull(sourceParametersUuid);
 
         var path = UriComponentsBuilder
                     .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")

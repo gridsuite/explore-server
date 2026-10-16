@@ -6,67 +6,49 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestClient;
 
+import java.net.URI;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 class DirectoryServiceTest {
-    private static final String DIRECTORY_SERVER_BASE_URI = "http://directory-server";
+
+    @MockitoBean
+    private RestClient restClient;
 
     @Autowired
     private DirectoryService directoryService;
-
-    private MockRestServiceServer mockServer;
-
-    @BeforeEach
-    void setUp() {
-        // Bind the mock server to the builder before creating the client used by DirectoryService.
-        RestClient.Builder restClientBuilder = RestClient.builder();
-        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
-
-        directoryService = new DirectoryService(
-            mock(FilterService.class),
-            mock(ContingencyListService.class),
-            mock(StudyService.class),
-            mock(NetworkModificationService.class),
-            mock(CaseService.class),
-            mock(SpreadsheetConfigService.class),
-            mock(SpreadsheetConfigCollectionService.class),
-            mock(ParametersService.class),
-            mock(SingleLineDiagramService.class),
-            mock(WorkspaceService.class),
-            mock(MonitorService.class),
-            mock(DynamicMappingService.class),
-            restClientBuilder.build(),
-            new RemoteServicesProperties());
-        directoryService.setDirectoryServerBaseUri(DIRECTORY_SERVER_BASE_URI);
-    }
 
     @Test
     void testSearchElementsWithSpecialCharacters() {
         String userInput = "a+éè{}\\`b";
         String directoryUuid = UUID.randomUUID().toString();
+        RestClient.RequestHeadersUriSpec<?> requestUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.RequestHeadersSpec<?> requestSpec = mock(RestClient.RequestHeadersSpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
 
-        mockServer.expect(requestTo(
-            DIRECTORY_SERVER_BASE_URI
-                + "/v1/elements/indexation-infos"
-                + "?directoryUuid=" + directoryUuid
-                + "&userInput=a%2B%C3%A9%C3%A8%7B%7D%5C%60b"))
-            .andRespond(withSuccess("", MediaType.TEXT_PLAIN));
+        doReturn(requestUriSpec).when(restClient).get();
+        doReturn(requestSpec).when(requestUriSpec).uri(any(URI.class));
+        when(requestSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn("");
 
         directoryService.searchElements(userInput, directoryUuid);
 
-        mockServer.verify();
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(requestUriSpec).uri(uriCaptor.capture());
+        assertTrue(uriCaptor.getValue().toString().contains("userInput=a%2B%C3%A9%C3%A8%7B%7D%5C%60b"));
     }
 }
