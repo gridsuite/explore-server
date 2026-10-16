@@ -59,20 +59,17 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_STATUS = "status";
 
     private final Map<String, IDirectoryElementsService> genericServices;
-
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
+    private final RestClient restClient;
     private String directoryServerBaseUri;
 
     public DirectoryService(
         FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
         CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
         SingleLineDiagramService singleLineDiagramService, WorkspaceService workspaceService, MonitorService monitorService, DynamicMappingService dynamicMappingService,
-        RestClient.Builder restClientBuilder,
+        RestClient restClient,
         RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
-        this.restClient = restClientBuilder.baseUrl(directoryServerBaseUri).build();
+        this.restClient = restClient;
         this.genericServices = Map.ofEntries(
             Map.entry(FILTER, filterService),
             Map.entry(CONTINGENCY_LIST, contingencyListService),
@@ -98,7 +95,6 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
         this.directoryServerBaseUri = directoryServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(directoryServerBaseUri).build();
     }
 
     public String getRootDirectories(List<String> types) {
@@ -108,7 +104,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -119,7 +115,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(rootDirectoryAttributes)
             .retrieve()
@@ -135,7 +131,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-           .uri(path)
+           .uri(directoryServerBaseUri + path)
            .retrieve()
            .body(String.class);
     }
@@ -147,7 +143,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -163,7 +159,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         Map<UUID, List<ElementAttributes>> elementsPaths = restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
 
@@ -177,7 +173,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.head()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity()
             .getStatusCode();
@@ -190,7 +186,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.head()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity()
             .getStatusCode();
@@ -204,7 +200,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -233,7 +229,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(elementAttributes)
             .retrieve()
@@ -251,7 +247,7 @@ public class DirectoryService implements IDirectoryElementsService {
         String path = uri.buildAndExpand(elementUuid).toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .body(ElementAttributes.class);
@@ -264,7 +260,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -279,7 +275,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -292,7 +288,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
         return Objects.requireNonNull(
             restClient.get()
-                .uri(path)
+                .uri(directoryServerBaseUri + path)
                 .retrieve()
                 .body(ElementAttributes.class)
         );
@@ -319,7 +315,7 @@ public class DirectoryService implements IDirectoryElementsService {
         }
 
         List<ElementAttributes> elementAttributesList = restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
 
@@ -335,7 +331,7 @@ public class DirectoryService implements IDirectoryElementsService {
 
         return Objects.requireNonNull(
             restClient.get()
-                .uri(path)
+                .uri(directoryServerBaseUri + path)
                 .retrieve()
                 .body(Integer.class)
         );
@@ -348,7 +344,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.post()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -359,7 +355,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         List<ElementAttributes> elementAttributesList = restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
 
@@ -415,7 +411,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }
@@ -427,7 +423,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(elementAttributes)
             .retrieve()
@@ -448,7 +444,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(elementsUuids)
             .retrieve()
@@ -471,7 +467,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -483,7 +479,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }
@@ -495,7 +491,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(permissions)
             .retrieve()
@@ -515,7 +511,7 @@ public class DirectoryService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }

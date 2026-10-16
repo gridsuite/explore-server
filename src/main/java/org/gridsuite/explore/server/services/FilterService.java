@@ -28,18 +28,16 @@ public class FilterService implements IDirectoryElementsService {
     private static final String FILTERS_ID_URL = "/filters/{id}";
 
     private String filterServerBaseUri;
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
 
-    public FilterService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    private final RestClient restClient;
+
+    public FilterService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.restClient = restClient;
         this.filterServerBaseUri = remoteServicesProperties.getServiceUri("filter-server");
-        this.restClient = restClientBuilder.baseUrl(filterServerBaseUri).build();
     }
 
     public void setFilterServerBaseUri(String filterServerBaseUri) {
         this.filterServerBaseUri = filterServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(filterServerBaseUri).build();
     }
 
     @Override
@@ -49,7 +47,7 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(filterServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -60,7 +58,7 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.post()
-            .uri(path)
+            .uri(filterServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(filter)
             .retrieve()
@@ -73,7 +71,7 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(filterServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .body(UUID.class);
@@ -88,7 +86,7 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(filterServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }
@@ -99,7 +97,7 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(filterServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(filter)
             .retrieve()
@@ -112,7 +110,7 @@ public class FilterService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(filterServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }

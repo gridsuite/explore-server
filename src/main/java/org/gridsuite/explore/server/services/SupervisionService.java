@@ -32,12 +32,10 @@ public class SupervisionService {
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + SUPERVISION_PATH + DELIMITER
         + "elements";
 
-    public SupervisionService(DirectoryService directoryService, RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
+    public SupervisionService(DirectoryService directoryService, RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.directoryService = directoryService;
-        this.restClient = restClientBuilder
-            .baseUrl(directoryServerBaseUri)
-            .build();
+        this.restClient = restClient;
     }
 
     public void deleteElements(List<UUID> uuids) {
@@ -63,7 +61,7 @@ public class SupervisionService {
             .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }

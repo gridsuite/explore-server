@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,30 +28,24 @@ public class UserIdentityService {
 
     private static final String USER_IDENTITY_API_VERSION = "v1";
     private static final String USERS_IDENTITY_PATH = "/users/identities?subs={subs}";
+
     private static final String DELIMITER = "/";
+    private final RestClient restClient;
 
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
-
+    @Setter
     private String userIdentityServerBaseUri;
 
     @Autowired
-    public UserIdentityService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    public UserIdentityService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.userIdentityServerBaseUri = remoteServicesProperties.getServiceUri("user-identity-server");
-        this.restClient = restClientBuilder.baseUrl(userIdentityServerBaseUri).build();
-    }
-
-    public void setUserIdentityServerBaseUri(String userIdentityServerBaseUri) {
-        this.userIdentityServerBaseUri = userIdentityServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(userIdentityServerBaseUri).build();
+        this.restClient = restClient;
     }
 
     public String getUsersIdentities(List<String> subs) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_IDENTITY_API_VERSION + USERS_IDENTITY_PATH)
             .buildAndExpand(String.join(",", subs)).toUriString();
         return restClient.get()
-            .uri(path)
+            .uri(userIdentityServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -66,7 +61,7 @@ public class UserIdentityService {
             .buildAndExpand(String.join(",", subs)).toUriString();
         try {
             UsersIdentities usersIdentities = restClient.get()
-                .uri(path)
+                .uri(userIdentityServerBaseUri + path)
                 .retrieve()
                 .body(UsersIdentities.class);
             return usersIdentities == null || usersIdentities.data() == null ? Map.of() : usersIdentities.data();

@@ -31,20 +31,17 @@ public class CaseService implements IDirectoryElementsService {
     private static final String CASE_SERVER_API_VERSION = "v1";
     private static final String CASES_URL = "cases";
     private static final String DELIMITER = "/";
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
+    private final RestClient restClient;
     private String caseServerBaseUri;
 
     public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String caseServerBaseUri,
-                       RestClient.Builder restClientBuilder) {
-        this.restClientBuilder = restClientBuilder;
+                       RestClient restClient) {
         this.caseServerBaseUri = caseServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(this.caseServerBaseUri).build();
+        this.restClient = restClient;
     }
 
     public void setBaseUri(String caseServerBaseUri) {
         this.caseServerBaseUri = caseServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(caseServerBaseUri).build();
     }
 
     private UUID importCaseResource(Resource resource) {
@@ -53,13 +50,8 @@ public class CaseService implements IDirectoryElementsService {
             body.add("file", resource);
         }
 
-        String path = UriComponentsBuilder
-            .fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
-            .buildAndExpand()
-            .toUriString();
-
         return restClient.post()
-            .uri(path)
+            .uri(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
             .contentType(MediaType.MULTIPART_FORM_DATA)
             .body(body)
             .retrieve()
@@ -90,7 +82,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .contentType(MediaType.MULTIPART_FORM_DATA)
             .body(body)
             .retrieve()
@@ -103,7 +95,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .retrieve()
             .toEntity(Resource.class);
     }
@@ -115,7 +107,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -126,7 +118,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -137,7 +129,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .body(UUID.class);
@@ -150,7 +142,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -164,7 +156,7 @@ public class CaseService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(caseServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }

@@ -22,7 +22,6 @@ import static org.mockito.Mockito.*;
 class SupervisionTest {
     private SupervisionService supervisionService;
     private DirectoryService directoryService;
-    private RestClient.Builder restClientBuilder;
     private RestClient restClient;
     private RestClient.RequestHeadersUriSpec<?> deleteSpec;
     private RestClient.RequestHeadersSpec<?> requestSpec;
@@ -35,7 +34,6 @@ class SupervisionTest {
     @BeforeEach
     void setUp() {
         directoryService = mock(DirectoryService.class);
-        restClientBuilder = mock(RestClient.Builder.class);
         restClient = mock(RestClient.class);
         deleteSpec = mock(RestClient.RequestHeadersUriSpec.class);
         requestSpec = mock(RestClient.RequestHeadersSpec.class);
@@ -43,15 +41,12 @@ class SupervisionTest {
         remoteServicesProperties = mock(RemoteServicesProperties.class);
 
         when(remoteServicesProperties.getServiceUri("directory-server")).thenReturn("http://directory-server");
-        when(restClientBuilder.baseUrl(anyString())).thenReturn(restClientBuilder);
-        when(restClientBuilder.build()).thenReturn(restClient);
-
         doReturn(deleteSpec).when(restClient).delete();
 
         doReturn(requestSpec).when(deleteSpec).uri(anyString());
         when(requestSpec.retrieve()).thenReturn(responseSpec);
 
-        supervisionService = new SupervisionService(directoryService, restClientBuilder, remoteServicesProperties);
+        supervisionService = new SupervisionService(directoryService, restClient, remoteServicesProperties);
     }
 
     @Test

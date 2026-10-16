@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -29,21 +30,15 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     private static final String SPREADSHEET_CONFIG_SERVER_ROOT_PATH = DELIMITER + SPREADSHEET_CONFIG_API_VERSION + DELIMITER + "spreadsheet-configs";
 
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
+    private final RestClient restClient;
 
+    @Setter
     private String spreadsheetConfigServerBaseUri;
 
     @Autowired
-    public SpreadsheetConfigService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    public SpreadsheetConfigService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.spreadsheetConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
-        this.restClient = restClientBuilder.baseUrl(spreadsheetConfigServerBaseUri).build();
-    }
-
-    public void setSpreadsheetConfigServerBaseUri(String spreadsheetConfigServerBaseUri) {
-        this.spreadsheetConfigServerBaseUri = spreadsheetConfigServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(spreadsheetConfigServerBaseUri).build();
+        this.restClient = restClient;
     }
 
     public UUID createSpreadsheetConfig(String config) {
@@ -55,7 +50,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(spreadsheetConfigServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(config)
             .retrieve()
@@ -71,7 +66,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(spreadsheetConfigServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .body(UUID.class);
@@ -87,7 +82,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(spreadsheetConfigServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(config)
             .retrieve()
@@ -103,7 +98,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(spreadsheetConfigServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -120,7 +115,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(spreadsheetConfigServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }

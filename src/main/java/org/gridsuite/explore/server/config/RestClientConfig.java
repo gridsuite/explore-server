@@ -22,6 +22,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -34,6 +35,11 @@ import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
  */
 @Configuration
 public class RestClientConfig {
+    @Bean
+    public RestClient restClient(RestClient.Builder builder) {
+        return builder.build();
+    }
+
     @Bean
     public RestClientCustomizer restClientCustomizer() {
         return builder -> builder

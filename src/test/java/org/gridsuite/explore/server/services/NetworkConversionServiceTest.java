@@ -52,7 +52,7 @@ class NetworkConversionServiceTest {
     @BeforeEach
     void setUp() {
         server = MockRestServiceServer.bindTo(restClientBuilder).build();
-        networkConversionService = new NetworkConversionService(BASE_URI, restClientBuilder);
+        networkConversionService = new NetworkConversionService(BASE_URI, restClientBuilder.build());
     }
 
     @Test

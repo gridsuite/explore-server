@@ -24,19 +24,16 @@ import java.util.stream.Collectors;
 public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
     private String actionsServerBaseUri;
+    private final RestClient restClient;
 
-    public ContingencyListService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    public ContingencyListService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.actionsServerBaseUri = remoteServicesProperties.getServiceUri("actions-server");
-        this.restClient = restClientBuilder.baseUrl(actionsServerBaseUri).build();
+        this.restClient = restClient;
     }
 
     public void setActionsServerBaseUri(String actionsServerBaseUri) {
         this.actionsServerBaseUri = actionsServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(actionsServerBaseUri).build();
     }
 
     @Override
@@ -46,7 +43,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -57,7 +54,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.post()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(content)
             .retrieve()
@@ -70,7 +67,7 @@ public class ContingencyListService implements IDirectoryElementsService {
             .toUriString();
 
         restClient.post()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(content)
             .retrieve()
@@ -83,7 +80,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .retrieve()
             .body(UUID.class);
     }
@@ -94,7 +91,7 @@ public class ContingencyListService implements IDirectoryElementsService {
             .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .retrieve()
             .body(UUID.class);
     }
@@ -113,7 +110,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -127,7 +124,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }
@@ -138,7 +135,7 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(actionsServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(content)
             .retrieve()

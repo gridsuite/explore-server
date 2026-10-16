@@ -31,7 +31,7 @@ class DirectoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        // The mock server must be bound to the very same builder that DirectoryService uses to build its RestClient
+        // Bind the mock server to the builder before creating the client used by DirectoryService.
         RestClient.Builder restClientBuilder = RestClient.builder();
         mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
 
@@ -48,7 +48,7 @@ class DirectoryServiceTest {
             mock(WorkspaceService.class),
             mock(MonitorService.class),
             mock(DynamicMappingService.class),
-            restClientBuilder,
+            restClientBuilder.build(),
             new RemoteServicesProperties());
         directoryService.setDirectoryServerBaseUri(DIRECTORY_SERVER_BASE_URI);
     }

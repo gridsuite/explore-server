@@ -45,7 +45,7 @@ class FilterServiceTest {
     @BeforeEach
     void setUp() {
         server = MockRestServiceServer.bindTo(restClientBuilder).build();
-        filterService = new FilterService(restClientBuilder, new RemoteServicesProperties());
+        filterService = new FilterService(restClientBuilder.build(), new RemoteServicesProperties());
         filterService.setFilterServerBaseUri(BASE_URI);
     }
 

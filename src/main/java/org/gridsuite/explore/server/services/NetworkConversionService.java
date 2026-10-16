@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -21,11 +22,14 @@ public class NetworkConversionService {
     private static final String NETWORK_CONVERSION_API_VERSION = "v1";
     private static final String DELIMITER = "/";
 
-    private RestClient restClient;
+    @Setter
+    private String networkConversionServerBaseUri;
+    private final RestClient restClient;
 
     public NetworkConversionService(@Value("${powsybl.services.network-conversion-server.base-uri:http://network-conversion-server/}") String networkConversionServerBaseUri,
-                                    RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder.baseUrl(networkConversionServerBaseUri).build();
+                                    RestClient restClient) {
+        this.networkConversionServerBaseUri = networkConversionServerBaseUri;
+        this.restClient = restClient;
     }
 
     public String getCaseImportParameters(UUID caseUuid) {
@@ -34,7 +38,7 @@ public class NetworkConversionService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(networkConversionServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }
@@ -46,7 +50,7 @@ public class NetworkConversionService {
             .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(networkConversionServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(formatParameters)
             .retrieve()
@@ -59,7 +63,7 @@ public class NetworkConversionService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(networkConversionServerBaseUri + path)
             .retrieve()
             .toEntity(Resource.class);
     }
@@ -70,7 +74,7 @@ public class NetworkConversionService {
             .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(networkConversionServerBaseUri + path)
             .retrieve()
             .body(String.class);
     }

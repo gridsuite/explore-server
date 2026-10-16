@@ -54,7 +54,7 @@ class CaseServiceTest {
     @BeforeEach
     void setUp() {
         server = MockRestServiceServer.bindTo(restClientBuilder).build();
-        caseService = new CaseService(BASE_URI, restClientBuilder);
+        caseService = new CaseService(BASE_URI, restClientBuilder.build());
         caseService.setBaseUri(BASE_URI);
     }
 

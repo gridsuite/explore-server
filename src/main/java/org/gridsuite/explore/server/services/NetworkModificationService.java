@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -30,19 +31,13 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private static final String CONTAINERS_PATH = "containers";
+    @Setter
     private String networkModificationServerBaseUri;
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
+    private final RestClient restClient;
 
-    public NetworkModificationService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    public NetworkModificationService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.restClient = restClient;
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
-        this.restClient = restClientBuilder.baseUrl(networkModificationServerBaseUri).build();
-    }
-
-    public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
-        this.networkModificationServerBaseUri = networkModificationServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(networkModificationServerBaseUri).build();
     }
 
     public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {
@@ -51,7 +46,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(modificationUuids)
             .retrieve()
@@ -65,7 +60,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(modificationUuids)
             .retrieve()
@@ -81,7 +76,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
         Map<String, Object> body = Map.of("first", modification, "second", List.of());
 
         restClient.post()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(body)
             .retrieve()
@@ -95,7 +90,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(modificationUuids)
             .retrieve()
@@ -116,7 +111,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
 
         restClient.put()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .toBodilessEntity();
@@ -130,7 +125,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.delete()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }
@@ -144,7 +139,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }
@@ -163,7 +158,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(networkModificationServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }

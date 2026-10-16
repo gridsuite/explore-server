@@ -31,7 +31,7 @@ public class ParametersService implements IDirectoryElementsService {
     private static final String COMPUTATION_PARAMETERS = "/parameters";
     private static final String NETWORK_VISU_PARAMETERS = "/network-visualizations-params";
 
-    private final RestClient.Builder restClientBuilder;
+    private final RestClient restClient;
 
     private final DirectoryService directoryService;
 
@@ -53,8 +53,8 @@ public class ParametersService implements IDirectoryElementsService {
 
     private final RemoteServicesProperties remoteServicesProperties;
 
-    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestClient.Builder restClientBuilder) {
-        this.restClientBuilder = restClientBuilder;
+    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestClient restClient) {
+        this.restClient = restClient;
         this.remoteServicesProperties = remoteServicesProperties;
         this.directoryService = directoryService;
     }
@@ -70,11 +70,9 @@ public class ParametersService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
 
-        return restClientBuilder
-            .baseUrl(parametersServerBaseUri)
-            .build()
+        return restClient
             .post()
-            .uri(path)
+            .uri(parametersServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(parameters)
             .retrieve()
@@ -93,11 +91,9 @@ public class ParametersService implements IDirectoryElementsService {
                 .buildAndExpand(parametersUuid)
                 .toUriString();
 
-        restClientBuilder
-            .baseUrl(parametersServerBaseUri)
-            .build()
+        restClient
             .put()
-            .uri(path)
+            .uri(parametersServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
             .body(parameters)
             .retrieve()
@@ -115,11 +111,9 @@ public class ParametersService implements IDirectoryElementsService {
                     .buildAndExpand(sourceParametersUuid)
                     .toUriString();
 
-        return restClientBuilder
-            .baseUrl(parametersServerBaseUri)
-            .build()
+        return restClient
             .post()
-            .uri(path)
+            .uri(parametersServerBaseUri + path)
             .retrieve()
             .body(UUID.class);
     }
@@ -135,11 +129,9 @@ public class ParametersService implements IDirectoryElementsService {
                 .buildAndExpand(parametersUuid)
                 .toUriString();
 
-        restClientBuilder
-            .baseUrl(parametersServerBaseUri)
-            .build()
+        restClient
             .delete()
-            .uri(path)
+            .uri(parametersServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
     }

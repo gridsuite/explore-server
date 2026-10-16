@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -24,27 +25,21 @@ public class WorkspaceService implements IDirectoryElementsService {
     private static final String WORKSPACES_PATH = DELIMITER + WORKSPACES_API_VERSION + DELIMITER + "workspaces";
     private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
 
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
+    private final RestClient restClient;
 
+    @Setter
     private String studyConfigServerBaseUri;
 
-    public WorkspaceService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    public WorkspaceService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.studyConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
-        this.restClient = restClientBuilder.baseUrl(studyConfigServerBaseUri).build();
-    }
-
-    public void setStudyConfigServerBaseUri(String studyConfigServerBaseUri) {
-        this.studyConfigServerBaseUri = studyConfigServerBaseUri;
-        this.restClient = restClientBuilder.baseUrl(studyConfigServerBaseUri).build();
+        this.restClient = restClient;
     }
 
     public UUID duplicateWorkspace(UUID sourceWorkspaceId) {
         Objects.requireNonNull(sourceWorkspaceId);
 
         return restClient.post()
-            .uri(WORKSPACES_PATH + "/{uuid}/duplicate", sourceWorkspaceId)
+            .uri(studyConfigServerBaseUri + WORKSPACES_PATH + "/{uuid}/duplicate", sourceWorkspaceId)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .body(UUID.class);
@@ -55,10 +50,8 @@ public class WorkspaceService implements IDirectoryElementsService {
         Objects.requireNonNull(sourceWorkspaceId);
 
         restClient.put()
-            .uri(uriBuilder -> uriBuilder
-                .path(WORKSPACES_PATH + DELIMITER + "{uuid}/replace")
-                .queryParam(DUPLICATE_FROM_PARAMETER, sourceWorkspaceId)
-                .build(workspaceId))
+            .uri(studyConfigServerBaseUri + WORKSPACES_PATH + DELIMITER + "{uuid}/replace?" + DUPLICATE_FROM_PARAMETER + "={duplicateFrom}",
+                workspaceId, sourceWorkspaceId)
             .contentType(MediaType.APPLICATION_JSON)
             .retrieve()
             .toBodilessEntity();
@@ -69,7 +62,7 @@ public class WorkspaceService implements IDirectoryElementsService {
         Objects.requireNonNull(workspaceUuid);
 
         restClient.delete()
-            .uri(WORKSPACES_PATH + DELIMITER + "{uuid}", workspaceUuid)
+            .uri(studyConfigServerBaseUri + WORKSPACES_PATH + DELIMITER + "{uuid}", workspaceUuid)
             .retrieve()
             .toBodilessEntity();
     }

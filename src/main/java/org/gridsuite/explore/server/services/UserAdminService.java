@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import lombok.Setter;
 import org.gridsuite.explore.server.dto.QuotaState;
 import org.gridsuite.explore.server.dto.QuotaType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,24 +29,15 @@ public class UserAdminService {
     private static final String USERS_QUOTA_STATE_URI = USERS_QUOTA_URI + "/state";
     private static final String CASES_ALERT_THRESHOLD_URI = "/cases-alert-threshold";
     private static final String DELIMITER = "/";
+    private final RestClient restClient;
 
-    private final RestClient.Builder restClientBuilder;
-    private RestClient restClient;
-
+    @Setter
     private String userAdminServerBaseUri;
 
     @Autowired
-    public UserAdminService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
-        this.restClientBuilder = restClientBuilder;
+    public UserAdminService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.userAdminServerBaseUri = remoteServicesProperties.getServiceUri("user-admin-server");
-        this.restClient = restClientBuilder.baseUrl(userAdminServerBaseUri).build();
-    }
-
-    public void setUserAdminServerBaseUri(String userAdminServerBaseUri) {
-        this.userAdminServerBaseUri = userAdminServerBaseUri;
-        this.restClient = restClientBuilder
-            .baseUrl(userAdminServerBaseUri)
-            .build();
+        this.restClient = restClient;
     }
 
     public Map<QuotaType, QuotaState> getUserQuotaState() {
@@ -54,7 +46,7 @@ public class UserAdminService {
             .buildAndExpand(sub).toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(userAdminServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }
@@ -74,7 +66,7 @@ public class UserAdminService {
             .buildAndExpand().toUriString();
 
         return restClient.get()
-            .uri(path)
+            .uri(userAdminServerBaseUri + path)
             .retrieve()
             .body(Integer.class);
     }
