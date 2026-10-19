@@ -497,15 +497,14 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "/explore/elements/{id}/types/{type}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/explore/elements/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modify an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element has been modified successfully")})
     @PreAuthorize("@authorizationService.canWrite(#id)")
     public ResponseEntity<Void> updateElement(
             @PathVariable UUID id,
-            @PathVariable String type,
             @RequestBody ElementAttributes elementAttributes) {
-        exploreService.updateElement(id, type, elementAttributes);
+        exploreService.updateElement(id, elementAttributes);
         return ResponseEntity.ok().build();
     }
 

@@ -1177,8 +1177,7 @@ class ExploreTest {
     void testUpdateElement() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
-                ELEMENT_UUID, "STUDY")
+        mockMvc.perform(put("/v1/explore/elements/{id}", ELEMENT_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1188,8 +1187,7 @@ class ExploreTest {
     void testUpdateCompositeName() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName("new Name");
-        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
-                ELEMENT_COMPOSITE_UUID, "MODIFICATION")
+        mockMvc.perform(put("/v1/explore/elements/{id}", ELEMENT_COMPOSITE_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1211,8 +1209,7 @@ class ExploreTest {
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
-                FORBIDDEN_ELEMENT_UUID, "STUDY")
+        mockMvc.perform(put("/v1/explore/elements/{id}", FORBIDDEN_ELEMENT_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isForbidden());

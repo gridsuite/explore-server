@@ -421,12 +421,13 @@ public class ExploreService {
         }
     }
 
-    public void updateElement(UUID id, String type, ElementAttributes updatedElementAttributes) {
-        if (type.equals(MODIFICATION)) {
+    public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
+        // The check to know if the  user have the right to update the element is done in the directory-server
+        directoryService.updateElement(id, updatedElementAttributes);
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        if (MODIFICATION.equals(elementsInfos.getType())) {
             networkModificationService.updateCompositeModificationMetadata(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
         } else {
-            directoryService.updateElement(id, updatedElementAttributes);
-            ElementAttributes elementsInfos = directoryService.getElementInfos(id);
             notifyElementUpdated(elementsInfos);
         }
     }
