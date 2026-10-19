@@ -8,20 +8,18 @@ package org.gridsuite.explore.server.services;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.net.URI;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,10 +27,7 @@ import static org.mockito.Mockito.when;
 class DirectoryServiceTest {
 
     @MockitoBean
-    private RestTemplate restTemplate;
-
-    @Mock
-    private ResponseEntity<String> responseEntity;
+    private RestClient restClient;
 
     @Autowired
     private DirectoryService directoryService;
@@ -41,14 +36,19 @@ class DirectoryServiceTest {
     void testSearchElementsWithSpecialCharacters() {
         String userInput = "a+éè{}\\`b";
         String directoryUuid = UUID.randomUUID().toString();
-        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenReturn(responseEntity);
+        RestClient.RequestHeadersUriSpec<?> requestUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.RequestHeadersSpec<?> requestSpec = mock(RestClient.RequestHeadersSpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+
+        doReturn(requestUriSpec).when(restClient).get();
+        doReturn(requestSpec).when(requestUriSpec).uri(any(URI.class));
+        when(requestSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(String.class)).thenReturn("");
 
         directoryService.searchElements(userInput, directoryUuid);
 
         ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
-        verify(restTemplate).exchange(uriCaptor.capture(), any(), any(), any(Class.class));
-        String uriString = uriCaptor.getValue().toString();
-        assertTrue(uriString.contains("userInput=a%2B%C3%A9%C3%A8%7B%7D%5C%60b"));
+        verify(requestUriSpec).uri(uriCaptor.capture());
+        assertTrue(uriCaptor.getValue().toString().contains("userInput=a%2B%C3%A9%C3%A8%7B%7D%5C%60b"));
     }
 }

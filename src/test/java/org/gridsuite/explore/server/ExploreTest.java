@@ -131,7 +131,7 @@ class ExploreTest {
             "type", "COMPOSITE",
             "name", "compositeName",
             "description", "compositeDescription");
-    private final Map<UUID, List<Map<String, Object>>> compositeModificationMetadata = Map.of(COMPOSITE_MODIFICATION_UUID, List.of(
+    private final List<Map<String, Object>> compositeModificationMetadata = List.of(
             Map.of(
             "uuid", MODIFICATION_UUID,
             "type", "LOAD_MODIFICATION",
@@ -144,7 +144,7 @@ class ExploreTest {
             "messageType", "SHUNT_COMPENSATOR_MODIFICATION",
             "messageValues", "{\"equipmentId\":\"equipmentId2\"}",
             "activated", true)
-    ));
+    );
     private final Map<String, Object> processConfigSprecificMetadata = Map.of("id", PROCESS_CONFIG_UUID, "type", "SECURITY_ANALYSIS");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
@@ -426,7 +426,7 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 compositeModificationSpecificMetadataAsString);
-                    } else if (path.matches("/v1/containers/network-modifications[?]uuids=" + COMPOSITE_MODIFICATION_UUID + "&onlyMetadata=true")) {
+                    } else if (path.matches("/v1/containers/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications[?]onlyMetadata=true")) {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 mapper.writeValueAsString(compositeModificationMetadata));
