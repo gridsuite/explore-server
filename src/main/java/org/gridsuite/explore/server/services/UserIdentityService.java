@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
 import java.util.Map;
@@ -30,21 +30,24 @@ public class UserIdentityService {
     private static final String USERS_IDENTITY_PATH = "/users/identities?subs={subs}";
 
     private static final String DELIMITER = "/";
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     @Setter
     private String userIdentityServerBaseUri;
 
     @Autowired
-    public UserIdentityService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public UserIdentityService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.userIdentityServerBaseUri = remoteServicesProperties.getServiceUri("user-identity-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     public String getUsersIdentities(List<String> subs) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_IDENTITY_API_VERSION + USERS_IDENTITY_PATH)
             .buildAndExpand(String.join(",", subs)).toUriString();
-        return restTemplate.getForObject(userIdentityServerBaseUri + path, String.class);
+        return restClient.get()
+            .uri(userIdentityServerBaseUri + path)
+            .retrieve()
+            .body(String.class);
     }
 
     /**
@@ -57,12 +60,14 @@ public class UserIdentityService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + USER_IDENTITY_API_VERSION + USERS_IDENTITY_PATH)
             .buildAndExpand(String.join(",", subs)).toUriString();
         try {
-            UsersIdentities usersIdentities = restTemplate.getForObject(userIdentityServerBaseUri + path, UsersIdentities.class);
+            UsersIdentities usersIdentities = restClient.get()
+                .uri(userIdentityServerBaseUri + path)
+                .retrieve()
+                .body(UsersIdentities.class);
             return usersIdentities == null || usersIdentities.data() == null ? Map.of() : usersIdentities.data();
         } catch (RestClientException e) {
             LOGGER.error("Failed to fetch users identities", e);
             return Map.of();
         }
     }
-
 }

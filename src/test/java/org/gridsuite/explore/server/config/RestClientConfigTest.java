@@ -20,7 +20,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_ROLES;
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
@@ -36,11 +36,12 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 // And other builders are also registered but without consequences, they're just unused.
 // In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
 @AutoConfigureWebClient
-@ContextConfiguration(classes = {RestTemplateConfig.class})
-class RestTemplateConfigTest {
+@ContextConfiguration(classes = {RestClientConfig.class})
+class RestClientConfigTest {
 
     @Autowired
-    private RestTemplate restTemplate;
+    private RestClient.Builder restClientBuilder;
+    private RestClient restClient;
 
     private MockRestServiceServer mockServer;
     private static final String TEST_ROLES = "ADMIN|USER";
@@ -49,7 +50,10 @@ class RestTemplateConfigTest {
 
     @BeforeEach
     void setUp() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
+        RestClientConfig restClientConfig = new RestClientConfig();
+        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+        restClientConfig.restClientCustomizer().customize(restClientBuilder);
+        restClient = restClientBuilder.build();
     }
 
     @AfterEach
@@ -69,7 +73,10 @@ class RestTemplateConfigTest {
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
 
         // Execute request through our RestTemplate
-        restTemplate.getForObject(TEST_ENDPOINT, String.class);
+        restClient.get()
+            .uri(TEST_ENDPOINT)
+            .retrieve()
+            .body(String.class);
 
         // Verify the request was made correctly
         mockServer.verify();
@@ -92,7 +99,10 @@ class RestTemplateConfigTest {
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
 
         // Execute request
-        restTemplate.getForObject(TEST_ENDPOINT, String.class);
+        restClient.get()
+            .uri(TEST_ENDPOINT)
+            .retrieve()
+            .body(String.class);
 
         // Verify
         mockServer.verify();
@@ -112,7 +122,10 @@ class RestTemplateConfigTest {
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
 
         // Execute request
-        restTemplate.getForObject(TEST_ENDPOINT, String.class);
+        restClient.get()
+            .uri(TEST_ENDPOINT)
+            .retrieve()
+            .body(String.class);
 
         // Verify
         mockServer.verify();
