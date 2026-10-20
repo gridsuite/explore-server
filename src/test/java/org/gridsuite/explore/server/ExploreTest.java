@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.http.client.reactive.ClientHttpConnectorBuilderCustomizer;
+import org.springframework.boot.http.client.reactive.ReactorClientHttpConnectorBuilder;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
@@ -131,7 +133,7 @@ class ExploreTest {
             "type", "COMPOSITE",
             "name", "compositeName",
             "description", "compositeDescription");
-    private final Map<UUID, List<Map<String, Object>>> compositeModificationMetadata = Map.of(COMPOSITE_MODIFICATION_UUID, List.of(
+    private final List<Map<String, Object>> compositeModificationMetadata = List.of(
             Map.of(
             "uuid", MODIFICATION_UUID,
             "type", "LOAD_MODIFICATION",
@@ -144,7 +146,7 @@ class ExploreTest {
             "messageType", "SHUNT_COMPENSATOR_MODIFICATION",
             "messageValues", "{\"equipmentId\":\"equipmentId2\"}",
             "activated", true)
-    ));
+    );
     private final Map<String, Object> processConfigSprecificMetadata = Map.of("id", PROCESS_CONFIG_UUID, "type", "SECURITY_ANALYSIS");
 
     private static final UUID SCRIPT_ID_BASE_FORM_CONTINGENCY_LIST_UUID = UUID.randomUUID();
@@ -193,6 +195,8 @@ class ExploreTest {
     public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
 
     private static final long TIMEOUT = 1000;
+    @Autowired
+    private ClientHttpConnectorBuilderCustomizer<ReactorClientHttpConnectorBuilder> reactorResourceFactoryClientHttpConnectorBuilderCustomizer;
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
@@ -426,7 +430,7 @@ class ExploreTest {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 compositeModificationSpecificMetadataAsString);
-                    } else if (path.matches("/v1/containers/network-modifications[?]uuids=" + COMPOSITE_MODIFICATION_UUID + "&onlyMetadata=true")) {
+                    } else if (path.matches("/v1/containers/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications[?]onlyMetadata=true")) {
                         return new MockResponse(200,
                                 Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
                                 mapper.writeValueAsString(compositeModificationMetadata));
@@ -1177,8 +1181,7 @@ class ExploreTest {
     void testUpdateElement() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
-                ELEMENT_UUID, "STUDY")
+        mockMvc.perform(put("/v1/explore/elements/{id}", ELEMENT_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1188,8 +1191,7 @@ class ExploreTest {
     void testUpdateCompositeName() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName("new Name");
-        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
-                ELEMENT_COMPOSITE_UUID, "MODIFICATION")
+        mockMvc.perform(put("/v1/explore/elements/{id}", ELEMENT_COMPOSITE_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isOk());
@@ -1211,8 +1213,9 @@ class ExploreTest {
     void testUpdateElementNotOk() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
-        mockMvc.perform(put("/v1/explore/elements/{id}/types/{type}",
-                FORBIDDEN_ELEMENT_UUID, "STUDY")
+        elementAttributes.setType("STUDY");
+        doReturn(elementAttributes).when(directoryService).getElementInfos(FORBIDDEN_ELEMENT_UUID);
+        mockMvc.perform(put("/v1/explore/elements/{id}", FORBIDDEN_ELEMENT_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
         ).andExpect(status().isForbidden());

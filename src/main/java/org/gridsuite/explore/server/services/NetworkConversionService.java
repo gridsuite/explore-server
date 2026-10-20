@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.UUID;
@@ -24,19 +24,23 @@ public class NetworkConversionService {
 
     @Setter
     private String networkConversionServerBaseUri;
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     public NetworkConversionService(@Value("${powsybl.services.network-conversion-server.base-uri:http://network-conversion-server/}") String networkConversionServerBaseUri,
-                                    RestTemplate restTemplate) {
+                                    RestClient restClient) {
         this.networkConversionServerBaseUri = networkConversionServerBaseUri;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     public String getCaseImportParameters(UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/import-parameters")
             .buildAndExpand(caseUuid)
             .toUriString();
-        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
+
+        return restClient.get()
+            .uri(networkConversionServerBaseUri + path)
+            .retrieve()
+            .body(String.class);
     }
 
     public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters) {
@@ -44,25 +48,35 @@ public class NetworkConversionService {
             .queryParam("fileName", fileName)
             .buildAndExpand(caseUuid, format)
             .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        return restTemplate
-                .exchange(networkConversionServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(formatParameters, headers), UUID.class)
-                .getBody();
+        var request = restClient.post()
+            .uri(networkConversionServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON);
+        if (formatParameters != null) {
+            request.body(formatParameters);
+        }
+        return request.retrieve().body(UUID.class);
     }
 
     public ResponseEntity<Resource> downloadFile(UUID exportUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/download-file/{exportUuid}")
             .buildAndExpand(exportUuid)
             .toUriString();
-        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, Resource.class);
+
+        return restClient.get()
+            .uri(networkConversionServerBaseUri + path)
+            .retrieve()
+            .toEntity(Resource.class);
     }
 
     public String getExportFormats() {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/export/formats")
             .buildAndExpand()
             .toUriString();
-        return restTemplate.exchange(networkConversionServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
+
+        return restClient.get()
+            .uri(networkConversionServerBaseUri + path)
+            .retrieve()
+            .body(String.class);
     }
 }

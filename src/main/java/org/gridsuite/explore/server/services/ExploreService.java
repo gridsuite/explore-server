@@ -266,9 +266,7 @@ public class ExploreService {
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
-        Map<UUID, List<Object>> compositeContent = networkModificationService.getCompositeModificationContent(compositeModificationId);
-        List<Object> requestedContent = compositeContent.get(compositeModificationId);
-        return requestedContent != null ? requestedContent : List.of();
+        return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description) {
@@ -424,7 +422,9 @@ public class ExploreService {
     }
 
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
-        switch (updatedElementAttributes.getType()) {
+        // TODO set type in updatedElementAttributes from front to avoid a read DB
+        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
+        switch (elementsInfos.getType()) {
             case STUDY -> updateStudy(id, updatedElementAttributes);
             case MODIFICATION -> updateNetworkModification(id, updatedElementAttributes);
             default -> directoryService.updateElement(id, updatedElementAttributes);
