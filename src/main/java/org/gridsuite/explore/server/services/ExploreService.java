@@ -423,21 +423,21 @@ public class ExploreService {
         }
     }
 
-    public void updateElement(UUID id, String type, ElementAttributes updatedElementAttributes) {
-        if (type.equals(MODIFICATION)) {
-            networkModificationService.updateCompositeModificationMetadata(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
-        } else {
-            directoryService.updateElement(id, updatedElementAttributes);
-            ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-            notifyElementUpdated(elementsInfos);
+    public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
+        switch (updatedElementAttributes.getType()) {
+            case STUDY -> updateStudy(id, updatedElementAttributes);
+            case MODIFICATION -> updateNetworkModification(id, updatedElementAttributes);
+            default -> directoryService.updateElement(id, updatedElementAttributes);
         }
     }
 
-    private void notifyElementUpdated(ElementAttributes element) {
-        // send notification if the study name was updated
-        if (STUDY.equals(element.getType())) {
-            studyService.notifyStudyUpdate(element.getElementUuid());
-        }
+    private void updateStudy(UUID id, ElementAttributes updatedElementAttributes) {
+        directoryService.updateElement(id, updatedElementAttributes);
+        studyService.notifyStudyUpdate(updatedElementAttributes.getElementUuid());
+    }
+
+    private void updateNetworkModification(UUID id, ElementAttributes updatedElementAttributes) {
+        networkModificationService.updateModificationNameAndDescription(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
     }
 
     private void notifyElementMoved(ElementAttributes element) {

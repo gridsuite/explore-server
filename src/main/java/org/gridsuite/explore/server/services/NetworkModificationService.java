@@ -95,7 +95,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
      * @param newName null if the name shouldn't be updated
      * @param newDescription null if the description shouldn't be updated
      */
-    public void updateCompositeModificationMetadata(UUID compositeModificationId, String newName, String newDescription) {
+    public void updateModificationNameAndDescription(UUID compositeModificationId, String newName, String newDescription) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
                 DELIMITER + NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER + NETWORK_MODIFICATIONS_PATH +
