@@ -98,6 +98,6 @@ public class NotificationService {
                 .setHeader(HEADER_MODIFIED_BY, userId)
                 .setHeader(HEADER_ONLY_METADATA, true)
                 .build();
-        sendMessage(message, "publishElementUpdate-out-0");
+        sendMessage(message, ELEMENT_UPDATE_BINDING);
     }
 }
