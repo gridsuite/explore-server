@@ -1190,6 +1190,7 @@ class ExploreTest {
     @Test
     void testUpdateCompositeName() throws Exception {
         ElementAttributes elementAttributes = new ElementAttributes();
+        elementAttributes.setElementUuid(ELEMENT_COMPOSITE_UUID);
         elementAttributes.setElementName("new Name");
         mockMvc.perform(put("/v1/explore/elements/{id}", ELEMENT_COMPOSITE_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
