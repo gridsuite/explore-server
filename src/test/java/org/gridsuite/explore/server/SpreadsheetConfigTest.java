@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.services.NotificationService.HEADER_ELEMENT_UUID;
 import static org.gridsuite.explore.server.services.NotificationService.HEADER_MODIFIED_BY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -156,13 +157,14 @@ class SpreadsheetConfigTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
-                        .param("description", "description"))
+                        .param("description", "description")
+                        .header(HEADER_USER_ID, USER_ID))
                 .andExpect(status().isNoContent());
 
         Message<byte[]> message = output.receive(TIMEOUT, ELEMENT_UPDATE_DESTINATION);
         assertNotNull(message);
         assertEquals(CONFIG_UUID, message.getHeaders().get(HEADER_ELEMENT_UUID));
-        assertNotNull(message.getHeaders().get(HEADER_MODIFIED_BY));
+        assertEquals(USER_ID, message.getHeaders().get(HEADER_MODIFIED_BY));
     }
 
     @Test
