@@ -22,6 +22,7 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
@@ -438,6 +439,8 @@ public class ExploreService {
 
     private void updateNetworkModification(UUID id, ElementAttributes updatedElementAttributes) {
         networkModificationService.updateModificationNameAndDescription(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        notificationService.emitElementMetadataUpdated(updatedElementAttributes.getElementUuid(), userId);
     }
 
     private void notifyElementMoved(ElementAttributes element) {

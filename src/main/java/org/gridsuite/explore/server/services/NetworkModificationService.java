@@ -9,7 +9,6 @@ package org.gridsuite.explore.server.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Setter;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.ModificationMetadata;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -116,7 +116,14 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 );
         String path = uriComponentsBuilder.buildAndExpand().toUriString();
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        ModificationMetadata modificationMetadata = new ModificationMetadata(compositeModificationId, newName, newDescription);
+        Map<String, Object> modificationMetadata = new HashMap<>();
+        modificationMetadata.put("id", compositeModificationId);
+        if (newName != null) {
+            modificationMetadata.put(NAME, newName);
+        }
+        if (newDescription != null) {
+            modificationMetadata.put(DESCRIPTION, newDescription);
+        }
 
         restClient.put()
             .uri(networkModificationServerBaseUri + path)
