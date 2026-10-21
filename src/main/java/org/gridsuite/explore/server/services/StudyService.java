@@ -149,4 +149,17 @@ public class StudyService implements IDirectoryElementsService {
                     .retrieve()
                     .toBodilessEntity();
     }
+
+    public void setSpreadsheetConfigCollection(UUID studyUuid, String spreadsheetConfigCollection) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/spreadsheet-config-collection")
+                .buildAndExpand(studyUuid)
+                .toUriString();
+
+        restClient.post()
+            .uri(studyServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(spreadsheetConfigCollection)
+            .retrieve()
+            .toBodilessEntity();
+    }
 }

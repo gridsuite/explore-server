@@ -17,6 +17,7 @@ import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.FilterService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.gridsuite.explore.server.services.RemoteServicesProperties;
+import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.junit.jupiter.api.AfterEach;
@@ -87,6 +88,9 @@ class StudyImportTest {
     private NetworkModificationService networkModificationService;
 
     @Autowired
+    private SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
+
+    @Autowired
     private RemoteServicesProperties remoteServicesProperties;
 
     @BeforeEach
@@ -100,6 +104,7 @@ class StudyImportTest {
         filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
         contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
         networkModificationService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
+        spreadsheetConfigCollectionService.setSpreadsheetConfigServerBaseUri(wireMockServer.baseUrl());
         remoteServicesProperties.getServices().forEach(service -> service.setBaseUri(wireMockServer.baseUrl()));
 
         // Stub case-server
@@ -156,6 +161,49 @@ class StudyImportTest {
 
         // Verify the import was initiated
         assertNotNull(result);
+    }
+
+    @Test
+    void testImportStudySpreadsheetConfigCollection() throws Exception {
+        wireMockServer.stubFor(post(urlPathMatching("/v1/studies/.*/spreadsheet-config-collection")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/filters")).willReturn(aResponse().withStatus(200)));
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/spreadsheet-config-collections"))
+                .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(objectMapper.writeValueAsString(UUID.randomUUID()))));
+        UUID oldFilter = UUID.randomUUID();
+        String column = "{\"name\":\"ID\",\"id\":\"id\",\"columnFilterInfos\":{\"filterDataType\":\"text\",\"filterType\":\"contains\",\"filterValue\":\"L1\"}}";
+        String globalFilters = "{\"uuid\":\"%s\",\"filterType\":\"genericFilter\",\"label\":\"lines\",\"deleted\":false},{\"filterType\":\"country\",\"label\":\"FR\",\"deleted\":false}";
+        String spreadsheetConfigCollection = "{\"spreadsheetConfigs\":[{\"name\":\"Lines\",\"sheetType\":\"LINE\",\"columns\":[" + column + "],\"globalFilters\":[" + globalFilters + "],"
+                + "\"nodeAliases\":[\"N1\"],\"sortConfig\":{\"colId\":\"id\",\"sort\":\"asc\"}}],\"nodeAliases\":[\"N1\"]}";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            addJsonEntry(zos, createStudyExportInfos());
+            addFileEntry(zos, "cases/" + CASE_UUID + "/testCase.xiidm", "<network></network>".getBytes());
+            addFileEntry(zos, "spreadsheets/spreadsheetConfigCollection.json", String.format(spreadsheetConfigCollection, oldFilter).getBytes());
+            addFileEntry(zos, "spreadsheets/filters.json", objectMapper.writeValueAsBytes(List.of(expertFilter(oldFilter, "lines", "LINE"))));
+        }
+        MockMultipartFile archiveFile = new MockMultipartFile("archiveFile", "study-export.zip", "application/zip", baos.toByteArray());
+
+        mockMvc.perform(multipart("/v1/explore/studies/import")
+                        .file(archiveFile)
+                        .param("studyName", STUDY_NAME)
+                        .param("description", DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString())
+                        .header("userId", USER_ID))
+                .andExpect(status().isOk());
+
+        // the filter referenced by the global filter is imported with a new uuid
+        List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
+        assertEquals(1, filterRequests.size());
+        String newFilter = filterRequests.getFirst().queryParameter("id").firstValue();
+        assertNotEquals(oldFilter.toString(), newFilter);
+        // the whole collection is set on the imported study, its global filter references the imported filter
+        wireMockServer.verify(1, postRequestedFor(urlPathMatching("/v1/studies/.*/spreadsheet-config-collection"))
+                .withHeader("userId", equalTo(USER_ID))
+                .withRequestBody(equalToJson(String.format(spreadsheetConfigCollection, newFilter))));
+        // the collection is also created as a directory element, with the same content
+        wireMockServer.verify(1, postRequestedFor(urlPathEqualTo("/v1/spreadsheet-config-collections"))
+                .withRequestBody(equalToJson(String.format(spreadsheetConfigCollection, newFilter))));
     }
 
     @Test
@@ -488,7 +536,7 @@ class StudyImportTest {
         assertNotEquals(oldGroup, newGroup);
 
         List<LoggedRequest> filterRequests = wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/filters")));
-        // the filter exported in both directories is imported only once
+        // the shared filter is exported with the computation parameters and with the network modifications, but imported only once
         assertEquals(2, filterRequests.size());
         String newSharedFilter = findRequestContaining(filterRequests, "GENERATOR").queryParameter("id").firstValue();
         String newModificationFilter = findRequestContaining(filterRequests, "LINE").queryParameter("id").firstValue();
