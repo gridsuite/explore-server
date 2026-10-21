@@ -342,6 +342,7 @@ public class ExploreService {
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String name, String description) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String name, String description) {
