@@ -8,18 +8,13 @@ package org.gridsuite.explore.server.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
+import org.gridsuite.explore.server.dto.CompressionType;
 import org.gridsuite.explore.server.services.NetworkConversionService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -44,9 +39,10 @@ public class NetworkConversionController {
     @PreAuthorize("@authorizationService.canWrite(#caseUuid)")
     public ResponseEntity<UUID> convertCase(@PathVariable("caseUuid") UUID caseUuid,
                                             @PathVariable("format") String format,
+                                            @RequestParam(value = "compression", required = false, defaultValue = "ZIP") CompressionType compression,
                                             @RequestParam(value = "fileName", required = false) String fileName,
                                             @RequestBody(required = false) String formatParameters) {
-        return ResponseEntity.ok(networkConversionService.convertCase(caseUuid, format, fileName, formatParameters));
+        return ResponseEntity.ok(networkConversionService.convertCase(caseUuid, format, compression, fileName, formatParameters));
     }
 
     @GetMapping(value = "/download-file/{exportUuid}")
