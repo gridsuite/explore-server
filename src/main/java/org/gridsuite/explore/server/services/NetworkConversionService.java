@@ -50,7 +50,7 @@ public class NetworkConversionService {
     public UUID convertCase(UUID caseUuid, String format, CompressionType compression, String fileName, String formatParameters) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/convert/{format}")
             .queryParamIfPresent("compression", Optional.ofNullable(compression));
-        if(!StringUtils.isBlank(fileName)) {
+        if (!StringUtils.isBlank(fileName)) {
             uriComponentsBuilder.queryParam("fileName", fileName);
         }
         String path = uriComponentsBuilder
