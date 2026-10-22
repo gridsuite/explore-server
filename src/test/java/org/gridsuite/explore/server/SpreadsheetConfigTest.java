@@ -25,9 +25,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.Message;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -36,6 +38,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+import static org.gridsuite.explore.server.services.NotificationService.HEADER_ELEMENT_UUID;
+import static org.gridsuite.explore.server.services.NotificationService.HEADER_MODIFIED_BY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -63,12 +70,17 @@ class SpreadsheetConfigTest {
     @Autowired
     private UserAdminService userAdminService;
 
+    @Autowired
+    private OutputDestination output;
+
     private static final String BASE_URL = "/v1/explore/spreadsheet-configs";
     private static final String SPREADSHEET_CONFIG_SERVER_BASE_URL = "/v1/spreadsheet-configs";
     private static final UUID CONFIG_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final String USER_ID = "testUser";
     private static final String CONFIG_NAME = "Test Config";
+    private static final String ELEMENT_UPDATE_DESTINATION = "element.update";
+    private static final long TIMEOUT = 1000;
 
     private String spreadsheetConfigJson;
 
@@ -78,6 +90,7 @@ class SpreadsheetConfigTest {
         spreadsheetConfigService.setSpreadsheetConfigServerBaseUri(baseUrl);
         directoryService.setDirectoryServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
+        output.clear();
 
         spreadsheetConfigJson = "{\"sheetType\":\"GENERATORS\",\"customColumns\":[{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Custom Column\",\"formula\":\"SUM(A1:A10)\"}]}";
 
@@ -144,8 +157,14 @@ class SpreadsheetConfigTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
-                        .param("description", "description"))
+                        .param("description", "description")
+                        .header(HEADER_USER_ID, USER_ID))
                 .andExpect(status().isNoContent());
+
+        Message<byte[]> message = output.receive(TIMEOUT, ELEMENT_UPDATE_DESTINATION);
+        assertNotNull(message);
+        assertEquals(CONFIG_UUID, message.getHeaders().get(HEADER_ELEMENT_UUID));
+        assertEquals(USER_ID, message.getHeaders().get(HEADER_MODIFIED_BY));
     }
 
     @Test
