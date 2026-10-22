@@ -22,6 +22,7 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,7 +48,7 @@ public class ExploreService {
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
-    public static final String MODIFICATION = "MODIFICATION";
+    public static final String MODIFICATION = "MODIFICATION"; // only for composite modification
     static final String DIRECTORY = "DIRECTORY";
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
@@ -421,23 +422,25 @@ public class ExploreService {
         }
     }
 
-    public void updateElement(UUID id, ElementAttributes elementAttributes) {
-        // The check to know if the  user have the right to update the element is done in the directory-server
-        directoryService.updateElement(id, elementAttributes);
+    public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
+        // TODO set type in updatedElementAttributes from front to avoid a read DB
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        notifyElementUpdated(elementsInfos);
+        switch (elementsInfos.getType()) {
+            case STUDY -> updateStudy(id, updatedElementAttributes);
+            case MODIFICATION -> updateNetworkModification(id, updatedElementAttributes);
+            default -> directoryService.updateElement(id, updatedElementAttributes);
+        }
     }
 
-    private void notifyElementUpdated(ElementAttributes element) {
-        // send notification if the study name was updated
-        if (STUDY.equals(element.getType())) {
-            studyService.notifyStudyUpdate(element.getElementUuid());
-        }
+    private void updateStudy(UUID id, ElementAttributes updatedElementAttributes) {
+        directoryService.updateElement(id, updatedElementAttributes);
+        studyService.notifyStudyUpdate(updatedElementAttributes.getElementUuid());
+    }
 
-        // the composite modification name has to be updated in order to match the new element name
-        if (MODIFICATION.equals(element.getType())) {
-            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName());
-        }
+    private void updateNetworkModification(UUID id, ElementAttributes updatedElementAttributes) {
+        networkModificationService.updateModificationNameAndDescription(id, updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        notificationService.emitElementMetadataUpdated(updatedElementAttributes.getElementUuid(), userId);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
