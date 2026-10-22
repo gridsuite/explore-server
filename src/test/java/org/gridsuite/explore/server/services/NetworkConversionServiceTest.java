@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.dto.CompressionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
@@ -21,9 +22,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.client.ExpectedCount.once;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class NetworkConversionServiceTest {
@@ -58,13 +57,13 @@ class NetworkConversionServiceTest {
 
     @Test
     void convertCaseForwardsPathQueryHeaderAndBody() {
-        server.expect(once(), requestTo(BASE_URI + "/v1/cases/" + CASE_UUID + "/convert/CGMES?fileName=network.zip"))
+        server.expect(once(), requestTo(BASE_URI + "/v1/cases/" + CASE_UUID + "/convert/CGMES?compression=ZIP&fileName=network.zip"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(content().string(JSON))
             .andRespond(withSuccess("\"" + CONVERSION_UUID + "\"", MediaType.APPLICATION_JSON));
 
-        UUID response = networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", JSON);
+        UUID response = networkConversionService.convertCase(CASE_UUID, "CGMES", CompressionType.ZIP, "network.zip", JSON);
 
         assertEquals(CONVERSION_UUID, response);
         server.verify();
