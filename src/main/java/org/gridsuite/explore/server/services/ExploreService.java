@@ -440,7 +440,8 @@ public class ExploreService {
     private void updateNetworkModification(UUID id, ElementAttributes updatedElementAttributes) {
         // id can be the id of the shared parent modification
         // updatedElementAttributes.getElementUuid() is the real id of the network modification to update
-        networkModificationService.updateModificationNameAndDescription(updatedElementAttributes.getElementUuid(), updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
+        networkModificationService.updateModificationNameAndDescription(
+                updatedElementAttributes.getElementUuid(), updatedElementAttributes.getElementName(), updatedElementAttributes.getDescription());
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         notificationService.emitElementMetadataUpdated(id, userId);
     }
