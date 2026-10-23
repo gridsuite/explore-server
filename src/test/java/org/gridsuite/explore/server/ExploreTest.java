@@ -118,6 +118,8 @@ class ExploreTest {
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 = "limitedUser3";
     private static final String GENERIC_STRING = "a generic string";
+    private static final String DUPLICATED_CASE_NAME = "duplicated case";
+    private static final String CASE_DESCRIPTION = "duplicated case description";
 
     private static final String USER_NOT_FOUND = "userNotFound";
     private static final String USER_UNEXPECTED_ERROR = "unexpectedErrorUser";
@@ -243,6 +245,7 @@ class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
+        String duplicatedCaseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_COPY_UUID, "duplicated case", "CASE", USER1, 0L,  "duplicated case description"));
         String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1,
                 0, null));
         String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null,
@@ -296,6 +299,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/cases/" + CASE_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newCaseUuidAsString);
+                }  else if (path.equals("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?allowNewName=false") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), duplicatedCaseElementAttributesAsString);
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
@@ -716,6 +721,17 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
                         CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = USER1)
+    void testDuplicateExistingCase() throws Exception {
+        mockMvc.perform(post("/v1/explore/cases/{caseName}/duplicate-existing",
+                        DUPLICATED_CASE_NAME)
+                        .param("sourceCaseUuid", CASE_UUID.toString())
+                        .param("description", CASE_DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isCreated());
     }
 
     @Test
