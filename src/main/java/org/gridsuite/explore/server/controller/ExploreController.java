@@ -126,6 +126,20 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping(value = "/explore/cases/{caseName}/duplicate-existing")
+    @Operation(summary = "Create a case by duplicating an existing case-server case")
+    @ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Case has been duplicated and added to Explore") })
+    @PreAuthorize("@authorizationService.canWrite(#targetDirectoryId)")
+    public ResponseEntity<Void> duplicateExistingCase(
+            @PathVariable("caseName") String caseName,
+            @RequestParam("sourceCaseUuid") UUID sourceCaseUuid,
+            @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID targetDirectoryId) {
+        exploreService.assertCanCreateCase();
+        exploreService.duplicateExistingCase(sourceCaseUuid, caseName, description, targetDirectoryId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @PostMapping(value = "/explore/contingency-lists/{id}/duplicate")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created")})
