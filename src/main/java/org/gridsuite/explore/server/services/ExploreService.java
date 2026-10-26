@@ -434,7 +434,7 @@ public class ExploreService {
 
     private void updateStudy(UUID id, ElementAttributes updatedElementAttributes) {
         directoryService.updateElement(id, updatedElementAttributes);
-        studyService.notifyStudyUpdate(updatedElementAttributes.getElementUuid());
+        studyService.notifyStudyUpdate(id);
     }
 
     private void updateNetworkModification(UUID modificationToNotifyId, ElementAttributes updatedModificationAttributes) {
