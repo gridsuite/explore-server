@@ -122,7 +122,7 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(String.class);
     }
 
-    public String getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive) {
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
             .queryParam(PARAM_ELEMENT_TYPES, types)
@@ -133,7 +133,17 @@ public class DirectoryService implements IDirectoryElementsService {
         return restClient.get()
            .uri(directoryServerBaseUri + path)
            .retrieve()
-           .body(String.class);
+           .body(new ParameterizedTypeReference<>() {
+           });
+    }
+
+    public boolean checkElementNameAvailability(String newName, UUID parentDirectoryUuid) {
+        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, Collections.emptyList(), false);
+        List<ElementAttributes> listOfElements = getElementsMetadata(elements, Collections.emptyList());
+        Set<String> existingNames = listOfElements.stream()
+                .map(ElementAttributes::getElementName)
+                .collect(Collectors.toSet());
+        return !existingNames.contains(newName);
     }
 
     public String getPath(UUID elementUuid) {
@@ -378,9 +388,12 @@ public class DirectoryService implements IDirectoryElementsService {
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
                                                        List<String> equipmentTypes) {
-        Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
-            .stream()
-            .collect(Collectors.groupingBy(ElementAttributes::getType));
+        return getElementsMetadata(getElementsInfos(ids, elementTypes), equipmentTypes);
+    }
+
+    private List<ElementAttributes> getElementsMetadata(List<ElementAttributes> elements, List<String> equipmentTypes) {
+        Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
+                .collect(Collectors.groupingBy(ElementAttributes::getType));
         List<ElementAttributes> listOfElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
@@ -389,14 +402,14 @@ public class DirectoryService implements IDirectoryElementsService {
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
-                .filter(element -> {
-                    Object equipmentType = element.getSpecificMetadata().get("equipmentType");
-                    if (equipmentType != null) { // could be null for some elements
-                        return equipmentTypes.contains(equipmentType);
-                    }
-                    return true; // keep other elements
-                })
-                .collect(Collectors.toList());
+                    .filter(element -> {
+                        Object equipmentType = element.getSpecificMetadata().get("equipmentType");
+                        if (equipmentType != null) { // could be null for some elements
+                            return equipmentTypes.contains(equipmentType);
+                        }
+                        return true; // keep other elements
+                    })
+                    .collect(Collectors.toList());
         }
 
         return listOfElements;
@@ -514,5 +527,17 @@ public class DirectoryService implements IDirectoryElementsService {
             .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
+    }
+
+    public UUID getParentDirectoryUuid(UUID elementUuid) {
+        String path = UriComponentsBuilder
+            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/parentId")
+            .buildAndExpand(elementUuid)
+            .toUriString();
+
+        return restClient.get()
+            .uri(directoryServerBaseUri + path)
+            .retrieve()
+            .body(UUID.class);
     }
 }
