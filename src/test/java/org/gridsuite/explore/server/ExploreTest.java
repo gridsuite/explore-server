@@ -62,10 +62,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -470,6 +467,8 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/" + ELEMENT_UUID + "/parentId")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(PARENT_DIRECTORY_UUID2));
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
@@ -1298,6 +1297,17 @@ class ExploreTest {
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r ->
                 r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?elementTypes=STUDY&recursive=false")));
+    }
+
+    @Test
+    void testElementExistsWithElementUuidAndNoDirectoryUuid(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&elementName={elementName}&elementType={elementType}",
+                        ELEMENT_UUID, STUDY1, "STUDY"))
+                .andExpect(status().isOk());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r ->
+                r.getPath().contains("/v1/elements/" + ELEMENT_UUID + "/parentId")));
     }
 
     @Test
