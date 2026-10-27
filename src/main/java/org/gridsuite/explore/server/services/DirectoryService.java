@@ -137,9 +137,9 @@ public class DirectoryService implements IDirectoryElementsService {
            });
     }
 
-    public boolean checkElementNameAvailability(String newName, UUID parentDirectoryUuid) {
-        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, Collections.emptyList(), false);
-        List<ElementAttributes> listOfElements = getElementsMetadata(elements, Collections.emptyList());
+    public boolean checkElementNameAlreadyExists(String newName, UUID parentDirectoryUuid, String elementType) {
+        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
         Set<String> existingNames = listOfElements.stream()
                 .map(ElementAttributes::getElementName)
                 .collect(Collectors.toSet());
@@ -174,19 +174,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(new ParameterizedTypeReference<>() { });
 
         return Objects.requireNonNullElse(elementsPaths, Collections.emptyMap());
-    }
-
-    public HttpStatusCode elementExists(UUID directoryUuid, String elementName, String type) {
-        String path = UriComponentsBuilder
-            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements/{elementName}/types/{type}")
-            .buildAndExpand(directoryUuid, elementName, type)
-            .toUriString();
-
-        return restClient.head()
-            .uri(directoryServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity()
-            .getStatusCode();
     }
 
     public HttpStatusCode rootDirectoryExists(String directoryName) {
@@ -386,12 +373,7 @@ public class DirectoryService implements IDirectoryElementsService {
         return iDirectoryElementsService;
     }
 
-    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
-                                                       List<String> equipmentTypes) {
-        return getElementsMetadata(getElementsInfos(ids, elementTypes), equipmentTypes);
-    }
-
-    private List<ElementAttributes> getElementsMetadata(List<ElementAttributes> elements, List<String> equipmentTypes) {
+    private List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> elements) {
         Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType));
         List<ElementAttributes> listOfElements = new ArrayList<>();
@@ -399,7 +381,12 @@ public class DirectoryService implements IDirectoryElementsService {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
             listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
+        return listOfElements;
+    }
 
+    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
+        List<ElementAttributes> elements = getElementsInfos(ids, elementTypes);
+        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
                     .filter(element -> {
@@ -411,7 +398,6 @@ public class DirectoryService implements IDirectoryElementsService {
                     })
                     .collect(Collectors.toList());
         }
-
         return listOfElements;
     }
 

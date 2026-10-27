@@ -598,7 +598,8 @@ public class ExploreController {
     @PreAuthorize("true")
     public ResponseEntity<Void> elementExists(@RequestParam(value = "elementUuid", required = false) UUID elementUuid,
                                               @RequestParam(value = "directoryUuid", required = false) UUID directoryUuid,
-                                              @RequestParam(name = "elementName") String elementName) {
+                                              @RequestParam(name = "elementName") String elementName,
+                                              @RequestParam(name = "elementType", required = false) String elementType) {
         if (elementUuid == null && directoryUuid == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).build();
         }
@@ -609,7 +610,7 @@ public class ExploreController {
         if (finalDirectoryUuid == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).contentType(MediaType.APPLICATION_JSON).build();
         }
-        if (directoryService.checkElementNameAvailability(elementName, finalDirectoryUuid)) {
+        if (directoryService.checkElementNameAlreadyExists(elementName, finalDirectoryUuid, elementType)) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).contentType(MediaType.APPLICATION_JSON).build();
         }
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).build();

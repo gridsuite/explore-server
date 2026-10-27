@@ -270,6 +270,7 @@ class ExploreTest {
         ));
         @SuppressWarnings("checkstyle:MethodLength")
         String elementNamesAsString = mapper.writeValueAsString(elementNames);
+        String elementAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -403,7 +404,9 @@ class ExploreTest {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=STUDY&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate[?]type=type")) {
@@ -1252,7 +1255,8 @@ class ExploreTest {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
-        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+        String expected = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
+        assertEquals(expected, result.getResponse().getContentAsString());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?elementTypes&recursive=false")));
@@ -1287,14 +1291,13 @@ class ExploreTest {
 
     @Test
     void testElementExists(final MockWebServer server) throws Exception {
-        mockMvc.perform(head("/v1/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}",
-                        PARENT_DIRECTORY_UUID2,
-                        "elementName",
-                        "type"))
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2.toString(), STUDY1, "STUDY"))
                 .andExpect(status().isOk());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")));
+        assertTrue(requests.stream().anyMatch(r ->
+                r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?elementTypes=STUDY&recursive=false")));
     }
 
     @Test
