@@ -620,4 +620,20 @@ public class ExploreService {
                                                           DirectoryElementStatus elementStatus, Consumer<UUID> rollback) {
         executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
     }
+
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        List<ElementAttributes> elementAttributesList = directoryService.getDirectoryElements(directoryUuid, types, recursive);
+        if (!types.isEmpty() && !types.contains(MODIFICATION) ||
+                elementAttributesList.stream()
+                        .noneMatch(elementAttributes -> MODIFICATION.equals(elementAttributes.getType()))) {
+            return elementAttributesList;
+        }
+        List<ElementAttributes> finalElementAttributes = elementAttributesList.stream()
+                .filter(elementAttributes -> !MODIFICATION.equals(elementAttributes.getType())).collect(Collectors.toList());
+        // complete name and description for modification
+        List<ElementAttributes> completedModificationElementAttributes = networkModificationService.completeElementAttribute(elementAttributesList.stream()
+                .filter(elementAttributes -> MODIFICATION.equals(elementAttributes.getType())).toList());
+        finalElementAttributes.addAll(completedModificationElementAttributes);
+        return finalElementAttributes;
+    }
 }
