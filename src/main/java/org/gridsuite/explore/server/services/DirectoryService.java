@@ -389,14 +389,14 @@ public class DirectoryService implements IDirectoryElementsService {
         List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
-                    .filter(element -> {
-                        Object equipmentType = element.getSpecificMetadata().get("equipmentType");
-                        if (equipmentType != null) { // could be null for some elements
-                            return equipmentTypes.contains(equipmentType);
-                        }
-                        return true; // keep other elements
-                    })
-                    .collect(Collectors.toList());
+                .filter(element -> {
+                    Object equipmentType = element.getSpecificMetadata().get("equipmentType");
+                    if (equipmentType != null) { // could be null for some elements
+                        return equipmentTypes.contains(equipmentType);
+                    }
+                    return true; // keep other elements
+                })
+                .collect(Collectors.toList());
         }
         return listOfElements;
     }
