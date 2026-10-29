@@ -19,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.lang.annotation.ElementType;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -138,7 +139,11 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     public boolean checkElementNameAlreadyExists(String newName, UUID parentDirectoryUuid, String elementType) {
-        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        List<String> elementTypes = new ArrayList<>();
+        if (elementType != null) {
+            elementTypes.add(elementType);
+        }
+        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, elementTypes, false);
         List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
         Set<String> existingNames = listOfElements.stream()
                 .map(ElementAttributes::getElementName)
