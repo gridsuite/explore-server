@@ -245,7 +245,7 @@ class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
-        String duplicatedCaseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_COPY_UUID, "duplicated case", "CASE", USER1, 0L,  "duplicated case description"));
+        String duplicatedCaseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_COPY_UUID, "duplicated case", "CASE", USER1, 0L, "duplicated case description"));
         String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1,
                 0, null));
         String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null,
@@ -299,7 +299,7 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/cases/" + CASE_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newCaseUuidAsString);
-                }  else if (path.equals("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?allowNewName=false") && "POST".equals(request.getMethod())) {
+                } else if (("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?allowNewName=false").equals(path) && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), duplicatedCaseElementAttributesAsString);
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
