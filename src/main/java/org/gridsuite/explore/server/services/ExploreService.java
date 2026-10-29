@@ -622,18 +622,20 @@ public class ExploreService {
     }
 
     public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
-        List<ElementAttributes> elementAttributesList = directoryService.getDirectoryElements(directoryUuid, types, recursive);
-        if (!types.isEmpty() && !types.contains(MODIFICATION) ||
-                elementAttributesList.stream()
-                        .noneMatch(elementAttributes -> MODIFICATION.equals(elementAttributes.getType()))) {
-            return elementAttributesList;
+        List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
+        List<ElementAttributes> modifications = elements.stream()
+                .filter(element -> MODIFICATION.equals(element.getType()))
+                .toList();
+
+        if (modifications.isEmpty()) {
+            return elements;
         }
-        List<ElementAttributes> finalElementAttributes = elementAttributesList.stream()
-                .filter(elementAttributes -> !MODIFICATION.equals(elementAttributes.getType())).collect(Collectors.toList());
-        // complete name and description for modification
-        List<ElementAttributes> completedModificationElementAttributes = networkModificationService.completeElementAttribute(elementAttributesList.stream()
-                .filter(elementAttributes -> MODIFICATION.equals(elementAttributes.getType())).toList());
-        finalElementAttributes.addAll(completedModificationElementAttributes);
-        return finalElementAttributes;
+
+        List<ElementAttributes> directoryElements = elements.stream()
+                .filter(element -> !MODIFICATION.equals(element.getType()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
+        return elements;
     }
 }
