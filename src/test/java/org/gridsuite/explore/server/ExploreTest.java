@@ -627,11 +627,15 @@ class ExploreTest {
 
     @Test
     void testUpdateParameters() throws Exception {
+        output.clear();
         mockMvc.perform(put("/v1/explore/parameters/{id}?name={name}&description={description}&type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                 PARAMETERS_UUID, "", "", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), PARENT_DIRECTORY_UUID)
+                .header(HEADER_USER_ID, USER1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"new Parameters content\"")
         ).andExpect(status().isOk());
+
+        TestUtils.assertElementUpdatedSent(output, PARAMETERS_UUID, USER1);
     }
 
     private void deleteElement(UUID elementUUid) throws Exception {

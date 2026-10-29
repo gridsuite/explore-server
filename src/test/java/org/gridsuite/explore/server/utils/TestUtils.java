@@ -9,11 +9,20 @@ package org.gridsuite.explore.server.utils;
 
 import com.powsybl.commons.exceptions.UncheckedInterruptedException;
 import mockwebserver3.MockWebServer;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.messaging.Message;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static org.gridsuite.explore.server.services.NotificationService.HEADER_ELEMENT_UUID;
+import static org.gridsuite.explore.server.services.NotificationService.HEADER_MODIFICATION_DATE;
+import static org.gridsuite.explore.server.services.NotificationService.HEADER_MODIFIED_BY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author AJELLAL Ali <ali.ajellal at rte-france.com>
@@ -21,9 +30,19 @@ import java.util.stream.IntStream;
 public final class TestUtils {
 
     private static final long TIMEOUT = 100;
+    private static final long MESSAGE_TIMEOUT = 1000;
+    private static final String ELEMENT_UPDATE_DESTINATION = "element.update";
 
     private TestUtils() {
 
+    }
+
+    public static void assertElementUpdatedSent(OutputDestination output, UUID elementUuid, String modifiedBy) {
+        Message<byte[]> message = output.receive(MESSAGE_TIMEOUT, ELEMENT_UPDATE_DESTINATION);
+        assertNotNull(message);
+        assertEquals(elementUuid, message.getHeaders().get(HEADER_ELEMENT_UUID));
+        assertEquals(modifiedBy, message.getHeaders().get(HEADER_MODIFIED_BY));
+        assertNotNull(message.getHeaders().get(HEADER_MODIFICATION_DATE));
     }
 
     public static Set<RequestWithBody> getRequestsWithBodyDone(int n, MockWebServer server) throws UncheckedInterruptedException {
