@@ -1267,7 +1267,7 @@ class ExploreTest {
     }
 
     @Test
-    void testGetDirectoryElementsWithModification(final MockWebServer server) throws Exception {
+    void testGetDirectoryElementsWithModifications(final MockWebServer server) throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID2))
                 .andExpect(status().isOk())
                 .andReturn();
