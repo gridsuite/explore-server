@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.NonNull;
 import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,8 @@ public class NotificationService {
 
     public static final String HEADER_ELEMENT_UUID = "elementUuid";
 
+    public static final String HEADER_ONLY_METADATA = "onlyMetadata";
+
     private static final Logger MESSAGE_OUTPUT_LOGGER = LoggerFactory.getLogger(CATEGORY_BROKER_OUTPUT);
 
     private final StreamBridge updatePublisher;
@@ -87,5 +90,14 @@ public class NotificationService {
             .setHeader(HEADER_MODIFICATION_DATE, Instant.now())
             .build(), ELEMENT_UPDATE_BINDING
         );
+    }
+
+    public void emitElementMetadataUpdated(@NonNull UUID elementUuid, @NonNull String userId) {
+        Message<String> message = MessageBuilder.withPayload("")
+                .setHeader(HEADER_ELEMENT_UUID, elementUuid)
+                .setHeader(HEADER_MODIFIED_BY, userId)
+                .setHeader(HEADER_ONLY_METADATA, true)
+                .build();
+        sendMessage(message, ELEMENT_UPDATE_BINDING);
     }
 }

@@ -7,13 +7,17 @@
 package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.explore.server.dto.CompressionType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -43,9 +47,13 @@ public class NetworkConversionService {
             .body(String.class);
     }
 
-    public UUID convertCase(UUID caseUuid, String format, String fileName, String formatParameters) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/convert/{format}")
-            .queryParam("fileName", fileName)
+    public UUID convertCase(UUID caseUuid, String format, CompressionType compression, String fileName, String formatParameters) {
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_CONVERSION_API_VERSION + "/cases/{caseUuid}/convert/{format}")
+            .queryParamIfPresent("compression", Optional.ofNullable(compression));
+        if (!StringUtils.isBlank(fileName)) {
+            uriComponentsBuilder.queryParam("fileName", fileName);
+        }
+        String path = uriComponentsBuilder
             .buildAndExpand(caseUuid, format)
             .toUriString();
 
