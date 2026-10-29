@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -123,32 +124,38 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(String.class);
     }
 
-    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive) {
-        String path = UriComponentsBuilder
+    private String getDirectoryElementsPath(UUID directoryUuid, List<String> types, boolean recursive) {
+        return UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
             .queryParam(PARAM_ELEMENT_TYPES, types)
             .queryParam(PARAM_RECURSIVE, recursive)
             .buildAndExpand(directoryUuid)
             .toUriString();
-
-        return restClient.get()
-           .uri(directoryServerBaseUri + path)
-           .retrieve()
-           .body(new ParameterizedTypeReference<>() {
-           });
     }
 
-    public boolean checkElementNameAlreadyExists(String newName, UUID parentDirectoryUuid, String elementType) {
-        List<String> elementTypes = new ArrayList<>();
-        if (elementType != null) {
-            elementTypes.add(elementType);
+    public String getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive) {
+        return restClient.get()
+           .uri(directoryServerBaseUri + getDirectoryElementsPath(directoryUuid, types, recursive))
+           .retrieve()
+           .body(String.class);
+    }
+
+    public boolean isElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
+        List<ElementAttributes> elements = restClient.get()
+            .uri(directoryServerBaseUri + getDirectoryElementsPath(parentDirectoryUuid, List.of(elementType), false))
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() {
+            });
+        if (CollectionUtils.isEmpty(elements)) {
+            return false;
         }
-        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, elementTypes, false);
-        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
-        Set<String> existingNames = listOfElements.stream()
-                .map(ElementAttributes::getElementName)
-                .collect(Collectors.toSet());
-        return !existingNames.contains(newName);
+        // the real name of a modification is stored in the network modification server, not in the directory
+        if (MODIFICATION.equals(elementType)) {
+            elements = completeElementsAttributes(elements);
+        }
+        return elements.stream()
+            .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
+            .anyMatch(element -> elementName.equals(element.getElementName()));
     }
 
     public String getPath(UUID elementUuid) {
@@ -526,9 +533,13 @@ public class DirectoryService implements IDirectoryElementsService {
             .buildAndExpand(elementUuid)
             .toUriString();
 
-        return restClient.get()
-            .uri(directoryServerBaseUri + path)
-            .retrieve()
-            .body(UUID.class);
+        try {
+            return restClient.get()
+                .uri(directoryServerBaseUri + path)
+                .retrieve()
+                .body(UUID.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
     }
 }

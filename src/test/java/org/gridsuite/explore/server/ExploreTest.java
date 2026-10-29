@@ -62,7 +62,10 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -268,6 +271,8 @@ class ExploreTest {
         @SuppressWarnings("checkstyle:MethodLength")
         String elementNamesAsString = mapper.writeValueAsString(elementNames);
         String elementAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
+        // the directory name of a modification is outdated: its real name ("compositeName") comes from the network modification server
+        String modificationAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "directoryName", MODIFICATION, USER1, 0, null)));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -401,9 +406,11 @@ class ExploreTest {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=STUDY&recursive=false")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=MODIFICATION&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationAttributeList);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate[?]type=type")) {
@@ -469,6 +476,8 @@ class ExploreTest {
                         return new MockResponse(403);
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID + "/parentId")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(PARENT_DIRECTORY_UUID2));
+                    } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID + "/parentId")) {
+                        return new MockResponse(404);
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
@@ -512,9 +521,7 @@ class ExploreTest {
                         return new MockResponse(200);
                     }
                     return new MockResponse(404);
-                } else if ("HEAD".equals(request.getMethod()) && path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
-                        return new MockResponse(200);
-                    }
+                }
 
                 return new MockResponse(418);
             }
@@ -1254,8 +1261,7 @@ class ExploreTest {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
-        String expected = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
-        assertEquals(expected, result.getResponse().getContentAsString());
+        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?elementTypes&recursive=false")));
@@ -1308,6 +1314,59 @@ class ExploreTest {
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r ->
                 r.getPath().contains("/v1/elements/" + ELEMENT_UUID + "/parentId")));
+    }
+
+    @Test
+    void testElementNotExists(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2, "unknownName", "STUDY"))
+                .andExpect(status().isNoContent());
+
+        TestUtils.getRequestsWithBodyDone(1, server);
+    }
+
+    @Test
+    void testElementExistsExcludesRenamedElement(final MockWebServer server) throws Exception {
+        // the element being renamed must not conflict with its own name
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PRIVATE_STUDY_UUID, PARENT_DIRECTORY_UUID2, STUDY1, "STUDY"))
+                .andExpect(status().isNoContent());
+
+        TestUtils.getRequestsWithBodyDone(1, server);
+    }
+
+    @Test
+    void testModificationNameExists(final MockWebServer server) throws Exception {
+        // the name stored in the network modification server is used, not the directory one
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2, "compositeName", MODIFICATION))
+                .andExpect(status().isOk());
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/network-modifications/metadata?ids=" + COMPOSITE_MODIFICATION_UUID)));
+
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2, "directoryName", MODIFICATION))
+                .andExpect(status().isNoContent());
+        TestUtils.getRequestsWithBodyDone(2, server);
+    }
+
+    @Test
+    void testElementExistsBadRequests() throws Exception {
+        // neither elementUuid nor directoryUuid
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementName={elementName}&elementType={elementType}", STUDY1, "STUDY"))
+                .andExpect(status().isBadRequest());
+        // missing elementType
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}", PARENT_DIRECTORY_UUID2, STUDY1))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testElementExistsWithUnknownElementUuid(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&elementName={elementName}&elementType={elementType}",
+                        INVALID_ELEMENT_UUID, STUDY1, "STUDY"))
+                .andExpect(status().isNotFound());
+
+        TestUtils.getRequestsWithBodyDone(1, server);
     }
 
     @Test
