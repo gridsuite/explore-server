@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -533,13 +532,9 @@ public class DirectoryService implements IDirectoryElementsService {
             .buildAndExpand(elementUuid)
             .toUriString();
 
-        try {
-            return restClient.get()
-                .uri(directoryServerBaseUri + path)
-                .retrieve()
-                .body(UUID.class);
-        } catch (HttpClientErrorException.NotFound e) {
-            return null;
-        }
+        return restClient.get()
+            .uri(directoryServerBaseUri + path)
+            .retrieve()
+            .body(UUID.class);
     }
 }
