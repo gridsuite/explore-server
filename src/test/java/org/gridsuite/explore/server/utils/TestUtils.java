@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public final class TestUtils {
 
     private static final long TIMEOUT = 100;
-    private static final long MESSAGE_TIMEOUT = 1000;
     private static final String ELEMENT_UPDATE_DESTINATION = "element.update";
 
     private TestUtils() {
@@ -38,7 +37,7 @@ public final class TestUtils {
     }
 
     public static void assertElementUpdatedSent(OutputDestination output, UUID elementUuid, String modifiedBy) {
-        Message<byte[]> message = output.receive(MESSAGE_TIMEOUT, ELEMENT_UPDATE_DESTINATION);
+        Message<byte[]> message = output.receive(TIMEOUT, ELEMENT_UPDATE_DESTINATION);
         assertNotNull(message);
         assertEquals(elementUuid, message.getHeaders().get(HEADER_ELEMENT_UUID));
         assertEquals(modifiedBy, message.getHeaders().get(HEADER_MODIFIED_BY));
