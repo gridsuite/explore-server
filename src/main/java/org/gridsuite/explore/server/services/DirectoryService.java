@@ -123,29 +123,9 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(String.class);
     }
 
-    private String getDirectoryElementsPath(UUID directoryUuid, List<String> types, boolean recursive) {
-        return UriComponentsBuilder
-            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
-            .queryParam(PARAM_ELEMENT_TYPES, types)
-            .queryParam(PARAM_RECURSIVE, recursive)
-            .buildAndExpand(directoryUuid)
-            .toUriString();
-    }
-
-    public String getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive) {
-        return restClient.get()
-           .uri(directoryServerBaseUri + getDirectoryElementsPath(directoryUuid, types, recursive))
-           .retrieve()
-           .body(String.class);
-    }
-
     public boolean isElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
-        List<ElementAttributes> elements = restClient.get()
-            .uri(directoryServerBaseUri + getDirectoryElementsPath(parentDirectoryUuid, List.of(elementType), false))
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() {
-            });
-        if (CollectionUtils.isEmpty(elements)) {
+        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        if (elements.isEmpty()) {
             return false;
         }
         // the real name of a modification is stored in the network modification server, not in the directory
@@ -358,8 +338,18 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid) {
-        String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
-            .buildAndExpand(directoryUuid)
+        return getDirectoryElements(directoryUuid, null, null);
+    }
+
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements");
+        if (types != null) {
+            builder.queryParam(PARAM_ELEMENT_TYPES, types);
+        }
+        if (recursive != null) {
+            builder.queryParam(PARAM_RECURSIVE, recursive);
+        }
+        String path = builder.buildAndExpand(directoryUuid)
             .toUriString();
 
         List<ElementAttributes> elementAttributesList = restClient.get()

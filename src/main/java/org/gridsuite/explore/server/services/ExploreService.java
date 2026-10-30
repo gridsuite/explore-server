@@ -343,6 +343,7 @@ public class ExploreService {
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String name, String description) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String name, String description) {
@@ -619,5 +620,23 @@ public class ExploreService {
     private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId,
                                                           DirectoryElementStatus elementStatus, Consumer<UUID> rollback) {
         executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
+    }
+
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
+        List<ElementAttributes> modifications = elements.stream()
+                .filter(element -> MODIFICATION.equals(element.getType()))
+                .toList();
+
+        if (modifications.isEmpty()) {
+            return elements;
+        }
+
+        List<ElementAttributes> directoryElements = elements.stream()
+                .filter(element -> !MODIFICATION.equals(element.getType()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
+        return elements;
     }
 }

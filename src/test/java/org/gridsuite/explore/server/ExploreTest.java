@@ -127,7 +127,8 @@ class ExploreTest {
     private final Map<String, Object> specificMetadata = Map.of("equipmentType", "GENERATOR", "id", FILTER_UUID);
     private final Map<String, Object> specificMetadata2 = Map.of("equipmentType", "LINE", "id", FILTER_UUID_2);
     private final Map<String, Object> caseSpecificMetadata = Map.of("uuid", CASE_UUID, "name", TEST_FILE, "format", "XIIDM");
-    private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION");
+    private final Map<String, Object> modificationSpecificMetadata = Map.of("id", MODIFICATION_UUID, "type", "LOAD_MODIFICATION",
+            "name", "modification name", "description", "modif description");
     private final Map<String, Object> compositeModificationSpecificMetadata = Map.of(
             "id", COMPOSITE_MODIFICATION_UUID,
             "type", "COMPOSITE",
@@ -273,6 +274,8 @@ class ExploreTest {
         String elementAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
         // the directory name of a modification is outdated: its real name ("compositeName") comes from the network modification server
         String modificationAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "directoryName", MODIFICATION, USER1, 0, null)));
+        String elementAttributeWithModificationList = mapper.writeValueAsString(
+                List.of(new ElementAttributes(MODIFICATION_UUID, "initial modification name", "MODIFICATION", USER1, 0, null)));
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows(JsonProcessingException.class)
@@ -406,7 +409,9 @@ class ExploreTest {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeWithModificationList);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=STUDY&recursive=false")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=MODIFICATION&recursive=false")) {
@@ -965,7 +970,8 @@ class ExploreTest {
 
     @Test
     void testGetModificationMetadata() throws Exception {
-        final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null, modificationSpecificMetadata));
+        final String expectedResult = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID,
+                "modification name", "MODIFICATION", USER1, 0L, "modif description", modificationSpecificMetadata));
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/metadata?ids=" + MODIFICATION_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1261,10 +1267,25 @@ class ExploreTest {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
-        assertEquals(GENERIC_STRING, result.getResponse().getContentAsString());
+        String expected = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
+        assertEquals(expected, result.getResponse().getContentAsString());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?elementTypes&recursive=false")));
+    }
+
+    @Test
+    void testGetDirectoryElementsWithModifications(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID2))
+                .andExpect(status().isOk())
+                .andReturn();
+        String expected = mapper.writeValueAsString(
+                List.of(new ElementAttributes(MODIFICATION_UUID, "modification name", "MODIFICATION",
+                        USER1, 0, "modif description", modificationSpecificMetadata)));
+        assertEquals(expected, result.getResponse().getContentAsString());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?elementTypes&recursive=false")));
     }
 
     @Test
