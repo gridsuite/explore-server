@@ -163,6 +163,12 @@ public class ExploreService {
         duplicateDirectoryElementOrDeleteElement(sourceCaseUuid, newCaseId, targetDirectoryId, caseService::delete);
     }
 
+    public void duplicateExistingCase(UUID sourceCaseUuid, String caseName, String description, UUID targetDirectoryId) {
+        UUID newCaseUuid = caseService.duplicateCase(sourceCaseUuid);
+        ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, 0L, description);
+        createDirectoryElementOrDeleteElement(elementAttributes, targetDirectoryId, caseService::delete);
+    }
+
     public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, ContingencyListType contingencyListType) {
         UUID newId = switch (contingencyListType) {
             case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
