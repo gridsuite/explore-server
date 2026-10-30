@@ -12,7 +12,8 @@ import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -122,6 +123,20 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(String.class);
     }
 
+    public boolean isElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
+        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        if (elements.isEmpty()) {
+            return false;
+        }
+        // the real name of a modification is stored in the network modification server, not in the directory
+        if (MODIFICATION.equals(elementType)) {
+            elements = completeElementsAttributes(elements);
+        }
+        return elements.stream()
+            .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
+            .anyMatch(element -> elementName.equals(element.getElementName()));
+    }
+
     public String getPath(UUID elementUuid) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
@@ -150,19 +165,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(new ParameterizedTypeReference<>() { });
 
         return Objects.requireNonNullElse(elementsPaths, Collections.emptyMap());
-    }
-
-    public HttpStatusCode elementExists(UUID directoryUuid, String elementName, String type) {
-        String path = UriComponentsBuilder
-            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements/{elementName}/types/{type}")
-            .buildAndExpand(directoryUuid, elementName, type)
-            .toUriString();
-
-        return restClient.head()
-            .uri(directoryServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity()
-            .getStatusCode();
     }
 
     public HttpStatusCode rootDirectoryExists(String directoryName) {
@@ -372,17 +374,20 @@ public class DirectoryService implements IDirectoryElementsService {
         return iDirectoryElementsService;
     }
 
-    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes,
-                                                       List<String> equipmentTypes) {
-        Map<String, List<ElementAttributes>> elementAttributesListByType = getElementsInfos(ids, elementTypes)
-            .stream()
-            .collect(Collectors.groupingBy(ElementAttributes::getType));
+    private List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> elements) {
+        Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
+                .collect(Collectors.groupingBy(ElementAttributes::getType));
         List<ElementAttributes> listOfElements = new ArrayList<>();
         for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
             IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
             listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
         }
+        return listOfElements;
+    }
 
+    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
+        List<ElementAttributes> elements = getElementsInfos(ids, elementTypes);
+        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
                 .filter(element -> {
@@ -394,7 +399,6 @@ public class DirectoryService implements IDirectoryElementsService {
                 })
                 .collect(Collectors.toList());
         }
-
         return listOfElements;
     }
 
@@ -510,5 +514,17 @@ public class DirectoryService implements IDirectoryElementsService {
             .uri(directoryServerBaseUri + path)
             .retrieve()
             .toBodilessEntity();
+    }
+
+    public UUID getParentDirectoryUuid(UUID elementUuid) {
+        String path = UriComponentsBuilder
+            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/parentId")
+            .buildAndExpand(elementUuid)
+            .toUriString();
+
+        return restClient.get()
+            .uri(directoryServerBaseUri + path)
+            .retrieve()
+            .body(UUID.class);
     }
 }

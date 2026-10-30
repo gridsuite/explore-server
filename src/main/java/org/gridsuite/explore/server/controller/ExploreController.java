@@ -594,15 +594,29 @@ public class ExploreController {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getPath(elementUuid));
     }
 
-    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}")
-    @Operation(summary = "Check if an element with this name and this type already exists in the given directory")
+    @RequestMapping(method = RequestMethod.HEAD, value = "/explore/elements/checkName")
+    @Operation(summary = "Check if an element with this name and this type already exists in a directory",
+        description = "The directory is either the given directoryUuid, or the parent directory of the given elementUuid (directoryUuid takes precedence). "
+            + "When elementUuid is given, this element is excluded from the check (renaming case).")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The element exists"),
-        @ApiResponse(responseCode = "204", description = "The element doesn't exist")})
+        @ApiResponse(responseCode = "204", description = "The element doesn't exist"),
+        @ApiResponse(responseCode = "400", description = "Neither elementUuid nor directoryUuid is given"),
+        @ApiResponse(responseCode = "404", description = "The parent directory of the element was not found")})
     @PreAuthorize("true")
-    public ResponseEntity<Void> elementExists(@PathVariable("directoryUuid") UUID directoryUuid,
-                                              @PathVariable("elementName") String elementName,
-                                              @PathVariable("type") String type) {
-        return ResponseEntity.status(directoryService.elementExists(directoryUuid, elementName, type)).contentType(MediaType.APPLICATION_JSON).build();
+    public ResponseEntity<Void> elementExists(@RequestParam(value = "elementUuid", required = false) UUID elementUuid,
+                                              @RequestParam(value = "directoryUuid", required = false) UUID directoryUuid,
+                                              @RequestParam(name = "elementName") String elementName,
+                                              @RequestParam(name = "elementType") String elementType) {
+        if (elementUuid == null && directoryUuid == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        UUID parentDirectoryUuid = directoryUuid != null ? directoryUuid : directoryService.getParentDirectoryUuid(elementUuid);
+        if (parentDirectoryUuid == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return directoryService.isElementNameAlreadyExists(elementName, parentDirectoryUuid, elementType, elementUuid)
+            ? ResponseEntity.ok().build()
+            : ResponseEntity.noContent().build();
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/{elementName}/newNameCandidate")
