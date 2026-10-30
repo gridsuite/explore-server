@@ -900,10 +900,11 @@ class ExploreTest {
     }
 
     @Test
-    void testCreateNetworkCompositeModifications() throws Exception {
+    void testCreateNetworkCompositeModifications(final MockWebServer server) throws Exception {
         List<UUID> modificationUuids = Arrays.asList(MODIFICATION_UUID, UUID.randomUUID());
         mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "nameModif", "descModif", PARENT_DIRECTORY_UUID)
+                .param("rootNetworkTags", "PH1", "PH2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(modificationUuids))
         ).andExpect(status().isOk());
