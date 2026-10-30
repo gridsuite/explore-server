@@ -13,6 +13,7 @@ import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.MonitorService;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.UUID;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -70,6 +73,9 @@ class MonitorTest {
     @MockitoBean
     private DirectoryService directoryService;
 
+    @Autowired
+    private OutputDestination output;
+
     private static final String URL_EXPLORE_MONITOR_PROCESS_CONFIGS = "/v1/explore/process-configs";
     private static final String URL_PROCESS_CONFIGS = "/v1/process-configs";
 
@@ -83,6 +89,7 @@ class MonitorTest {
     private static final String DESCRIPTION = "description";
     private static final UUID DIRECTORY_ID = UUID.randomUUID();
     private static final String PROCESS_CONFIG = "processConfig";
+    private static final String USER_ID = "userId";
 
     @BeforeEach
     void setUp() {
@@ -176,7 +183,9 @@ class MonitorTest {
             .willReturn(WireMock.ok()))
             .getId();
 
+        output.clear();
         mockMvc.perform(put(URL_EXPLORE_MONITOR_PROCESS_CONFIGS + "/" + ID)
+                .header(HEADER_USER_ID, USER_ID)
                 .queryParam(QUERY_PARAM_NAME, NAME)
                 .queryParam(QUERY_PARAM_DESCRIPTION, DESCRIPTION)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -185,6 +194,7 @@ class MonitorTest {
 
         verify(directoryService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture());
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
+        TestUtils.assertElementUpdatedSent(output, ID, USER_ID);
     }
 
     @Test
