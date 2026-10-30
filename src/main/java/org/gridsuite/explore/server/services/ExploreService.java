@@ -280,12 +280,6 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes);
     }
 
-    // for elements whose server does not notify directory-server itself when their content is updated
-    private void notifyContentUpdatedAndUpdateNameAndDescription(UUID id, String name, String description) {
-        notificationService.emitElementUpdated(id);
-        updateElementNameAndDescription(id, name, description);
-    }
-
     private String getProperPath(ContingencyListType contingencyListType) {
         return switch (contingencyListType) {
             case IDENTIFIERS -> "/identifier-contingency-lists/{id}";
@@ -301,7 +295,8 @@ public class ExploreService {
 
     public void updateParameters(UUID id, String parameters, ParametersType parametersType, String name, String description) {
         parametersService.updateParameters(id, parameters, parametersType);
-        notifyContentUpdatedAndUpdateNameAndDescription(id, name, description);
+        updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
@@ -322,7 +317,8 @@ public class ExploreService {
 
     public void updateDiagramConfig(UUID id, String diagramConfig, String name, String description) {
         singleLineDiagramService.updateDiagramConfig(id, diagramConfig);
-        notifyContentUpdatedAndUpdateNameAndDescription(id, name, description);
+        updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
@@ -348,17 +344,20 @@ public class ExploreService {
 
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String name, String description) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
-        notifyContentUpdatedAndUpdateNameAndDescription(id, name, description);
+        updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String name, String description) {
         spreadsheetConfigCollectionService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto);
-        notifyContentUpdatedAndUpdateNameAndDescription(id, name, description);
+        updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void replaceAllSpreadsheetConfigsInCollection(UUID id, List<UUID> configIds, String name, String description) {
         spreadsheetConfigCollectionService.replaceAllSpreadsheetConfigsInCollection(id, configIds);
-        notifyContentUpdatedAndUpdateNameAndDescription(id, name, description);
+        updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId) {
@@ -379,7 +378,8 @@ public class ExploreService {
 
     public void replaceWorkspace(UUID id, UUID workspaceId, String name, String description) {
         workspaceService.replaceWorkspace(id, workspaceId);
-        notifyContentUpdatedAndUpdateNameAndDescription(id, name, description);
+        updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
@@ -568,7 +568,8 @@ public class ExploreService {
 
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description) {
         monitorService.updateProcessConfig(uuid, processConfig);
-        notifyContentUpdatedAndUpdateNameAndDescription(uuid, name, description);
+        updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId) {
@@ -586,7 +587,8 @@ public class ExploreService {
 
     public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description) {
         dynamicMappingService.updateMapping(uuid, dynamicMapping);
-        notifyContentUpdatedAndUpdateNameAndDescription(uuid, name, description);
+        updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId) {
