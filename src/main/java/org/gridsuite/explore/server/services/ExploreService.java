@@ -626,4 +626,22 @@ public class ExploreService {
                                                           DirectoryElementStatus elementStatus, Consumer<UUID> rollback) {
         executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
     }
+
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
+        List<ElementAttributes> modifications = elements.stream()
+                .filter(element -> MODIFICATION.equals(element.getType()))
+                .toList();
+
+        if (modifications.isEmpty()) {
+            return elements;
+        }
+
+        List<ElementAttributes> directoryElements = elements.stream()
+                .filter(element -> !MODIFICATION.equals(element.getType()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
+        return elements;
+    }
 }

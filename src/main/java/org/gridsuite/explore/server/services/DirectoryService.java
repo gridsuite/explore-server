@@ -122,20 +122,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(String.class);
     }
 
-    public String getDirectoryElements(UUID directoryUuid, List<String> types, boolean recursive) {
-        String path = UriComponentsBuilder
-            .fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
-            .queryParam(PARAM_ELEMENT_TYPES, types)
-            .queryParam(PARAM_RECURSIVE, recursive)
-            .buildAndExpand(directoryUuid)
-            .toUriString();
-
-        return restClient.get()
-           .uri(directoryServerBaseUri + path)
-           .retrieve()
-           .body(String.class);
-    }
-
     public String getPath(UUID elementUuid) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
@@ -350,8 +336,18 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid) {
-        String path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements")
-            .buildAndExpand(directoryUuid)
+        return getDirectoryElements(directoryUuid, null, null);
+    }
+
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements");
+        if (types != null) {
+            builder.queryParam(PARAM_ELEMENT_TYPES, types);
+        }
+        if (recursive != null) {
+            builder.queryParam(PARAM_RECURSIVE, recursive);
+        }
+        String path = builder.buildAndExpand(directoryUuid)
             .toUriString();
 
         List<ElementAttributes> elementAttributesList = restClient.get()
