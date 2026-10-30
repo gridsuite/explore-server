@@ -565,10 +565,10 @@ public class ExploreController {
     @Operation(summary = "Get directory elements")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "List directory's elements"))
     @PreAuthorize("@authorizationService.canRead(#directoryUuid)")
-    public ResponseEntity<String> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
+    public ResponseEntity<List<ElementAttributes>> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
                                                        @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getDirectoryElements(directoryUuid, types, recursive));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getDirectoryElements(directoryUuid, types, recursive));
     }
 
     @PostMapping(value = "/explore/directories/{directoryUuid}/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
