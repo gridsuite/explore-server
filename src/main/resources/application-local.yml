@@ -66,3 +66,7 @@ gridsuite:
       name: dynamic-mapping-server
       base-uri: http://localhost:5036
 
+powsybl-ws:
+  autoconfigure:
+    authorization-system:
+      directory-server-base-uri: http://localhost:5026
