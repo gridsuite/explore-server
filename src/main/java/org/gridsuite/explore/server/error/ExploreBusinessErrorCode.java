@@ -15,6 +15,7 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
  */
 public enum ExploreBusinessErrorCode implements BusinessErrorCode {
     EXPLORE_MAX_ELEMENTS_EXCEEDED("explore.maxElementsExceeded"),
+    ELEMENT_ALREADY_EXISTS("explore.elementAlreadyExists"),
     IMPORT_STUDY_FAILED("explore.importStudyFailed");
 
     private final String code;
