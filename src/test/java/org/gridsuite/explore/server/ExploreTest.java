@@ -118,6 +118,8 @@ class ExploreTest {
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED = "limitedUser2";
     private static final String USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 = "limitedUser3";
     private static final String GENERIC_STRING = "a generic string";
+    private static final String DUPLICATED_CASE_NAME = "duplicated case";
+    private static final String CASE_DESCRIPTION = "duplicated case description";
 
     private static final String USER_NOT_FOUND = "userNotFound";
     private static final String USER_UNEXPECTED_ERROR = "unexpectedErrorUser";
@@ -244,6 +246,7 @@ class ExploreTest {
         String listOfFilterAttributesAsString = mapper.writeValueAsString(List.of(new ElementAttributes(FILTER_UUID, FILTER_CONTINGENCY_LIST, FILTER, USER1, 0, null)));
         String directoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARENT_DIRECTORY_UUID, "directory", "DIRECTORY", USER1, 0, null));
         String caseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_UUID, "case", "CASE", USER1, 0L, null));
+        String duplicatedCaseElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(CASE_COPY_UUID, "duplicated case", "CASE", USER1, 0L, "duplicated case description"));
         String parametersElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PARAMETERS_UUID, "voltageInitParametersName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), USER1,
                 0, null));
         String processConfigElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PROCESS_CONFIG_UUID, "processConfigName", "PROCESS_CONFIG", USER1, 0, null,
@@ -272,6 +275,8 @@ class ExploreTest {
         @SuppressWarnings("checkstyle:MethodLength")
         String elementNamesAsString = mapper.writeValueAsString(elementNames);
         String elementAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
+        // the directory name of a modification is outdated: its real name ("compositeName") comes from the network modification server
+        String modificationAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "directoryName", MODIFICATION, USER1, 0, null)));
         String elementAttributeWithModificationList = mapper.writeValueAsString(
                 List.of(new ElementAttributes(MODIFICATION_UUID, "initial modification name", "MODIFICATION", USER1, 0, null)));
 
@@ -300,6 +305,8 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/cases/" + CASE_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newCaseUuidAsString);
+                } else if (("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?allowNewName=false").equals(path) && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), duplicatedCaseElementAttributesAsString);
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
                     String bodyStr = body.readUtf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
@@ -410,6 +417,10 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes&recursive=false")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeWithModificationList);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=STUDY&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=MODIFICATION&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationAttributeList);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate[?]type=type")) {
@@ -473,6 +484,10 @@ class ExploreTest {
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
                         return new MockResponse(403);
+                    } else if (path.matches("/v1/elements/" + ELEMENT_UUID + "/parentId")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(PARENT_DIRECTORY_UUID2));
+                    } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID + "/parentId")) {
+                        return new MockResponse(404);
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
@@ -516,9 +531,7 @@ class ExploreTest {
                         return new MockResponse(200);
                     }
                     return new MockResponse(404);
-                } else if ("HEAD".equals(request.getMethod()) && path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")) {
-                        return new MockResponse(200);
-                    }
+                }
 
                 return new MockResponse(418);
             }
@@ -726,6 +739,17 @@ class ExploreTest {
         mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
                         CASE_UUID, PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = USER1)
+    void testDuplicateExistingCase() throws Exception {
+        mockMvc.perform(post("/v1/explore/cases/{caseName}/duplicate-existing",
+                        DUPLICATED_CASE_NAME)
+                        .param("sourceCaseUuid", CASE_UUID.toString())
+                        .param("description", CASE_DESCRIPTION)
+                        .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -1313,14 +1337,77 @@ class ExploreTest {
 
     @Test
     void testElementExists(final MockWebServer server) throws Exception {
-        mockMvc.perform(head("/v1/explore/directories/{directoryUuid}/elements/{elementName}/types/{type}",
-                        PARENT_DIRECTORY_UUID2,
-                        "elementName",
-                        "type"))
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2.toString(), STUDY1, "STUDY"))
                 .andExpect(status().isOk());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
-        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements/elementName/types/type")));
+        assertTrue(requests.stream().anyMatch(r ->
+                r.getPath().contains("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements?elementTypes=STUDY&recursive=false")));
+    }
+
+    @Test
+    void testElementExistsWithElementUuidAndNoDirectoryUuid(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&elementName={elementName}&elementType={elementType}",
+                        ELEMENT_UUID, STUDY1, "STUDY"))
+                .andExpect(status().isOk());
+
+        var requests = TestUtils.getRequestsWithBodyDone(1, server);
+        assertTrue(requests.stream().anyMatch(r ->
+                r.getPath().contains("/v1/elements/" + ELEMENT_UUID + "/parentId")));
+    }
+
+    @Test
+    void testElementNotExists(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2, "unknownName", "STUDY"))
+                .andExpect(status().isNoContent());
+
+        TestUtils.getRequestsWithBodyDone(1, server);
+    }
+
+    @Test
+    void testElementExistsExcludesRenamedElement(final MockWebServer server) throws Exception {
+        // the element being renamed must not conflict with its own name
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PRIVATE_STUDY_UUID, PARENT_DIRECTORY_UUID2, STUDY1, "STUDY"))
+                .andExpect(status().isNoContent());
+
+        TestUtils.getRequestsWithBodyDone(1, server);
+    }
+
+    @Test
+    void testModificationNameExists(final MockWebServer server) throws Exception {
+        // the name stored in the network modification server is used, not the directory one
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2, "compositeName", MODIFICATION))
+                .andExpect(status().isOk());
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+        assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/network-modifications/metadata?ids=" + COMPOSITE_MODIFICATION_UUID)));
+
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
+                        PARENT_DIRECTORY_UUID2, "directoryName", MODIFICATION))
+                .andExpect(status().isNoContent());
+        TestUtils.getRequestsWithBodyDone(2, server);
+    }
+
+    @Test
+    void testElementExistsBadRequests() throws Exception {
+        // neither elementUuid nor directoryUuid
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementName={elementName}&elementType={elementType}", STUDY1, "STUDY"))
+                .andExpect(status().isBadRequest());
+        // missing elementType
+        mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}", PARENT_DIRECTORY_UUID2, STUDY1))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testElementExistsWithUnknownElementUuid(final MockWebServer server) throws Exception {
+        mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&elementName={elementName}&elementType={elementType}",
+                        INVALID_ELEMENT_UUID, STUDY1, "STUDY"))
+                .andExpect(status().isNotFound());
+
+        TestUtils.getRequestsWithBodyDone(1, server);
     }
 
     @Test

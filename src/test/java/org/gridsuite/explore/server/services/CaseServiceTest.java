@@ -34,6 +34,7 @@ class CaseServiceTest {
 
     private static final String BASE_URI = "http://case-server";
     private static final UUID CASE_UUID = UUID.randomUUID();
+    private static final UUID DUPLICATED_CASE_UUID = UUID.randomUUID();
     private static final String CASE_NAME = "network.xiidm";
 
     private CaseService caseService;
@@ -96,6 +97,21 @@ class CaseServiceTest {
         String response = caseService.getBaseName(CASE_NAME);
 
         assertEquals("network", response);
+        server.verify();
+    }
+
+    @Test
+    void duplicateCaseForwardsCaseUuid() {
+        server.expect(once(), requestTo(BASE_URI + "/v1/cases/" + CASE_UUID + "/duplicate"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(
+                        "\"" + DUPLICATED_CASE_UUID + "\"",
+                        MediaType.APPLICATION_JSON
+                ));
+
+        UUID response = caseService.duplicateCase(CASE_UUID);
+
+        assertEquals(DUPLICATED_CASE_UUID, response);
         server.verify();
     }
 }
