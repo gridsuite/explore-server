@@ -39,7 +39,7 @@ public class ExploreExceptionHandler
         return switch (errorCode) {
             case EXPLORE_MAX_ELEMENTS_EXCEEDED -> HttpStatus.FORBIDDEN;
             case IMPORT_STUDY_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR;
-            case ELEMENT_ALREADY_EXISTS -> HttpStatus.BAD_REQUEST;
+            case ELEMENT_ALREADY_EXISTS -> HttpStatus.CONFLICT;
         };
     }
 

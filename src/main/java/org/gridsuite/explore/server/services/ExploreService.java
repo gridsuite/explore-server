@@ -653,7 +653,8 @@ public class ExploreService {
                                          UUID parentDirectoryUuid) {
         directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
         if (directoryService.isElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
-            throw new ExploreException(ELEMENT_ALREADY_EXISTS, "composite modification name " + name + " already exists in directory", Map.of("fileName", name));
+            throw new ExploreException(ELEMENT_ALREADY_EXISTS,
+                    "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
         }
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         studyService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);

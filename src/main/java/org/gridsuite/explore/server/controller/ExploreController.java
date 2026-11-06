@@ -508,7 +508,7 @@ public class ExploreController {
     }
 
     @PostMapping(value = "/explore/studies/{studyUuid}/nodes/{nodeUuid}/network-modifications/{modificationUuid}/share")
-    @Operation(summary = "Move a composite modification of the node into a directory, replacing it by a reference to it")
+    @Operation(summary = "Move a composite modification from the node into a directory, replacing it by a reference to it")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been shared.")})
     @PreAuthorize("@authorizationService.canWrite(#modificationUuid)")
     public ResponseEntity<Void> shareCompositeModification(@PathVariable("studyUuid") UUID studyUuid,
