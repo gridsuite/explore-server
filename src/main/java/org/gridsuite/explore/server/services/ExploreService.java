@@ -296,6 +296,7 @@ public class ExploreService {
     public void updateParameters(UUID id, String parameters, ParametersType parametersType, String name, String description) {
         parametersService.updateParameters(id, parameters, parametersType);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
@@ -317,6 +318,7 @@ public class ExploreService {
     public void updateDiagramConfig(UUID id, String diagramConfig, String name, String description) {
         singleLineDiagramService.updateDiagramConfig(id, diagramConfig);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
@@ -377,6 +379,7 @@ public class ExploreService {
     public void replaceWorkspace(UUID id, UUID workspaceId, String name, String description) {
         workspaceService.replaceWorkspace(id, workspaceId);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
@@ -566,6 +569,7 @@ public class ExploreService {
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description) {
         monitorService.updateProcessConfig(uuid, processConfig);
         updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId) {
@@ -584,6 +588,7 @@ public class ExploreService {
     public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description) {
         dynamicMappingService.updateMapping(uuid, dynamicMapping);
         updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId) {
