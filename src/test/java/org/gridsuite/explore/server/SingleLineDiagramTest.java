@@ -72,7 +72,6 @@ class SingleLineDiagramTest {
     private static final UUID NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID DUPLICATE_NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
-    private static final UUID ID = UUID.randomUUID();
     private static final String USER_ID = "userId";
 
     @BeforeEach
