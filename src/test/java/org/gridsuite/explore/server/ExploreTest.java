@@ -1496,20 +1496,23 @@ class ExploreTest {
 
     @Test
     void testShareCompositeModification() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/nodes/{nodeUuid}" +
+                        "/network-modifications/{modificationUuid}/share", PUBLIC_STUDY_UUID, NODE_UUID, COMPOSITE_MODIFICATION_UUID)
+                .queryParam("name", "compositeName")
+                .queryParam("description", "modificationDescription")
+                .queryParam("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    @Test
+    void testShareCompositeModificationConflict() throws Exception {
         // already exist modification name
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/nodes/{nodeUuid}" +
-                                "/network-modifications/{modificationUuid}" +
-                                "/share", PUBLIC_STUDY_UUID, NODE_UUID, MODIFICATION_UUID)
+                        "/network-modifications/{modificationUuid}/share", PUBLIC_STUDY_UUID, NODE_UUID, MODIFICATION_UUID)
                         .queryParam("name", "compositeName")
                         .queryParam("description", "modificationDescription")
                         .queryParam("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isConflict());
-
-        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/nodes/{nodeUuid}" +
-                        "/network-modifications/{modificationUuid}" +
-                        "/share?name=\"modificationName\"&description=\"modificationDescription\"&parentDirectoryUuid=" + PARENT_DIRECTORY_UUID,
-                        PUBLIC_STUDY_UUID, NODE_UUID, COMPOSITE_MODIFICATION_UUID))
-                .andExpect(status().isOk())
-                .andReturn();
     }
 }
