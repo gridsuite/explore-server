@@ -1503,7 +1503,7 @@ class ExploreTest {
                         .queryParam("name", "compositeName")
                         .queryParam("description", "modificationDescription")
                         .queryParam("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
 
         mockMvc.perform(post("/v1/explore/studies/{studyUuid}/nodes/{nodeUuid}" +
                         "/network-modifications/{modificationUuid}" +
