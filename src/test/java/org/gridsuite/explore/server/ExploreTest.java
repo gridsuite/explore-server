@@ -62,10 +62,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -109,6 +106,7 @@ class ExploreTest {
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final UUID PROCESS_CONFIG_UUID = UUID.randomUUID();
+    private static final UUID NODE_UUID = UUID.randomUUID();
     private static final String STUDY_ERROR_NAME = "studyInError";
     private static final String STUDY1 = "study1";
     private static final String USER1 = "user1";
@@ -488,6 +486,10 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(PARENT_DIRECTORY_UUID2));
                     } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID + "/parentId")) {
                         return new MockResponse(404);
+                    } else if (path.matches("/v1/elements/authorized[?]accessType=WRITE&ids=&targetDirectoryUuid=" + PARENT_DIRECTORY_UUID + "&recursiveCheck=false")) {
+                        return new MockResponse(200);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes=MODIFICATION&recursive=false")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationAttributeList);
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
@@ -1490,5 +1492,27 @@ class ExploreTest {
                 "compositeName", "MODIFICATION", USER1, 0L, "compositeDescription", compositeModificationSpecificMetadata));
         assertEquals(1, elementsMetadata.size());
         assertEquals(mapper.writeValueAsString(elementsMetadata.getFirst()), compositeModificationAttributesAsString);
+    }
+
+    @Test
+    void testShareCompositeModification() throws Exception {
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/nodes/{nodeUuid}" +
+                        "/network-modifications/{modificationUuid}/share", PUBLIC_STUDY_UUID, NODE_UUID, COMPOSITE_MODIFICATION_UUID)
+                .queryParam("name", "compositeName")
+                .queryParam("description", "modificationDescription")
+                .queryParam("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    @Test
+    void testShareCompositeModificationConflict() throws Exception {
+        // already exist modification name
+        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/nodes/{nodeUuid}" +
+                        "/network-modifications/{modificationUuid}/share", PUBLIC_STUDY_UUID, NODE_UUID, MODIFICATION_UUID)
+                        .queryParam("name", "compositeName")
+                        .queryParam("description", "modificationDescription")
+                        .queryParam("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isConflict());
     }
 }
