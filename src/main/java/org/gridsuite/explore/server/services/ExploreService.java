@@ -434,6 +434,7 @@ public class ExploreService {
 
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
         // TODO set type in updatedElementAttributes from front to avoid a read DB
+        // TODO 2 : système d'héritage ?
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
         switch (elementsInfos.getType()) {
             case STUDY -> updateStudy(id, updatedElementAttributes);
@@ -450,6 +451,8 @@ public class ExploreService {
     private void updateNetworkModification(UUID modificationToNotifyId, ElementAttributes updatedModificationAttributes) {
         // modificationToNotifyId can be the id of the shared parent modification
         // updatedModificationAttributes.getElementUuid() is the real id of the network modification to update
+        // TODO check : est-ce que les modifications autre que nom et description de composites ne vont pas rater ? temps de modification par exemple ??
+        // appeler l'original en pmettant nom et description à null ??
         networkModificationService.updateModificationNameAndDescription(
                 updatedModificationAttributes.getElementUuid(), updatedModificationAttributes.getElementName(), updatedModificationAttributes.getDescription());
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -648,6 +651,6 @@ public class ExploreService {
                 .collect(Collectors.toCollection(ArrayList::new));
 
         directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
-        return elements;
+        return directoryElements;
     }
 }

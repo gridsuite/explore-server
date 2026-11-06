@@ -59,7 +59,7 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_USER_INPUT = "userInput";
     private static final String PARAM_STATUS = "status";
 
-    private final Map<String, IDirectoryElementsService> genericServices;
+    private final Map<String, IDirectoryElementsService> genericServices; // TODO : pourquoi est-ce ici ça ? et pas dans explore service ?
     private final RestClient restClient;
     private String directoryServerBaseUri;
 
