@@ -180,10 +180,12 @@ class DynamicMappingTest {
                     .withBody(objectMapper.writeValueAsString(NEW_ID))))
             .getId();
 
-        mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID + "/duplicate")
+        String response = mockMvc.perform(post(URL_EXPLORE_DYNAMIC_MAPPINGS + "/" + ID + "/duplicate")
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString()))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
 
+        assertEquals(NEW_ID, objectMapper.readValue(response, UUID.class));
         verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, CREATED);
         wireMockUtils.verifyPostRequest(stubId, URL_MAPPINGS + "/" + ID + "/duplicate", Map.of(), false);
     }
