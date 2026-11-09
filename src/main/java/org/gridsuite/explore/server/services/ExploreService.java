@@ -8,14 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
-import org.gridsuite.explore.server.dto.CaseInfo;
-import org.gridsuite.explore.server.dto.DirectoryElementStatus;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.NodeInfos;
-import org.gridsuite.explore.server.dto.ReferenceAttributes;
-import org.gridsuite.explore.server.dto.ReferencingElementInfos;
-import org.gridsuite.explore.server.dto.UsersIdentities;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -35,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATING;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.ELEMENT_ALREADY_EXISTS;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
 /**
@@ -161,6 +155,12 @@ public class ExploreService {
     public void duplicateCase(UUID sourceCaseUuid, UUID targetDirectoryId) {
         UUID newCaseId = caseService.duplicateCase(sourceCaseUuid);
         duplicateDirectoryElementOrDeleteElement(sourceCaseUuid, newCaseId, targetDirectoryId, caseService::delete);
+    }
+
+    public void duplicateExistingCase(UUID sourceCaseUuid, String caseName, String description, UUID targetDirectoryId) {
+        UUID newCaseUuid = caseService.duplicateCase(sourceCaseUuid);
+        ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, 0L, description);
+        createDirectoryElementOrDeleteElement(elementAttributes, targetDirectoryId, caseService::delete);
     }
 
     public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, ContingencyListType contingencyListType) {
@@ -296,6 +296,7 @@ public class ExploreService {
     public void updateParameters(UUID id, String parameters, ParametersType parametersType, String name, String description) {
         parametersService.updateParameters(id, parameters, parametersType);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
@@ -317,6 +318,7 @@ public class ExploreService {
     public void updateDiagramConfig(UUID id, String diagramConfig, String name, String description) {
         singleLineDiagramService.updateDiagramConfig(id, diagramConfig);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
@@ -377,6 +379,7 @@ public class ExploreService {
     public void replaceWorkspace(UUID id, UUID workspaceId, String name, String description) {
         workspaceService.replaceWorkspace(id, workspaceId);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
@@ -566,6 +569,7 @@ public class ExploreService {
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description) {
         monitorService.updateProcessConfig(uuid, processConfig);
         updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId) {
@@ -584,6 +588,7 @@ public class ExploreService {
     public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description) {
         dynamicMappingService.updateMapping(uuid, dynamicMapping);
         updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId) {
@@ -638,5 +643,20 @@ public class ExploreService {
 
         directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
         return elements;
+    }
+
+    public void shareNetworkModification(UUID studyUuid,
+                                         UUID nodeUuid,
+                                         UUID modificationUuid,
+                                         String name,
+                                         String description,
+                                         UUID parentDirectoryUuid) {
+        directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
+        if (directoryService.isElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
+            throw new ExploreException(ELEMENT_ALREADY_EXISTS,
+                    "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
+        }
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        studyService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);
     }
 }

@@ -17,6 +17,7 @@ import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.ReferencingElementInfos;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;
@@ -124,6 +125,20 @@ public class ExploreController {
         exploreService.assertCanCreateCase();
         exploreService.duplicateCase(caseId, targetDirectoryId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/cases/{caseName}/duplicate-existing")
+    @Operation(summary = "Create a case by duplicating an existing case-server case")
+    @ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Case has been duplicated and added to Explore") })
+    @PreAuthorize("@authorizationService.canWrite(#targetDirectoryId)")
+    public ResponseEntity<Void> duplicateExistingCase(
+            @PathVariable("caseName") String caseName,
+            @RequestParam("sourceCaseUuid") UUID sourceCaseUuid,
+            @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
+            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID targetDirectoryId) {
+        exploreService.assertCanCreateCase();
+        exploreService.duplicateExistingCase(sourceCaseUuid, caseName, description, targetDirectoryId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping(value = "/explore/contingency-lists/{id}/duplicate")
@@ -494,6 +509,20 @@ public class ExploreController {
     public ResponseEntity<Void> duplicateCompositeNetworkModification(@PathVariable("id") UUID networkModificationId,
                                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
         exploreService.duplicateCompositeModification(networkModificationId, targetDirectoryId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/explore/studies/{studyUuid}/nodes/{nodeUuid}/network-modifications/{modificationUuid}/share")
+    @Operation(summary = "Move a composite modification from the node into a directory, replacing it by a reference to it")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been shared.")})
+    @PreAuthorize("@authorizationService.canWrite(#modificationUuid)")
+    public ResponseEntity<Void> shareCompositeModification(@PathVariable("studyUuid") UUID studyUuid,
+                                                           @PathVariable("nodeUuid") UUID nodeUuid,
+                                                           @PathVariable("modificationUuid") UUID modificationUuid,
+                                                           @RequestParam(QUERY_PARAM_NAME) String name,
+                                                           @RequestParam(value = QUERY_PARAM_DESCRIPTION, required = false) String description,
+                                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
+        exploreService.shareNetworkModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid);
         return ResponseEntity.ok().build();
     }
 
