@@ -233,7 +233,7 @@ public class ExploreController {
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids,
                                                                        @RequestParam(value = "equipmentTypes", required = false) List<String> equipmentTypes,
                                                                        @RequestParam(value = "elementTypes", required = false) List<String> elementTypes) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
 
     @GetMapping(value = "/explore/elements/name", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -582,7 +582,7 @@ public class ExploreController {
     public ResponseEntity<List<ElementAttributes>> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
                                                        @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getDirectoryElements(directoryUuid, types, recursive));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getUpdatedDirectoryElements(directoryUuid, types, recursive));
     }
 
     @PostMapping(value = "/explore/directories/{directoryUuid}/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -625,7 +625,7 @@ public class ExploreController {
         if (parentDirectoryUuid == null) {
             return ResponseEntity.notFound().build();
         }
-        return directoryService.isElementNameAlreadyExists(elementName, parentDirectoryUuid, elementType, elementUuid)
+        return exploreService.doesElementNameAlreadyExists(elementName, parentDirectoryUuid, elementType, elementUuid)
             ? ResponseEntity.ok().build()
             : ResponseEntity.noContent().build();
     }

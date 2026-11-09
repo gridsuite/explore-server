@@ -17,13 +17,16 @@ import org.gridsuite.explore.server.dto.ReferenceAttributes;
 import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.metadata.MetadataHandler;
+import org.gridsuite.explore.server.services.metadata.NetworkModificationMetadataHandler;
+import org.gridsuite.explore.server.services.metadata.StudyMetadataHandler;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -76,6 +79,7 @@ public class ExploreService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramService singleLineDiagramService;
+    private final Map<String, MetadataHandler> metadataHandlers;
 
     public ExploreService(
         DirectoryService directoryService,
@@ -113,6 +117,28 @@ public class ExploreService {
         this.monitorService = monitorService;
         this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
+        // TODO : arranger ça :
+        this.metadataHandlers = Map.ofEntries(
+                Map.entry(FILTER, new MetadataHandler(filterService, directoryService)),
+                Map.entry(MODIFICATION, new NetworkModificationMetadataHandler(networkModificationService, directoryService, notificationService)),
+                Map.entry(CONTINGENCY_LIST, new MetadataHandler(contingencyListService, directoryService)),
+                Map.entry(STUDY, new StudyMetadataHandler(studyService, directoryService)),
+                Map.entry(DIRECTORY, new MetadataHandler(directoryService, directoryService)),
+                Map.entry(CASE, new MetadataHandler(caseService, directoryService)),
+                Map.entry(SPREADSHEET_CONFIG, new MetadataHandler(spreadsheetConfigService, directoryService)),
+                Map.entry(SPREADSHEET_CONFIG_COLLECTION, new MetadataHandler(spreadsheetConfigCollectionService, directoryService)),
+                Map.entry(DIAGRAM_CONFIG, new MetadataHandler(singleLineDiagramService, directoryService)),
+                Map.entry(WORKSPACE, new MetadataHandler(workspaceService, directoryService)),
+                Map.entry(PROCESS_CONFIG, new MetadataHandler(monitorService, directoryService)),
+                Map.entry(DYNAMIC_MAPPING, new MetadataHandler(dynamicMappingService, directoryService)),
+                Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
+                Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
+                Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
+                Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
+                Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
+                Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
+                Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService))
+        );
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -139,6 +165,46 @@ public class ExploreService {
             // because no element with the given uuid. Then, do nothing and keep elementName as null
         }
         return elementName;
+    }
+
+    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
+        List<ElementAttributes> elements = directoryService.getElementsInfos(ids, elementTypes);
+        Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
+                .collect(Collectors.groupingBy(ElementAttributes::getType));
+        List<ElementAttributes> listOfElements = new ArrayList<>();
+        for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
+            listOfElements.addAll(
+                    metadataHandlers.get(elementAttribute.getKey()).completeElementsAttributes(elementAttribute.getValue())
+            );
+        }
+
+        if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
+            listOfElements = listOfElements.stream()
+                    .filter(element -> {
+                        Object equipmentType = element.getSpecificMetadata().get("equipmentType");
+                        if (equipmentType != null) { // could be null for some elements
+                            return equipmentTypes.contains(equipmentType);
+                        }
+                        return true; // keep other elements
+                    })
+                    .collect(Collectors.toList());
+        }
+        return listOfElements;
+    }
+
+    public boolean doesElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
+        List<ElementAttributes> elements = getUpdatedDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        if (elements.isEmpty()) {
+            return false;
+        }
+        // the real name of a modification is stored in the network modification server, not in the directory
+        /** TODO : ne devrait plus être nécessaire
+        if (MODIFICATION.equals(elementType)) {
+            elements = metadataHandlers.get(MODIFICATION).completeElementsAttributes(elements);
+        }*/
+        return elements.stream()
+                .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
+                .anyMatch(element -> elementName.equals(element.getElementName()));
     }
 
     public void duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
@@ -434,29 +500,8 @@ public class ExploreService {
 
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
         // TODO set type in updatedElementAttributes from front to avoid a read DB
-        // TODO 2 : système d'héritage ?
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        switch (elementsInfos.getType()) {
-            case STUDY -> updateStudy(id, updatedElementAttributes);
-            case MODIFICATION -> updateNetworkModification(id, updatedElementAttributes);
-            default -> directoryService.updateElement(id, updatedElementAttributes);
-        }
-    }
-
-    private void updateStudy(UUID id, ElementAttributes updatedElementAttributes) {
-        directoryService.updateElement(id, updatedElementAttributes);
-        studyService.notifyStudyUpdate(id);
-    }
-
-    private void updateNetworkModification(UUID modificationToNotifyId, ElementAttributes updatedModificationAttributes) {
-        // modificationToNotifyId can be the id of the shared parent modification
-        // updatedModificationAttributes.getElementUuid() is the real id of the network modification to update
-        // TODO check : est-ce que les modifications autre que nom et description de composites ne vont pas rater ? temps de modification par exemple ??
-        // appeler l'original en pmettant nom et description à null ??
-        networkModificationService.updateModificationNameAndDescription(
-                updatedModificationAttributes.getElementUuid(), updatedModificationAttributes.getElementName(), updatedModificationAttributes.getDescription());
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        notificationService.emitElementMetadataUpdated(modificationToNotifyId, userId);
+        metadataHandlers.get(elementsInfos.getType()).updateElement(id, updatedElementAttributes);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
@@ -636,21 +681,13 @@ public class ExploreService {
         executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
     }
 
-    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+    /**
+     * returns the directory elements from directory service but updated when some data hold their own data that override basic directory elements
+     */
+    // TODO : trouver mieux que "updated" pour exprmer l'idée
+    public List<ElementAttributes> getUpdatedDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
         List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
-        List<ElementAttributes> modifications = elements.stream()
-                .filter(element -> MODIFICATION.equals(element.getType()))
-                .toList();
-
-        if (modifications.isEmpty()) {
-            return elements;
-        }
-
-        List<ElementAttributes> directoryElements = elements.stream()
-                .filter(element -> !MODIFICATION.equals(element.getType()))
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
-        return directoryElements;
+        // TODO appeler sur tous els types par défaut ?? sinon ça fait pas trop polymorphique... -> mais ça implique de les grouper par type
+        return metadataHandlers.get(MODIFICATION).completeDirectoryElements(elements);
     }
 }
