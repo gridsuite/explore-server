@@ -8,14 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
-import org.gridsuite.explore.server.dto.CaseInfo;
-import org.gridsuite.explore.server.dto.DirectoryElementStatus;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.NodeInfos;
-import org.gridsuite.explore.server.dto.ReferenceAttributes;
-import org.gridsuite.explore.server.dto.ReferencingElementInfos;
-import org.gridsuite.explore.server.dto.UsersIdentities;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.metadata.MetadataHandler;
 import org.gridsuite.explore.server.services.metadata.NetworkModificationMetadataHandler;
@@ -38,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATING;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.ELEMENT_ALREADY_EXISTS;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
 /**
@@ -689,5 +683,20 @@ public class ExploreService {
         List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
         // TODO appeler sur tous els types par défaut ?? sinon ça fait pas trop polymorphique... -> mais ça implique de les grouper par type
         return metadataHandlers.get(MODIFICATION).completeDirectoryElements(elements);
+    }
+
+    public void shareNetworkModification(UUID studyUuid,
+                                         UUID nodeUuid,
+                                         UUID modificationUuid,
+                                         String name,
+                                         String description,
+                                         UUID parentDirectoryUuid) {
+        directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
+        if (directoryService.isElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
+            throw new ExploreException(ELEMENT_ALREADY_EXISTS,
+                    "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
+        }
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        studyService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);
     }
 }
