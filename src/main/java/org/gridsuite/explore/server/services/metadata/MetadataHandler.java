@@ -6,67 +6,38 @@
  */
 package org.gridsuite.explore.server.services.metadata;
 
-import lombok.extern.slf4j.Slf4j;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
-import org.springframework.web.client.ResourceAccessException;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
+ * Specific metadata behaviour of an element type.
+ * Implementations are Spring beans automatically collected by {@link MetadataService}.
+ * Element types without a dedicated handler get the default behaviour.
+ *
  * @author Mathieu Deharbe <mathieu.deharbe at rte-france_externe.com>
  */
-@Slf4j
-public class MetadataHandler {
-    IDirectoryElementsService specificService;
-    DirectoryService directoryService;
+public interface MetadataHandler {
 
-    public MetadataHandler(IDirectoryElementsService specificService, DirectoryService directoryService) {
-        this.specificService = specificService;
-        this.directoryService = directoryService;
+    String getElementType();
+
+    /**
+     * @return true when the specific server holds data (name, description...) overriding the directory element ones,
+     * meaning that directory elements of this type must be enriched before being returned
+     */
+    default boolean overridesDirectoryAttributes() {
+        return false;
     }
 
-    // no modification by default. Should be overriden when the element type need to update specific elements data
-    public List<ElementAttributes> enrichDirectoryElements(List<ElementAttributes> elements) {
-        return elements;
+    default ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        return setSpecificMetadata(elementAttributes, metadataItem);
     }
 
-    public List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> lstElementAttribute) {
-        /* generating id -> elementAttribute map */
-        Map<String, ElementAttributes> mapElementAttribute = lstElementAttribute.stream()
-                .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
-        /* getting metadata from services */
-        try {
-            List<UUID> elementsUuids = lstElementAttribute.stream().map(ElementAttributes::getElementUuid).collect(Collectors.toList());
-            List<Map<String, Object>> metadata = specificService.getMetadata(elementsUuids);
-            return metadata.stream().map(metadataItem -> {
-                Object item = metadataItem.get("id");
-                if (item == null) {
-                    item = metadataItem.getOrDefault("uuid", "");
-                }
-                ElementAttributes e = mapElementAttribute.get(item.toString());
-                return populateMetadataItem(e, metadataItem);
-            }).collect(Collectors.toList());
-        } catch (ResourceAccessException _) {
-            String elementType = lstElementAttribute.isEmpty() ? "UNKNOWN" : lstElementAttribute.getFirst().getType();
-            log.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
-            return lstElementAttribute.stream()
-                    .map(elementAttributes -> populateMetadataItem(elementAttributes, Map.of()))
-                    .collect(Collectors.toList());
-        }
-    }
+    void updateElement(UUID elementUuid, ElementAttributes elementAttributes);
 
-    ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+    static ElementAttributes setSpecificMetadata(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;
-    }
-
-    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes) {
-        directoryService.updateElement(elementUuid, elementAttributes);
     }
 }

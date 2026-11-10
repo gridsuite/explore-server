@@ -10,9 +10,7 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.gridsuite.explore.server.services.metadata.MetadataHandler;
-import org.gridsuite.explore.server.services.metadata.NetworkModificationMetadataHandler;
-import org.gridsuite.explore.server.services.metadata.StudyMetadataHandler;
+import org.gridsuite.explore.server.services.metadata.MetadataService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
@@ -42,7 +40,7 @@ import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLOR
 
 @Service
 public class ExploreService {
-    static final String STUDY = "STUDY";
+    public static final String STUDY = "STUDY";
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
@@ -74,7 +72,7 @@ public class ExploreService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramService singleLineDiagramService;
-    private final Map<String, MetadataHandler> metadataHandlers;
+    private final MetadataService metadataService;
 
     public ExploreService(
         DirectoryService directoryService,
@@ -93,7 +91,8 @@ public class ExploreService {
         SingleLineDiagramService singleLineDiagramService,
         MonitorService monitorService,
         DynamicMappingService dynamicMappingService,
-        ExploreServerExecutionService exploreServerExecutionService) {
+        ExploreServerExecutionService exploreServerExecutionService,
+        MetadataService metadataService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -112,28 +111,7 @@ public class ExploreService {
         this.monitorService = monitorService;
         this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
-        // TODO : arranger ça :
-        this.metadataHandlers = Map.ofEntries(
-                Map.entry(FILTER, new MetadataHandler(filterService, directoryService)),
-                Map.entry(MODIFICATION, new NetworkModificationMetadataHandler(networkModificationService, directoryService, notificationService)),
-                Map.entry(CONTINGENCY_LIST, new MetadataHandler(contingencyListService, directoryService)),
-                Map.entry(STUDY, new StudyMetadataHandler(studyService, directoryService)),
-                Map.entry(DIRECTORY, new MetadataHandler(directoryService, directoryService)),
-                Map.entry(CASE, new MetadataHandler(caseService, directoryService)),
-                Map.entry(SPREADSHEET_CONFIG, new MetadataHandler(spreadsheetConfigService, directoryService)),
-                Map.entry(SPREADSHEET_CONFIG_COLLECTION, new MetadataHandler(spreadsheetConfigCollectionService, directoryService)),
-                Map.entry(DIAGRAM_CONFIG, new MetadataHandler(singleLineDiagramService, directoryService)),
-                Map.entry(WORKSPACE, new MetadataHandler(workspaceService, directoryService)),
-                Map.entry(PROCESS_CONFIG, new MetadataHandler(monitorService, directoryService)),
-                Map.entry(DYNAMIC_MAPPING, new MetadataHandler(dynamicMappingService, directoryService)),
-                Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
-                Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
-                Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
-                Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
-                Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
-                Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService)),
-                Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), new MetadataHandler(parametersService, directoryService))
-        );
+        this.metadataService = metadataService;
     }
 
     public void createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -164,14 +142,7 @@ public class ExploreService {
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
         List<ElementAttributes> elements = directoryService.getElementsInfos(ids, elementTypes);
-        Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
-                .collect(Collectors.groupingBy(ElementAttributes::getType));
-        List<ElementAttributes> listOfElements = new ArrayList<>();
-        for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
-            listOfElements.addAll(
-                    metadataHandlers.get(elementAttribute.getKey()).completeElementsAttributes(elementAttribute.getValue())
-            );
-        }
+        List<ElementAttributes> listOfElements = metadataService.completeElementsAttributes(elements);
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
@@ -491,7 +462,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
         // TODO set type in updatedElementAttributes from front to avoid a read DB
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        metadataHandlers.get(elementsInfos.getType()).updateElement(id, updatedElementAttributes);
+        metadataService.updateElement(id, elementsInfos.getType(), updatedElementAttributes);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
@@ -675,12 +646,7 @@ public class ExploreService {
      * returns the directory elements from directory service but enriched with some specific data hold by the objects that override basic elements data
      */
     public List<ElementAttributes> getEnrichedDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
-        List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
-        // TODO appeler sur tous els types par défaut ?? sinon ça fait pas trop polymorphique... -> mais ça implique de les grouper par type
-        /*for (metadataHandlers.entrySet()) {
-
-        }*/
-        return metadataHandlers.get(MODIFICATION).enrichDirectoryElements(elements);
+        return metadataService.enrichDirectoryElements(directoryService.getDirectoryElements(directoryUuid, types, recursive));
     }
 
     public void shareNetworkModification(UUID studyUuid,

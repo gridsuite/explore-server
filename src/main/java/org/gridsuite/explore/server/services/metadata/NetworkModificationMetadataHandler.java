@@ -7,17 +7,13 @@
 package org.gridsuite.explore.server.services.metadata;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.gridsuite.explore.server.services.NotificationService;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
 import static org.gridsuite.explore.server.services.NetworkModificationService.DESCRIPTION;
@@ -26,52 +22,45 @@ import static org.gridsuite.explore.server.services.NetworkModificationService.N
 /**
  * @author Mathieu Deharbe <mathieu.deharbe at rte-france_externe.com>
  */
-public class NetworkModificationMetadataHandler extends MetadataHandler {
+@Component
+public class NetworkModificationMetadataHandler implements MetadataHandler {
+    private final NetworkModificationService networkModificationService;
     private final NotificationService notificationService;
 
-    public NetworkModificationMetadataHandler(IDirectoryElementsService service, DirectoryService directoryService, NotificationService notificationService) {
-        super(service, directoryService);
+    public NetworkModificationMetadataHandler(NetworkModificationService networkModificationService, NotificationService notificationService) {
+        this.networkModificationService = networkModificationService;
         this.notificationService = notificationService;
+    }
+
+    @Override
+    public String getElementType() {
+        return MODIFICATION;
     }
 
     // the real name of a modification is stored in the network modification server, not in the directory
     @Override
-    public List<ElementAttributes> enrichDirectoryElements(List<ElementAttributes> elements) {
-        List<ElementAttributes> modifications = elements.stream()
-                .filter(element -> MODIFICATION.equals(element.getType()))
-                .toList();
-
-        if (modifications.isEmpty()) {
-            return elements;
-        }
-
-        List<ElementAttributes> directoryElements = elements.stream()
-                .filter(element -> !MODIFICATION.equals(element.getType()))
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        directoryElements.addAll(completeElementsAttributes(modifications));
-        return directoryElements;
+    public boolean overridesDirectoryAttributes() {
+        return true;
     }
 
     @Override
     public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         if (metadataItem != null) {
-            if (metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
+            if (metadataItem.get(NAME) != null) {
                 elementAttributes.setElementName(metadataItem.get(NAME).toString());
             }
-            if (metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
+            if (metadataItem.get(DESCRIPTION) != null) {
                 elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
             }
         }
-        elementAttributes.setSpecificMetadata(metadataItem);
-        return elementAttributes;
+        return MetadataHandler.setSpecificMetadata(elementAttributes, metadataItem);
     }
 
     @Override
     public void updateElement(UUID modificationToNotifyId, ElementAttributes elementAttributes) {
         // modificationToNotifyId can be the id of the shared parent modification
-        // updatedModificationAttributes.getElementUuid() is the real id of the network modification to update
-        ((NetworkModificationService) specificService).updateModificationNameAndDescription(
+        // elementAttributes.getElementUuid() is the real id of the network modification to update
+        networkModificationService.updateModificationNameAndDescription(
                 elementAttributes.getElementUuid(), elementAttributes.getElementName(), elementAttributes.getDescription());
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         notificationService.emitElementMetadataUpdated(modificationToNotifyId, userId);

@@ -7,22 +7,35 @@
 package org.gridsuite.explore.server.services.metadata;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.DirectoryService;
+import org.gridsuite.explore.server.services.StudyService;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+
+import static org.gridsuite.explore.server.services.ExploreService.STUDY;
 
 /**
  * @author Mathieu Deharbe <mathieu.deharbe at rte-france_externe.com>
  */
-public class StudyMetadataHandler extends MetadataHandler {
+@Component
+public class StudyMetadataHandler implements MetadataHandler {
+    private final StudyService studyService;
+    private final DirectoryService directoryService;
 
-    public StudyMetadataHandler(IDirectoryElementsService service, DirectoryService directoryService) {
-        super(service, directoryService);
+    public StudyMetadataHandler(StudyService studyService, DirectoryService directoryService) {
+        this.studyService = studyService;
+        this.directoryService = directoryService;
     }
 
     @Override
-    public void updateElement(UUID id, ElementAttributes elementAttributes) {
-        super.updateElement(id, elementAttributes);
-        ((StudyService) specificService).notifyStudyUpdate(id);
+    public String getElementType() {
+        return STUDY;
+    }
+
+    @Override
+    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes) {
+        directoryService.updateElement(elementUuid, elementAttributes);
+        studyService.notifyStudyUpdate(elementUuid);
     }
 }

@@ -352,7 +352,7 @@ public class DirectoryService implements IDirectoryElementsService {
         service.delete(elementAttribute.getElementUuid());
     }
 
-    private IDirectoryElementsService getGenericService(String type) {
+    public IDirectoryElementsService getGenericService(String type) {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
         if (iDirectoryElementsService == null) {
             throw new IllegalArgumentException("Unknown element type " + type);
