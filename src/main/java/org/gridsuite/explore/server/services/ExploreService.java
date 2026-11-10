@@ -272,6 +272,24 @@ public class ExploreService {
         updateElementNameAndDescription(id, name, description);
     }
 
+    /**
+     * The activation is held by the modifications themselves, hence shared by every study using them. The network
+     * modification server only notifies the composites used in a study.
+     */
+    public void updateModificationsMetadata(UUID compositeModificationId, List<UUID> modificationUuids, String metadata) {
+        networkModificationService.updateModificationsMetadata(modificationUuids, metadata);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
+    /**
+     * The applicability is held by the modifications themselves, hence shared by every study using them. The network
+     * modification server only notifies the composites used in a study.
+     */
+    public void updateRootNetworkApplicability(UUID compositeModificationId, List<UUID> modificationUuids, String rootNetworkTag, boolean applicable) {
+        networkModificationService.updateRootNetworkApplicability(modificationUuids, rootNetworkTag, applicable);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }

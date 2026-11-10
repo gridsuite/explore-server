@@ -134,6 +134,44 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .toBodilessEntity();
     }
 
+    /**
+     * @param metadata the activation of the modifications, with their type: {"activated": ..., "type": ...}
+     */
+    public void updateModificationsMetadata(List<UUID> modificationUuids, String metadata) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+                .queryParam(UUIDS, modificationUuids)
+                .buildAndExpand()
+                .toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(metadata)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
+    /**
+     * The network modification server checks the user may write on the shared modifications concerned
+     */
+    public void updateRootNetworkApplicability(List<UUID> modificationUuids, String rootNetworkTag, boolean applicable) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + DELIMITER + "root-network-applicability")
+                .queryParam(UUIDS, modificationUuids)
+                .queryParam("rootNetworkTag", rootNetworkTag)
+                .queryParam("applicable", applicable)
+                .buildAndExpand()
+                .toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
     @Override
     public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
