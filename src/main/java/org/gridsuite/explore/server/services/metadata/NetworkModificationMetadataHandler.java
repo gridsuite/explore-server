@@ -71,8 +71,6 @@ public class NetworkModificationMetadataHandler extends MetadataHandler {
     public void updateElement(UUID modificationToNotifyId, ElementAttributes elementAttributes) {
         // modificationToNotifyId can be the id of the shared parent modification
         // updatedModificationAttributes.getElementUuid() is the real id of the network modification to update
-        // TODO check : est-ce que les modifications autre que nom et description de composites ne vont pas rater ? temps de modification par exemple ??
-        // appeler l'original en pmettant nom et description à null ??
         ((NetworkModificationService) specificService).updateModificationNameAndDescription(
                 elementAttributes.getElementUuid(), elementAttributes.getElementName(), elementAttributes.getDescription());
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
