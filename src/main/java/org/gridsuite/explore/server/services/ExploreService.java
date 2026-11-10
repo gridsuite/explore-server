@@ -294,9 +294,8 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes);
     }
 
-    public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String name, String description) {
+    public void replaceCompositeModification(UUID id, List<UUID> modificationUuids, String name) {
         networkModificationService.replaceCompositeModification(id, name, modificationUuids);
-        updateElementNameAndDescription(id, name, description);
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {

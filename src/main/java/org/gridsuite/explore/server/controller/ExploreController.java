@@ -489,11 +489,11 @@ public class ExploreController {
     @Operation(summary = "Modify a composite modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
     @PreAuthorize("@authorizationService.canWrite(#id)")
-    public ResponseEntity<Void> updateCompositeNetworkModification(@PathVariable UUID id,
-                                                                   @RequestBody List<UUID> modificationUuids,
-                                                                   @RequestParam(QUERY_PARAM_NAME) String name,
-                                                                   @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        exploreService.updateCompositeModification(id, modificationUuids, name, description);
+    public ResponseEntity<Void> replaceCompositeNetworkModification(@PathVariable UUID id,
+                                                                    @RequestBody List<UUID> modificationUuids,
+                                                                    @RequestParam(QUERY_PARAM_NAME) String name,
+                                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.replaceCompositeModification(id, modificationUuids, name);
         return ResponseEntity.ok().build();
     }
 
