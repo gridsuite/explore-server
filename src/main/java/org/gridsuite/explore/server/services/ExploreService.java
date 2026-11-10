@@ -18,6 +18,7 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -692,7 +693,7 @@ public class ExploreService {
                                          String description,
                                          UUID parentDirectoryUuid) {
         directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
-        if (directoryService.isElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
+        if (doesElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
             throw new ExploreException(ELEMENT_ALREADY_EXISTS,
                     "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
         }
