@@ -52,7 +52,7 @@ public class MetadataHandler {
                 ElementAttributes e = mapElementAttribute.get(item.toString());
                 return populateMetadataItem(e, metadataItem);
             }).collect(Collectors.toList());
-        } catch (ResourceAccessException e) {
+        } catch (ResourceAccessException _) {
             String elementType = lstElementAttribute.isEmpty() ? "UNKNOWN" : lstElementAttribute.getFirst().getType();
             log.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
             return lstElementAttribute.stream()

@@ -188,7 +188,7 @@ public class ExploreService {
     }
 
     public boolean doesElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
-        List<ElementAttributes> elements = getUpdatedDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        List<ElementAttributes> elements = getEnrichedDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
         if (elements.isEmpty()) {
             return false;
         }
@@ -677,12 +677,14 @@ public class ExploreService {
     }
 
     /**
-     * returns the directory elements from directory service but updated when some data hold their own data that override basic directory elements
+     * returns the directory elements from directory service but enriched with some specific data hold by the objects that override basic elements data
      */
-    // TODO : trouver mieux que "updated" pour exprmer l'idée
-    public List<ElementAttributes> getUpdatedDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+    public List<ElementAttributes> getEnrichedDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
         List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
         // TODO appeler sur tous els types par défaut ?? sinon ça fait pas trop polymorphique... -> mais ça implique de les grouper par type
+        /*for (metadataHandlers.entrySet()) {
+
+        }*/
         return metadataHandlers.get(MODIFICATION).completeDirectoryElements(elements);
     }
 
