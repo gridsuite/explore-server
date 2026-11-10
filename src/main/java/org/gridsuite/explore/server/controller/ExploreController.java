@@ -60,7 +60,7 @@ public class ExploreController {
     @Operation(summary = "create a study from an existing case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createStudy(@PathVariable("studyName") String studyName,
+    public ResponseEntity<UUID> createStudy(@PathVariable("studyName") String studyName,
                                                             @PathVariable("caseUuid") UUID caseUuid,
                                                             @RequestParam(name = "caseFormat") String caseFormat,
                                                             @RequestParam(name = "duplicateCase", required = false, defaultValue = "false") Boolean duplicateCase,
@@ -69,32 +69,29 @@ public class ExploreController {
                                                             @RequestBody(required = false) Map<String, Object> importParams) {
         exploreService.assertCanCreateCase();
         CaseInfo caseInfo = new CaseInfo(caseUuid, caseFormat);
-        exploreService.createStudy(studyName, caseInfo, description, parentDirectoryUuid, importParams, duplicateCase);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createStudy(studyName, caseInfo, description, parentDirectoryUuid, importParams, duplicateCase));
     }
 
     @PostMapping(value = "/explore/studies/{id}/duplicate")
     @Operation(summary = "Duplicate a study")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study creation request delegated to study server")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#studyId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateStudy(@PathVariable("id") UUID studyId,
+    public ResponseEntity<UUID> duplicateStudy(@PathVariable("id") UUID studyId,
                                                @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
         exploreService.assertCanCreateCase();
-        exploreService.duplicateStudy(studyId, targetDirectoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateStudy(studyId, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/cases/{caseName}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "create a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case creation request delegated to case server")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createCase(@PathVariable("caseName") String caseName,
+    public ResponseEntity<UUID> createCase(@PathVariable("caseName") String caseName,
                                            @RequestPart("caseFile") MultipartFile caseFile,
                                            @RequestParam("description") String description,
                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
         exploreService.assertCanCreateCase();
-        exploreService.createCase(caseName, caseFile, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createCase(caseName, caseFile, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/cases/{caseName}/persist", params = {"caseUuid", "description", QUERY_PARAM_PARENT_DIRECTORY_ID})
@@ -114,85 +111,78 @@ public class ExploreController {
     @Operation(summary = "Duplicate a case")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Case duplication request delegated to case server")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#caseId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateCase(
+    public ResponseEntity<UUID> duplicateCase(
             @PathVariable("id") UUID caseId,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
         exploreService.assertCanCreateCase();
-        exploreService.duplicateCase(caseId, targetDirectoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateCase(caseId, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/cases/{caseName}/duplicate-existing")
     @Operation(summary = "Create a case by duplicating an existing case-server case")
     @ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Case has been duplicated and added to Explore") })
     @PreAuthorize("@authorizationService.canWrite(#targetDirectoryId)")
-    public ResponseEntity<Void> duplicateExistingCase(
+    public ResponseEntity<UUID> duplicateExistingCase(
             @PathVariable("caseName") String caseName,
             @RequestParam("sourceCaseUuid") UUID sourceCaseUuid,
             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID targetDirectoryId) {
         exploreService.assertCanCreateCase();
-        exploreService.duplicateExistingCase(sourceCaseUuid, caseName, description, targetDirectoryId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.duplicateExistingCase(sourceCaseUuid, caseName, description, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/contingency-lists/{id}/duplicate")
     @Operation(summary = "Duplicate a contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Contingency list has been created")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#contingencyListUuid, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateContingencyList(
+    public ResponseEntity<UUID> duplicateContingencyList(
             @PathVariable("id") UUID contingencyListUuid,
             @RequestParam(name = QUERY_PARAM_TYPE) ContingencyListType contingencyListType,
             @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateContingencyList(contingencyListUuid, targetDirectoryId, contingencyListType);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateContingencyList(contingencyListUuid, targetDirectoryId, contingencyListType));
     }
 
     @PostMapping(value = "/explore/identifier-contingency-lists/{listName}")
     @Operation(summary = "create an identifier contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Identifier contingency list has been created")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createIdentifierContingencyList(@PathVariable("listName") String listName,
+    public ResponseEntity<UUID> createIdentifierContingencyList(@PathVariable("listName") String listName,
                                                           @RequestBody(required = false) String content,
                                                           @RequestParam("description") String description,
                                                           @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createIdentifierContingencyList(listName, content, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createIdentifierContingencyList(listName, content, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/filters-contingency-lists/{listName}")
     @Operation(summary = "create a filter based contingency list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter based contingency list has been created")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createFilterBasedContingencyList(@PathVariable("listName") String listName,
+    public ResponseEntity<UUID> createFilterBasedContingencyList(@PathVariable("listName") String listName,
                                                                 @RequestBody(required = false) String content,
                                                                 @RequestParam("description") String description,
                                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createFilterBasedContingencyList(listName, content, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createFilterBasedContingencyList(listName, content, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/filters", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Filter creation request delegated to filter server")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createFilter(@RequestBody String filter,
+    public ResponseEntity<UUID> createFilter(@RequestBody String filter,
                                              @RequestParam("name") String filterName,
                                              @RequestParam("description") String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createFilter(filter, filterName, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createFilter(filter, filterName, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/filters/{id}/duplicate")
     @Operation(summary = "Duplicate a filter")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The script has been created successfully")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#filterId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateFilter(
+    public ResponseEntity<UUID> duplicateFilter(
                                              @PathVariable("id") UUID filterId,
                                              @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateFilter(filterId, targetDirectoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateFilter(filterId, targetDirectoryId));
     }
 
     @DeleteMapping(value = "/explore/elements/{elementUuid}")
@@ -280,35 +270,32 @@ public class ExploreController {
     @Operation(summary = "create parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters creation request delegated to corresponding server")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createParameters(@RequestBody String parameters,
+    public ResponseEntity<UUID> createParameters(@RequestBody String parameters,
                                              @RequestParam("name") String parametersName,
                                              @RequestParam(name = QUERY_PARAM_TYPE, defaultValue = "") ParametersType parametersType,
                                              @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                              @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createParameters(parameters, parametersType, parametersName, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createParameters(parameters, parametersType, parametersName, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/diagram-config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "create diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "diagram config creation request delegated to corresponding server")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createDiagramConfig(@RequestBody String diagramConfig,
+    public ResponseEntity<UUID> createDiagramConfig(@RequestBody String diagramConfig,
                                                     @RequestParam("name") String diagramConfigName,
                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                     @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createDiagramConfig(diagramConfig, diagramConfigName, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/diagram-config/{id}/duplicate")
     @Operation(summary = "Duplicate a diagram config")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "diagram config has been successfully duplicated")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateDiagramConfig(@PathVariable("id") UUID sourceId,
+    public ResponseEntity<UUID> duplicateDiagramConfig(@PathVariable("id") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateDiagramConfig(sourceId, targetDirectoryId));
     }
 
     @PutMapping(value = "/explore/diagram-config/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -340,47 +327,43 @@ public class ExploreController {
     @Operation(summary = "Duplicate parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters have been successfully duplicated")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#parametersId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateParameters(@PathVariable("id") UUID parametersId,
+    public ResponseEntity<UUID> duplicateParameters(@PathVariable("id") UUID parametersId,
                                                     @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId,
                                                     @RequestParam(name = QUERY_PARAM_TYPE) ParametersType parametersType) {
-        exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateParameters(parametersId, targetDirectoryId, parametersType));
     }
 
     @PostMapping(value = "/explore/spreadsheet-configs", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config created")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createSpreadsheetConfig(@RequestBody String spreadsheetConfigDto,
+    public ResponseEntity<UUID> createSpreadsheetConfig(@RequestBody String spreadsheetConfigDto,
                                                         @RequestParam("name") String configName,
                                                         @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                         @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, description, parentDirectoryUuid);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.createSpreadsheetConfig(spreadsheetConfigDto, configName, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/spreadsheet-config-collections", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createSpreadsheetConfigCollection(@RequestBody String spreadsheetConfigCollectionDto,
+    public ResponseEntity<UUID> createSpreadsheetConfigCollection(@RequestBody String spreadsheetConfigCollectionDto,
                                                                   @RequestParam("name") String collectionName,
                                                                   @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                                   @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto, collectionName, description, parentDirectoryUuid);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto, collectionName, description, parentDirectoryUuid));
     }
 
     @PostMapping(value = "/explore/spreadsheet-config-collections/merge", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a new spreadsheet configuration collection duplicating and merging a list of existing configurations")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection created")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#configUuids, #parentDirectoryUuid)")
-    public ResponseEntity<Void> createSpreadsheetConfigCollectionFromConfigIds(@RequestBody List<UUID> configUuids,
+    public ResponseEntity<UUID> createSpreadsheetConfigCollectionFromConfigIds(@RequestBody List<UUID> configUuids,
                                                                                @RequestParam("name") String collectionName,
                                                                                @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                                                @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createSpreadsheetConfigCollectionFromConfigIds(configUuids, collectionName, description, parentDirectoryUuid);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.createSpreadsheetConfigCollectionFromConfigIds(configUuids, collectionName, description, parentDirectoryUuid));
     }
 
     @PutMapping(value = "/explore/spreadsheet-configs/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -423,22 +406,20 @@ public class ExploreController {
     @Operation(summary = "Duplicate a spreadsheet configuration")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config has been successfully duplicated")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateSpreadsheetConfig(@PathVariable("id") UUID sourceId,
+    public ResponseEntity<UUID> duplicateSpreadsheetConfig(@PathVariable("id") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateSpreadsheetConfig(sourceId, targetDirectoryId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.duplicateSpreadsheetConfig(sourceId, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/workspaces", params = "workspaceId")
     @Operation(summary = "Create a workspace by duplicating an existing workspace")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Workspace created")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#workspaceId, #parentDirectoryUuid)")
-    public ResponseEntity<Void> createWorkspace(@RequestParam("workspaceId") UUID workspaceId,
+    public ResponseEntity<UUID> createWorkspace(@RequestParam("workspaceId") UUID workspaceId,
                                                 @RequestParam("name") String workspaceName,
                                                 @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                 @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createWorkspace(workspaceId, workspaceName, description, parentDirectoryUuid);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.createWorkspace(workspaceId, workspaceName, description, parentDirectoryUuid));
     }
 
     @PutMapping(value = "/explore/workspaces/{id}", params = "workspaceId")
@@ -457,32 +438,29 @@ public class ExploreController {
     @Operation(summary = "Duplicate a workspace")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Workspace has been successfully duplicated")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateWorkspace(@PathVariable("id") UUID sourceId,
+    public ResponseEntity<UUID> duplicateWorkspace(@PathVariable("id") UUID sourceId,
                                                    @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateWorkspace(sourceId, targetDirectoryId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.duplicateWorkspace(sourceId, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/spreadsheet-config-collections/{id}/duplicate")
     @Operation(summary = "Duplicate a spreadsheet configuration collection")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Spreadsheet config collection has been successfully duplicated")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#sourceId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateSpreadsheetConfigCollection(@PathVariable("id") UUID sourceId,
+    public ResponseEntity<UUID> duplicateSpreadsheetConfigCollection(@PathVariable("id") UUID sourceId,
                                                            @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateSpreadsheetConfigCollection(sourceId, targetDirectoryId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(exploreService.duplicateSpreadsheetConfigCollection(sourceId, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/composite-modifications")
     @Operation(summary = "Create composite modification element from existing network modifications")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Modifications have been created and composite modification element created in the directory")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> createCompositeModification(@RequestBody List<UUID> modificationAttributes,
+    public ResponseEntity<UUID> createCompositeModification(@RequestBody List<UUID> modificationAttributes,
                                                             @RequestParam(QUERY_PARAM_NAME) String name,
                                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        exploreService.createCompositeModification(modificationAttributes, name, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.createCompositeModification(modificationAttributes, name, description, parentDirectoryUuid));
     }
 
     @PutMapping(value = "/explore/composite-modifications/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -501,10 +479,9 @@ public class ExploreController {
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Composite modification has been duplicated and corresponding element created in the directory")})
     @PreAuthorize("@authorizationService.canDuplicateTo(#networkModificationId, #targetDirectoryId)")
-    public ResponseEntity<Void> duplicateCompositeNetworkModification(@PathVariable("id") UUID networkModificationId,
+    public ResponseEntity<UUID> duplicateCompositeNetworkModification(@PathVariable("id") UUID networkModificationId,
                                                                       @RequestParam(name = QUERY_PARAM_PARENT_DIRECTORY_ID, required = false) UUID targetDirectoryId) {
-        exploreService.duplicateCompositeModification(networkModificationId, targetDirectoryId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(exploreService.duplicateCompositeModification(networkModificationId, targetDirectoryId));
     }
 
     @PostMapping(value = "/explore/studies/{studyUuid}/nodes/{nodeUuid}/network-modifications/{modificationUuid}/share")
@@ -791,12 +768,11 @@ public class ExploreController {
     @Operation(summary = "Import a study from an archive")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Study import finished")})
     @PreAuthorize("@authorizationService.canWrite(#parentDirectoryUuid)")
-    public ResponseEntity<Void> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
+    public ResponseEntity<UUID> importStudy(@RequestParam(QUERY_PARAM_STUDY_NAME) String studyName,
                                             @RequestPart(QUERY_PARAM_ARCHIVE_FILE) MultipartFile archiveFile,
                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
                                             @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
         exploreService.assertCanCreateCase();
-        studyImportService.importStudy(archiveFile, studyName, description, parentDirectoryUuid);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(studyImportService.importStudy(archiveFile, studyName, description, parentDirectoryUuid));
     }
 }
