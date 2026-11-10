@@ -192,11 +192,6 @@ public class ExploreService {
         if (elements.isEmpty()) {
             return false;
         }
-        // the real name of a modification is stored in the network modification server, not in the directory
-        /** TODO : ne devrait plus être nécessaire
-        if (MODIFICATION.equals(elementType)) {
-            elements = metadataHandlers.get(MODIFICATION).completeElementsAttributes(elements);
-        }*/
         return elements.stream()
                 .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
                 .anyMatch(element -> elementName.equals(element.getElementName()));
@@ -685,7 +680,7 @@ public class ExploreService {
         /*for (metadataHandlers.entrySet()) {
 
         }*/
-        return metadataHandlers.get(MODIFICATION).completeDirectoryElements(elements);
+        return metadataHandlers.get(MODIFICATION).enrichDirectoryElements(elements);
     }
 
     public void shareNetworkModification(UUID studyUuid,

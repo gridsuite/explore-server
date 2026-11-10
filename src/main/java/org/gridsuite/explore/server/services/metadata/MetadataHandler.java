@@ -32,7 +32,7 @@ public class MetadataHandler {
     }
 
     // no modification by default. Should be overriden when the element type need to update specific elements data
-    public List<ElementAttributes> completeDirectoryElements(List<ElementAttributes> elements) {
+    public List<ElementAttributes> enrichDirectoryElements(List<ElementAttributes> elements) {
         return elements;
     }
 

@@ -34,8 +34,9 @@ public class NetworkModificationMetadataHandler extends MetadataHandler {
         this.notificationService = notificationService;
     }
 
+    // the real name of a modification is stored in the network modification server, not in the directory
     @Override
-    public List<ElementAttributes> completeDirectoryElements(List<ElementAttributes> elements) {
+    public List<ElementAttributes> enrichDirectoryElements(List<ElementAttributes> elements) {
         List<ElementAttributes> modifications = elements.stream()
                 .filter(element -> MODIFICATION.equals(element.getType()))
                 .toList();
