@@ -45,6 +45,8 @@ public class ElementAttributes {
 
     private DirectoryElementStatus status;
 
+    private Boolean writePermission;
+
     // uses of the current element as a reference (shared element), empty when it is not referenced
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<ReferenceAttributes> references = new ArrayList<>();
@@ -55,21 +57,21 @@ public class ElementAttributes {
     // change all places calling the constructor to explicitly pass lastModifiedBy ? or is it like specificMetadata ?
     // and remove the other constructor because it becomes the AllArgsConstructor
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description) {
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null, null);
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, true, null, null);
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        this(elementUuid, elementName, type, userId, subdirectoriesCount, description, null, null, null, null, null, null);
+        this(elementUuid, elementName, type, userId, subdirectoriesCount, description, null, null, null, null, true, null, null);
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, String owner, long subdirectoriesCount, String description, Map<String, Object> specificMetadata) {
-        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, null, specificMetadata);
+        this(elementUuid, elementName, type, owner, subdirectoriesCount, description, null, null, null, null, true, null, specificMetadata);
     }
 
     public ElementAttributes(UUID elementUuid, String elementName, String type, long subdirectoriesCount, String description, DirectoryElementStatus status) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        this(elementUuid, elementName, type, userId, subdirectoriesCount, description, null, null, null, status, null, null);
+        this(elementUuid, elementName, type, userId, subdirectoriesCount, description, null, null, null, status, true, null, null);
     }
 
     // DTO in directory-server has another property : creationDate
