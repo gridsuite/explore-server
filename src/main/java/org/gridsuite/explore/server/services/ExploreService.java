@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.metadata.MetadataService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,7 +40,7 @@ import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLOR
 
 @Service
 public class ExploreService {
-    static final String STUDY = "STUDY";
+    public static final String STUDY = "STUDY";
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
@@ -70,6 +72,7 @@ public class ExploreService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramService singleLineDiagramService;
+    private final MetadataService metadataService;
 
     public ExploreService(
         DirectoryService directoryService,
@@ -88,7 +91,8 @@ public class ExploreService {
         SingleLineDiagramService singleLineDiagramService,
         MonitorService monitorService,
         DynamicMappingService dynamicMappingService,
-        ExploreServerExecutionService exploreServerExecutionService) {
+        ExploreServerExecutionService exploreServerExecutionService,
+        MetadataService metadataService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -107,6 +111,7 @@ public class ExploreService {
         this.monitorService = monitorService;
         this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
+        this.metadataService = metadataService;
     }
 
     public UUID createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -134,6 +139,34 @@ public class ExploreService {
             // because no element with the given uuid. Then, do nothing and keep elementName as null
         }
         return elementName;
+    }
+
+    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
+        List<ElementAttributes> elements = directoryService.getElementsInfos(ids, elementTypes);
+        List<ElementAttributes> listOfElements = metadataService.completeElementsAttributes(elements);
+
+        if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
+            listOfElements = listOfElements.stream()
+                    .filter(element -> {
+                        Object equipmentType = element.getSpecificMetadata().get("equipmentType");
+                        if (equipmentType != null) { // could be null for some elements
+                            return equipmentTypes.contains(equipmentType);
+                        }
+                        return true; // keep other elements
+                    })
+                    .collect(Collectors.toList());
+        }
+        return listOfElements;
+    }
+
+    public boolean doesElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
+        List<ElementAttributes> elements = getEnrichedDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        if (elements.isEmpty()) {
+            return false;
+        }
+        return elements.stream()
+                .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
+                .anyMatch(element -> elementName.equals(element.getElementName()));
     }
 
     public UUID duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
@@ -271,9 +304,8 @@ public class ExploreService {
         directoryService.updateElement(id, elementAttributes);
     }
 
-    public void updateCompositeModification(UUID id, List<UUID> modificationUuids, String name, String description) {
+    public void replaceCompositeModification(UUID id, List<UUID> modificationUuids, String name) {
         networkModificationService.replaceCompositeModification(id, name, modificationUuids);
-        updateElementNameAndDescription(id, name, description);
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
@@ -452,25 +484,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
         // TODO set type in updatedElementAttributes from front to avoid a read DB
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        switch (elementsInfos.getType()) {
-            case STUDY -> updateStudy(id, updatedElementAttributes);
-            case MODIFICATION -> updateNetworkModification(id, updatedElementAttributes);
-            default -> directoryService.updateElement(id, updatedElementAttributes);
-        }
-    }
-
-    private void updateStudy(UUID id, ElementAttributes updatedElementAttributes) {
-        directoryService.updateElement(id, updatedElementAttributes);
-        studyService.notifyStudyUpdate(id);
-    }
-
-    private void updateNetworkModification(UUID modificationToNotifyId, ElementAttributes updatedModificationAttributes) {
-        // modificationToNotifyId can be the id of the shared parent modification
-        // updatedModificationAttributes.getElementUuid() is the real id of the network modification to update
-        networkModificationService.updateModificationNameAndDescription(
-                updatedModificationAttributes.getElementUuid(), updatedModificationAttributes.getElementName(), updatedModificationAttributes.getDescription());
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        notificationService.emitElementMetadataUpdated(modificationToNotifyId, userId);
+        metadataService.updateElement(id, elementsInfos.getType(), updatedElementAttributes);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
@@ -650,22 +664,11 @@ public class ExploreService {
         executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
     }
 
-    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
-        List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
-        List<ElementAttributes> modifications = elements.stream()
-                .filter(element -> MODIFICATION.equals(element.getType()))
-                .toList();
-
-        if (modifications.isEmpty()) {
-            return elements;
-        }
-
-        List<ElementAttributes> directoryElements = elements.stream()
-                .filter(element -> !MODIFICATION.equals(element.getType()))
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
-        return elements;
+    /**
+     * returns the directory elements from directory service but enriched with some specific data hold by the objects that override basic elements data
+     */
+    public List<ElementAttributes> getEnrichedDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        return metadataService.enrichDirectoryElements(directoryService.getDirectoryElements(directoryUuid, types, recursive));
     }
 
     public void shareNetworkModification(UUID studyUuid,
@@ -675,7 +678,7 @@ public class ExploreService {
                                          String description,
                                          UUID parentDirectoryUuid) {
         directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
-        if (directoryService.isElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
+        if (doesElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
             throw new ExploreException(ELEMENT_ALREADY_EXISTS,
                     "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
         }

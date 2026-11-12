@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Setter;
-import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -180,19 +179,5 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .uri(networkModificationServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
-    }
-
-    @Override
-    public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        if (metadataItem != null) {
-            if (metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
-                elementAttributes.setElementName(metadataItem.get(NAME).toString());
-            }
-            if (metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
-                elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
-            }
-        }
-        elementAttributes.setSpecificMetadata(metadataItem);
-        return elementAttributes;
     }
 }

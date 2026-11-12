@@ -123,20 +123,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(String.class);
     }
 
-    public boolean isElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
-        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
-        if (elements.isEmpty()) {
-            return false;
-        }
-        // the real name of a modification is stored in the network modification server, not in the directory
-        if (MODIFICATION.equals(elementType)) {
-            elements = completeElementsAttributes(elements);
-        }
-        return elements.stream()
-            .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
-            .anyMatch(element -> elementName.equals(element.getElementName()));
-    }
-
     public String getPath(UUID elementUuid) {
         String path = UriComponentsBuilder
             .fromPath(DIRECTORIES_SERVER_ROOT_PATH + "/elements/{elementUuid}/path")
@@ -366,40 +352,12 @@ public class DirectoryService implements IDirectoryElementsService {
         service.delete(elementAttribute.getElementUuid());
     }
 
-    private IDirectoryElementsService getGenericService(String type) {
+    public IDirectoryElementsService getGenericService(String type) {
         IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
         if (iDirectoryElementsService == null) {
             throw new IllegalArgumentException("Unknown element type " + type);
         }
         return iDirectoryElementsService;
-    }
-
-    private List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> elements) {
-        Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
-                .collect(Collectors.groupingBy(ElementAttributes::getType));
-        List<ElementAttributes> listOfElements = new ArrayList<>();
-        for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
-            IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
-            listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
-        }
-        return listOfElements;
-    }
-
-    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
-        List<ElementAttributes> elements = getElementsInfos(ids, elementTypes);
-        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
-        if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
-            listOfElements = listOfElements.stream()
-                .filter(element -> {
-                    Object equipmentType = element.getSpecificMetadata().get("equipmentType");
-                    if (equipmentType != null) { // could be null for some elements
-                        return equipmentTypes.contains(equipmentType);
-                    }
-                    return true; // keep other elements
-                })
-                .collect(Collectors.toList());
-        }
-        return listOfElements;
     }
 
     public Map<UUID, String> getElementsName(List<UUID> ids) {
