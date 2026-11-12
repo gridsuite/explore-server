@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SingleLineDiagramService;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,9 +16,12 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,6 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @Import(AllowAllAuthorizationTestConfiguration.class)
 class SingleLineDiagramTest {
 
@@ -55,6 +61,9 @@ class SingleLineDiagramTest {
     @MockitoBean
     private DirectoryService directoryService;
 
+    @Autowired
+    private OutputDestination output;
+
     @Captor
     private ArgumentCaptor<ElementAttributes> elementAttributesCaptor;
 
@@ -63,6 +72,7 @@ class SingleLineDiagramTest {
     private static final UUID NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID DUPLICATE_NAD_CONFIG_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
+    private static final String USER_ID = "userId";
 
     @BeforeEach
     void setUp() {
@@ -84,10 +94,10 @@ class SingleLineDiagramTest {
         UUID stubId = wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL))
                 .willReturn(WireMock.ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
-                )).getId();
+                        .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))))
+                .getId();
 
-        mockMvc.perform(post(BASE_URL)
+        String result = mockMvc.perform(post(BASE_URL)
                     .param("name", "diagram config name")
                     .param("type", "DIAGRAM_CONFIG")
                     .param("description", "the config description")
@@ -95,8 +105,10 @@ class SingleLineDiagramTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content("{\"depth\": 1}"))
                     .andExpect(status().isOk())
-                    .andReturn();
+                    .andReturn().getResponse().getContentAsString();
+        UUID createdDiagramConfigId = mapper.readValue(result, UUID.class);
 
+        assertEquals(NAD_CONFIG_UUID, createdDiagramConfigId);
         verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
@@ -110,7 +122,9 @@ class SingleLineDiagramTest {
                         .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
                 )).getId();
 
+        output.clear();
         mockMvc.perform(put(BASE_URL + "/" + NAD_CONFIG_UUID)
+                    .header(HEADER_USER_ID, USER_ID)
                     .param("name", "diagram config name")
                     .param("type", "DIAGRAM_CONFIG")
                     .param("description", "the config description")
@@ -121,6 +135,7 @@ class SingleLineDiagramTest {
 
         verify(directoryService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture());
         wireMockUtils.verifyPutRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID, Map.of(), false);
+        TestUtils.assertElementUpdatedSent(output, NAD_CONFIG_UUID, USER_ID);
     }
 
     @Test
@@ -131,11 +146,13 @@ class SingleLineDiagramTest {
                         .withBody(mapper.writeValueAsString(DUPLICATE_NAD_CONFIG_UUID.toString()))
                 )).getId();
 
-        mockMvc.perform(post(BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate")
+        String result = mockMvc.perform(post(BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate")
                     .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                     .andExpect(status().isOk())
-                    .andReturn();
+                    .andReturn().getResponse().getContentAsString();
+        UUID duplicatedDiagramConfigId = mapper.readValue(result, UUID.class);
 
+        assertEquals(DUPLICATE_NAD_CONFIG_UUID, duplicatedDiagramConfigId);
         verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED);
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate", Map.of(), false);
     }
