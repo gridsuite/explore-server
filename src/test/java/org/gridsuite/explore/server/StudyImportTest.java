@@ -10,7 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import com.powsybl.ws.commons.security.restclient.AllowAllAuthorizationTestConfiguration;
+import com.powsybl.ws.commons.security.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.ContingencyListService;
