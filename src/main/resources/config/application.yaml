@@ -14,3 +14,8 @@ spring:
         publishElementUpdate-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}element.update
       output-bindings: publishDirectoryUpdate-out-0;publishElementUpdate-out-0
+
+powsybl-ws:
+  autoconfigure:
+    authorization-system:
+      enable: true

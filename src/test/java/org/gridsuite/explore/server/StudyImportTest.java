@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import com.powsybl.ws.commons.security.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.ContingencyListService;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -48,6 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
  */
 @AutoConfigureMockMvc
+@Import(AllowAllAuthorizationTestConfiguration.class)
 @SpringBootTest
 class StudyImportTest {
 

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.controller;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
 import org.gridsuite.explore.server.dto.*;
+import org.gridsuite.explore.server.dto.CaseInfo;
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.PermissionDTO;
+import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.dto;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
