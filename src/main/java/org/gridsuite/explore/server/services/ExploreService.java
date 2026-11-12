@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;

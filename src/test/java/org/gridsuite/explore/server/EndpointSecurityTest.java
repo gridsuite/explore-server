@@ -7,7 +7,7 @@
 
 package org.gridsuite.explore.server;
 
-import com.powsybl.ws.commons.security.AbstractEndpointSecurityTest;
+import com.powsybl.ws.commons.security.restclient.AbstractEndpointSecurityTest;
 import org.gridsuite.explore.server.controller.SupervisionController;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -19,8 +19,8 @@ import java.util.List;
 @SpringBootTest
 class EndpointSecurityTest extends AbstractEndpointSecurityTest {
 
-    protected String getControllerPackage() {
-        return "org.gridsuite.explore.server.controller";
+    protected List<String> getControllerPackages() {
+        return List.of("org.gridsuite.explore.server.controller");
     }
 
     /**

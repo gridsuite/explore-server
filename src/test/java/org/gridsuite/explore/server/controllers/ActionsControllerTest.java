@@ -8,7 +8,7 @@ package org.gridsuite.explore.server.controllers;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.powsybl.ws.commons.security.AllowAllAuthorizationTestConfiguration;
+import com.powsybl.ws.commons.security.restclient.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.ExploreApplication;
 import org.gridsuite.explore.server.services.ContingencyListService;
 import org.gridsuite.explore.server.utils.WireMockUtils;

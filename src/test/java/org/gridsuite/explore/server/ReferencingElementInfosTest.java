@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.powsybl.ws.commons.security.AllowAllAuthorizationTestConfiguration;
+import com.powsybl.ws.commons.security.restclient.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;

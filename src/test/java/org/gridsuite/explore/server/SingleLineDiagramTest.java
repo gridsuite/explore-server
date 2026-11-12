@@ -3,7 +3,7 @@ package org.gridsuite.explore.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.powsybl.ws.commons.security.AllowAllAuthorizationTestConfiguration;
+import com.powsybl.ws.commons.security.restclient.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SingleLineDiagramService;
