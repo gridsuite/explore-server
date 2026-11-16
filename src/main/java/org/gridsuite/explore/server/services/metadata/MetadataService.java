@@ -57,6 +57,7 @@ public class MetadataService {
                 .collect(Collectors.toList());
     }
 
+    // nom obsolète -> nom et description ?
     public void updateElement(UUID elementUuid, String elementType, ElementAttributes elementAttributes) {
         MetadataHandler handler = handlers.get(elementType);
         if (handler != null) {

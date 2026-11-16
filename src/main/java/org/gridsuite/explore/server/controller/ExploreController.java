@@ -474,7 +474,8 @@ public class ExploreController {
                                                                     @RequestBody List<UUID> modificationUuids,
                                                                     @RequestParam(QUERY_PARAM_NAME) String name,
                                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        exploreService.replaceCompositeModification(id, modificationUuids, name);
+        // TODO : description seems to be lost -> to be corrected
+        exploreService.replaceCompositeModification(id, modificationUuids, name, description);
         return ResponseEntity.ok().build();
     }
 

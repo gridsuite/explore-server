@@ -311,18 +311,6 @@ public class DirectoryService implements IDirectoryElementsService {
         );
     }
 
-    public void notifyDirectoryChanged(UUID elementUuid) {
-        String path = UriComponentsBuilder
-            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/notification?type={update_directory}")
-            .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
-            .toUriString();
-
-        restClient.post()
-            .uri(directoryServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
-    }
-
     private List<ElementAttributes> getDirectoryElements(UUID directoryUuid) {
         return getDirectoryElements(directoryUuid, null, null);
     }

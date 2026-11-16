@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
  */
 
-public interface IDirectoryElementsService {
+public interface IDirectoryElementsService { // ajouter directory service et mettre le updateElement par défaut ici
 
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
