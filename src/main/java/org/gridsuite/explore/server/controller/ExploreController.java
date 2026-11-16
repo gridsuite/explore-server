@@ -42,6 +42,7 @@ public class ExploreController {
     private static final String QUERY_PARAM_STUDY_NAME = "studyName";
     private static final String QUERY_PARAM_DESCRIPTION = "description";
     private static final String QUERY_PARAM_PARENT_DIRECTORY_ID = "parentDirectoryUuid";
+    private static final String QUERY_PARAM_ROOT_NETWORK_TAGS = "rootNetworkTags";
 
     private static final String QUERY_PARAM_TYPE = "type";
     private static final String QUERY_PARAM_ARCHIVE_FILE = "archiveFile";
@@ -459,8 +460,10 @@ public class ExploreController {
     public ResponseEntity<UUID> createCompositeModification(@RequestBody List<UUID> modificationAttributes,
                                                             @RequestParam(QUERY_PARAM_NAME) String name,
                                                             @RequestParam(QUERY_PARAM_DESCRIPTION) String description,
-                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid) {
-        return ResponseEntity.ok().body(exploreService.createCompositeModification(modificationAttributes, name, description, parentDirectoryUuid));
+                                                            @RequestParam(QUERY_PARAM_PARENT_DIRECTORY_ID) UUID parentDirectoryUuid,
+                                                            @Parameter(description = "Root network tags of the study the modifications come from")
+                                                            @RequestParam(QUERY_PARAM_ROOT_NETWORK_TAGS) List<String> rootNetworkTags) {
+        return ResponseEntity.ok().body(exploreService.createCompositeModification(modificationAttributes, name, description, parentDirectoryUuid, rootNetworkTags));
     }
 
     @PutMapping(value = "/explore/composite-modifications/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
