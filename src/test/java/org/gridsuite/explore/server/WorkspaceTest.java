@@ -134,19 +134,25 @@ class WorkspaceTest {
 
     @Test
     void testDuplicateWorkspace() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
+        String result = mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID duplicatedWorkspaceId = objectMapper.readValue(result, UUID.class);
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
+        assertEquals(WORKSPACE_UUID, duplicatedWorkspaceId);
     }
 
     @Test
     void testDuplicateWorkspaceInSameDirectory() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
-                .andExpect(status().isCreated());
+        String result = mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID createdWorkspaceId = objectMapper.readValue(result, UUID.class);
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
+        assertEquals(WORKSPACE_UUID, createdWorkspaceId);
     }
 
     @Test

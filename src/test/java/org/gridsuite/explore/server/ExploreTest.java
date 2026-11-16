@@ -104,6 +104,7 @@ class ExploreTest {
     private static final UUID CONTINGENCY_LIST_COPY_UUID = UUID.randomUUID();
     private static final UUID FILTER_COPY_UUID = UUID.randomUUID();
     private static final UUID PARAMETER_COPY_UUID = UUID.randomUUID();
+    private static final UUID PARAMETERS_CREATED_UUID = UUID.randomUUID();
     private static final UUID ELEMENT_COPY_UUID = UUID.randomUUID();
     private static final UUID PROCESS_CONFIG_UUID = UUID.randomUUID();
     private static final UUID NODE_UUID = UUID.randomUUID();
@@ -312,7 +313,8 @@ class ExploreTest {
                     } else if (bodyStr.contains("filename=\"" + TEST_INCORRECT_FILE + "\"")) {  // import file with errors
                         return new MockResponse.Builder().code(422).body("file with bad extension").build();
                     } else {
-                        return new MockResponse(200);
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                                mapper.writeValueAsString(CASE_COPY_UUID));
                     }
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), privateStudyAttributesAsString);
@@ -398,6 +400,9 @@ class ExploreTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
+                } else if (path.matches("/v1/parameters.*") && "POST".equals(request.getMethod())) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
+                            mapper.writeValueAsString(PARAMETERS_CREATED_UUID));
                 } else if (path.matches("/v1/parameters.*")) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/network-composite-modifications.*") && "POST".equals(request.getMethod())) {
@@ -550,6 +555,22 @@ class ExploreTest {
         }
     }
 
+    private UUID getResponseUuid(MvcResult result) throws Exception {
+        UUID responseUuid = mapper.readValue(result.getResponse().getContentAsString(), UUID.class);
+        assertNotNull(responseUuid);
+        return responseUuid;
+    }
+
+    private UUID getCreatedElementUuid(final MockWebServer server) throws Exception {
+        var requests = TestUtils.getRequestsWithBodyDone(2, server);
+        var directoryElementRequest = requests.stream()
+                .filter(request -> request.getPath().contains("/elements?allowNewName="))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Directory element creation request not found"));
+
+        return mapper.readValue(directoryElementRequest.getBody(), ElementAttributes.class).getElementUuid();
+    }
+
     @Test
     @WithMockUser(username = USER1)
     void testCreateStudyFromExistingCase() throws Exception {
@@ -575,11 +596,14 @@ class ExploreTest {
         try (InputStream is = new FileInputStream(ResourceUtils.getFile("classpath:" + TEST_FILE))) {
             MockMultipartFile mockFile = new MockMultipartFile("caseFile", TEST_FILE, MediaType.TEXT_XML_VALUE, is);
 
-            mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+            MvcResult result = mockMvc.perform(multipart("/v1/explore/cases/{caseName}?description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                             STUDY1, "description", PARENT_DIRECTORY_UUID).file(mockFile)
                             .contentType(MediaType.MULTIPART_FORM_DATA)
                     )
-                    .andExpect(status().isOk());
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            assertEquals(CASE_COPY_UUID, getResponseUuid(result));
         }
     }
 
@@ -608,42 +632,58 @@ class ExploreTest {
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateIdentifierContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+    void testCreateIdentifierContingencyList(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Contingency list content\"")
-        ).andExpect(status().isOk());
+        )
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals(getCreatedElementUuid(server), getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateFilterBasedContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+    void testCreateFilterBasedContingencyList(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(post("/v1/explore/filters-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
             "filterBasedContingencyListName", PARENT_DIRECTORY_UUID, null)
             .contentType(MediaType.APPLICATION_JSON)
             .content("\"Contingency list content\"")
-        ).andExpect(status().isOk());
+        )
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals(getCreatedElementUuid(server), getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateFilter() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
+    void testCreateFilter(final MockWebServer server) throws Exception {
+        MvcResult result = mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Filter content\"")
-        ).andExpect(status().isOk());
+        )
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals(getCreatedElementUuid(server), getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
     void testCreateParameters() throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/parameters?name={name}&type={type}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "paramName", ParametersType.VOLTAGE_INIT_PARAMETERS.name(), "comment", PARENT_DIRECTORY_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("\"Parameters content\"")
-        ).andExpect(status().isOk());
+        )
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals(PARAMETERS_CREATED_UUID, getResponseUuid(result));
     }
 
     @Test
@@ -731,97 +771,136 @@ class ExploreTest {
 
     @Test
     void testDuplicateCase() throws Exception {
-        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         CASE_UUID, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(CASE_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateCaseInSameDirectory() throws Exception {
-        mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
+        MvcResult result = mockMvc.perform(post("/v1/explore/cases/{caseUuid}/duplicate",
                         CASE_UUID, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(CASE_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
     void testDuplicateExistingCase() throws Exception {
-        mockMvc.perform(post("/v1/explore/cases/{caseName}/duplicate-existing",
+        MvcResult result = mockMvc.perform(post("/v1/explore/cases/{caseName}/duplicate-existing",
                         DUPLICATED_CASE_NAME)
                         .param("sourceCaseUuid", CASE_UUID.toString())
                         .param("description", CASE_DESCRIPTION)
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        assertEquals(CASE_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateFilter() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                 FILTER_UUID, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(FILTER_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateFilterInSameDirectory() throws Exception {
-        mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate", FILTER_UUID, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+        MvcResult result = mockMvc.perform(post("/v1/explore/filters/{filterUuid}/duplicate", FILTER_UUID, PARENT_DIRECTORY_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(FILTER_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateIdentifierContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(CONTINGENCY_LIST_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateIdentifierContingencyListInSameDirectory() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/contingency-lists/{identifierContingencyListUuid}/duplicate?type={contingencyListsType}",
                 CONTINGENCY_LIST_UUID, ContingencyListType.IDENTIFIERS))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(CONTINGENCY_LIST_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateFilterBasedContingencyList() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}&parentDirectoryUuid={parentDirectoryUuid}",
             CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(CONTINGENCY_LIST_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateFilterBasedContingencyListInSameDirectory() throws Exception {
-        mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/contingency-lists/{contingencyListUuid}/duplicate?type={contingencyListsType}",
             CONTINGENCY_LIST_UUID, ContingencyListType.FILTERS))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(CONTINGENCY_LIST_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
     void testDuplicateStudy() throws Exception {
-        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate?parentDirectoryUuid={parentDirectoryUuid}",
                         PUBLIC_STUDY_UUID, PARENT_DIRECTORY_UUID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(STUDY_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
     void testDuplicateStudyInSameDirectory() throws Exception {
-        mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate", PUBLIC_STUDY_UUID))
-                .andExpect(status().isOk());
+        MvcResult result = mockMvc.perform(post("/v1/explore/studies/{studyUuid}/duplicate", PUBLIC_STUDY_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(STUDY_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateParameters() throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}&parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}&parentDirectoryUuid={parentDirectoryUuid}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS, PARENT_DIRECTORY_UUID))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals(PARAMETER_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
     void testDuplicateParametersInSameDirectory() throws Exception {
-        mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/parameters/{parameterUuid}/duplicate?type={type}",
                         PARAMETERS_UUID, ParametersType.LOADFLOW_PARAMETERS))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(PARAMETER_COPY_UUID, getResponseUuid(result));
     }
 
     @Test
@@ -930,13 +1009,18 @@ class ExploreTest {
     }
 
     @Test
-    void testCreateNetworkCompositeModifications() throws Exception {
+    void testCreateNetworkCompositeModifications(final MockWebServer server) throws Exception {
         List<UUID> modificationUuids = Arrays.asList(MODIFICATION_UUID, UUID.randomUUID());
-        mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
+        MvcResult result = mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "nameModif", "descModif", PARENT_DIRECTORY_UUID)
+                .param("rootNetworkTags", "PH1", "PH2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(modificationUuids))
-        ).andExpect(status().isOk());
+        )
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals(MODIFICATION_UUID, getResponseUuid(result));
     }
 
     @Test

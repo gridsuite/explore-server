@@ -94,10 +94,10 @@ class SingleLineDiagramTest {
         UUID stubId = wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL))
                 .willReturn(WireMock.ok()
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))
-                )).getId();
+                        .withBody(mapper.writeValueAsString(NAD_CONFIG_UUID.toString()))))
+                .getId();
 
-        mockMvc.perform(post(BASE_URL)
+        String result = mockMvc.perform(post(BASE_URL)
                     .param("name", "diagram config name")
                     .param("type", "DIAGRAM_CONFIG")
                     .param("description", "the config description")
@@ -105,8 +105,10 @@ class SingleLineDiagramTest {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content("{\"depth\": 1}"))
                     .andExpect(status().isOk())
-                    .andReturn();
+                    .andReturn().getResponse().getContentAsString();
+        UUID createdDiagramConfigId = mapper.readValue(result, UUID.class);
 
+        assertEquals(NAD_CONFIG_UUID, createdDiagramConfigId);
         verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
@@ -144,11 +146,13 @@ class SingleLineDiagramTest {
                         .withBody(mapper.writeValueAsString(DUPLICATE_NAD_CONFIG_UUID.toString()))
                 )).getId();
 
-        mockMvc.perform(post(BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate")
+        String result = mockMvc.perform(post(BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate")
                     .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                     .andExpect(status().isOk())
-                    .andReturn();
+                    .andReturn().getResponse().getContentAsString();
+        UUID duplicatedDiagramConfigId = mapper.readValue(result, UUID.class);
 
+        assertEquals(DUPLICATE_NAD_CONFIG_UUID, duplicatedDiagramConfigId);
         verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED);
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate", Map.of(), false);
     }

@@ -31,7 +31,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -64,6 +67,7 @@ class SpreadsheetConfigCollectionTest {
     private static final String BASE_URL = "/v1/explore/spreadsheet-config-collections";
     private static final String SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL = "/v1/spreadsheet-config-collections";
     private static final UUID COLLECTION_UUID = UUID.randomUUID();
+    private static final UUID DUPLICATED_COLLECTION_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final String USER_ID = "testUser";
     private static final String COLLECTION_NAME = "Test Collection";
@@ -93,12 +97,12 @@ class SpreadsheetConfigCollectionTest {
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID + "/spreadsheet-configs/replace-all")) {
                     return new MockResponse(204);
                 } else if (path.matches(SPREADSHEET_CONFIG_COLLECTION_SERVER_BASE_URL + "/" + COLLECTION_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
+                    return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(DUPLICATED_COLLECTION_UUID));
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod()) || path.matches("/v1/elements/" + COLLECTION_UUID)) {
                     ElementAttributes elementAttributes = new ElementAttributes(COLLECTION_UUID, COLLECTION_NAME, "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(elementAttributes));
                 } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*")) {
-                    ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), COLLECTION_NAME + " (copy)", "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
+                    ElementAttributes duplicatedElement = new ElementAttributes(DUPLICATED_COLLECTION_UUID, COLLECTION_NAME + " (copy)", "SPREADSHEET_CONFIG_COLLECTION", USER_ID, 0L, null);
                     return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
                 } else if (path.matches("/v1/elements\\?forDeletion=true&ids=.*")) {
                     return new MockResponse(200);
@@ -114,25 +118,31 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testCreateSpreadsheetConfigCollection() throws Exception {
-        ResultActions perform = mockMvc.perform(post(BASE_URL)
+        String response = mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(spreadsheetConfigCollectionJson)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
-        perform.andExpect(status().isCreated());
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(COLLECTION_UUID, objectMapper.readValue(response, UUID.class));
     }
 
     @Test
     void testCreateSpreadsheetConfigCollectionWithMerge() throws Exception {
         String configIds = "[\"" + UUID.randomUUID() + "\", \"" + UUID.randomUUID() + "\"]";
-        ResultActions perform = mockMvc.perform(post(BASE_URL + "/merge")
+        String response = mockMvc.perform(post(BASE_URL + "/merge")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(configIds)
                 .param("name", COLLECTION_NAME)
                 .param("description", "Test Description")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
-        perform.andExpect(status().isCreated());
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(COLLECTION_UUID, objectMapper.readValue(response, UUID.class));
     }
 
     @Test
@@ -158,9 +168,12 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollection(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
+        String response = mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(DUPLICATED_COLLECTION_UUID, objectMapper.readValue(response, UUID.class));
 
         // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
         TestUtils.getRequestsWithBodyDone(2, mockWebServer);
@@ -168,8 +181,11 @@ class SpreadsheetConfigCollectionTest {
 
     @Test
     void testDuplicateSpreadsheetConfigCollectionInSameDirectory(final MockWebServer mockWebServer) throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate"))
-                .andExpect(status().isCreated());
+        String response = mockMvc.perform(post(BASE_URL + "/" + COLLECTION_UUID + "/duplicate"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(DUPLICATED_COLLECTION_UUID, objectMapper.readValue(response, UUID.class));
 
         // check that we called 1 time spreadsheet-config to duplicate the spreadsheet config and 1 time directory to duplicate the element
         TestUtils.getRequestsWithBodyDone(2, mockWebServer);
