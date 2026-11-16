@@ -426,6 +426,8 @@ class ExploreTest {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationAttributeList);
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                    } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/nameModif/newNameCandidate[?]type=MODIFICATION")) {
+                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE), "nameModif");
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate[?]type=type")) {
                         return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
                     } else if (path.matches("/v1/elements/indexation-infos[?]directoryUuid=directoryUuid&userInput=userInput")) {
