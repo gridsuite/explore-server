@@ -20,6 +20,8 @@ import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
+import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
@@ -176,7 +178,7 @@ class ExploreTest {
     @Autowired
     private FilterService filterService;
     @Autowired
-    private StudyService studyService;
+    private StudyRestService studyRestService;
     @Autowired
     private NetworkModificationService networkModificationService;
     @Autowired
@@ -215,7 +217,7 @@ class ExploreTest {
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
 
         directoryService.setDirectoryServerBaseUri(baseUrl);
-        studyService.setStudyServerBaseUri(baseUrl);
+        studyRestService.setStudyServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
@@ -230,7 +232,7 @@ class ExploreTest {
             wireMockServer.start();
             directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
             filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
-            studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+            studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         }
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));

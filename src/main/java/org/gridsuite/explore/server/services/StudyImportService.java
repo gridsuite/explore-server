@@ -13,7 +13,8 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
+import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,24 +78,26 @@ public class StudyImportService {
     );
 
     private final CaseService caseService;
+    private final StudyRestService studyRestService;
     private final StudyService studyService;
     private final ObjectMapper objectMapper;
     private final ExploreService exploreService;
-    private final DirectoryService directoryService;
     private final FilterService filterService;
     private final ContingencyListService contingencyListService;
     private final ParametersService parametersService;
     private final NetworkModificationService networkModificationService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
 
-    public StudyImportService(CaseService caseService, StudyService studyService, ObjectMapper objectMapper, ExploreService exploreService,
-                              DirectoryService directoryService, FilterService filterService, ContingencyListService contingencyListService,
-                              ParametersService parametersService, NetworkModificationService networkModificationService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
+    public StudyImportService(CaseService caseService, StudyRestService studyRestService, StudyService studyService,
+                              ObjectMapper objectMapper, ExploreService exploreService,
+                              FilterService filterService, ContingencyListService contingencyListService,
+                              ParametersService parametersService, NetworkModificationService networkModificationService,
+                              SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
         this.caseService = caseService;
+        this.studyRestService = studyRestService;
         this.studyService = studyService;
         this.objectMapper = objectMapper;
         this.exploreService = exploreService;
-        this.directoryService = directoryService;
         this.filterService = filterService;
         this.contingencyListService = contingencyListService;
         this.parametersService = parametersService;
@@ -182,7 +185,7 @@ public class StudyImportService {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
         ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
-        studyService.importStudy(treeExportInfos);
+        studyRestService.importStudy(treeExportInfos);
         exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
         return createdStudyUuid;
     }
@@ -269,7 +272,7 @@ public class StudyImportService {
                     // the study voltage init parameters wrap the computation parameters, applyModifications is not exported and keeps its default value
                     parameters = objectMapper.writeValueAsString(Map.of(COMPUTATION_PARAMETERS, objectMapper.readTree(parameters), APPLY_MODIFICATIONS, true));
                 }
-                studyService.setStudyParameters(studyUuid, computation.getValue(), parameters);
+                studyRestService.setStudyParameters(studyUuid, computation.getValue(), parameters);
             }
         }
     }
@@ -313,7 +316,7 @@ public class StudyImportService {
             return;
         }
         String spreadsheetConfigCollection = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
-        studyService.setSpreadsheetConfigCollection(studyUuid, spreadsheetConfigCollection);
+        studyRestService.setSpreadsheetConfigCollection(studyUuid, spreadsheetConfigCollection);
         UUID newCollectionUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollection(spreadsheetConfigCollection);
         ElementAttributes collectionElementAttributes = new ElementAttributes(newCollectionUuid, SPREADSHEET_CONFIG_COLLECTION_ELEMENT_NAME, SPREADSHEET_CONFIG_COLLECTION, 0L, description);
         exploreService.createDirectoryElementWithNewNameOrDeleteElement(collectionElementAttributes, parentDirectoryUuid, spreadsheetConfigCollectionService::delete);

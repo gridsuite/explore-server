@@ -1,18 +1,19 @@
-/**
- * Copyright (c) 2021, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.study;
 
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.TreeExportInfos;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,33 +26,40 @@ import java.util.stream.Collectors;
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
  */
 @Service
-public class StudyService implements IDirectoryElementsService {
+public class StudyRestService {
     private static final String STUDY_SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
     private static final String NOTIFICATION_TYPE_METADATA_UPDATED = "metadata_updated";
     private final RestClient restClient;
+    @Setter
     private String studyServerBaseUri;
 
-    public StudyService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+    public StudyRestService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.studyServerBaseUri = remoteServicesProperties.getServiceUri("study-server");
         this.restClient = restClient;
     }
 
-    public void setStudyServerBaseUri(String studyServerBaseUri) {
-        this.studyServerBaseUri = studyServerBaseUri;
+    public void delete(UUID studyUuid) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
+                .buildAndExpand(studyUuid)
+                .toUriString();
+        restClient.delete()
+                .uri(studyServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public void insertStudyWithExistingCaseFile(UUID studyUuid, UUID caseUuid, String caseFormat,
-            Map<String, Object> importParams, Boolean duplicateCase, String firstRootNetworkName) {
+                                                Map<String, Object> importParams, Boolean duplicateCase, String firstRootNetworkName) {
         var uriComponentsBuilder = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/cases/{caseUuid}")
-            .queryParam("studyUuid", studyUuid)
-            .queryParam("duplicateCase", duplicateCase)
-            .queryParam("caseFormat", caseFormat);
+                        "/studies/cases/{caseUuid}")
+                .queryParam("studyUuid", studyUuid)
+                .queryParam("duplicateCase", duplicateCase)
+                .queryParam("caseFormat", caseFormat);
 
         if (!StringUtils.isBlank(firstRootNetworkName)) {
             uriComponentsBuilder.queryParam("firstRootNetworkName", firstRootNetworkName);
@@ -59,8 +67,8 @@ public class StudyService implements IDirectoryElementsService {
 
         String path = uriComponentsBuilder.buildAndExpand(caseUuid).toUriString();
         var request = restClient.post()
-            .uri(studyServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON);
+                .uri(studyServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON);
         if (importParams != null) {
             request.body(importParams);
         }
@@ -70,29 +78,17 @@ public class StudyService implements IDirectoryElementsService {
 
     public UUID duplicateStudy(UUID studyId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
-                "/studies/{uuid}/duplicate")
-            .buildAndExpand(studyId)
-            .toUriString();
+                        "/studies/{uuid}/duplicate")
+                .buildAndExpand(studyId)
+                .toUriString();
 
         return restClient.post()
-            .uri(studyServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .body(UUID.class);
+                .uri(studyServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(UUID.class);
     }
 
-    @Override
-    public void delete(UUID studyUuid) {
-        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}")
-                .buildAndExpand(studyUuid)
-                .toUriString();
-        restClient.delete()
-            .uri(studyServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
-    }
-
-    @Override
     public List<Map<String, Object>> getMetadata(List<UUID> studiesUuids) {
         var ids = studiesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
@@ -101,9 +97,9 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(studyServerBaseUri + path)
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() { });
+                .uri(studyServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
     }
 
     public List<NodeInfos> getNodesInfos(List<UUID> nodeUuids) {
@@ -113,9 +109,9 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(studyServerBaseUri + path)
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() { });
+                .uri(studyServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
     }
 
     public ResponseEntity<Void> notifyStudyUpdate(UUID studyUuid) {
@@ -125,20 +121,20 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(studyServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(studyServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public void importStudy(TreeExportInfos treeExportInfos) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/import").toUriString();
 
         restClient.post()
-                    .uri(studyServerBaseUri + path)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(treeExportInfos)
-                    .retrieve()
-                    .toBodilessEntity();
+                .uri(studyServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(treeExportInfos)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public void setStudyParameters(UUID studyUuid, String computationPath, String parameters) {
@@ -147,11 +143,11 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.post()
-                    .uri(studyServerBaseUri + path)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(parameters)
-                    .retrieve()
-                    .toBodilessEntity();
+                .uri(studyServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(parameters)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public void setSpreadsheetConfigCollection(UUID studyUuid, String spreadsheetConfigCollection) {
@@ -160,11 +156,11 @@ public class StudyService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.post()
-            .uri(studyServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(spreadsheetConfigCollection)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(studyServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(spreadsheetConfigCollection)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public void shareModification(UUID studyUuid,
@@ -187,11 +183,5 @@ public class StudyService implements IDirectoryElementsService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .toBodilessEntity();
-    }
-
-    @Override
-    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, DirectoryService directoryService) {
-        directoryService.updateElement(elementUuid, elementAttributes);
-        notifyStudyUpdate(elementUuid);
     }
 }

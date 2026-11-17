@@ -17,9 +17,9 @@ import org.gridsuite.explore.server.services.FilterService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
-import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ class StudyImportTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private StudyService studyService;
+    private StudyRestService studyRestService;
 
     @Autowired
     private CaseService caseService;
@@ -97,7 +97,7 @@ class StudyImportTest {
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
-        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+        studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         caseService.setBaseUri(wireMockServer.baseUrl());
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());

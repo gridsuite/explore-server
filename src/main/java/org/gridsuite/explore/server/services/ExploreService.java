@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
+import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -57,6 +59,7 @@ public class ExploreService {
     static final String DYNAMIC_MAPPING = "DYNAMIC_MAPPING";
 
     private final DirectoryService directoryService;
+    private final StudyRestService studyRestService;
     private final StudyService studyService;
     private final ContingencyListService contingencyListService;
     private final NetworkModificationService networkModificationService;
@@ -81,6 +84,7 @@ public class ExploreService {
     public ExploreService(
         DirectoryService directoryService,
         StudyService studyService,
+        StudyRestService studyRestService,
         ContingencyListService contingencyListService,
         FilterService filterService,
         NetworkModificationService networkModificationService,
@@ -100,6 +104,7 @@ public class ExploreService {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
+        this.studyRestService = studyRestService;
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
         this.networkModificationService = networkModificationService;
@@ -167,7 +172,7 @@ public class ExploreService {
 
         String elementName = getElementName(caseInfo.caseUuid());
 
-        studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
+        studyRestService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
         return elementAttributes.getElementUuid();
     }
@@ -218,7 +223,7 @@ public class ExploreService {
     }
 
     public UUID duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
-        UUID newStudyId = studyService.duplicateStudy(sourceStudyUuid);
+        UUID newStudyId = studyRestService.duplicateStudy(sourceStudyUuid);
         duplicateDirectoryElementOrDeleteElement(sourceStudyUuid, newStudyId, targetDirectoryId, CREATING, studyService::delete);
         return newStudyId;
     }
@@ -538,7 +543,7 @@ public class ExploreService {
     private void notifyElementMoved(ElementAttributes element) {
         // send notification if the study name was updated
         if (STUDY.equals(element.getType())) {
-            studyService.notifyStudyUpdate(element.getElementUuid());
+            studyRestService.notifyStudyUpdate(element.getElementUuid());
         }
     }
 
@@ -572,7 +577,7 @@ public class ExploreService {
         }
 
         // a node can be referenced several times, and several nodes often belong to the same study: query each only once
-        Map<UUID, NodeInfos> nodeInfosByUuid = studyService.getNodesInfos(referencedNodeUuids.stream().distinct().toList())
+        Map<UUID, NodeInfos> nodeInfosByUuid = studyRestService.getNodesInfos(referencedNodeUuids.stream().distinct().toList())
                 .stream().collect(Collectors.toMap(NodeInfos::nodeUuid, Function.identity()));
         List<UUID> studyUuids = nodeInfosByUuid.values().stream().map(NodeInfos::studyUuid).distinct().toList();
         if (studyUuids.isEmpty()) {
@@ -737,7 +742,7 @@ public class ExploreService {
                     "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
         }
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        studyService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);
+        studyRestService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);
     }
 
     public List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> elements) {
