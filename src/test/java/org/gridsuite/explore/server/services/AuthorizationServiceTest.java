@@ -8,6 +8,7 @@
 package org.gridsuite.explore.server.services;
 
 import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

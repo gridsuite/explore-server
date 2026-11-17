@@ -4,13 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.directory;
 
+import lombok.Setter;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.PermissionType;
-import org.gridsuite.explore.server.utils.ParametersType;
+import org.gridsuite.explore.server.services.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -24,12 +25,11 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.explore.server.services.ExploreService.*;
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
+// TODO : pas sûr que ça ait un sens que DirectoryService implements IDirectoryElementsService
 public class DirectoryService implements IDirectoryElementsService {
 
     private static final String DIRECTORY_SERVER_API_VERSION = "v1";
@@ -58,44 +58,15 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
     private static final String PARAM_STATUS = "status";
-
-    private final Map<String, IDirectoryElementsService> genericServices;
     private final RestClient restClient;
+    @Setter
     private String directoryServerBaseUri;
 
     public DirectoryService(
-        FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-        CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
-        SingleLineDiagramService singleLineDiagramService, WorkspaceService workspaceService, MonitorService monitorService, DynamicMappingService dynamicMappingService,
-        RestClient restClient,
-        RemoteServicesProperties remoteServicesProperties) {
+            RestClient restClient,
+            RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restClient = restClient;
-        this.genericServices = Map.ofEntries(
-            Map.entry(FILTER, filterService),
-            Map.entry(CONTINGENCY_LIST, contingencyListService),
-            Map.entry(STUDY, studyService),
-            Map.entry(DIRECTORY, this),
-            Map.entry(MODIFICATION, networkModificationService),
-            Map.entry(CASE, caseService),
-            Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
-            Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
-            Map.entry(DIAGRAM_CONFIG, singleLineDiagramService),
-            Map.entry(WORKSPACE, workspaceService),
-            Map.entry(PROCESS_CONFIG, monitorService),
-            Map.entry(DYNAMIC_MAPPING, dynamicMappingService),
-            Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), parametersService)
-        );
-    }
-
-    public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
-        this.directoryServerBaseUri = directoryServerBaseUri;
     }
 
     public String getRootDirectories(List<String> types) {
@@ -334,20 +305,6 @@ public class DirectoryService implements IDirectoryElementsService {
         return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
     }
 
-    public void deleteElement(UUID id) {
-        ElementAttributes elementAttribute = getElementInfos(id);
-        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
-        service.delete(elementAttribute.getElementUuid());
-    }
-
-    public IDirectoryElementsService getGenericService(String type) {
-        IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
-        if (iDirectoryElementsService == null) {
-            throw new IllegalArgumentException("Unknown element type " + type);
-        }
-        return iDirectoryElementsService;
-    }
-
     public Map<UUID, String> getElementsName(List<UUID> ids) {
         String path = UriComponentsBuilder
             .fromPath(ELEMENTS_SERVER_ROOT_PATH + "/names")
@@ -376,12 +333,8 @@ public class DirectoryService implements IDirectoryElementsService {
             .toBodilessEntity();
     }
 
-    // TODO get id/type recursively then do batch delete
     @Override
-    public void delete(UUID id) {
-        List<ElementAttributes> elementAttributesList = getDirectoryElements(id);
-        elementAttributesList.forEach(elementAttributes -> deleteElement(elementAttributes.getElementUuid()));
-    }
+    public void delete(UUID id) { }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid) {
         String path = UriComponentsBuilder

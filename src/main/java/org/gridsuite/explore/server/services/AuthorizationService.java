@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import jakarta.validation.constraints.NotNull;
 import org.gridsuite.explore.server.dto.PermissionType;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

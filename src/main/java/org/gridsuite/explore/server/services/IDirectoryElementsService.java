@@ -6,6 +6,9 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -15,11 +18,30 @@ import java.util.stream.Collectors;
  * @author Jacques Borsenberger <jacques.borsenberger at rte-france.com>
  */
 
-public interface IDirectoryElementsService { // ajouter directory service et mettre le updateElement par défaut ici
+public interface IDirectoryElementsService {
 
     default List<Map<String, Object>> getMetadata(List<UUID> uuidList) {
         return uuidList.stream().map(e -> Map.of("id", (Object) e)).collect(Collectors.toList());
     }
 
     void delete(UUID id);
+
+    // TODO : nom obsolète -> nom et description ?
+    default void updateElement(UUID elementUuid, ElementAttributes elementAttributes, DirectoryService directoryService) {
+        directoryService.updateElement(elementUuid, elementAttributes);
+    }
+
+    default ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        return setSpecificMetadata(elementAttributes, metadataItem);
+    }
+
+    // by default there are no overriden elements : we just return the basic directory elements
+    default List<ElementAttributes> overrideBasicDirectoryElements(List<ElementAttributes> elementAttributes) {
+        return elementAttributes;
+    }
+
+    static ElementAttributes setSpecificMetadata(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        elementAttributes.setSpecificMetadata(metadataItem);
+        return elementAttributes;
+    }
 }

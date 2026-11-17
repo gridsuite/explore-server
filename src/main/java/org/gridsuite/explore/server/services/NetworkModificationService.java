@@ -8,6 +8,8 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,10 +42,12 @@ public class NetworkModificationService implements IDirectoryElementsService {
     @Setter
     private String networkModificationServerBaseUri;
     private final RestClient restClient;
+    private final NotificationService notificationService;
 
-    public NetworkModificationService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+    public NetworkModificationService(RestClient restClient, RemoteServicesProperties remoteServicesProperties, NotificationService notificationService) {
         this.restClient = restClient;
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
+        this.notificationService = notificationService;
     }
 
     public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {
@@ -180,5 +184,54 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .uri(networkModificationServerBaseUri + path)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
+    }
+
+    @Override
+    public void updateElement(UUID modificationToNotifyId, ElementAttributes elementAttributes, DirectoryService directoryService) {
+        // modificationToNotifyId can be the id of the shared parent modification
+        // elementAttributes.getElementUuid() is the real id of the network modification to update
+        updateModificationNameAndDescription(
+                elementAttributes.getElementUuid(), elementAttributes.getElementName(), elementAttributes.getDescription());
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        notificationService.emitElementMetadataUpdated(modificationToNotifyId, userId);
+    }
+
+    @Override
+    public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> specificServiceMetadata) {
+        if (specificServiceMetadata != null) {
+            if (specificServiceMetadata.get(NAME) != null) {
+                elementAttributes.setElementName(specificServiceMetadata.get(NAME).toString());
+            }
+            if (specificServiceMetadata.get(DESCRIPTION) != null) {
+                elementAttributes.setDescription(specificServiceMetadata.get(DESCRIPTION).toString());
+            }
+        }
+        return IDirectoryElementsService.setSpecificMetadata(elementAttributes, specificServiceMetadata);
+    }
+
+    @Override
+    public List<ElementAttributes> overrideBasicDirectoryElements(List<ElementAttributes> elementsAttributes) {
+        List<UUID> modificationUuids = elementsAttributes.stream().map(ElementAttributes::getElementUuid).toList();
+        List<Map<String, Object>> specificServiceMetadataList = getMetadata(modificationUuids);
+
+        modificationUuids.forEach(modificationUuid -> {
+            Map<String, Object> specificServiceMetadata = specificServiceMetadataList.stream()
+                    .filter(metadata ->
+                            metadata.get("id").equals(modificationUuid.toString()))
+                    .findFirst().orElse(null);
+            ElementAttributes elementAttributes = elementsAttributes.stream()
+                    .filter(attributes -> attributes.getElementUuid().equals(modificationUuid))
+                    .findFirst().orElse(null);
+            if (specificServiceMetadata != null && elementAttributes != null) {
+                if (specificServiceMetadata.get(NAME) != null) {
+                    elementAttributes.setElementName(specificServiceMetadata.get(NAME).toString());
+                }
+                if (specificServiceMetadata.get(DESCRIPTION) != null) {
+                    elementAttributes.setDescription(specificServiceMetadata.get(DESCRIPTION).toString());
+                }
+            }
+        });
+
+        return elementsAttributes;
     }
 }

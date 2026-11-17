@@ -19,6 +19,7 @@ import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
@@ -168,6 +169,8 @@ class ExploreTest {
     private MockMvc mockMvc;
     @MockitoSpyBean
     private DirectoryService directoryService;
+    @MockitoSpyBean
+    private ExploreService exploreService;
     @Autowired
     private ContingencyListService contingencyListService;
     @Autowired
@@ -1387,7 +1390,7 @@ class ExploreTest {
                 .andReturn();
         String expected = mapper.writeValueAsString(
                 List.of(new ElementAttributes(MODIFICATION_UUID, "modification name", "MODIFICATION",
-                        USER1, 0, "modif description", modificationSpecificMetadata)));
+                        USER1, 0, "modif description", null)));
         assertEquals(expected, result.getResponse().getContentAsString());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
@@ -1547,7 +1550,7 @@ class ExploreTest {
                 .willReturn(WireMock.ok()));
 
         doThrow(new RuntimeException("simulated failure"))
-                .when(directoryService).deleteElement(FILTER_UUID);
+                .when(exploreService).delete(FILTER_UUID);
 
         CountDownLatch reconciliationDone = new CountDownLatch(1);
         doAnswer(invocation -> {

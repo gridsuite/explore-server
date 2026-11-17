@@ -13,6 +13,7 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +130,7 @@ public class StudyImportService {
             importSpreadsheetConfigCollection(tempDir.resolve(SPREADSHEETS_DIR), studyUuid, oldUuidsToNewUuids, parentDirectoryUuid, description);
             return studyUuid;
         } catch (Exception e) {
-            directoryService.deleteElement(parentDirectoryUuid);
+            exploreService.delete(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);
         } finally {
             try {

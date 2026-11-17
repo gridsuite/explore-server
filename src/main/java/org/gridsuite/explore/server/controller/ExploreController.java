@@ -13,9 +13,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
 import org.gridsuite.explore.server.dto.*;
-import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
@@ -195,7 +195,7 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canDelete(#elementUuid)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid) {
-        exploreService.deleteElement(elementUuid);
+        exploreService.deleteElementAsync(elementUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -474,7 +474,6 @@ public class ExploreController {
                                                                     @RequestBody List<UUID> modificationUuids,
                                                                     @RequestParam(QUERY_PARAM_NAME) String name,
                                                                     @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        // TODO : description seems to be lost -> to be corrected
         exploreService.replaceCompositeModification(id, modificationUuids, name, description);
         return ResponseEntity.ok().build();
     }
@@ -573,7 +572,7 @@ public class ExploreController {
     public ResponseEntity<List<ElementAttributes>> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
                                                        @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getEnrichedDirectoryElements(directoryUuid, types, recursive));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getOverridableDirectoryElements(directoryUuid, types, recursive));
     }
 
     @PostMapping(value = "/explore/directories/{directoryUuid}/directories", consumes = MediaType.APPLICATION_JSON_VALUE)

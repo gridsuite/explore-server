@@ -1,8 +1,9 @@
 package org.gridsuite.explore.server;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.DirectoryService;
+import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.SupervisionService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
@@ -26,6 +27,8 @@ class SupervisionTest {
 
     @MockitoBean
     private DirectoryService directoryService;
+    @MockitoBean
+    private ExploreService exploreService;
 
     @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
     private RestClient restClient;
@@ -38,8 +41,8 @@ class SupervisionTest {
         List<UUID> uuidsToDelete = List.of(filter.getElementUuid(), study.getElementUuid());
         supervisionService.deleteElements(uuidsToDelete);
         // deletions of both elements with foreach towards respective microservice
-        verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
-        verify(directoryService, times(1)).deleteElement(study.getElementUuid());
+        verify(exploreService, times(1)).delete(filter.getElementUuid());
+        verify(exploreService, times(1)).delete(study.getElementUuid());
         // deletions of both elements in directory server
         verify(restClient).delete();
     }
@@ -48,12 +51,12 @@ class SupervisionTest {
     void testDeleteElementsWithErrors() {
         List<UUID> uuidsToDelete = List.of(filter.getElementUuid(), study.getElementUuid());
         // one deletion will fail, this test checks deletions does not stop even when one of them is throwing       an exception
-        doThrow(new RuntimeException("An error occured when deleting filter")).when(directoryService).deleteElement(filter.getElementUuid());
+        doThrow(new RuntimeException("An error occured when deleting filter")).when(exploreService).delete(filter.getElementUuid());
 
         supervisionService.deleteElements(uuidsToDelete);
         // deletions of both elements with foreach towards respective microservice
-        verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
-        verify(directoryService, times(1)).deleteElement(study.getElementUuid());
+        verify(exploreService, times(1)).delete(filter.getElementUuid());
+        verify(exploreService, times(1)).delete(study.getElementUuid());
         // deletions of both elements in directory server
         verify(restClient).delete();
     }

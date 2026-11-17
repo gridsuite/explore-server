@@ -10,7 +10,7 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
-import org.gridsuite.explore.server.services.metadata.MetadataService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -72,7 +73,8 @@ public class ExploreService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramService singleLineDiagramService;
-    private final MetadataService metadataService;
+
+    private final Map<String, IDirectoryElementsService> genericServices;
 
     public ExploreService(
         DirectoryService directoryService,
@@ -91,8 +93,7 @@ public class ExploreService {
         SingleLineDiagramService singleLineDiagramService,
         MonitorService monitorService,
         DynamicMappingService dynamicMappingService,
-        ExploreServerExecutionService exploreServerExecutionService,
-        MetadataService metadataService) {
+        ExploreServerExecutionService exploreServerExecutionService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -111,7 +112,51 @@ public class ExploreService {
         this.monitorService = monitorService;
         this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
-        this.metadataService = metadataService;
+        this.genericServices = Map.ofEntries(
+                Map.entry(FILTER, filterService),
+                Map.entry(CONTINGENCY_LIST, contingencyListService),
+                Map.entry(STUDY, studyService),
+                Map.entry(DIRECTORY, directoryService),
+                Map.entry(MODIFICATION, networkModificationService),
+                Map.entry(CASE, caseService),
+                Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
+                Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
+                Map.entry(DIAGRAM_CONFIG, singleLineDiagramService),
+                Map.entry(WORKSPACE, workspaceService),
+                Map.entry(PROCESS_CONFIG, monitorService),
+                Map.entry(DYNAMIC_MAPPING, dynamicMappingService),
+                Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
+                Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
+                Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
+                Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
+                Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService),
+                Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), parametersService),
+                Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), parametersService)
+        );
+    }
+
+    public IDirectoryElementsService getGenericService(String type) {
+        IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
+        if (iDirectoryElementsService == null) {
+            throw new IllegalArgumentException("Unknown element type " + type);
+        }
+        return iDirectoryElementsService;
+    }
+
+    public void delete(UUID id) {
+        ElementAttributes element = directoryService.getElementInfos(id);
+        if (DIRECTORY.equals(element.getType())) {
+            directoryService.getDirectoryElements(id, null, true).stream()
+                    .filter(e -> !DIRECTORY.equals(e.getType()))
+                    .collect(Collectors.groupingBy(ElementAttributes::getType))
+                    .forEach((type, elems) -> elems.forEach(e -> getGenericService(type).delete(e.getElementUuid())));
+        } else {
+            getGenericService(element.getType()).delete(id);
+        }
+        /* TODO supprimer ce commentaire si le delete de dossiers fonctionne bien
+        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
+        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
+        service.delete(elementAttribute.getElementUuid());*/
     }
 
     public UUID createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
@@ -143,7 +188,7 @@ public class ExploreService {
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
         List<ElementAttributes> elements = directoryService.getElementsInfos(ids, elementTypes);
-        List<ElementAttributes> listOfElements = metadataService.completeElementsAttributes(elements);
+        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
             listOfElements = listOfElements.stream()
@@ -160,7 +205,7 @@ public class ExploreService {
     }
 
     public boolean doesElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
-        List<ElementAttributes> elements = getEnrichedDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
+        List<ElementAttributes> elements = getOverridableDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
         if (elements.isEmpty()) {
             return false;
         }
@@ -237,7 +282,7 @@ public class ExploreService {
         return newFilterId;
     }
 
-    public CompletableFuture<Void> deleteElement(UUID id) {
+    public CompletableFuture<Void> deleteElementAsync(UUID id) {
         return exploreServerExecutionService.runAsync(() -> doDeleteElement(id));
     }
 
@@ -245,7 +290,7 @@ public class ExploreService {
         try {
             directoryService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING);
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
-            directoryService.deleteElement(id);
+            delete(id);
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
         } finally {
@@ -263,7 +308,7 @@ public class ExploreService {
         List<UUID> failedIds = new ArrayList<>();
         for (UUID id : uuids) {
             try {
-                directoryService.deleteElement(id);
+                delete(id);
                 deletedIds.add(id);
             } catch (Exception e) {
                 LOGGER.error("Failed to delete element {}", id, e);
@@ -484,7 +529,7 @@ public class ExploreService {
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
         // TODO set type in updatedElementAttributes from front to avoid a read DB
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        metadataService.updateElement(id, elementsInfos.getType(), updatedElementAttributes);
+        getGenericService(elementsInfos.getType()).updateElement(id, updatedElementAttributes, directoryService);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
@@ -665,10 +710,16 @@ public class ExploreService {
     }
 
     /**
-     * returns the directory elements from directory service but enriched with some specific data hold by the objects that override basic elements data
+     * returns the directory elements from directory service but possibly overriden with some specific data hold by the objects that override basic elements data
      */
-    public List<ElementAttributes> getEnrichedDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
-        return metadataService.enrichDirectoryElements(directoryService.getDirectoryElements(directoryUuid, types, recursive));
+    public List<ElementAttributes> getOverridableDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        return directoryService.getDirectoryElements(directoryUuid, types, recursive)
+                .stream()
+                .collect(Collectors.groupingBy(ElementAttributes::getType))
+                .entrySet().stream()
+                .map(entry -> getGenericService(entry.getKey()).overrideBasicDirectoryElements(entry.getValue()))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
     public void shareNetworkModification(UUID studyUuid,
@@ -684,5 +735,41 @@ public class ExploreService {
         }
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         studyService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);
+    }
+
+    public List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> elements) {
+        return elements.stream()
+                .collect(Collectors.groupingBy(ElementAttributes::getType))
+                .entrySet().stream()
+                .flatMap(entry -> completeElementsAttributes(entry.getKey(), entry.getValue()).stream())
+                .collect(Collectors.toList());
+    }
+
+    private List<ElementAttributes> completeElementsAttributes(String elementType, List<ElementAttributes> elements) {
+        // each service decides how its metadata enrich the element (default: IDirectoryElementsService::setSpecificMetadata)
+        IDirectoryElementsService specificService = getGenericService(elementType);
+
+        Map<String, ElementAttributes> baseMetadataById = elements.stream()
+                .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));
+        try {
+            List<UUID> elementsUuids = elements.stream().map(ElementAttributes::getElementUuid).toList();
+            return specificService.getMetadata(elementsUuids).stream()
+                    .map(specificServiceMetadataItem -> specificService.populateMetadataItem(
+                            baseMetadataById.get(getMetadataItemId(specificServiceMetadataItem)), specificServiceMetadataItem))
+                    .collect(Collectors.toList());
+        } catch (ResourceAccessException _) {
+            LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
+            return elements.stream()
+                    .map(element -> specificService.populateMetadataItem(element, Map.of()))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public static String getMetadataItemId(Map<String, Object> metadataItem) {
+        Object id = metadataItem.get("id");
+        if (id == null) {
+            id = metadataItem.getOrDefault("uuid", "");
+        }
+        return id.toString();
     }
 }

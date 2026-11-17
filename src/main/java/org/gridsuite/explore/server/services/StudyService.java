@@ -7,8 +7,10 @@
 package org.gridsuite.explore.server.services;
 
 import org.apache.commons.lang3.StringUtils;
+import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.TreeExportInfos;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -185,5 +187,11 @@ public class StudyService implements IDirectoryElementsService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    @Override
+    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, DirectoryService directoryService) {
+        directoryService.updateElement(elementUuid, elementAttributes);
+        notifyStudyUpdate(elementUuid);
     }
 }

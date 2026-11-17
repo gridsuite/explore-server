@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;

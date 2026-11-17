@@ -9,6 +9,7 @@ package org.gridsuite.explore.server.services;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;

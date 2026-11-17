@@ -6,10 +6,10 @@
  */
 package org.gridsuite.explore.server;
 
-import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.FilterService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
