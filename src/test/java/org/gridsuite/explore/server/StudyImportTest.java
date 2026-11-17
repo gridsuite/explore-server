@@ -160,7 +160,13 @@ class StudyImportTest {
                 .andReturn();
 
         // Verify the import was initiated
-        assertNotNull(result);
+        TreeExportInfos importedStudy = objectMapper.readValue(
+            wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/v1/studies/import"))).getFirst().getBodyAsString(),
+            TreeExportInfos.class);
+
+        UUID returnedStudyUuid = objectMapper.readValue(result.getResponse().getContentAsString(), UUID.class);
+        assertNotEquals(STUDY_UUID, importedStudy.getStudyUuid());
+        assertEquals(importedStudy.getStudyUuid(), returnedStudyUuid);
     }
 
     @Test

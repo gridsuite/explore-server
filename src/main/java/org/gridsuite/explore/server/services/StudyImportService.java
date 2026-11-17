@@ -108,7 +108,7 @@ public class StudyImportService {
      * @param description the description for the new study
      * @param parentDirectoryUuid the parent directory UUID
      */
-    public void importStudy(MultipartFile archiveFile, String studyName, String description, UUID parentDirectoryUuid) {
+    public UUID importStudy(MultipartFile archiveFile, String studyName, String description, UUID parentDirectoryUuid) {
         Path tempDir = null;
         try {
             tempDir = extractArchiveToDisk(archiveFile);
@@ -127,6 +127,7 @@ public class StudyImportService {
             importComputationParametersFiles(tempDir.resolve(PARAMETERS_DIR), studyUuid, oldUuidsToNewUuids);
             importNetworkModifications(tempDir.resolve(MODIFICATIONS_DIR), oldUuidsToNewUuids, oldGroupUuidsToNewGroupUuids);
             importSpreadsheetConfigCollection(tempDir.resolve(SPREADSHEETS_DIR), studyUuid, oldUuidsToNewUuids, parentDirectoryUuid, description);
+            return studyUuid;
         } catch (Exception e) {
             directoryService.deleteElement(parentDirectoryUuid);
             throw new ExploreException(IMPORT_STUDY_FAILED, "Error while importing study '" + studyName + "': " + e.getMessage(), e);

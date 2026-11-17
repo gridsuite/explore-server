@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -161,5 +163,27 @@ public class StudyService implements IDirectoryElementsService {
             .body(spreadsheetConfigCollection)
             .retrieve()
             .toBodilessEntity();
+    }
+
+    public void shareModification(UUID studyUuid,
+                                  UUID nodeUuid,
+                                  UUID modificationUuid,
+                                  String name,
+                                  String description,
+                                  UUID parentDirectoryUuid,
+                                  String userId) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION + "/studies/{studyUuid}/nodes/{nodeUuid}/network-modifications/{modificationUuid}/share")
+                .queryParam("name", name)
+                .queryParam("description", description)
+                .queryParam("parentDirectoryUuid", parentDirectoryUuid)
+                .buildAndExpand(studyUuid, nodeUuid, modificationUuid)
+                .toUriString();
+
+        restClient.post()
+                .uri(studyServerBaseUri + path)
+                .header(HEADER_USER_ID, userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .toBodilessEntity();
     }
 }
