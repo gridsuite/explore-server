@@ -116,6 +116,18 @@ public class StudyService implements IDirectoryElementsService {
             .body(new ParameterizedTypeReference<>() { });
     }
 
+    /**
+     * @return for each root network tag, how many studies of the given nodes have it; stashed or unknown nodes are ignored
+     */
+    public Map<String, Long> getRootNetworkTagsStudyCount(List<UUID> nodeUuids) {
+        return restClient.post()
+            .uri(studyServerBaseUri + DELIMITER + STUDY_SERVER_API_VERSION + "/nodes/root-network-tags/study-count")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(nodeUuids)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
+    }
+
     public ResponseEntity<Void> notifyStudyUpdate(UUID studyUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/{studyUuid}/notification?type={metadata_updated}")

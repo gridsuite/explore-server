@@ -666,6 +666,18 @@ public class ExploreController {
                 .body(exploreService.getReferencingElementInfos(elementUuid));
     }
 
+    @GetMapping(value = "/explore/elements/{elementUuid}/root-network-tags/study-count", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "For each root network tag, count the studies using the given shared element")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Number of studies using the shared element by root network tag"),
+        @ApiResponse(responseCode = "404", description = "The shared element was not found"),
+    })
+    @PreAuthorize("@authorizationService.canRead(#elementUuid)")
+    public ResponseEntity<Map<String, Long>> getRootNetworkTagsStudyCount(@PathVariable("elementUuid") UUID elementUuid) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(exploreService.getRootNetworkTagsStudyCount(elementUuid));
+    }
+
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get permissions for a directory")
     @ApiResponses(value = {

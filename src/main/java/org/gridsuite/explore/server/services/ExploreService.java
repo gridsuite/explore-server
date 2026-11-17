@@ -500,11 +500,7 @@ public class ExploreService {
      * Elements the user cannot read are omitted.
      */
     public List<ReferencingElementInfos> getReferencingElementInfos(UUID elementUuid) {
-        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
-        List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                .map(ExploreService::getReferencedNodeUuid)
-                .filter(Objects::nonNull)
-                .toList();
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(elementUuid);
         if (referencedNodeUuids.isEmpty()) {
             return List.of();
         }
@@ -527,6 +523,29 @@ public class ExploreService {
                 .filter(Objects::nonNull)
                 .map(nodeInfos -> toReferencingElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
                         parentDirectoryNamesByStudyUuid, identityBySub))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * For each root network tag, counts the studies using a shared element: the studies of the nodes referencing it.
+     * A tag no such study has is absent.
+     */
+    public Map<String, Long> getRootNetworkTagsStudyCount(UUID elementUuid) {
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(elementUuid).stream().distinct().toList();
+        if (referencedNodeUuids.isEmpty()) {
+            return Map.of();
+        }
+        return studyService.getRootNetworkTagsStudyCount(referencedNodeUuids);
+    }
+
+    /**
+     * @return the nodes referencing the shared element, once per reference
+     */
+    private List<UUID> getReferencedNodeUuids(UUID elementUuid) {
+        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
+        return directoryService.getElementInfos(elementUuid).getReferences().stream()
+                .map(ExploreService::getReferencedNodeUuid)
                 .filter(Objects::nonNull)
                 .toList();
     }
