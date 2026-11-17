@@ -26,7 +26,6 @@ public interface IDirectoryElementsService {
 
     void delete(UUID id);
 
-    // TODO : nom obsolète -> nom et description ?
     default void updateElement(UUID elementUuid, ElementAttributes elementAttributes, DirectoryService directoryService) {
         directoryService.updateElement(elementUuid, elementAttributes);
     }
@@ -40,6 +39,7 @@ public interface IDirectoryElementsService {
         return elementAttributes;
     }
 
+    // TODO : est-ce que c'est vraiment nécessaire :
     static ElementAttributes setSpecificMetadata(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;

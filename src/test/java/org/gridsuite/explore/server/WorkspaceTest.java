@@ -11,8 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.WorkspaceService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +58,7 @@ class WorkspaceTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private WorkspaceService workspaceService;
+    private WorkspaceRestService workspaceRestService;
 
     @MockitoBean
     private DirectoryService directoryService;
@@ -83,7 +83,7 @@ class WorkspaceTest {
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
-        workspaceService.setStudyConfigServerBaseUri(wireMockServer.baseUrl());
+        workspaceRestService.setStudyConfigServerBaseUri(wireMockServer.baseUrl());
 
         wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_CONFIG_SERVER_BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
                 .willReturn(WireMock.aResponse()

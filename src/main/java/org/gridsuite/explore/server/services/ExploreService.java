@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
+import org.gridsuite.explore.server.services.workspace.WorkspaceService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
@@ -63,7 +65,7 @@ public class ExploreService {
     private final ParametersService parametersService;
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
-    private final WorkspaceService workspaceService;
+    private final WorkspaceRestService workspaceRestService;
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
     private final MonitorService monitorService;
@@ -87,6 +89,7 @@ public class ExploreService {
         UserAdminService userAdminService,
         SpreadsheetConfigService spreadsheetConfigService,
         SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
+        WorkspaceRestService workspaceRestService,
         WorkspaceService workspaceService,
         UserIdentityService userIdentityService,
         NotificationService notificationService,
@@ -105,7 +108,7 @@ public class ExploreService {
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
-        this.workspaceService = workspaceService;
+        this.workspaceRestService = workspaceRestService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
@@ -467,21 +470,21 @@ public class ExploreService {
     }
 
     public UUID createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid) {
-        UUID newWorkspaceId = workspaceService.duplicateWorkspace(workspaceId);
+        UUID newWorkspaceId = workspaceRestService.duplicateWorkspace(workspaceId);
         ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, 0, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, workspaceService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, workspaceRestService::delete);
         return newWorkspaceId;
     }
 
     public void replaceWorkspace(UUID id, UUID workspaceId, String name, String description) {
-        workspaceService.replaceWorkspace(id, workspaceId);
+        workspaceRestService.replaceWorkspace(id, workspaceId);
         updateElementNameAndDescription(id, name, description);
         notificationService.emitElementUpdated(id);
     }
 
     public UUID duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
-        UUID newWorkspaceId = workspaceService.duplicateWorkspace(sourceId);
-        duplicateDirectoryElementOrDeleteElement(sourceId, newWorkspaceId, targetDirectoryId, workspaceService::delete);
+        UUID newWorkspaceId = workspaceRestService.duplicateWorkspace(sourceId);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newWorkspaceId, targetDirectoryId, workspaceRestService::delete);
         return newWorkspaceId;
     }
 
