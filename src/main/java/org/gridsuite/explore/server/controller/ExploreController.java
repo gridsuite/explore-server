@@ -478,6 +478,29 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping(value = "/explore/composite-modifications/{id}/network-modifications/metadata", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Update the metadata, as the activation, of network modifications of a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The metadata has been updated")})
+    @PreAuthorize("@authorizationService.canWrite(#id)")
+    public ResponseEntity<Void> updateModificationsMetadata(@PathVariable UUID id,
+                                                            @RequestParam("uuids") List<UUID> modificationUuids,
+                                                            @RequestBody String metadata) {
+        exploreService.updateModificationsMetadata(id, modificationUuids, metadata);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(value = "/explore/composite-modifications/{id}/root-network-applicability")
+    @Operation(summary = "Update the applicability on a root network of network modifications of a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The applicability has been updated")})
+    @PreAuthorize("@authorizationService.canWrite(#id)")
+    public ResponseEntity<Void> updateRootNetworkApplicability(@PathVariable UUID id,
+                                                               @RequestParam("uuids") List<UUID> modificationUuids,
+                                                               @RequestParam("rootNetworkTag") String rootNetworkTag,
+                                                               @RequestParam("applicable") boolean applicable) {
+        exploreService.updateRootNetworkApplicability(id, modificationUuids, rootNetworkTag, applicable);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/explore/composite-modifications/{id}/duplicate")
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Composite modification has been duplicated and corresponding element created in the directory")})
