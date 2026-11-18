@@ -10,6 +10,8 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
+import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
@@ -84,6 +86,7 @@ public class ExploreService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramService singleLineDiagramService;
+    private final SingleLineDiagramRestService singleLineDiagramRestService;
 
     private final Map<String, IDirectoryElementsService> genericServices;
 
@@ -106,7 +109,7 @@ public class ExploreService {
             SingleLineDiagramService singleLineDiagramService,
             MonitorService monitorService,
             DynamicMappingService dynamicMappingService,
-            ExploreServerExecutionService exploreServerExecutionService) {
+            ExploreServerExecutionService exploreServerExecutionService, SingleLineDiagramRestService singleLineDiagramRestService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -128,6 +131,7 @@ public class ExploreService {
         this.monitorService = monitorService;
         this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
+        this.singleLineDiagramRestService = singleLineDiagramRestService;
         this.genericServices = Map.ofEntries(
                 Map.entry(FILTER, filterService),
                 Map.entry(CONTINGENCY_LIST, contingencyListService),
@@ -410,20 +414,20 @@ public class ExploreService {
     }
 
     public UUID createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid) {
-        UUID diagramConfigUuid = singleLineDiagramService.createDiagramConfig(diagramConfig);
+        UUID diagramConfigUuid = singleLineDiagramRestService.createDiagramConfig(diagramConfig);
         ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, singleLineDiagramService::delete);
         return diagramConfigUuid;
     }
 
     public UUID duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId) {
-        UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
+        UUID newConfigUuid = singleLineDiagramRestService.duplicateDiagramConfig(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newConfigUuid, targetDirectoryId, singleLineDiagramService::delete);
         return newConfigUuid;
     }
 
     public void updateDiagramConfig(UUID id, String diagramConfig, String name, String description) {
-        singleLineDiagramService.updateDiagramConfig(id, diagramConfig);
+        singleLineDiagramRestService.updateDiagramConfig(id, diagramConfig);
         updateElementNameAndDescription(id, name, description);
         notificationService.emitElementUpdated(id);
     }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.SingleLineDiagramService;
+import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -56,7 +56,7 @@ class SingleLineDiagramTest {
     private ObjectMapper mapper;
 
     @Autowired
-    private SingleLineDiagramService singleLineDiagramService;
+    private SingleLineDiagramRestService singleLineDiagramRestService;
 
     @MockitoBean
     private DirectoryService directoryService;
@@ -79,7 +79,7 @@ class SingleLineDiagramTest {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
-        singleLineDiagramService.setSingleLineDiagramServerBaseUri(wireMockServer.baseUrl());
+        singleLineDiagramRestService.setSingleLineDiagramServerBaseUri(wireMockServer.baseUrl());
     }
 
     @AfterEach
