@@ -29,7 +29,6 @@ import java.util.UUID;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,8 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CompositeModificationApplicabilityTest {
 
     private static final String APPLICABILITY_PATH = "/v1/network-modifications/root-network-applicability";
-    private static final String METADATA_PATH = "/v1/network-modifications";
-    private static final String ACTIVATION = "{\"activated\":false,\"type\":\"LOAD_CREATION\"}";
+    private static final String ACTIVATION_PATH = "/v1/network-modifications";
     private static final UUID COMPOSITE_UUID = UUID.randomUUID();
     private static final UUID FIRST_UUID = UUID.randomUUID();
     private static final UUID SECOND_UUID = UUID.randomUUID();
@@ -67,7 +65,7 @@ class CompositeModificationApplicabilityTest {
         wireMockServer.start();
         networkModificationService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
         wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(APPLICABILITY_PATH)).willReturn(WireMock.ok()));
-        wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(METADATA_PATH)).willReturn(WireMock.ok()));
+        wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(ACTIVATION_PATH)).willReturn(WireMock.ok()));
         output.clear();
     }
 
@@ -108,30 +106,28 @@ class CompositeModificationApplicabilityTest {
     }
 
     @Test
-    void testUpdateModificationsMetadata() throws Exception {
-        mockMvc.perform(put("/v1/explore/composite-modifications/{id}/network-modifications/metadata", COMPOSITE_UUID)
+    void testUpdateCompositeModificationActivation() throws Exception {
+        mockMvc.perform(put("/v1/explore/composite-modifications/{id}/network-modifications/activation", COMPOSITE_UUID)
                         .header(HEADER_USER_ID, USER_ID)
                         .param("uuids", FIRST_UUID.toString(), SECOND_UUID.toString())
-                        .contentType(APPLICATION_JSON)
-                        .content(ACTIVATION))
+                        .param("active", "false"))
                 .andExpect(status().isOk());
 
-        wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlPathEqualTo(METADATA_PATH))
+        wireMockServer.verify(1, WireMock.putRequestedFor(WireMock.urlPathEqualTo(ACTIVATION_PATH))
                 .withQueryParam("uuids", WireMock.havingExactly(FIRST_UUID.toString(), SECOND_UUID.toString()))
-                .withHeader(HEADER_USER_ID, WireMock.equalTo(USER_ID))
-                .withRequestBody(WireMock.equalToJson(ACTIVATION)));
+                .withQueryParam("active", WireMock.equalTo("false"))
+                .withHeader(HEADER_USER_ID, WireMock.equalTo(USER_ID)));
         TestUtils.assertElementUpdatedSent(output, COMPOSITE_UUID, USER_ID);
     }
 
     @Test
-    void testUpdateModificationsMetadataFailureIsNotNotified() throws Exception {
-        wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(METADATA_PATH)).willReturn(WireMock.forbidden()));
+    void testUpdateCompositeModificationActivationFailureIsNotNotified() throws Exception {
+        wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(ACTIVATION_PATH)).willReturn(WireMock.forbidden()));
 
-        mockMvc.perform(put("/v1/explore/composite-modifications/{id}/network-modifications/metadata", COMPOSITE_UUID)
+        mockMvc.perform(put("/v1/explore/composite-modifications/{id}/network-modifications/activation", COMPOSITE_UUID)
                         .header(HEADER_USER_ID, USER_ID)
                         .param("uuids", FIRST_UUID.toString())
-                        .contentType(APPLICATION_JSON)
-                        .content(ACTIVATION))
+                        .param("active", "true"))
                 .andExpect(status().isForbidden());
 
         assertNull(output.receive(100, "element.update"));

@@ -478,14 +478,14 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "/explore/composite-modifications/{id}/network-modifications/metadata", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Update the metadata, as the activation, of network modifications of a composite modification")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The metadata has been updated")})
-    @PreAuthorize("@authorizationService.canWrite(#id)")
-    public ResponseEntity<Void> updateModificationsMetadata(@PathVariable UUID id,
-                                                            @RequestParam("uuids") List<UUID> modificationUuids,
-                                                            @RequestBody String metadata) {
-        exploreService.updateModificationsMetadata(id, modificationUuids, metadata);
+    @PutMapping(value = "/explore/composite-modifications/{compositeId}/network-modifications/activation")
+    @Operation(summary = "Update the activation of a composite modification")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The activation has been updated")})
+    @PreAuthorize("@authorizationService.canWrite(#compositeId)")
+    public ResponseEntity<Void> updateCompositeModificationActivation(@PathVariable UUID compositeId,
+                                                                      @RequestParam("uuids") List<UUID> childrenModificationUuids,
+                                                                      @RequestParam("active") boolean active) {
+        exploreService.updateCompositeModificationActivation(compositeId, childrenModificationUuids, active);
         return ResponseEntity.ok().build();
     }
 

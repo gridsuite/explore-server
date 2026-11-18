@@ -276,12 +276,8 @@ public class ExploreService {
         updateElementNameAndDescription(id, name, description);
     }
 
-    /**
-     * The activation is held by the modifications themselves, hence shared by every study using them. The network
-     * modification server only notifies the composites used in a study.
-     */
-    public void updateModificationsMetadata(UUID compositeModificationId, List<UUID> modificationUuids, String metadata) {
-        networkModificationService.updateModificationsMetadata(modificationUuids, metadata);
+    public void updateCompositeModificationActivation(UUID compositeModificationId, List<UUID> childrenModificationUuids, boolean active) {
+        networkModificationService.updateCompositeModificationActivation(childrenModificationUuids, active);
         notificationService.emitElementUpdated(compositeModificationId);
     }
 
@@ -542,8 +538,7 @@ public class ExploreService {
     }
 
     /**
-     * For each root network tag, counts the studies using a shared composite: the studies of the nodes referencing it,
-     * each counted once per tag. A tag no such study has is absent.
+     * For each root network tag, counts the studies using a shared composite: the studies of the nodes referencing it
      */
     public Map<String, Long> countStudiesByTagFromSharedComposite(UUID compositeUuid) {
         List<UUID> referencedNodeUuids = getReferencedNodeUuids(compositeUuid).stream().distinct().toList();
