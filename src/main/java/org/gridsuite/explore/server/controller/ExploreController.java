@@ -489,15 +489,15 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "/explore/composite-modifications/{id}/root-network-applicability")
+    @PutMapping(value = "/explore/composite-modifications/{compositeId}/root-network-applicability")
     @Operation(summary = "Update the applicability on a root network of network modifications of a composite modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The applicability has been updated")})
-    @PreAuthorize("@authorizationService.canWrite(#id)")
-    public ResponseEntity<Void> updateRootNetworkApplicability(@PathVariable UUID id,
-                                                               @RequestParam("uuids") List<UUID> modificationUuids,
-                                                               @RequestParam("rootNetworkTag") String rootNetworkTag,
-                                                               @RequestParam("applicable") boolean applicable) {
-        exploreService.updateRootNetworkApplicability(id, modificationUuids, rootNetworkTag, applicable);
+    @PreAuthorize("@authorizationService.canWrite(#compositeId)")
+    public ResponseEntity<Void> updateCompositeModificationApplicability(@PathVariable UUID compositeId,
+                                                                         @RequestParam("uuids") List<UUID> childrenModificationUuids,
+                                                                         @RequestParam("rootNetworkTag") String rootNetworkTag,
+                                                                         @RequestParam("applicable") boolean applicable) {
+        exploreService.updateCompositeModificationApplicability(compositeId, childrenModificationUuids, rootNetworkTag, applicable);
         return ResponseEntity.ok().build();
     }
 
@@ -689,16 +689,16 @@ public class ExploreController {
                 .body(exploreService.getReferencingElementInfos(elementUuid));
     }
 
-    @GetMapping(value = "/explore/elements/{elementUuid}/root-network-tags/study-count", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "For each root network tag, count the studies using the given shared element")
+    @GetMapping(value = "/explore/composite-modifications/{compositeId}/root-network-tags/study-count", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "For each root network tag, count the studies using the given composite modification")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Number of studies using the shared element by root network tag"),
-        @ApiResponse(responseCode = "404", description = "The shared element was not found"),
+        @ApiResponse(responseCode = "200", description = "Number of studies using the composite modification by root network tag"),
+        @ApiResponse(responseCode = "404", description = "The composite modification was not found"),
     })
-    @PreAuthorize("@authorizationService.canRead(#elementUuid)")
-    public ResponseEntity<Map<String, Long>> getRootNetworkTagsStudyCount(@PathVariable("elementUuid") UUID elementUuid) {
+    @PreAuthorize("@authorizationService.canRead(#compositeId)")
+    public ResponseEntity<Map<String, Long>> getCompositeModificationApplicabilityInfos(@PathVariable UUID compositeId) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(exploreService.getRootNetworkTagsStudyCount(elementUuid));
+                .body(exploreService.countStudiesByTagFromSharedComposite(compositeId));
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/permissions", produces = MediaType.APPLICATION_JSON_VALUE)

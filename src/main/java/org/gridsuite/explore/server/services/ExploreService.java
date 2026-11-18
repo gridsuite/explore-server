@@ -285,12 +285,8 @@ public class ExploreService {
         notificationService.emitElementUpdated(compositeModificationId);
     }
 
-    /**
-     * The applicability is held by the modifications themselves, hence shared by every study using them. The network
-     * modification server only notifies the composites used in a study.
-     */
-    public void updateRootNetworkApplicability(UUID compositeModificationId, List<UUID> modificationUuids, String rootNetworkTag, boolean applicable) {
-        networkModificationService.updateRootNetworkApplicability(modificationUuids, rootNetworkTag, applicable);
+    public void updateCompositeModificationApplicability(UUID compositeModificationId, List<UUID> childrenModificationUuids, String rootNetworkTag, boolean applicable) {
+        networkModificationService.updateRootNetworkApplicability(childrenModificationUuids, rootNetworkTag, applicable);
         notificationService.emitElementUpdated(compositeModificationId);
     }
 
@@ -546,15 +542,22 @@ public class ExploreService {
     }
 
     /**
-     * For each root network tag, counts the studies using a shared element: the studies of the nodes referencing it.
-     * A tag no such study has is absent.
+     * For each root network tag, counts the studies using a shared composite: the studies of the nodes referencing it,
+     * each counted once per tag. A tag no such study has is absent.
      */
-    public Map<String, Long> getRootNetworkTagsStudyCount(UUID elementUuid) {
-        List<UUID> referencedNodeUuids = getReferencedNodeUuids(elementUuid).stream().distinct().toList();
+    public Map<String, Long> countStudiesByTagFromSharedComposite(UUID compositeUuid) {
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(compositeUuid).stream().distinct().toList();
         if (referencedNodeUuids.isEmpty()) {
             return Map.of();
         }
-        return studyService.getRootNetworkTagsStudyCount(referencedNodeUuids);
+        List<UUID> studyUuids = studyService.getNodesInfos(referencedNodeUuids).stream()
+                .map(NodeInfos::studyUuid)
+                .distinct()
+                .toList();
+        if (studyUuids.isEmpty()) {
+            return Map.of();
+        }
+        return studyService.getRootNetworkTagsStudyCount(studyUuids);
     }
 
     /**

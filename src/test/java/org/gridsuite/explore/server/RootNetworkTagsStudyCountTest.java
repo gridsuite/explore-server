@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;
 import org.gridsuite.explore.server.dto.ReferenceContainer;
 import org.gridsuite.explore.server.services.DirectoryService;
@@ -57,10 +58,13 @@ class RootNetworkTagsStudyCountTest {
     private static final UUID SHARED_ELEMENT_UUID = UUID.randomUUID();
     private static final UUID NODE_1_UUID = UUID.randomUUID();
     private static final UUID NODE_2_UUID = UUID.randomUUID();
+    private static final UUID NODE_3_UUID = UUID.randomUUID();
     private static final UUID STUDY_1_UUID = UUID.randomUUID();
+    private static final UUID STUDY_2_UUID = UUID.randomUUID();
 
     private static final String SHARED_ELEMENT_PATH = "/v1/elements/" + SHARED_ELEMENT_UUID;
-    private static final String STUDY_COUNT_PATH = "/v1/nodes/root-network-tags/study-count";
+    private static final String NODES_INFOS_PATH = "/v1/nodes/infos";
+    private static final String STUDY_COUNT_PATH = "/v1/studies/root-network-tags/study-count";
 
     @BeforeEach
     void setUp() {
@@ -97,7 +101,7 @@ class RootNetworkTagsStudyCountTest {
     }
 
     private Map<String, Long> getRootNetworkTagsStudyCount() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/root-network-tags/study-count", SHARED_ELEMENT_UUID))
+        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modifications/{compositeUuid}/root-network-tags/study-count", SHARED_ELEMENT_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
         return objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() { });
@@ -109,19 +113,30 @@ class RootNetworkTagsStudyCountTest {
                 // node 1: at the root of its node, referenced twice
                 reference(ReferenceAttributes.ReferenceType.STUDY_NODE, STUDY_1_UUID, NODE_1_UUID),
                 reference(ReferenceAttributes.ReferenceType.STUDY_NODE, STUDY_1_UUID, NODE_1_UUID),
-                // node 2: inside a composite of the node
+                // node 2: inside a composite of the node, in the same study as node 1
                 reference(ReferenceAttributes.ReferenceType.STUDY_NODE_NETWORK_MODIFICATION, NODE_2_UUID, UUID.randomUUID()),
+                reference(ReferenceAttributes.ReferenceType.STUDY_NODE, STUDY_2_UUID, NODE_3_UUID),
                 // not in a study: ignored
                 reference(ReferenceAttributes.ReferenceType.DIRECTORY_NETWORK_MODIFICATION, UUID.randomUUID(), UUID.randomUUID()));
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .willReturn(WireMock.ok(objectMapper.writeValueAsString(List.of(
+                                new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
+                                new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID),
+                                new NodeInfos(NODE_3_UUID, "node3", STUDY_2_UUID))))
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
+        Map<String, Long> studyCountByTag = Map.of("R1", 2L, "R2", 1L);
         wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_COUNT_PATH))
-                .willReturn(WireMock.ok("{\"R1\": 2, \"R2\": 1}")
+                .willReturn(WireMock.ok(objectMapper.writeValueAsString(studyCountByTag))
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
 
-        assertEquals(Map.of("R1", 2L, "R2", 1L), getRootNetworkTagsStudyCount());
+        // the count of study-server is returned as is
+        assertEquals(studyCountByTag, getRootNetworkTagsStudyCount());
 
-        // the study-server is called once, with each referenced node only once
+        // each referenced node is asked once, then each study once
+        wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .withQueryParam("ids", WireMock.havingExactly(NODE_1_UUID.toString(), NODE_2_UUID.toString(), NODE_3_UUID.toString())));
         wireMockServer.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo(STUDY_COUNT_PATH))
-                .withRequestBody(WireMock.equalToJson("[\"" + NODE_1_UUID + "\", \"" + NODE_2_UUID + "\"]")));
+                .withRequestBody(WireMock.equalToJson("[\"" + STUDY_1_UUID + "\", \"" + STUDY_2_UUID + "\"]")));
     }
 
     @Test
@@ -132,6 +147,7 @@ class RootNetworkTagsStudyCountTest {
         assertEquals(Map.of(), getRootNetworkTagsStudyCount());
 
         // no node to count from: the study-server is not reached
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
         wireMockServer.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(STUDY_COUNT_PATH)));
     }
 }
