@@ -552,7 +552,10 @@ public class ExploreService {
         if (studyUuids.isEmpty()) {
             return Map.of();
         }
-        return studyService.getRootNetworkTagsStudyCount(studyUuids);
+        // a study counts once for each of its tags
+        return studyService.getRootNetworkTags(studyUuids).values().stream()
+                .flatMap(tags -> tags.stream().distinct())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
 
     /**

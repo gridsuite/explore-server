@@ -64,7 +64,7 @@ class RootNetworkTagsStudyCountTest {
 
     private static final String SHARED_ELEMENT_PATH = "/v1/elements/" + SHARED_ELEMENT_UUID;
     private static final String NODES_INFOS_PATH = "/v1/nodes/infos";
-    private static final String STUDY_COUNT_PATH = "/v1/studies/root-network-tags/study-count";
+    private static final String ROOT_NETWORK_TAGS_PATH = "/v1/studies/root-network-tags";
 
     @BeforeEach
     void setUp() {
@@ -124,18 +124,19 @@ class RootNetworkTagsStudyCountTest {
                                 new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID),
                                 new NodeInfos(NODE_3_UUID, "node3", STUDY_2_UUID))))
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
-        Map<String, Long> studyCountByTag = Map.of("R1", 2L, "R2", 1L);
-        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(STUDY_COUNT_PATH))
-                .willReturn(WireMock.ok(objectMapper.writeValueAsString(studyCountByTag))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH))
+                .willReturn(WireMock.ok(objectMapper.writeValueAsString(Map.of(
+                                STUDY_1_UUID, List.of("R1", "R2"),
+                                STUDY_2_UUID, List.of("R1"))))
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
 
-        // the count of study-server is returned as is
-        assertEquals(studyCountByTag, getRootNetworkTagsStudyCount());
+        // each study counts once for each of its tags
+        assertEquals(Map.of("R1", 2L, "R2", 1L), getRootNetworkTagsStudyCount());
 
         // each referenced node is asked once, then each study once
         wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
                 .withQueryParam("ids", WireMock.havingExactly(NODE_1_UUID.toString(), NODE_2_UUID.toString(), NODE_3_UUID.toString())));
-        wireMockServer.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo(STUDY_COUNT_PATH))
+        wireMockServer.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH))
                 .withRequestBody(WireMock.equalToJson("[\"" + STUDY_1_UUID + "\", \"" + STUDY_2_UUID + "\"]")));
     }
 
@@ -148,6 +149,6 @@ class RootNetworkTagsStudyCountTest {
 
         // no node to count from: the study-server is not reached
         wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
-        wireMockServer.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(STUDY_COUNT_PATH)));
+        wireMockServer.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH)));
     }
 }
