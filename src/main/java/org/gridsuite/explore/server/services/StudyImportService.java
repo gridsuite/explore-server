@@ -13,6 +13,7 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.parameters.ParametersRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
@@ -86,7 +87,7 @@ public class StudyImportService {
     private final ExploreService exploreService;
     private final FilterService filterService;
     private final ContingencyListService contingencyListService;
-    private final ParametersService parametersService;
+    private final ParametersRestService parametersRestService;
     private final NetworkModificationService networkModificationService;
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
@@ -94,7 +95,7 @@ public class StudyImportService {
     public StudyImportService(CaseService caseService, StudyRestService studyRestService, StudyService studyService,
                               ObjectMapper objectMapper, ExploreService exploreService,
                               FilterService filterService, ContingencyListService contingencyListService,
-                              ParametersService parametersService, NetworkModificationService networkModificationService,
+                              ParametersRestService parametersRestService, NetworkModificationService networkModificationService,
                               SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
                               SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
         this.caseService = caseService;
@@ -104,7 +105,7 @@ public class StudyImportService {
         this.exploreService = exploreService;
         this.filterService = filterService;
         this.contingencyListService = contingencyListService;
-        this.parametersService = parametersService;
+        this.parametersRestService = parametersRestService;
         this.networkModificationService = networkModificationService;
         this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
@@ -298,7 +299,7 @@ public class StudyImportService {
     private void importLoadFlowParameters(Path modificationsDir, Map<UUID, UUID> oldUuidsToNewUuids) {
         List<ExportedElementInfos> loadFlowParameters = readExportedElements(modificationsDir.resolve(LOAD_FLOW_PARAMETERS_FILE));
         for (ExportedElementInfos parameters : loadFlowParameters) {
-            UUID newParametersUuid = parametersService.createParameters(parameters.content().toString(), ParametersType.LOADFLOW_PARAMETERS);
+            UUID newParametersUuid = parametersRestService.createParameters(parameters.content().toString(), ParametersType.LOADFLOW_PARAMETERS);
             oldUuidsToNewUuids.put(parameters.uuid(), newParametersUuid);
         }
     }

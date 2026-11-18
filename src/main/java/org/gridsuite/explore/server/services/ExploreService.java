@@ -13,6 +13,8 @@ import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.parameters.ParametersRestService;
+import org.gridsuite.explore.server.services.parameters.ParametersService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigRestService;
@@ -72,6 +74,7 @@ public class ExploreService {
     private final FilterService filterService;
     private final CaseService caseService;
     private final ParametersService parametersService;
+    private final ParametersRestService parametersRestService;
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigRestService spreadsheetConfigRestService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
@@ -98,7 +101,7 @@ public class ExploreService {
             FilterService filterService,
             NetworkModificationService networkModificationService,
             CaseService caseService,
-            ParametersService parametersService, SpreadsheetConfigRestService spreadsheetConfigRestService,
+            ParametersService parametersService, ParametersRestService parametersRestService, SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
             SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
@@ -119,6 +122,7 @@ public class ExploreService {
         this.networkModificationService = networkModificationService;
         this.caseService = caseService;
         this.parametersService = parametersService;
+        this.parametersRestService = parametersRestService;
         this.spreadsheetConfigRestService = spreadsheetConfigRestService;
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
@@ -395,20 +399,20 @@ public class ExploreService {
     }
 
     public UUID createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid) {
-        UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
+        UUID parametersUuid = parametersRestService.createParameters(parameters, parametersType);
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, parametersService::delete);
         return parametersUuid;
     }
 
     public void updateParameters(UUID id, String parameters, ParametersType parametersType, String name, String description) {
-        parametersService.updateParameters(id, parameters, parametersType);
+        parametersRestService.updateParameters(id, parameters, parametersType);
         updateElementNameAndDescription(id, name, description);
         notificationService.emitElementUpdated(id);
     }
 
     public UUID duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
-        UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
+        UUID newParametersUuid = parametersRestService.duplicateParameters(sourceId, parametersType);
         duplicateDirectoryElementOrDeleteElement(sourceId, newParametersUuid, targetDirectoryId, parametersService::delete);
         return newParametersUuid;
     }
