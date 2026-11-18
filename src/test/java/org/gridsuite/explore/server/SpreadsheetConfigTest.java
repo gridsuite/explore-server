@@ -15,9 +15,9 @@ import mockwebserver3.RecordedRequest;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.SpreadsheetConfigService;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +58,7 @@ class SpreadsheetConfigTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private SpreadsheetConfigService spreadsheetConfigService;
+    private SpreadsheetConfigRestService spreadsheetConfigRestService;
 
     @Autowired
     private DirectoryService directoryService;
@@ -82,7 +82,7 @@ class SpreadsheetConfigTest {
     @BeforeEach
     void initialize(final MockWebServer mockWebServer) {
         String baseUrl = String.format("http://localhost:%s", mockWebServer.getPort());
-        spreadsheetConfigService.setSpreadsheetConfigServerBaseUri(baseUrl);
+        spreadsheetConfigRestService.setSpreadsheetConfigServerBaseUri(baseUrl);
         directoryService.setDirectoryServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         output.clear();

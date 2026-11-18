@@ -20,7 +20,6 @@ import java.util.UUID;
  */
 @Service
 public class WorkspaceRestService {
-
     private static final String WORKSPACES_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String WORKSPACES_PATH = DELIMITER + WORKSPACES_API_VERSION + DELIMITER + "workspaces";

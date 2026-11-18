@@ -13,6 +13,8 @@ import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigRestService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
@@ -69,6 +71,7 @@ public class ExploreService {
     private final CaseService caseService;
     private final ParametersService parametersService;
     private final SpreadsheetConfigService spreadsheetConfigService;
+    private final SpreadsheetConfigRestService spreadsheetConfigRestService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final WorkspaceRestService workspaceRestService;
@@ -92,7 +95,7 @@ public class ExploreService {
             FilterService filterService,
             NetworkModificationService networkModificationService,
             CaseService caseService,
-            ParametersService parametersService,
+            ParametersService parametersService, SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
             SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
@@ -113,6 +116,7 @@ public class ExploreService {
         this.networkModificationService = networkModificationService;
         this.caseService = caseService;
         this.parametersService = parametersService;
+        this.spreadsheetConfigRestService = spreadsheetConfigRestService;
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
@@ -425,7 +429,7 @@ public class ExploreService {
     }
 
     public UUID createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
-        UUID spreadsheetConfigUuid = spreadsheetConfigService.createSpreadsheetConfig(spreadsheetConfigDto);
+        UUID spreadsheetConfigUuid = spreadsheetConfigRestService.createSpreadsheetConfig(spreadsheetConfigDto);
         ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, spreadsheetConfigService::delete);
         return spreadsheetConfigUuid;
@@ -449,7 +453,7 @@ public class ExploreService {
     }
 
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String name, String description) {
-        spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
+        spreadsheetConfigRestService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
         updateElementNameAndDescription(id, name, description);
         notificationService.emitElementUpdated(id);
     }
@@ -467,7 +471,7 @@ public class ExploreService {
     }
 
     public UUID duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId) {
-        UUID newSpreadsheetConfigUuid = spreadsheetConfigService.duplicateSpreadsheetConfig(sourceId);
+        UUID newSpreadsheetConfigUuid = spreadsheetConfigRestService.duplicateSpreadsheetConfig(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, spreadsheetConfigService::delete);
         return newSpreadsheetConfigUuid;
     }
