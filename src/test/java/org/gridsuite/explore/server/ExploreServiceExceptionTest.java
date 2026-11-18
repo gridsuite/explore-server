@@ -8,8 +8,9 @@ package org.gridsuite.explore.server;
 
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.FilterService;
-import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ class ExploreServiceExceptionTest {
 
     @MockitoBean
     private NetworkModificationService networkModificationService;
+
+    @MockitoBean
+    private NetworkModificationRestService networkModificationRestService;
 
     @Test
     void testDirectoryServerCrashesWithFilter() {
@@ -82,13 +86,13 @@ class ExploreServiceExceptionTest {
         String creatingErrorMessage = "error when creating element from directory server";
         when(directoryService.createElementWithNewName(any(), any(), anyBoolean())).thenThrow(new RuntimeException(creatingErrorMessage));
         UUID createdCompositeModificationId = UUID.randomUUID();
-        when(networkModificationService.createCompositeModification(anyList(), any(), anyList())).thenReturn(createdCompositeModificationId);
+        when(networkModificationRestService.createCompositeModification(anyList(), any(), anyList())).thenReturn(createdCompositeModificationId);
 
         List<UUID> modificationUuids = List.of(UUID.randomUUID());
         UUID parentDirectoryUuid = UUID.randomUUID();
         String message = assertThrows(RuntimeException.class, () -> exploreService.createCompositeModification(modificationUuids, "name", "description", parentDirectoryUuid, List.of()))
                 .getMessage();
-        verify(networkModificationService, times(1)).createCompositeModification(any(), any(), any());
+        verify(networkModificationRestService, times(1)).createCompositeModification(any(), any(), any());
         verify(networkModificationService, times(1)).delete(createdCompositeModificationId);
         assertEquals(creatingErrorMessage, message);
     }

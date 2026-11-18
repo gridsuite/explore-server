@@ -7,7 +7,6 @@
 package org.gridsuite.explore.server.services.diagram;
 
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

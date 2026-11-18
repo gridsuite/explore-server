@@ -13,6 +13,8 @@ import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationService;
 import org.gridsuite.explore.server.services.parameters.ParametersRestService;
 import org.gridsuite.explore.server.services.parameters.ParametersService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
@@ -71,6 +73,7 @@ public class ExploreService {
     private final StudyService studyService;
     private final ContingencyListService contingencyListService;
     private final NetworkModificationService networkModificationService;
+    private final NetworkModificationRestService networkModificationRestService;
     private final FilterService filterService;
     private final CaseService caseService;
     private final ParametersService parametersService;
@@ -99,7 +102,7 @@ public class ExploreService {
             StudyRestService studyRestService,
             ContingencyListService contingencyListService,
             FilterService filterService,
-            NetworkModificationService networkModificationService,
+            NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService,
             CaseService caseService,
             ParametersService parametersService, ParametersRestService parametersRestService, SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
@@ -120,6 +123,7 @@ public class ExploreService {
         this.contingencyListService = contingencyListService;
         this.filterService = filterService;
         this.networkModificationService = networkModificationService;
+        this.networkModificationRestService = networkModificationRestService;
         this.caseService = caseService;
         this.parametersService = parametersService;
         this.parametersRestService = parametersRestService;
@@ -374,11 +378,11 @@ public class ExploreService {
     }
 
     public void replaceCompositeModification(UUID id, List<UUID> modificationUuids, String name, String description) {
-        networkModificationService.replaceCompositeModification(id, name, description, modificationUuids);
+        networkModificationRestService.replaceCompositeModification(id, name, description, modificationUuids);
     }
 
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
-        return networkModificationService.getCompositeModificationContent(compositeModificationId);
+        return networkModificationRestService.getCompositeModificationContent(compositeModificationId);
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description) {
@@ -513,7 +517,7 @@ public class ExploreService {
                                             String description, UUID parentDirectoryUuid, List<String> rootNetworkTags) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name, rootNetworkTags);
+        UUID modificationsUuid = networkModificationRestService.createCompositeModification(modificationUuids, name, rootNetworkTags);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
         return modificationsUuid;
@@ -521,7 +525,7 @@ public class ExploreService {
 
     public UUID duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid) {
         // create duplicated modification
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateCompositeModifications(List.of(sourceId));
+        Map<UUID, UUID> newModificationsUuids = networkModificationRestService.duplicateCompositeModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         duplicateDirectoryElementOrDeleteElement(sourceId, newNetworkModification, parentDirectoryUuid, networkModificationService::delete);

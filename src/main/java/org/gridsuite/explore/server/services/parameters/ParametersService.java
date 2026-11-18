@@ -10,7 +10,6 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ParametersType;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

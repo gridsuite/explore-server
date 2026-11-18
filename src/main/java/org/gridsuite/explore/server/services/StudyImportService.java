@@ -13,6 +13,7 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.parameters.ParametersRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
@@ -88,14 +89,14 @@ public class StudyImportService {
     private final FilterService filterService;
     private final ContingencyListService contingencyListService;
     private final ParametersRestService parametersRestService;
-    private final NetworkModificationService networkModificationService;
+    private final NetworkModificationRestService networkModificationRestService;
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
 
     public StudyImportService(CaseService caseService, StudyRestService studyRestService, StudyService studyService,
                               ObjectMapper objectMapper, ExploreService exploreService,
                               FilterService filterService, ContingencyListService contingencyListService,
-                              ParametersRestService parametersRestService, NetworkModificationService networkModificationService,
+                              ParametersRestService parametersRestService, NetworkModificationRestService networkModificationRestService,
                               SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
                               SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
         this.caseService = caseService;
@@ -106,7 +107,7 @@ public class StudyImportService {
         this.filterService = filterService;
         this.contingencyListService = contingencyListService;
         this.parametersRestService = parametersRestService;
-        this.networkModificationService = networkModificationService;
+        this.networkModificationRestService = networkModificationRestService;
         this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
     }
@@ -310,7 +311,7 @@ public class StudyImportService {
             if (Files.exists(file)) {
                 String modifications = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
                 for (JsonNode modification : objectMapper.readTree(modifications)) {
-                    networkModificationService.createModification(group.getValue(), modification);
+                    networkModificationRestService.createModification(group.getValue(), modification);
                 }
             }
         }

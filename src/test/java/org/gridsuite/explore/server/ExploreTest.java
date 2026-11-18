@@ -20,6 +20,7 @@ import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -177,7 +178,7 @@ class ExploreTest {
     @Autowired
     private StudyRestService studyRestService;
     @Autowired
-    private NetworkModificationService networkModificationService;
+    private NetworkModificationRestService networkModificationRestService;
     @Autowired
     private CaseService caseService;
     @Autowired
@@ -215,7 +216,7 @@ class ExploreTest {
         studyRestService.setStudyServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
-        networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
+        networkModificationRestService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
         monitorService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
