@@ -15,6 +15,8 @@ import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationService;
+import org.gridsuite.explore.server.services.monitor.MonitorRestService;
+import org.gridsuite.explore.server.services.monitor.MonitorService;
 import org.gridsuite.explore.server.services.parameters.ParametersRestService;
 import org.gridsuite.explore.server.services.parameters.ParametersService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
@@ -86,6 +88,7 @@ public class ExploreService {
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
     private final MonitorService monitorService;
+    private final MonitorRestService monitorRestService;
     private final DynamicMappingService dynamicMappingService;
     private final ExploreServerExecutionService exploreServerExecutionService;
 
@@ -113,7 +116,7 @@ public class ExploreService {
             UserIdentityService userIdentityService,
             NotificationService notificationService,
             SingleLineDiagramService singleLineDiagramService,
-            MonitorService monitorService,
+            MonitorService monitorService, MonitorRestService monitorRestService,
             DynamicMappingService dynamicMappingService,
             ExploreServerExecutionService exploreServerExecutionService, SingleLineDiagramRestService singleLineDiagramRestService) {
 
@@ -137,6 +140,7 @@ public class ExploreService {
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
         this.monitorService = monitorService;
+        this.monitorRestService = monitorRestService;
         this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
         this.singleLineDiagramRestService = singleLineDiagramRestService;
@@ -666,24 +670,24 @@ public class ExploreService {
     }
 
     public UUID createProcessConfig(String name, String processConfig, String description, UUID parentDirectoryUuid) {
-        UUID processConfigUuid = monitorService.createProcessConfig(processConfig);
+        UUID processConfigUuid = monitorRestService.createProcessConfig(processConfig);
         ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, monitorService::delete);
         return processConfigUuid;
     }
 
     public String getProcessConfig(UUID uuid) {
-        return monitorService.getProcessConfig(uuid);
+        return monitorRestService.getProcessConfig(uuid);
     }
 
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description) {
-        monitorService.updateProcessConfig(uuid, processConfig);
+        monitorRestService.updateProcessConfig(uuid, processConfig);
         updateElementNameAndDescription(uuid, name, description);
         notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId) {
-        UUID newProcessConfigUuid = monitorService.duplicateProcessConfig(sourceProcessConfigUuid);
+        UUID newProcessConfigUuid = monitorRestService.duplicateProcessConfig(sourceProcessConfigUuid);
         duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, monitorService::delete);
         return newProcessConfigUuid;
     }

@@ -282,10 +282,6 @@ public class DirectoryService implements IDirectoryElementsService {
         );
     }
 
-    private List<ElementAttributes> getDirectoryElements(UUID directoryUuid) {
-        return getDirectoryElements(directoryUuid, null, null);
-    }
-
     public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements");
         if (types != null) {

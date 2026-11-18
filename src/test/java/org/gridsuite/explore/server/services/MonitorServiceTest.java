@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.gridsuite.explore.server.services.monitor.MonitorRestService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,14 +29,14 @@ class MonitorServiceTest {
     private static final String PROCESS_CONFIG = "{\"name\":\"process config\"}";
 
     private WireMockServer wireMockServer;
-    private MonitorService monitorService;
+    private MonitorRestService monitorRestService;
 
     @BeforeEach
     void setUp() {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
-        monitorService = new MonitorService(RestClient.builder(), new RemoteServicesProperties());
-        monitorService.setMonitorServerBaseUri(wireMockServer.baseUrl());
+        monitorRestService = new MonitorRestService(RestClient.builder(), new RemoteServicesProperties());
+        monitorRestService.setMonitorServerBaseUri(wireMockServer.baseUrl());
     }
 
     @AfterEach
@@ -52,7 +53,7 @@ class MonitorServiceTest {
                 .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                 .withBody(PROCESS_CONFIG)));
 
-        String response = monitorService.getProcessConfig(PROCESS_CONFIG_UUID);
+        String response = monitorRestService.getProcessConfig(PROCESS_CONFIG_UUID);
 
         assertEquals(PROCESS_CONFIG, response);
         wireMockServer.verify(1, getRequestedFor(urlPathEqualTo("/v1/process-configs/" + PROCESS_CONFIG_UUID)));

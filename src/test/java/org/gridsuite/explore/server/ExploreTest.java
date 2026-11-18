@@ -21,6 +21,8 @@ import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
+import org.gridsuite.explore.server.services.monitor.MonitorRestService;
+import org.gridsuite.explore.server.services.monitor.MonitorService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -182,7 +184,7 @@ class ExploreTest {
     @Autowired
     private CaseService caseService;
     @Autowired
-    private MonitorService monitorService;
+    private MonitorRestService monitorRestService;
     @Autowired
     private RemoteServicesProperties remoteServicesProperties;
     @Autowired
@@ -218,7 +220,7 @@ class ExploreTest {
         contingencyListService.setActionsServerBaseUri(baseUrl);
         networkModificationRestService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
-        monitorService.setMonitorServerBaseUri(baseUrl);
+        monitorRestService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
 
