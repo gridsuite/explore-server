@@ -21,7 +21,6 @@ import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
-import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
@@ -32,8 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.http.client.reactive.ClientHttpConnectorBuilderCustomizer;
-import org.springframework.boot.http.client.reactive.ReactorClientHttpConnectorBuilder;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
@@ -202,8 +199,6 @@ class ExploreTest {
     public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
 
     private static final long TIMEOUT = 1000;
-    @Autowired
-    private ClientHttpConnectorBuilderCustomizer<ReactorClientHttpConnectorBuilder> reactorResourceFactoryClientHttpConnectorBuilderCustomizer;
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)

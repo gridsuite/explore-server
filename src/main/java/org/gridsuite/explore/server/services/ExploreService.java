@@ -11,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
@@ -68,6 +70,7 @@ public class ExploreService {
     private final ParametersService parametersService;
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
+    private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final WorkspaceRestService workspaceRestService;
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
@@ -82,25 +85,25 @@ public class ExploreService {
     private final Map<String, IDirectoryElementsService> genericServices;
 
     public ExploreService(
-        DirectoryService directoryService,
-        StudyService studyService,
-        StudyRestService studyRestService,
-        ContingencyListService contingencyListService,
-        FilterService filterService,
-        NetworkModificationService networkModificationService,
-        CaseService caseService,
-        ParametersService parametersService,
-        UserAdminService userAdminService,
-        SpreadsheetConfigService spreadsheetConfigService,
-        SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
-        WorkspaceRestService workspaceRestService,
-        WorkspaceService workspaceService,
-        UserIdentityService userIdentityService,
-        NotificationService notificationService,
-        SingleLineDiagramService singleLineDiagramService,
-        MonitorService monitorService,
-        DynamicMappingService dynamicMappingService,
-        ExploreServerExecutionService exploreServerExecutionService) {
+            DirectoryService directoryService,
+            StudyService studyService,
+            StudyRestService studyRestService,
+            ContingencyListService contingencyListService,
+            FilterService filterService,
+            NetworkModificationService networkModificationService,
+            CaseService caseService,
+            ParametersService parametersService,
+            UserAdminService userAdminService,
+            SpreadsheetConfigService spreadsheetConfigService,
+            SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
+            WorkspaceRestService workspaceRestService,
+            WorkspaceService workspaceService,
+            UserIdentityService userIdentityService,
+            NotificationService notificationService,
+            SingleLineDiagramService singleLineDiagramService,
+            MonitorService monitorService,
+            DynamicMappingService dynamicMappingService,
+            ExploreServerExecutionService exploreServerExecutionService) {
 
         this.directoryService = directoryService;
         this.studyService = studyService;
@@ -113,6 +116,7 @@ public class ExploreService {
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
+        this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
         this.workspaceRestService = workspaceRestService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
@@ -428,13 +432,13 @@ public class ExploreService {
     }
 
     public UUID createSpreadsheetConfigCollection(String spreadsheetConfigCollectionDto, String collectionName, String description, UUID parentDirectoryUuid) {
-        UUID spreadsheetConfigUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto);
+        UUID spreadsheetConfigUuid = spreadsheetConfigCollectionRestService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto);
         createSpreadsheetConfigCollectionElement(spreadsheetConfigUuid, collectionName, description, parentDirectoryUuid);
         return spreadsheetConfigUuid;
     }
 
     public UUID createSpreadsheetConfigCollectionFromConfigIds(List<UUID> configIds, String collectionName, String description, UUID parentDirectoryUuid) {
-        UUID spreadsheetConfigUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollectionFromConfigIds(configIds);
+        UUID spreadsheetConfigUuid = spreadsheetConfigCollectionRestService.createSpreadsheetConfigCollectionFromConfigIds(configIds);
         createSpreadsheetConfigCollectionElement(spreadsheetConfigUuid, collectionName, description, parentDirectoryUuid);
         return spreadsheetConfigUuid;
     }
@@ -451,13 +455,13 @@ public class ExploreService {
     }
 
     public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String name, String description) {
-        spreadsheetConfigCollectionService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto);
+        spreadsheetConfigCollectionRestService.updateSpreadsheetConfigCollection(id, spreadsheetConfigCollectionDto);
         updateElementNameAndDescription(id, name, description);
         notificationService.emitElementUpdated(id);
     }
 
     public void replaceAllSpreadsheetConfigsInCollection(UUID id, List<UUID> configIds, String name, String description) {
-        spreadsheetConfigCollectionService.replaceAllSpreadsheetConfigsInCollection(id, configIds);
+        spreadsheetConfigCollectionRestService.replaceAllSpreadsheetConfigsInCollection(id, configIds);
         updateElementNameAndDescription(id, name, description);
         notificationService.emitElementUpdated(id);
     }
@@ -469,7 +473,7 @@ public class ExploreService {
     }
 
     public UUID duplicateSpreadsheetConfigCollection(UUID sourceId, UUID targetDirectoryId) {
-        UUID newSpreadsheetConfigUuid = spreadsheetConfigCollectionService.duplicateSpreadsheetConfigCollection(sourceId);
+        UUID newSpreadsheetConfigUuid = spreadsheetConfigCollectionRestService.duplicateSpreadsheetConfigCollection(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, spreadsheetConfigCollectionService::delete);
         return newSpreadsheetConfigUuid;
     }
