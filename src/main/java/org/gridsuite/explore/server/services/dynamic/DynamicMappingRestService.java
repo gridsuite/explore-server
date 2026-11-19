@@ -1,11 +1,12 @@
-/**
- * Copyright (c) 2026, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.dynamic;
 
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -13,10 +14,10 @@ import org.springframework.web.client.RestClient;
 import java.util.UUID;
 
 /**
- * @author Thang PHAM <quyet-thang.pham at rte-france.com>
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
  */
 @Service
-public class DynamicMappingService implements IDirectoryElementsService {
+public class DynamicMappingRestService {
 
     private static final String DYNAMIC_MAPPING_API_VERSION = "";
     private static final String DELIMITER = "/";
@@ -28,7 +29,7 @@ public class DynamicMappingService implements IDirectoryElementsService {
 
     private RestClient restClient;
 
-    public DynamicMappingService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
+    public DynamicMappingRestService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
         this.restClientBuilder = restClientBuilder;
         this.dynamicMappingServerBaseUri = remoteServicesProperties.getServiceUri("dynamic-mapping-server");
         this.restClient = restClientBuilder.baseUrl(dynamicMappingServerBaseUri + DELIMITER + DYNAMIC_MAPPING_API_VERSION).build();
@@ -41,38 +42,36 @@ public class DynamicMappingService implements IDirectoryElementsService {
 
     public UUID createMapping(String mapping) {
         return restClient.post()
-            .uri(MAPPING_PATH)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(mapping)
-            .retrieve()
-            .body(UUID.class);
+                .uri(MAPPING_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(mapping)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public void updateMapping(UUID uuid, String mapping) {
         restClient.put()
-            .uri(MAPPING_PATH + DELIMITER + "{uuid}", uuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(mapping)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(MAPPING_PATH + DELIMITER + "{uuid}", uuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(mapping)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public UUID duplicateMapping(UUID sourceMappingUuid) {
         return restClient.post()
-            .uri(uriBuilder ->
-                uriBuilder.path(MAPPING_PATH + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
-                    .build(sourceMappingUuid))
-            .contentType(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .body(UUID.class);
+                .uri(uriBuilder ->
+                        uriBuilder.path(MAPPING_PATH + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
+                                .build(sourceMappingUuid))
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(UUID.class);
     }
 
-    @Override
     public void delete(UUID id) {
         restClient.delete()
-            .uri(MAPPING_PATH + DELIMITER + "{id}", id)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(MAPPING_PATH + DELIMITER + "{id}", id)
+                .retrieve()
+                .toBodilessEntity();
     }
-
 }

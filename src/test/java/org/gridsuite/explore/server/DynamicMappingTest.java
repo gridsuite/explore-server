@@ -11,8 +11,8 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.DynamicMappingService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.dynamic.DynamicMappingRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -68,7 +68,7 @@ class DynamicMappingTest {
     private ArgumentCaptor<ElementAttributes> elementAttributesCaptor;
 
     @Autowired
-    private DynamicMappingService dynamicMappingService;
+    private DynamicMappingRestService dynamicMappingRestService;
 
     @MockitoBean
     private DirectoryService directoryService;
@@ -96,7 +96,7 @@ class DynamicMappingTest {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
-        dynamicMappingService.setDynamicMappingServerBaseUri(wireMockServer.baseUrl());
+        dynamicMappingRestService.setDynamicMappingServerBaseUri(wireMockServer.baseUrl());
     }
 
     @AfterEach

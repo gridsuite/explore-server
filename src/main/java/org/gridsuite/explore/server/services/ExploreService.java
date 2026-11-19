@@ -13,6 +13,8 @@ import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.dynamic.DynamicMappingRestService;
+import org.gridsuite.explore.server.services.dynamic.DynamicMappingService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.filter.FilterService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
@@ -93,6 +95,7 @@ public class ExploreService {
     private final MonitorService monitorService;
     private final MonitorRestService monitorRestService;
     private final DynamicMappingService dynamicMappingService;
+    private final DynamicMappingRestService dynamicMappingRestService;
     private final ExploreServerExecutionService exploreServerExecutionService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
@@ -114,7 +117,7 @@ public class ExploreService {
             UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
             SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
-            WorkspaceRestService workspaceRestService,
+            WorkspaceRestService workspaceRestService, DynamicMappingRestService dynamicMappingRestService,
             WorkspaceService workspaceService,
             UserIdentityService userIdentityService,
             NotificationService notificationService,
@@ -140,6 +143,7 @@ public class ExploreService {
         this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
         this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
         this.workspaceRestService = workspaceRestService;
+        this.dynamicMappingRestService = dynamicMappingRestService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
@@ -697,20 +701,20 @@ public class ExploreService {
     }
 
     public UUID createDynamicMapping(String name, String dynamicMapping, String description, UUID parentDirectoryUuid) {
-        UUID dynamicMappingUuid = dynamicMappingService.createMapping(dynamicMapping);
+        UUID dynamicMappingUuid = dynamicMappingRestService.createMapping(dynamicMapping);
         ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, dynamicMappingService::delete);
         return dynamicMappingUuid;
     }
 
     public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description) {
-        dynamicMappingService.updateMapping(uuid, dynamicMapping);
+        dynamicMappingRestService.updateMapping(uuid, dynamicMapping);
         updateElementNameAndDescription(uuid, name, description);
         notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId) {
-        UUID newDynamicMappingUuid = dynamicMappingService.duplicateMapping(sourceDynamicMappingUuid);
+        UUID newDynamicMappingUuid = dynamicMappingRestService.duplicateMapping(sourceDynamicMappingUuid);
         duplicateDirectoryElementOrDeleteElement(sourceDynamicMappingUuid, newDynamicMappingUuid, targetDirectoryId, dynamicMappingService::delete);
         return newDynamicMappingUuid;
     }
