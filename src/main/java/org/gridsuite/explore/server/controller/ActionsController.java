@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
-import org.gridsuite.explore.server.services.ContingencyListService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,10 +27,10 @@ import java.util.UUID;
 @Tag(name = "Explore server - Actions")
 public class ActionsController {
 
-    private final ContingencyListService contingencyListService;
+    private final ContingencyListRestService contingencyListRestService;
 
-    public ActionsController(ContingencyListService contingencyListService) {
-        this.contingencyListService = contingencyListService;
+    public ActionsController(ContingencyListRestService contingencyListRestService) {
+        this.contingencyListRestService = contingencyListRestService;
     }
 
     @GetMapping(value = "/identifier-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -39,7 +39,7 @@ public class ActionsController {
         @ApiResponse(responseCode = "404", description = "The identifier contingency list does not exists")})
     @PreAuthorize("@authorizationService.canRead(#id)")
     public ResponseEntity<String> getIdentifierContingencyList(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(contingencyListService.getIdentifierContingencyList(id));
+        return ResponseEntity.ok(contingencyListRestService.getIdentifierContingencyList(id));
     }
 
     @GetMapping(value = "/filters-contingency-lists/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -48,6 +48,6 @@ public class ActionsController {
         @ApiResponse(responseCode = "404", description = "The filter based contingency list does not exists")})
     @PreAuthorize("@authorizationService.canRead(#id)")
     public ResponseEntity<String> getFilterBasedContingencyList(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(contingencyListService.getFilterBasedContingencyList(id));
+        return ResponseEntity.ok(contingencyListRestService.getFilterBasedContingencyList(id));
     }
 }

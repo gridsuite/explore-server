@@ -12,9 +12,9 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.CaseService;
-import org.gridsuite.explore.server.services.ContingencyListService;
 import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
@@ -82,7 +82,7 @@ class StudyImportTest {
     private FilterRestService filterRestService;
 
     @Autowired
-    private ContingencyListService contingencyListService;
+    private ContingencyListRestService contingencyListRestService;
 
     @Autowired
     private NetworkModificationRestService networkModificationRestService;
@@ -102,7 +102,7 @@ class StudyImportTest {
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
         filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());
-        contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
+        contingencyListRestService.setActionsServerBaseUri(wireMockServer.baseUrl());
         networkModificationRestService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
         spreadsheetConfigCollectionRestService.setSpreadsheetConfigServerBaseUri(wireMockServer.baseUrl());
         remoteServicesProperties.getServices().forEach(service -> service.setBaseUri(wireMockServer.baseUrl()));

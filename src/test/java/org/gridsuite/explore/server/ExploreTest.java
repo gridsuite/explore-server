@@ -19,6 +19,7 @@ import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
@@ -174,7 +175,7 @@ class ExploreTest {
     @MockitoSpyBean
     private ExploreService exploreService;
     @Autowired
-    private ContingencyListService contingencyListService;
+    private ContingencyListRestService contingencyListRestService;
     @Autowired
     private FilterRestService filterRestService;
     @Autowired
@@ -217,7 +218,7 @@ class ExploreTest {
         directoryService.setDirectoryServerBaseUri(baseUrl);
         studyRestService.setStudyServerBaseUri(baseUrl);
         filterRestService.setFilterServerBaseUri(baseUrl);
-        contingencyListService.setActionsServerBaseUri(baseUrl);
+        contingencyListRestService.setActionsServerBaseUri(baseUrl);
         networkModificationRestService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
         monitorRestService.setMonitorServerBaseUri(baseUrl);

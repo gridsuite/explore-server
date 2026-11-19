@@ -10,6 +10,8 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
@@ -78,6 +80,7 @@ public class ExploreService {
     private final StudyRestService studyRestService;
     private final StudyService studyService;
     private final ContingencyListService contingencyListService;
+    private final ContingencyListRestService contingencyListRestService;
     private final NetworkModificationService networkModificationService;
     private final NetworkModificationRestService networkModificationRestService;
     private final FilterService filterService;
@@ -109,7 +112,7 @@ public class ExploreService {
             DirectoryService directoryService,
             StudyService studyService,
             StudyRestService studyRestService,
-            ContingencyListService contingencyListService,
+            ContingencyListService contingencyListService, ContingencyListRestService contingencyListRestService,
             FilterService filterService,
             NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService, FilterRestService filterRestService,
             CaseService caseService,
@@ -130,6 +133,7 @@ public class ExploreService {
         this.studyService = studyService;
         this.studyRestService = studyRestService;
         this.contingencyListService = contingencyListService;
+        this.contingencyListRestService = contingencyListRestService;
         this.filterService = filterService;
         this.networkModificationService = networkModificationService;
         this.networkModificationRestService = networkModificationRestService;
@@ -288,8 +292,8 @@ public class ExploreService {
 
     public UUID duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, ContingencyListType contingencyListType) {
         UUID newId = switch (contingencyListType) {
-            case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
-            case FILTERS -> contingencyListService.duplicateFilterBasedContingencyList(contingencyListsId);
+            case IDENTIFIERS -> contingencyListRestService.duplicateIdentifierContingencyList(contingencyListsId);
+            case FILTERS -> contingencyListRestService.duplicateFilterBasedContingencyList(contingencyListsId);
         };
         duplicateDirectoryElementOrDeleteElement(contingencyListsId, newId, targetDirectoryId, contingencyListService::delete);
         return newId;
@@ -297,14 +301,14 @@ public class ExploreService {
 
     public UUID createIdentifierContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
-        contingencyListService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
+        contingencyListRestService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID createFilterBasedContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
-        contingencyListService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
+        contingencyListRestService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
         return elementAttributes.getElementUuid();
     }
@@ -380,7 +384,7 @@ public class ExploreService {
     }
 
     public void updateContingencyList(UUID id, String content, String name, String description, ContingencyListType contingencyListType) {
-        contingencyListService.updateContingencyList(id, content, getProperPath(contingencyListType));
+        contingencyListRestService.updateContingencyList(id, content, getProperPath(contingencyListType));
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setDescription(description);
         if (StringUtils.isNotBlank(name)) {

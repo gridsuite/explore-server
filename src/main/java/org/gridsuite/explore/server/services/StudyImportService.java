@@ -13,6 +13,8 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.filter.FilterService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
@@ -91,6 +93,7 @@ public class StudyImportService {
     private final FilterService filterService;
     private final FilterRestService filterRestService;
     private final ContingencyListService contingencyListService;
+    private final ContingencyListRestService contingencyListRestService;
     private final ParametersRestService parametersRestService;
     private final NetworkModificationRestService networkModificationRestService;
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
@@ -98,7 +101,7 @@ public class StudyImportService {
 
     public StudyImportService(CaseService caseService, StudyRestService studyRestService, StudyService studyService,
                               ObjectMapper objectMapper, ExploreService exploreService,
-                              FilterService filterService, FilterRestService filterRestService, ContingencyListService contingencyListService,
+                              FilterService filterService, FilterRestService filterRestService, ContingencyListService contingencyListService, ContingencyListRestService contingencyListRestService,
                               ParametersRestService parametersRestService, NetworkModificationRestService networkModificationRestService,
                               SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
                               SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
@@ -110,6 +113,7 @@ public class StudyImportService {
         this.filterService = filterService;
         this.filterRestService = filterRestService;
         this.contingencyListService = contingencyListService;
+        this.contingencyListRestService = contingencyListRestService;
         this.parametersRestService = parametersRestService;
         this.networkModificationRestService = networkModificationRestService;
         this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
@@ -243,8 +247,8 @@ public class StudyImportService {
             UUID newContingencyListUuid = oldUuidsToNewUuids.get(contingencyList.uuid());
             String remappedContent = replaceWithNewUuids(contingencyList.content().toString(), oldUuidsToNewUuids);
             switch (contingencyList.content().path(TYPE).asText()) {
-                case IDENTIFIERS_CONTINGENCY_LIST_TYPE -> contingencyListService.insertIdentifierContingencyList(newContingencyListUuid, remappedContent);
-                case FILTERS_CONTINGENCY_LIST_TYPE -> contingencyListService.insertFilterBasedContingencyList(newContingencyListUuid, remappedContent);
+                case IDENTIFIERS_CONTINGENCY_LIST_TYPE -> contingencyListRestService.insertIdentifierContingencyList(newContingencyListUuid, remappedContent);
+                case FILTERS_CONTINGENCY_LIST_TYPE -> contingencyListRestService.insertFilterBasedContingencyList(newContingencyListUuid, remappedContent);
                 default -> throw new ExploreException(IMPORT_STUDY_FAILED, "Unknown type for contingency list " + contingencyList.uuid());
             }
             createDirectoryElement(contingencyList, newContingencyListUuid, CONTINGENCY_LIST, parentDirectoryUuid, description, contingencyListService::delete);

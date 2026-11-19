@@ -10,7 +10,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.gridsuite.explore.server.AllowAllAuthorizationTestConfiguration;
 import org.gridsuite.explore.server.ExploreApplication;
-import org.gridsuite.explore.server.services.ContingencyListService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +47,7 @@ class ActionsControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ContingencyListService contingencyListService;
+    private ContingencyListRestService contingencyListRestService;
 
     private WireMockServer wireMockServer;
 
@@ -58,7 +58,7 @@ class ActionsControllerTest {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
-        contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
+        contingencyListRestService.setActionsServerBaseUri(wireMockServer.baseUrl());
     }
 
     @AfterEach
