@@ -228,6 +228,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements names")})
     @PreAuthorize("true")
     public ResponseEntity<Map<UUID, String>> getElementsName(@RequestParam("ids") List<UUID> ids) {
+        // TODO : attention, ici ce sont les vrais element name non overridés qui sont renvoyés. Est-ce vraiment ce qu'on veut ?
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsName(ids));
     }
 
