@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
-import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
