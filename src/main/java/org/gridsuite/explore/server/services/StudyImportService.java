@@ -13,6 +13,8 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
+import org.gridsuite.explore.server.services.filter.FilterService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.parameters.ParametersRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
@@ -87,6 +89,7 @@ public class StudyImportService {
     private final ObjectMapper objectMapper;
     private final ExploreService exploreService;
     private final FilterService filterService;
+    private final FilterRestService filterRestService;
     private final ContingencyListService contingencyListService;
     private final ParametersRestService parametersRestService;
     private final NetworkModificationRestService networkModificationRestService;
@@ -95,7 +98,7 @@ public class StudyImportService {
 
     public StudyImportService(CaseService caseService, StudyRestService studyRestService, StudyService studyService,
                               ObjectMapper objectMapper, ExploreService exploreService,
-                              FilterService filterService, ContingencyListService contingencyListService,
+                              FilterService filterService, FilterRestService filterRestService, ContingencyListService contingencyListService,
                               ParametersRestService parametersRestService, NetworkModificationRestService networkModificationRestService,
                               SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
                               SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
@@ -105,6 +108,7 @@ public class StudyImportService {
         this.objectMapper = objectMapper;
         this.exploreService = exploreService;
         this.filterService = filterService;
+        this.filterRestService = filterRestService;
         this.contingencyListService = contingencyListService;
         this.parametersRestService = parametersRestService;
         this.networkModificationRestService = networkModificationRestService;
@@ -227,7 +231,7 @@ public class StudyImportService {
         addNewUuids(filters, oldUuidsToNewUuids);
         for (ExportedElementInfos filter : filters) {
             UUID newFilterUuid = oldUuidsToNewUuids.get(filter.uuid());
-            filterService.insertFilter(replaceWithNewUuids(filter.content().toString(), oldUuidsToNewUuids), newFilterUuid);
+            filterRestService.insertFilter(replaceWithNewUuids(filter.content().toString(), oldUuidsToNewUuids), newFilterUuid);
             createDirectoryElement(filter, newFilterUuid, FILTER, parentDirectoryUuid, description, filterService::delete);
         }
     }

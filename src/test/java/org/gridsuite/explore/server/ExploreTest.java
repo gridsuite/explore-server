@@ -20,9 +20,9 @@ import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.monitor.MonitorRestService;
-import org.gridsuite.explore.server.services.monitor.MonitorService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -176,7 +176,7 @@ class ExploreTest {
     @Autowired
     private ContingencyListService contingencyListService;
     @Autowired
-    private FilterService filterService;
+    private FilterRestService filterRestService;
     @Autowired
     private StudyRestService studyRestService;
     @Autowired
@@ -216,7 +216,7 @@ class ExploreTest {
 
         directoryService.setDirectoryServerBaseUri(baseUrl);
         studyRestService.setStudyServerBaseUri(baseUrl);
-        filterService.setFilterServerBaseUri(baseUrl);
+        filterRestService.setFilterServerBaseUri(baseUrl);
         contingencyListService.setActionsServerBaseUri(baseUrl);
         networkModificationRestService.setNetworkModificationServerBaseUri(baseUrl);
         caseService.setBaseUri(baseUrl);
@@ -229,7 +229,7 @@ class ExploreTest {
             wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
             wireMockServer.start();
             directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
-            filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
+            filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());
             studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         }
 

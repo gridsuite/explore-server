@@ -13,6 +13,8 @@ import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
+import org.gridsuite.explore.server.services.filter.FilterService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationService;
 import org.gridsuite.explore.server.services.monitor.MonitorRestService;
@@ -77,6 +79,7 @@ public class ExploreService {
     private final NetworkModificationService networkModificationService;
     private final NetworkModificationRestService networkModificationRestService;
     private final FilterService filterService;
+    private final FilterRestService filterRestService;
     private final CaseService caseService;
     private final ParametersService parametersService;
     private final ParametersRestService parametersRestService;
@@ -105,7 +108,7 @@ public class ExploreService {
             StudyRestService studyRestService,
             ContingencyListService contingencyListService,
             FilterService filterService,
-            NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService,
+            NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService, FilterRestService filterRestService,
             CaseService caseService,
             ParametersService parametersService, ParametersRestService parametersRestService, SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
@@ -127,6 +130,7 @@ public class ExploreService {
         this.filterService = filterService;
         this.networkModificationService = networkModificationService;
         this.networkModificationRestService = networkModificationRestService;
+        this.filterRestService = filterRestService;
         this.caseService = caseService;
         this.parametersService = parametersService;
         this.parametersRestService = parametersRestService;
@@ -303,13 +307,13 @@ public class ExploreService {
 
     public UUID createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, 0, description);
-        filterService.insertFilter(filter, elementAttributes.getElementUuid());
+        filterRestService.insertFilter(filter, elementAttributes.getElementUuid());
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, filterService::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId) {
-        UUID newFilterId = filterService.duplicateFilter(sourceFilterId);
+        UUID newFilterId = filterRestService.duplicateFilter(sourceFilterId);
         duplicateDirectoryElementOrDeleteElement(sourceFilterId, newFilterId, targetDirectoryId, filterService::delete);
         return newFilterId;
     }
@@ -361,7 +365,7 @@ public class ExploreService {
     }
 
     public void updateFilter(UUID id, String filter, String name, String description) {
-        filterService.updateFilter(id, filter);
+        filterRestService.updateFilter(id, filter);
 
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setDescription(description);
