@@ -34,6 +34,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     public static final String UUIDS = "uuids";
     public static final String NAME = "name";
     public static final String DESCRIPTION = "description";
+    public static final String ROOT_NETWORK_TAGS = "rootNetworkTags";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private static final String CONTAINERS_PATH = "containers";
@@ -59,9 +60,10 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .body(new ParameterizedTypeReference<>() { });
     }
 
-    public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName) {
+    public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName, List<String> rootNetworkTags) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH)
                 .queryParam(NAME, compositeModificationName)
+                .queryParam(ROOT_NETWORK_TAGS, rootNetworkTags)
                 .buildAndExpand()
                 .toUriString();
 
