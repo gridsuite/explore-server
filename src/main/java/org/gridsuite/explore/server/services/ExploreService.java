@@ -78,12 +78,8 @@ public class ExploreService {
 
     private final DirectoryService directoryService;
     private final StudyRestService studyRestService;
-    private final StudyService studyService;
-    private final ContingencyListService contingencyListService;
     private final ContingencyListRestService contingencyListRestService;
-    private final NetworkModificationService networkModificationService;
     private final NetworkModificationRestService networkModificationRestService;
-    private final FilterService filterService;
     private final FilterRestService filterRestService;
     private final CaseService caseService;
     private final ParametersService parametersService;
@@ -130,12 +126,8 @@ public class ExploreService {
             ExploreServerExecutionService exploreServerExecutionService, SingleLineDiagramRestService singleLineDiagramRestService) {
 
         this.directoryService = directoryService;
-        this.studyService = studyService;
         this.studyRestService = studyRestService;
-        this.contingencyListService = contingencyListService;
         this.contingencyListRestService = contingencyListRestService;
-        this.filterService = filterService;
-        this.networkModificationService = networkModificationService;
         this.networkModificationRestService = networkModificationRestService;
         this.filterRestService = filterRestService;
         this.caseService = caseService;
@@ -209,7 +201,7 @@ public class ExploreService {
         String elementName = getElementName(caseInfo.caseUuid());
 
         studyRestService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(STUDY)::delete);
         return elementAttributes.getElementUuid();
     }
 
@@ -260,7 +252,7 @@ public class ExploreService {
 
     public UUID duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
         UUID newStudyId = studyRestService.duplicateStudy(sourceStudyUuid);
-        duplicateDirectoryElementOrDeleteElement(sourceStudyUuid, newStudyId, targetDirectoryId, CREATING, studyService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceStudyUuid, newStudyId, targetDirectoryId, CREATING, getGenericService(STUDY)::delete);
         return newStudyId;
     }
 
@@ -295,34 +287,34 @@ public class ExploreService {
             case IDENTIFIERS -> contingencyListRestService.duplicateIdentifierContingencyList(contingencyListsId);
             case FILTERS -> contingencyListRestService.duplicateFilterBasedContingencyList(contingencyListsId);
         };
-        duplicateDirectoryElementOrDeleteElement(contingencyListsId, newId, targetDirectoryId, contingencyListService::delete);
+        duplicateDirectoryElementOrDeleteElement(contingencyListsId, newId, targetDirectoryId, getGenericService(CONTINGENCY_LIST)::delete);
         return newId;
     }
 
     public UUID createIdentifierContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
         contingencyListRestService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CONTINGENCY_LIST)::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID createFilterBasedContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
         contingencyListRestService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CONTINGENCY_LIST)::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, 0, description);
         filterRestService.insertFilter(filter, elementAttributes.getElementUuid());
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, filterService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(FILTER)::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId) {
         UUID newFilterId = filterRestService.duplicateFilter(sourceFilterId);
-        duplicateDirectoryElementOrDeleteElement(sourceFilterId, newFilterId, targetDirectoryId, filterService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceFilterId, newFilterId, targetDirectoryId, getGenericService(FILTER)::delete);
         return newFilterId;
     }
 
@@ -535,7 +527,7 @@ public class ExploreService {
         // create composite modifications
         UUID modificationsUuid = networkModificationRestService.createCompositeModification(modificationUuids, name, rootNetworkTags);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
-        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
+        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(MODIFICATION)::delete);
         return modificationsUuid;
     }
 
@@ -544,7 +536,7 @@ public class ExploreService {
         Map<UUID, UUID> newModificationsUuids = networkModificationRestService.duplicateCompositeModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
-        duplicateDirectoryElementOrDeleteElement(sourceId, newNetworkModification, parentDirectoryUuid, networkModificationService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newNetworkModification, parentDirectoryUuid, getGenericService(MODIFICATION)::delete);
         return newNetworkModification;
     }
 
