@@ -86,15 +86,12 @@ public class ExploreService {
     private final FilterRestService filterRestService;
     private final CaseRestService caseRestService;
     private final ParametersRestService parametersRestService;
-    private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigRestService spreadsheetConfigRestService;
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final WorkspaceRestService workspaceRestService;
     private final UserIdentityService userIdentityService;
     private final NotificationService notificationService;
-    private final MonitorService monitorService;
     private final MonitorRestService monitorRestService;
-    private final DynamicMappingService dynamicMappingService;
     private final DynamicMappingRestService dynamicMappingRestService;
     private final ExploreServerExecutionService exploreServerExecutionService;
 
@@ -142,16 +139,13 @@ public class ExploreService {
         this.parametersRestService = parametersRestService;
         this.spreadsheetConfigRestService = spreadsheetConfigRestService;
         this.userAdminService = userAdminService;
-        this.spreadsheetConfigService = spreadsheetConfigService;
         this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
         this.workspaceRestService = workspaceRestService;
         this.dynamicMappingRestService = dynamicMappingRestService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
         this.singleLineDiagramService = singleLineDiagramService;
-        this.monitorService = monitorService;
         this.monitorRestService = monitorRestService;
-        this.dynamicMappingService = dynamicMappingService;
         this.exploreServerExecutionService = exploreServerExecutionService;
         this.singleLineDiagramRestService = singleLineDiagramRestService;
         this.genericServices = Map.ofEntries(
@@ -467,7 +461,7 @@ public class ExploreService {
     public UUID createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
         UUID spreadsheetConfigUuid = spreadsheetConfigRestService.createSpreadsheetConfig(spreadsheetConfigDto);
         ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, 0, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, spreadsheetConfigService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(SPREADSHEET_CONFIG)::delete);
         return spreadsheetConfigUuid;
     }
 
@@ -508,7 +502,7 @@ public class ExploreService {
 
     public UUID duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigRestService.duplicateSpreadsheetConfig(sourceId);
-        duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, spreadsheetConfigService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, getGenericService(SPREADSHEET_CONFIG)::delete);
         return newSpreadsheetConfigUuid;
     }
 
@@ -720,7 +714,7 @@ public class ExploreService {
     public UUID createProcessConfig(String name, String processConfig, String description, UUID parentDirectoryUuid) {
         UUID processConfigUuid = monitorRestService.createProcessConfig(processConfig);
         ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG, 0L, description);
-        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, monitorService::delete);
+        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(PROCESS_CONFIG)::delete);
         return processConfigUuid;
     }
 
@@ -736,14 +730,14 @@ public class ExploreService {
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId) {
         UUID newProcessConfigUuid = monitorRestService.duplicateProcessConfig(sourceProcessConfigUuid);
-        duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, monitorService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceProcessConfigUuid, newProcessConfigUuid, targetDirectoryId, getGenericService(PROCESS_CONFIG)::delete);
         return newProcessConfigUuid;
     }
 
     public UUID createDynamicMapping(String name, String dynamicMapping, String description, UUID parentDirectoryUuid) {
         UUID dynamicMappingUuid = dynamicMappingRestService.createMapping(dynamicMapping);
         ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING, 0L, description);
-        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, dynamicMappingService::delete);
+        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(DYNAMIC_MAPPING)::delete);
         return dynamicMappingUuid;
     }
 
@@ -755,7 +749,7 @@ public class ExploreService {
 
     public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId) {
         UUID newDynamicMappingUuid = dynamicMappingRestService.duplicateMapping(sourceDynamicMappingUuid);
-        duplicateDirectoryElementOrDeleteElement(sourceDynamicMappingUuid, newDynamicMappingUuid, targetDirectoryId, dynamicMappingService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceDynamicMappingUuid, newDynamicMappingUuid, targetDirectoryId, getGenericService(DYNAMIC_MAPPING)::delete);
         return newDynamicMappingUuid;
     }
 
