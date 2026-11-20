@@ -59,7 +59,8 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 elementAttributes.setDescription(specificServiceMetadata.get(NetworkModificationRestService.DESCRIPTION).toString());
             }
         }
-        return IDirectoryElementsService.setSpecificMetadata(elementAttributes, specificServiceMetadata);
+        elementAttributes.setSpecificMetadata(specificServiceMetadata);
+        return elementAttributes;
     }
 
     @Override

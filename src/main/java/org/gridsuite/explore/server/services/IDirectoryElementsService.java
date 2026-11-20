@@ -31,17 +31,12 @@ public interface IDirectoryElementsService {
     }
 
     default ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        return setSpecificMetadata(elementAttributes, metadataItem);
+        elementAttributes.setSpecificMetadata(metadataItem);
+        return elementAttributes;
     }
 
     // by default there are no overriden elements : we just return the basic directory elements
     default List<ElementAttributes> overrideBasicDirectoryElements(List<ElementAttributes> elementAttributes) {
-        return elementAttributes;
-    }
-
-    // TODO : est-ce que c'est vraiment nécessaire :
-    static ElementAttributes setSpecificMetadata(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;
     }
 }
