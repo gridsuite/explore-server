@@ -114,6 +114,18 @@ public class StudyRestService {
                 .body(new ParameterizedTypeReference<>() { });
     }
 
+    /**
+     * @return the root network tags of each given study; unknown studies are absent
+     */
+    public Map<UUID, List<String>> getRootNetworkTags(List<UUID> studyUuids) {
+        return restClient.post()
+            .uri(studyServerBaseUri + DELIMITER + STUDY_SERVER_API_VERSION + "/studies/root-network-tags")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(studyUuids)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
+    }
+
     public ResponseEntity<Void> notifyStudyUpdate(UUID studyUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + STUDY_SERVER_API_VERSION +
                         "/studies/{studyUuid}/notification?type={metadata_updated}")

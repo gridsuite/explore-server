@@ -137,6 +137,37 @@ public class NetworkModificationRestService {
                 .toBodilessEntity();
     }
 
+    public void updateCompositeModificationActivation(List<UUID> modificationUuids, boolean active) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+                .queryParam(UUIDS, modificationUuids)
+                .queryParam("active", active)
+                .buildAndExpand()
+                .toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
+    public void updateRootNetworkApplicability(List<UUID> modificationUuids, String rootNetworkTag, boolean applicable) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + DELIMITER + "root-network-applicability")
+                .queryParam(UUIDS, modificationUuids)
+                .queryParam("rootNetworkTag", rootNetworkTag)
+                .queryParam("applicable", applicable)
+                .buildAndExpand()
+                .toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
     public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
                 .queryParam(UUIDS, List.of(id))

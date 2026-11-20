@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
@@ -389,6 +390,16 @@ public class ExploreService {
         networkModificationRestService.replaceCompositeModification(id, name, description, modificationUuids);
     }
 
+    public void updateCompositeModificationActivation(UUID compositeModificationId, List<UUID> childrenModificationUuids, boolean active) {
+        networkModificationService.updateCompositeModificationActivation(childrenModificationUuids, active);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
+    public void updateCompositeModificationApplicability(UUID compositeModificationId, List<UUID> childrenModificationUuids, String rootNetworkTag, boolean applicable) {
+        networkModificationService.updateRootNetworkApplicability(childrenModificationUuids, rootNetworkTag, applicable);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         return networkModificationRestService.getCompositeModificationContent(compositeModificationId);
     }
@@ -595,11 +606,7 @@ public class ExploreService {
      * Elements the user cannot read are omitted.
      */
     public List<ReferencingElementInfos> getReferencingElementInfos(UUID elementUuid) {
-        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
-        List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                .map(ExploreService::getReferencedNodeUuid)
-                .filter(Objects::nonNull)
-                .toList();
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(elementUuid);
         if (referencedNodeUuids.isEmpty()) {
             return List.of();
         }
@@ -622,6 +629,38 @@ public class ExploreService {
                 .filter(Objects::nonNull)
                 .map(nodeInfos -> toReferencingElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
                         parentDirectoryNamesByStudyUuid, identityBySub))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * For each root network tag, counts the studies using a shared composite: the studies of the nodes referencing it
+     */
+    public Map<String, Long> countStudiesByTagFromSharedComposite(UUID compositeUuid) {
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(compositeUuid).stream().distinct().toList();
+        if (referencedNodeUuids.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> studyUuids = studyService.getNodesInfos(referencedNodeUuids).stream()
+                .map(NodeInfos::studyUuid)
+                .distinct()
+                .toList();
+        if (studyUuids.isEmpty()) {
+            return Map.of();
+        }
+        // a study counts once for each of its tags
+        return studyService.getRootNetworkTags(studyUuids).values().stream()
+                .flatMap(tags -> tags.stream().distinct())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+    }
+
+    /**
+     * @return the nodes referencing the shared element, once per reference
+     */
+    private List<UUID> getReferencedNodeUuids(UUID elementUuid) {
+        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
+        return directoryService.getElementInfos(elementUuid).getReferences().stream()
+                .map(ExploreService::getReferencedNodeUuid)
                 .filter(Objects::nonNull)
                 .toList();
     }

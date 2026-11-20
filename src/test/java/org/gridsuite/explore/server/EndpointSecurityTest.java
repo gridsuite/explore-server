@@ -7,57 +7,27 @@
 
 package org.gridsuite.explore.server;
 
+import com.powsybl.ws.commons.security.restclient.AbstractEndpointSecurityTest;
 import org.gridsuite.explore.server.controller.SupervisionController;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>
  */
 @SpringBootTest
-class EndpointSecurityTest {
+class EndpointSecurityTest extends AbstractEndpointSecurityTest {
 
-    @Autowired
-    @Qualifier("requestMappingHandlerMapping")
-    private RequestMappingHandlerMapping mappings;
-
-    @Test
-    void allEndpointsMustHaveSecurityAnnotation() {
-        List<String> unsecuredEndpoints = new ArrayList<>();
-
-        mappings.getHandlerMethods().forEach((info, handler) -> {
-            Method method = handler.getMethod();
-            Class<?> controller = handler.getBeanType();
-            // Supervision endpoints are filtered by the gateway and are not directly accessible,
-            // so we don't need to check permissions for them
-            if (!controller.getPackageName().equals("org.gridsuite.explore.server.controller")
-                    || controller == SupervisionController.class) {
-                return;
-            }
-
-            if (!hasSecurityAnnotation(method, controller)) {
-                unsecuredEndpoints.add(
-                        controller.getSimpleName() + "#" + method.getName()
-                );
-            }
-        });
-
-        assertThat(unsecuredEndpoints).isEmpty();
+    protected List<String> getControllerPackages() {
+        return List.of("org.gridsuite.explore.server.controller");
     }
 
-    private boolean hasSecurityAnnotation(Method method, Class<?> controller) {
-        return AnnotatedElementUtils.hasAnnotation(method, PreAuthorize.class)
-                || AnnotatedElementUtils.hasAnnotation(controller, PreAuthorize.class);
+    /**
+     * Supervision endpoints are filtered by the gateway and are not directly accessible,
+     * so we don't need to check permissions for them.
+     */
+    protected List<Class<?>> getExcludedControllers() {
+        return List.of(SupervisionController.class);
     }
 }
