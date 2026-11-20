@@ -8,6 +8,7 @@ package org.gridsuite.explore.server.services;
 
 import com.powsybl.ws.commons.security.PermissionType;
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
@@ -38,8 +39,6 @@ import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -64,6 +63,7 @@ import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLOR
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
 
+@Slf4j
 @Service
 public class ExploreService {
     public static final String STUDY = "STUDY";
@@ -85,11 +85,9 @@ public class ExploreService {
     private final NetworkModificationRestService networkModificationRestService;
     private final FilterRestService filterRestService;
     private final CaseRestService caseRestService;
-    private final ParametersService parametersService;
     private final ParametersRestService parametersRestService;
     private final SpreadsheetConfigService spreadsheetConfigService;
     private final SpreadsheetConfigRestService spreadsheetConfigRestService;
-    private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final WorkspaceRestService workspaceRestService;
     private final UserIdentityService userIdentityService;
@@ -100,7 +98,6 @@ public class ExploreService {
     private final DynamicMappingRestService dynamicMappingRestService;
     private final ExploreServerExecutionService exploreServerExecutionService;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramService singleLineDiagramService;
     private final SingleLineDiagramRestService singleLineDiagramRestService;
@@ -111,15 +108,23 @@ public class ExploreService {
             DirectoryService directoryService,
             StudyService studyService,
             StudyRestService studyRestService,
-            ContingencyListService contingencyListService, ContingencyListRestService contingencyListRestService,
+            ContingencyListService contingencyListService,
+            ContingencyListRestService contingencyListRestService,
             FilterService filterService,
-            NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService, FilterRestService filterRestService, CaseRestService caseRestService,
+            NetworkModificationService networkModificationService,
+            NetworkModificationRestService networkModificationRestService,
+            FilterRestService filterRestService,
+            CaseRestService caseRestService,
             CaseService caseService,
-            ParametersService parametersService, ParametersRestService parametersRestService, SpreadsheetConfigRestService spreadsheetConfigRestService,
+            ParametersService parametersService,
+            ParametersRestService parametersRestService,
+            SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
             SpreadsheetConfigService spreadsheetConfigService,
-            SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
-            WorkspaceRestService workspaceRestService, DynamicMappingRestService dynamicMappingRestService,
+            SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
+            SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
+            WorkspaceRestService workspaceRestService,
+            DynamicMappingRestService dynamicMappingRestService,
             WorkspaceService workspaceService,
             UserIdentityService userIdentityService,
             NotificationService notificationService,
@@ -134,12 +139,10 @@ public class ExploreService {
         this.networkModificationRestService = networkModificationRestService;
         this.filterRestService = filterRestService;
         this.caseRestService = caseRestService;
-        this.parametersService = parametersService;
         this.parametersRestService = parametersRestService;
         this.spreadsheetConfigRestService = spreadsheetConfigRestService;
         this.userAdminService = userAdminService;
         this.spreadsheetConfigService = spreadsheetConfigService;
-        this.spreadsheetConfigCollectionService = spreadsheetConfigCollectionService;
         this.spreadsheetConfigCollectionRestService = spreadsheetConfigCollectionRestService;
         this.workspaceRestService = workspaceRestService;
         this.dynamicMappingRestService = dynamicMappingRestService;
@@ -331,7 +334,7 @@ public class ExploreService {
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
             delete(id);
         } catch (Exception e) {
-            LOGGER.error(e.toString(), e);
+            log.error(e.toString(), e);
         } finally {
             directoryService.deleteDirectoryElement(id);
         }
@@ -350,7 +353,7 @@ public class ExploreService {
                 delete(id);
                 deletedIds.add(id);
             } catch (Exception e) {
-                LOGGER.error("Failed to delete element {}", id, e);
+                log.error("Failed to delete element {}", id, e);
                 failedIds.add(id);
             }
         }
@@ -358,7 +361,7 @@ public class ExploreService {
             try {
                 directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid);
             } catch (Exception e) {
-                LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
+                log.error("Failed to remove deleted elements {} from directory", deletedIds, e);
                 failedIds.addAll(deletedIds);
             }
         }
@@ -426,7 +429,7 @@ public class ExploreService {
     public UUID createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid) {
         UUID parametersUuid = parametersRestService.createParameters(parameters, parametersType);
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), 0, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, parametersService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(parametersType.name())::delete);
         return parametersUuid;
     }
 
@@ -438,7 +441,7 @@ public class ExploreService {
 
     public UUID duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
         UUID newParametersUuid = parametersRestService.duplicateParameters(sourceId, parametersType);
-        duplicateDirectoryElementOrDeleteElement(sourceId, newParametersUuid, targetDirectoryId, parametersService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newParametersUuid, targetDirectoryId, getGenericService(parametersType.name())::delete);
         return newParametersUuid;
     }
 
@@ -482,7 +485,7 @@ public class ExploreService {
 
     private void createSpreadsheetConfigCollectionElement(UUID spreadsheetConfigUuid, String collectionName, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, collectionName, SPREADSHEET_CONFIG_COLLECTION, 0, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, spreadsheetConfigCollectionService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(SPREADSHEET_CONFIG_COLLECTION)::delete);
     }
 
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String name, String description) {
@@ -511,7 +514,7 @@ public class ExploreService {
 
     public UUID duplicateSpreadsheetConfigCollection(UUID sourceId, UUID targetDirectoryId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigCollectionRestService.duplicateSpreadsheetConfigCollection(sourceId);
-        duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, spreadsheetConfigCollectionService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, getGenericService(SPREADSHEET_CONFIG_COLLECTION)::delete);
         return newSpreadsheetConfigUuid;
     }
 
@@ -835,7 +838,7 @@ public class ExploreService {
                             baseMetadataById.get(getMetadataItemId(specificServiceMetadataItem)), specificServiceMetadataItem))
                     .collect(Collectors.toList());
         } catch (ResourceAccessException _) {
-            LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
+            log.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
             return elements.stream()
                     .map(element -> specificService.populateMetadataItem(element, Map.of()))
                     .collect(Collectors.toList());
