@@ -11,6 +11,8 @@ import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
+import org.gridsuite.explore.server.services.cases.CaseService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
@@ -82,7 +84,7 @@ public class ExploreService {
     private final ContingencyListRestService contingencyListRestService;
     private final NetworkModificationRestService networkModificationRestService;
     private final FilterRestService filterRestService;
-    private final CaseService caseService;
+    private final CaseRestService caseRestService;
     private final ParametersService parametersService;
     private final ParametersRestService parametersRestService;
     private final SpreadsheetConfigService spreadsheetConfigService;
@@ -111,7 +113,7 @@ public class ExploreService {
             StudyRestService studyRestService,
             ContingencyListService contingencyListService, ContingencyListRestService contingencyListRestService,
             FilterService filterService,
-            NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService, FilterRestService filterRestService,
+            NetworkModificationService networkModificationService, NetworkModificationRestService networkModificationRestService, FilterRestService filterRestService, CaseRestService caseRestService,
             CaseService caseService,
             ParametersService parametersService, ParametersRestService parametersRestService, SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
@@ -131,7 +133,7 @@ public class ExploreService {
         this.contingencyListRestService = contingencyListRestService;
         this.networkModificationRestService = networkModificationRestService;
         this.filterRestService = filterRestService;
-        this.caseService = caseService;
+        this.caseRestService = caseRestService;
         this.parametersService = parametersService;
         this.parametersRestService = parametersRestService;
         this.spreadsheetConfigRestService = spreadsheetConfigRestService;
@@ -258,28 +260,28 @@ public class ExploreService {
     }
 
     public UUID createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
-        UUID uuid = caseService.importMultipartCase(caseFile);
+        UUID uuid = caseRestService.importMultipartCase(caseFile);
         ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, 0L, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CASE)::delete);
         return uuid;
     }
 
     public void persistCase(String caseName, UUID caseUuid, String description, UUID parentDirectoryUuid) {
-        caseService.persistCase(caseUuid);
+        caseRestService.persistCase(caseUuid);
         ElementAttributes elementAttributes = new ElementAttributes(caseUuid, caseName, CASE, 0L, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CASE)::delete);
     }
 
     public UUID duplicateCase(UUID sourceCaseUuid, UUID targetDirectoryId) {
-        UUID newCaseId = caseService.duplicateCase(sourceCaseUuid);
-        duplicateDirectoryElementOrDeleteElement(sourceCaseUuid, newCaseId, targetDirectoryId, caseService::delete);
+        UUID newCaseId = caseRestService.duplicateCase(sourceCaseUuid);
+        duplicateDirectoryElementOrDeleteElement(sourceCaseUuid, newCaseId, targetDirectoryId, getGenericService(CASE)::delete);
         return newCaseId;
     }
 
     public UUID duplicateExistingCase(UUID sourceCaseUuid, String caseName, String description, UUID targetDirectoryId) {
-        UUID newCaseUuid = caseService.duplicateCase(sourceCaseUuid);
+        UUID newCaseUuid = caseRestService.duplicateCase(sourceCaseUuid);
         ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, 0L, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, targetDirectoryId, caseService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, targetDirectoryId, getGenericService(CASE)::delete);
         return newCaseUuid;
     }
 

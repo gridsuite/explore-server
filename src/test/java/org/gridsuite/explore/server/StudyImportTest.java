@@ -12,9 +12,9 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.*;
-import org.gridsuite.explore.server.services.CaseService;
 import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
@@ -73,7 +73,7 @@ class StudyImportTest {
     private StudyRestService studyRestService;
 
     @Autowired
-    private CaseService caseService;
+    private CaseRestService caseRestService;
 
     @Autowired
     private DirectoryService directoryService;
@@ -101,7 +101,7 @@ class StudyImportTest {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
         studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
-        caseService.setBaseUri(wireMockServer.baseUrl());
+        caseRestService.setBaseUri(wireMockServer.baseUrl());
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
         filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());

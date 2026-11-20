@@ -1,17 +1,17 @@
-/**
- * Copyright (c) 2022, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.cases;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -26,15 +26,18 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
+ */
 @Service
-public class CaseService implements IDirectoryElementsService {
+public class CaseRestService {
     private static final String CASE_SERVER_API_VERSION = "v1";
     private static final String CASES_URL = "cases";
     private static final String DELIMITER = "/";
     private final RestClient restClient;
     private String caseServerBaseUri;
 
-    public CaseService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String caseServerBaseUri,
+    public CaseRestService(@Value("${powsybl.services.case-server.base-uri:http://case-server/}") String caseServerBaseUri,
                        RestClient restClient) {
         this.caseServerBaseUri = caseServerBaseUri;
         this.restClient = restClient;
@@ -51,14 +54,14 @@ public class CaseService implements IDirectoryElementsService {
         }
 
         return restClient.post()
-            .uri(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
-            .contentType(MediaType.MULTIPART_FORM_DATA)
-            .body(body)
-            .retrieve()
-            .body(UUID.class);
+                .uri(caseServerBaseUri + "/" + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(body)
+                .retrieve()
+                .body(UUID.class);
     }
 
-    UUID importMultipartCase(MultipartFile multipartFile) {
+    public UUID importMultipartCase(MultipartFile multipartFile) {
         Objects.requireNonNull(multipartFile);
         Objects.requireNonNull(multipartFile.getOriginalFilename());
         return importCaseResource(multipartFile.getResource());
@@ -77,87 +80,85 @@ public class CaseService implements IDirectoryElementsService {
         body.add("withExpiration", true);
 
         String path = UriComponentsBuilder
-            .fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
-            .buildAndExpand()
-            .toUriString();
+                .fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL)
+                .buildAndExpand()
+                .toUriString();
 
         return restClient.post()
-            .uri(caseServerBaseUri + path)
-            .contentType(MediaType.MULTIPART_FORM_DATA)
-            .body(body)
-            .retrieve()
-            .body(UUID.class);
+                .uri(caseServerBaseUri + path)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(body)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public ResponseEntity<Resource> downloadCase(UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{caseUuid}")
-            .buildAndExpand(caseUuid)
-            .toUriString();
+                .buildAndExpand(caseUuid)
+                .toUriString();
 
         return restClient.get()
-            .uri(caseServerBaseUri + path)
-            .retrieve()
-            .toEntity(Resource.class);
+                .uri(caseServerBaseUri + path)
+                .retrieve()
+                .toEntity(Resource.class);
     }
 
     public String getBaseName(String caseName) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "caseBaseName")
-            .queryParam("caseName", caseName)
-            .buildAndExpand()
-            .toUriString();
+                .queryParam("caseName", caseName)
+                .buildAndExpand()
+                .toUriString();
 
         return restClient.get()
-            .uri(caseServerBaseUri + path)
-            .retrieve()
-            .body(String.class);
+                .uri(caseServerBaseUri + path)
+                .retrieve()
+                .body(String.class);
     }
 
-    void persistCase(UUID caseUuid) {
+    public void persistCase(UUID caseUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + caseUuid + "/disableExpiration")
-            .buildAndExpand()
-            .toUriString();
+                .buildAndExpand()
+                .toUriString();
 
         restClient.put()
-            .uri(caseServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(caseServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 
-    UUID duplicateCase(UUID caseId) {
+    public UUID duplicateCase(UUID caseId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{uuid}/duplicate")
-            .buildAndExpand(caseId)
-            .toUriString();
+                .buildAndExpand(caseId)
+                .toUriString();
 
         return restClient.post()
-            .uri(caseServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .body(UUID.class);
+                .uri(caseServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(UUID.class);
     }
 
-    @Override
     public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "{id}")
-            .buildAndExpand(id)
-            .toUriString();
+                .buildAndExpand(id)
+                .toUriString();
 
         restClient.delete()
-            .uri(caseServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(caseServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 
-    @Override
     public List<Map<String, Object>> getMetadata(List<UUID> casesUuids) {
         var ids = casesUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
-            .fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "metadata" + "?ids=" + ids)
-            .buildAndExpand()
-            .toUriString();
+                .fromPath(DELIMITER + CASE_SERVER_API_VERSION + DELIMITER + CASES_URL + DELIMITER + "metadata" + "?ids=" + ids)
+                .buildAndExpand()
+                .toUriString();
 
         return restClient.get()
-            .uri(caseServerBaseUri + path)
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() { });
+                .uri(caseServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
     }
 }

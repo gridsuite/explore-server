@@ -13,6 +13,7 @@ import com.powsybl.ws.commons.SecuredZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
@@ -85,7 +86,7 @@ public class StudyImportService {
             PCC_MIN, "pcc-min"
     );
 
-    private final CaseService caseService;
+    private final CaseRestService caseRestService;
     private final StudyRestService studyRestService;
     private final StudyService studyService;
     private final ObjectMapper objectMapper;
@@ -99,13 +100,13 @@ public class StudyImportService {
     private final SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
     private final SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
 
-    public StudyImportService(CaseService caseService, StudyRestService studyRestService, StudyService studyService,
+    public StudyImportService(CaseRestService caseRestService, StudyRestService studyRestService, StudyService studyService,
                               ObjectMapper objectMapper, ExploreService exploreService,
                               FilterService filterService, FilterRestService filterRestService, ContingencyListService contingencyListService, ContingencyListRestService contingencyListRestService,
                               ParametersRestService parametersRestService, NetworkModificationRestService networkModificationRestService,
                               SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
                               SpreadsheetConfigCollectionService spreadsheetConfigCollectionService) {
-        this.caseService = caseService;
+        this.caseRestService = caseRestService;
         this.studyRestService = studyRestService;
         this.studyService = studyService;
         this.objectMapper = objectMapper;
@@ -189,9 +190,9 @@ public class StudyImportService {
         treeExportInfos.getRootNetworks().forEach(rootNetwork -> {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
-            UUID newCaseUuid = caseService.importFileCase(caseFile.toFile());
+            UUID newCaseUuid = caseRestService.importFileCase(caseFile.toFile());
             ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, 0L, description);
-            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, caseService::delete);
+            exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, caseRestService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
     }

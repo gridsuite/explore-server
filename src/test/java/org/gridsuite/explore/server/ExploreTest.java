@@ -21,6 +21,7 @@ import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
@@ -185,7 +186,7 @@ class ExploreTest {
     @Autowired
     private NetworkModificationRestService networkModificationRestService;
     @Autowired
-    private CaseService caseService;
+    private CaseRestService caseRestService;
     @Autowired
     private MonitorRestService monitorRestService;
     @Autowired
@@ -222,7 +223,7 @@ class ExploreTest {
         filterRestService.setFilterServerBaseUri(baseUrl);
         contingencyListRestService.setActionsServerBaseUri(baseUrl);
         networkModificationRestService.setNetworkModificationServerBaseUri(baseUrl);
-        caseService.setBaseUri(baseUrl);
+        caseRestService.setBaseUri(baseUrl);
         monitorRestService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
