@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services.directory;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import lombok.Setter;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;

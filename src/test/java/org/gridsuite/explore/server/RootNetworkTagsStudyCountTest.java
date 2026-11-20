@@ -15,8 +15,8 @@ import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.NodeInfos;
 import org.gridsuite.explore.server.dto.ReferenceAttributes;
 import org.gridsuite.explore.server.dto.ReferenceContainer;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.StudyService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +52,7 @@ class RootNetworkTagsStudyCountTest {
     private DirectoryService directoryService;
 
     @Autowired
-    private StudyService studyService;
+    private StudyRestService studyRestService;
 
     private WireMockServer wireMockServer;
 
@@ -72,7 +72,7 @@ class RootNetworkTagsStudyCountTest {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
-        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+        studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
     }
 
     @AfterEach

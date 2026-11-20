@@ -391,12 +391,12 @@ public class ExploreService {
     }
 
     public void updateCompositeModificationActivation(UUID compositeModificationId, List<UUID> childrenModificationUuids, boolean active) {
-        networkModificationService.updateCompositeModificationActivation(childrenModificationUuids, active);
+        networkModificationRestService.updateCompositeModificationActivation(childrenModificationUuids, active);
         notificationService.emitElementUpdated(compositeModificationId);
     }
 
     public void updateCompositeModificationApplicability(UUID compositeModificationId, List<UUID> childrenModificationUuids, String rootNetworkTag, boolean applicable) {
-        networkModificationService.updateRootNetworkApplicability(childrenModificationUuids, rootNetworkTag, applicable);
+        networkModificationRestService.updateRootNetworkApplicability(childrenModificationUuids, rootNetworkTag, applicable);
         notificationService.emitElementUpdated(compositeModificationId);
     }
 
@@ -641,7 +641,7 @@ public class ExploreService {
         if (referencedNodeUuids.isEmpty()) {
             return Map.of();
         }
-        List<UUID> studyUuids = studyService.getNodesInfos(referencedNodeUuids).stream()
+        List<UUID> studyUuids = studyRestService.getNodesInfos(referencedNodeUuids).stream()
                 .map(NodeInfos::studyUuid)
                 .distinct()
                 .toList();
@@ -649,7 +649,7 @@ public class ExploreService {
             return Map.of();
         }
         // a study counts once for each of its tags
-        return studyService.getRootNetworkTags(studyUuids).values().stream()
+        return studyRestService.getRootNetworkTags(studyUuids).values().stream()
                 .flatMap(tags -> tags.stream().distinct())
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
