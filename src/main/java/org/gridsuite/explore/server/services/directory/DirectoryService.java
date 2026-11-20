@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Service
-// TODO : pas sûr que ça ait un sens que DirectoryService implements IDirectoryElementsService
 public class DirectoryService implements IDirectoryElementsService {
 
     private static final String DIRECTORY_SERVER_API_VERSION = "v1";
@@ -330,7 +329,10 @@ public class DirectoryService implements IDirectoryElementsService {
     }
 
     @Override
-    public void delete(UUID id) { }
+    public void delete(UUID id) {
+        // elements are already deleted before,
+        // this function only delete data which is in other services, and there are none for simple directory elements
+    }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid) {
         String path = UriComponentsBuilder

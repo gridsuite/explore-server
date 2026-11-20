@@ -189,10 +189,6 @@ public class ExploreService {
         } else {
             getGenericService(element.getType()).delete(id);
         }
-        /* TODO supprimer ce commentaire si le delete de dossiers fonctionne bien
-        ElementAttributes elementAttribute = directoryService.getElementInfos(id);
-        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
-        service.delete(elementAttribute.getElementUuid());*/
     }
 
     public UUID createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
