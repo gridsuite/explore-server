@@ -52,6 +52,8 @@
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:explore-server</sonar.projectKey>
+        <!-- FIXME remove this in the next gridsuite-dependencies update -->
+        <powsybl-ws-commons.version>1.42.0</powsybl-ws-commons.version>
     </properties>
 
     <build>
@@ -121,6 +123,7 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ws-commons</artifactId>
+            <version>${powsybl-ws-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -199,6 +202,13 @@
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock-jetty12</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-ws-commons</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <version>${powsybl-ws-commons.version}</version>
         </dependency>
     </dependencies>
 </project>
