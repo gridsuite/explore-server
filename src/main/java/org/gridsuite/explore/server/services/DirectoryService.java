@@ -6,10 +6,10 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
-import org.gridsuite.explore.server.dto.PermissionType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
