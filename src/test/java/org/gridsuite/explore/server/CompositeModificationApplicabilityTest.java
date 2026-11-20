@@ -8,9 +8,9 @@ package org.gridsuite.explore.server;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.NetworkModificationService;
-import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
