@@ -47,7 +47,11 @@ public class NetworkModificationService implements IDirectoryElementsService {
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
     }
 
-    public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {
+    /**
+     * @param namesBySourceUuid source composite uuids mapped with the name of their duplicate, null to keep the source name
+     * @return the duplicated composite uuids mapped with their source uuid
+     */
+    public Map<UUID, UUID> duplicateCompositeModifications(Map<UUID, String> namesBySourceUuid) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + "duplication")
                 .buildAndExpand()
                 .toUriString();
@@ -55,7 +59,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
         return restClient.post()
             .uri(networkModificationServerBaseUri + path)
             .contentType(MediaType.APPLICATION_JSON)
-            .body(modificationUuids)
+            .body(namesBySourceUuid)
             .retrieve()
             .body(new ParameterizedTypeReference<>() { });
     }

@@ -80,7 +80,8 @@ class ExploreServiceExceptionTest {
     @Test
     void testDirectoryServerCrashesWithNetworkModification() {
         String creatingErrorMessage = "error when creating element from directory server";
-        when(directoryService.createElementWithNewName(any(), any(), anyBoolean())).thenThrow(new RuntimeException(creatingErrorMessage));
+        when(directoryService.getNameCandidate(any(), any(), any())).thenReturn("name");
+        when(directoryService.createElement(any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
         UUID createdCompositeModificationId = UUID.randomUUID();
         when(networkModificationService.createCompositeModification(anyList(), any(), anyList())).thenReturn(createdCompositeModificationId);
 
