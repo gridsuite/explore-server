@@ -52,7 +52,6 @@
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:explore-server</sonar.projectKey>
-        <gridsuite-dependencies.version>51.1.0</gridsuite-dependencies.version>
         <!-- FIXME remove this in the next gridsuite-dependencies update -->
         <powsybl-ws-commons.version>1.42.0</powsybl-ws-commons.version>
     </properties>
