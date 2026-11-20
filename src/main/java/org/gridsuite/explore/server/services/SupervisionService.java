@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @Service
 public class SupervisionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupervisionService.class);
-    private final DirectoryService directoryService;
+    private final ExploreService exploreService;
     private final String directoryServerBaseUri;
     private final RestClient restClient;
 
@@ -32,16 +32,16 @@ public class SupervisionService {
     private static final String ELEMENTS_SERVER_ROOT_PATH = DELIMITER + DIRECTORY_SERVER_API_VERSION + DELIMITER + SUPERVISION_PATH + DELIMITER
         + "elements";
 
-    public SupervisionService(DirectoryService directoryService, RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+    public SupervisionService(ExploreService exploreService, RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.exploreService = exploreService;
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
-        this.directoryService = directoryService;
         this.restClient = restClient;
     }
 
     public void deleteElements(List<UUID> uuids) {
         uuids.forEach(id -> {
             try {
-                directoryService.deleteElement(id);
+                exploreService.delete(id);
             } catch (Exception e) {
                 // if deletion fails (element does not exist, server is down...), the process keeps proceeding to at least delete references in directory-server
                 // orphan elements will be deleted in a dedicated script

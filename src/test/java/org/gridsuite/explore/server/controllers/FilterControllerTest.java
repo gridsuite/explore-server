@@ -7,7 +7,7 @@
 package org.gridsuite.explore.server.controllers;
 
 import org.gridsuite.explore.server.controller.FilterController;
-import org.gridsuite.explore.server.services.FilterService;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,7 +26,7 @@ class FilterControllerTest {
     private static final UUID FILTER_UUID = UUID.randomUUID();
 
     @Mock
-    private FilterService filterService;
+    private FilterRestService filterRestService;
 
     @InjectMocks
     private FilterController controller;
@@ -34,10 +34,10 @@ class FilterControllerTest {
     @Test
     void getFilterForwardsId() {
         String response = "{\"name\":\"filter\"}";
-        when(filterService.getFilter(FILTER_UUID)).thenReturn(response);
+        when(filterRestService.getFilter(FILTER_UUID)).thenReturn(response);
 
         assertSame(response, controller.getFilter(FILTER_UUID).getBody());
 
-        verify(filterService).getFilter(FILTER_UUID);
+        verify(filterRestService).getFilter(FILTER_UUID);
     }
 }

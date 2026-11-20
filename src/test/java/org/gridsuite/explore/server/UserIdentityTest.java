@@ -13,6 +13,7 @@ import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

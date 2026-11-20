@@ -7,7 +7,7 @@
 package org.gridsuite.explore.server.controllers;
 
 import org.gridsuite.explore.server.controller.CaseController;
-import org.gridsuite.explore.server.services.CaseService;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +29,7 @@ class CaseControllerTest {
     private static final UUID CASE_UUID = UUID.randomUUID();
 
     @Mock
-    private CaseService caseService;
+    private CaseRestService caseRestService;
 
     @Mock
     private MultipartFile file;
@@ -40,30 +40,30 @@ class CaseControllerTest {
     @Test
     void importCaseForwardsFileAndExpirationFlag() {
         UUID response = CASE_UUID;
-        when(caseService.importCaseWithoutDirectoryElementCreation(file)).thenReturn(response);
+        when(caseRestService.importCaseWithoutDirectoryElementCreation(file)).thenReturn(response);
 
         assertSame(response, controller.importCase(file).getBody());
 
-        verify(caseService).importCaseWithoutDirectoryElementCreation(file);
+        verify(caseRestService).importCaseWithoutDirectoryElementCreation(file);
     }
 
     @Test
     void downloadCaseForwardsCaseUuid() {
         ResponseEntity<ByteArrayResource> response = ResponseEntity.ok(new ByteArrayResource("case".getBytes()));
-        when(caseService.downloadCase(CASE_UUID)).thenReturn(ResponseEntity.ok(response.getBody()));
+        when(caseRestService.downloadCase(CASE_UUID)).thenReturn(ResponseEntity.ok(response.getBody()));
 
         assertSame(response.getBody(), controller.downloadCase(CASE_UUID).getBody());
 
-        verify(caseService).downloadCase(CASE_UUID);
+        verify(caseRestService).downloadCase(CASE_UUID);
     }
 
     @Test
     void getBaseNameForwardsCaseName() {
         String response = "case";
-        when(caseService.getBaseName("case.xiidm")).thenReturn(response);
+        when(caseRestService.getBaseName("case.xiidm")).thenReturn(response);
 
         assertSame(response, controller.getBaseName("case.xiidm").getBody());
 
-        verify(caseService).getBaseName("case.xiidm");
+        verify(caseRestService).getBaseName("case.xiidm");
     }
 }

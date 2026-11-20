@@ -17,9 +17,9 @@ import org.gridsuite.explore.server.dto.CaseInfo;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.ReferencingElementInfos;
-import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
@@ -199,7 +199,7 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canDelete(#elementUuid)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid) {
-        exploreService.deleteElement(elementUuid);
+        exploreService.deleteElementAsync(elementUuid);
         return ResponseEntity.ok().build();
     }
 
@@ -224,7 +224,7 @@ public class ExploreController {
     public ResponseEntity<List<ElementAttributes>> getElementsMetadata(@RequestParam("ids") List<UUID> ids,
                                                                        @RequestParam(value = "equipmentTypes", required = false) List<String> equipmentTypes,
                                                                        @RequestParam(value = "elementTypes", required = false) List<String> elementTypes) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsMetadata(ids, elementTypes, equipmentTypes));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getElementsMetadata(ids, elementTypes, equipmentTypes));
     }
 
     @GetMapping(value = "/explore/elements/name", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -232,6 +232,7 @@ public class ExploreController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The elements names")})
     @PreAuthorize("true")
     public ResponseEntity<Map<UUID, String>> getElementsName(@RequestParam("ids") List<UUID> ids) {
+        // TODO : attention, ici ce sont les vrais element name non overridés qui sont renvoyés. Est-ce vraiment ce qu'on veut ?
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsName(ids));
     }
 
@@ -474,11 +475,11 @@ public class ExploreController {
     @Operation(summary = "Modify a composite modification")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The composite modification has been modified successfully")})
     @PreAuthorize("@authorizationService.canWrite(#id)")
-    public ResponseEntity<Void> updateCompositeNetworkModification(@PathVariable UUID id,
-                                                                   @RequestBody List<UUID> modificationUuids,
-                                                                   @RequestParam(QUERY_PARAM_NAME) String name,
-                                                                   @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
-        exploreService.updateCompositeModification(id, modificationUuids, name, description);
+    public ResponseEntity<Void> replaceCompositeNetworkModification(@PathVariable UUID id,
+                                                                    @RequestBody List<UUID> modificationUuids,
+                                                                    @RequestParam(QUERY_PARAM_NAME) String name,
+                                                                    @RequestParam(QUERY_PARAM_DESCRIPTION) String description) {
+        exploreService.replaceCompositeModification(id, modificationUuids, name, description);
         return ResponseEntity.ok().build();
     }
 
@@ -599,7 +600,7 @@ public class ExploreController {
     public ResponseEntity<List<ElementAttributes>> getDirectoryElements(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types,
                                                        @RequestParam(value = "recursive", required = false, defaultValue = "false") Boolean recursive) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getDirectoryElements(directoryUuid, types, recursive));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(exploreService.getOverridableDirectoryElements(directoryUuid, types, recursive));
     }
 
     @PostMapping(value = "/explore/directories/{directoryUuid}/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -642,7 +643,7 @@ public class ExploreController {
         if (parentDirectoryUuid == null) {
             return ResponseEntity.notFound().build();
         }
-        return directoryService.isElementNameAlreadyExists(elementName, parentDirectoryUuid, elementType, elementUuid)
+        return exploreService.doesElementNameAlreadyExists(elementName, parentDirectoryUuid, elementType, elementUuid)
             ? ResponseEntity.ok().build()
             : ResponseEntity.noContent().build();
     }

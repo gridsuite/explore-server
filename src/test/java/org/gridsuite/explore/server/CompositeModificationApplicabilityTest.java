@@ -9,8 +9,8 @@ package org.gridsuite.explore.server;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.NetworkModificationService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ class CompositeModificationApplicabilityTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private NetworkModificationService networkModificationService;
+    private NetworkModificationRestService networkModificationRestService;
 
     @MockitoBean
     private DirectoryService directoryService;
@@ -64,7 +64,7 @@ class CompositeModificationApplicabilityTest {
     void setUp() {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
-        networkModificationService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
+        networkModificationRestService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
         wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(APPLICABILITY_PATH)).willReturn(WireMock.ok()));
         wireMockServer.stubFor(WireMock.put(WireMock.urlPathEqualTo(ACTIVATION_PATH)).willReturn(WireMock.ok()));
         output.clear();

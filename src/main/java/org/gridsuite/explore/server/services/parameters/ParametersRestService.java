@@ -1,17 +1,16 @@
-/**
- * Copyright (c) 2026, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.parameters;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.utils.ParametersType;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -21,10 +20,10 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
  */
 @Service
-public class ParametersService implements IDirectoryElementsService {
+public class ParametersRestService {
     private static final String SERVER_API_VERSION = "v1";
 
     private static final String DELIMITER = "/";
@@ -33,7 +32,12 @@ public class ParametersService implements IDirectoryElementsService {
 
     private final RestClient restClient;
 
-    private final DirectoryService directoryService;
+    private final RemoteServicesProperties remoteServicesProperties;
+
+    public ParametersRestService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.restClient = restClient;
+        this.remoteServicesProperties = remoteServicesProperties;
+    }
 
     @Getter
     @AllArgsConstructor
@@ -51,14 +55,6 @@ public class ParametersService implements IDirectoryElementsService {
             ParametersType.PCC_MIN_PARAMETERS, new ParameterServerConfig("pcc-min-server", COMPUTATION_PARAMETERS),
             ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS, new ParameterServerConfig("study-config-server", NETWORK_VISU_PARAMETERS));
 
-    private final RemoteServicesProperties remoteServicesProperties;
-
-    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestClient restClient) {
-        this.restClient = restClient;
-        this.remoteServicesProperties = remoteServicesProperties;
-        this.directoryService = directoryService;
-    }
-
     public UUID createParameters(String parameters, ParametersType parametersType) {
         ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
@@ -70,12 +66,12 @@ public class ParametersService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient
-            .post()
-            .uri(parametersServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(parameters)
-            .retrieve()
-            .body(UUID.class);
+                .post()
+                .uri(parametersServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(parameters)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public void updateParameters(UUID parametersUuid, String parameters, ParametersType parametersType) {
@@ -89,12 +85,12 @@ public class ParametersService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient
-            .put()
-            .uri(parametersServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(parameters)
-            .retrieve()
-            .toBodilessEntity();
+                .put()
+                .uri(parametersServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(parameters)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {
@@ -103,21 +99,18 @@ public class ParametersService implements IDirectoryElementsService {
         Objects.requireNonNull(sourceParametersUuid);
 
         var path = UriComponentsBuilder
-                    .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
-                    .buildAndExpand(sourceParametersUuid)
-                    .toUriString();
+                .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
+                .buildAndExpand(sourceParametersUuid)
+                .toUriString();
 
         return restClient
-            .post()
-            .uri(parametersServerBaseUri + path)
-            .retrieve()
-            .body(UUID.class);
+                .post()
+                .uri(parametersServerBaseUri + path)
+                .retrieve()
+                .body(UUID.class);
     }
 
-    @Override
-    public void delete(UUID parametersUuid) {
-        ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
-        ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
+    public void delete(UUID parametersUuid, ParametersType parametersType) {
         ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
         String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
 
@@ -126,9 +119,9 @@ public class ParametersService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient
-            .delete()
-            .uri(parametersServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
+                .delete()
+                .uri(parametersServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 }

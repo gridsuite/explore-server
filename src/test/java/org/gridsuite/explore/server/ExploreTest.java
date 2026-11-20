@@ -21,6 +21,13 @@ import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
+import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
+import org.gridsuite.explore.server.services.monitor.MonitorRestService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.gridsuite.explore.server.utils.TestUtils;
@@ -31,8 +38,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.http.client.reactive.ClientHttpConnectorBuilderCustomizer;
-import org.springframework.boot.http.client.reactive.ReactorClientHttpConnectorBuilder;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
@@ -170,18 +175,20 @@ class ExploreTest {
     private MockMvc mockMvc;
     @MockitoSpyBean
     private DirectoryService directoryService;
+    @MockitoSpyBean
+    private ExploreService exploreService;
     @Autowired
-    private ContingencyListService contingencyListService;
+    private ContingencyListRestService contingencyListRestService;
     @Autowired
-    private FilterService filterService;
+    private FilterRestService filterRestService;
     @Autowired
-    private StudyService studyService;
+    private StudyRestService studyRestService;
     @Autowired
-    private NetworkModificationService networkModificationService;
+    private NetworkModificationRestService networkModificationRestService;
     @Autowired
-    private CaseService caseService;
+    private CaseRestService caseRestService;
     @Autowired
-    private MonitorService monitorService;
+    private MonitorRestService monitorRestService;
     @Autowired
     private RemoteServicesProperties remoteServicesProperties;
     @Autowired
@@ -199,8 +206,6 @@ class ExploreTest {
     public static final String HEADER_UPDATE_TYPE_DIRECTORY = "directories";
 
     private static final long TIMEOUT = 1000;
-    @Autowired
-    private ClientHttpConnectorBuilderCustomizer<ReactorClientHttpConnectorBuilder> reactorResourceFactoryClientHttpConnectorBuilderCustomizer;
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
@@ -214,12 +219,12 @@ class ExploreTest {
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
 
         directoryService.setDirectoryServerBaseUri(baseUrl);
-        studyService.setStudyServerBaseUri(baseUrl);
-        filterService.setFilterServerBaseUri(baseUrl);
-        contingencyListService.setActionsServerBaseUri(baseUrl);
-        networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
-        caseService.setBaseUri(baseUrl);
-        monitorService.setMonitorServerBaseUri(baseUrl);
+        studyRestService.setStudyServerBaseUri(baseUrl);
+        filterRestService.setFilterServerBaseUri(baseUrl);
+        contingencyListRestService.setActionsServerBaseUri(baseUrl);
+        networkModificationRestService.setNetworkModificationServerBaseUri(baseUrl);
+        caseRestService.setBaseUri(baseUrl);
+        monitorRestService.setMonitorServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
         remoteServicesProperties.getServices().forEach(s -> s.setBaseUri(baseUrl));
 
@@ -228,8 +233,8 @@ class ExploreTest {
             wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
             wireMockServer.start();
             directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
-            filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
-            studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+            filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());
+            studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         }
 
         String privateStudyAttributesAsString = mapper.writeValueAsString(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null));
@@ -1389,7 +1394,7 @@ class ExploreTest {
                 .andReturn();
         String expected = mapper.writeValueAsString(
                 List.of(new ElementAttributes(MODIFICATION_UUID, "modification name", "MODIFICATION",
-                        USER1, 0, "modif description", modificationSpecificMetadata)));
+                        USER1, 0, "modif description", null)));
         assertEquals(expected, result.getResponse().getContentAsString());
 
         var requests = TestUtils.getRequestsWithBodyDone(1, server);
@@ -1549,7 +1554,7 @@ class ExploreTest {
                 .willReturn(WireMock.ok()));
 
         doThrow(new RuntimeException("simulated failure"))
-                .when(directoryService).deleteElement(FILTER_UUID);
+                .when(exploreService).delete(FILTER_UUID);
 
         CountDownLatch reconciliationDone = new CountDownLatch(1);
         doAnswer(invocation -> {

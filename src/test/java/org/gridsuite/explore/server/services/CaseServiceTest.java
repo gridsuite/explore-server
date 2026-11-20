@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
@@ -37,14 +38,14 @@ class CaseServiceTest {
     private static final UUID DUPLICATED_CASE_UUID = UUID.randomUUID();
     private static final String CASE_NAME = "network.xiidm";
 
-    private CaseService caseService;
+    private CaseRestService caseRestService;
     private MockRestServiceServer server;
 
     @BeforeEach
     void setUp() {
         RestClient.Builder restClientBuilder = RestClient.builder();
         server = MockRestServiceServer.bindTo(restClientBuilder).build();
-        caseService = new CaseService(BASE_URI, restClientBuilder.build());
+        caseRestService = new CaseRestService(BASE_URI, restClientBuilder.build());
     }
 
     @Test
@@ -66,7 +67,7 @@ class CaseServiceTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("case")))
             .andRespond(withSuccess("\"" + CASE_UUID + "\"", MediaType.APPLICATION_JSON));
 
-        UUID response = caseService.importCaseWithoutDirectoryElementCreation(file);
+        UUID response = caseRestService.importCaseWithoutDirectoryElementCreation(file);
 
         assertEquals(CASE_UUID, response);
         server.verify();
@@ -79,7 +80,7 @@ class CaseServiceTest {
             .andRespond(withSuccess("case", MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=network.xiidm"));
 
-        ResponseEntity<Resource> response = caseService.downloadCase(CASE_UUID);
+        ResponseEntity<Resource> response = caseRestService.downloadCase(CASE_UUID);
 
         assertEquals(MediaType.APPLICATION_OCTET_STREAM, response.getHeaders().getContentType());
         assertEquals("attachment; filename=network.xiidm", response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
@@ -94,7 +95,7 @@ class CaseServiceTest {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("network", MediaType.TEXT_PLAIN));
 
-        String response = caseService.getBaseName(CASE_NAME);
+        String response = caseRestService.getBaseName(CASE_NAME);
 
         assertEquals("network", response);
         server.verify();
@@ -109,7 +110,7 @@ class CaseServiceTest {
                         MediaType.APPLICATION_JSON
                 ));
 
-        UUID response = caseService.duplicateCase(CASE_UUID);
+        UUID response = caseRestService.duplicateCase(CASE_UUID);
 
         assertEquals(DUPLICATED_CASE_UUID, response);
         server.verify();

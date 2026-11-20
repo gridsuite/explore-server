@@ -4,13 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.directory;
 
 import com.powsybl.ws.commons.security.PermissionType;
+import lombok.Setter;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.PermissionDTO;
-import org.gridsuite.explore.server.utils.ParametersType;
+import org.gridsuite.explore.server.services.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -23,8 +24,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -58,44 +57,15 @@ public class DirectoryService implements IDirectoryElementsService {
     private static final String PARAM_DIRECTORY_UUID = "directoryUuid";
     private static final String PARAM_USER_INPUT = "userInput";
     private static final String PARAM_STATUS = "status";
-
-    private final Map<String, IDirectoryElementsService> genericServices;
     private final RestClient restClient;
+    @Setter
     private String directoryServerBaseUri;
 
     public DirectoryService(
-        FilterService filterService, ContingencyListService contingencyListService, StudyService studyService, NetworkModificationService networkModificationService,
-        CaseService caseService, SpreadsheetConfigService spreadsheetConfigService, SpreadsheetConfigCollectionService spreadsheetConfigCollectionService, ParametersService parametersService,
-        SingleLineDiagramService singleLineDiagramService, WorkspaceService workspaceService, MonitorService monitorService, DynamicMappingService dynamicMappingService,
-        RestClient restClient,
-        RemoteServicesProperties remoteServicesProperties) {
+            RestClient restClient,
+            RemoteServicesProperties remoteServicesProperties) {
         this.directoryServerBaseUri = remoteServicesProperties.getServiceUri("directory-server");
         this.restClient = restClient;
-        this.genericServices = Map.ofEntries(
-            Map.entry(FILTER, filterService),
-            Map.entry(CONTINGENCY_LIST, contingencyListService),
-            Map.entry(STUDY, studyService),
-            Map.entry(DIRECTORY, this),
-            Map.entry(MODIFICATION, networkModificationService),
-            Map.entry(CASE, caseService),
-            Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
-            Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
-            Map.entry(DIAGRAM_CONFIG, singleLineDiagramService),
-            Map.entry(WORKSPACE, workspaceService),
-            Map.entry(PROCESS_CONFIG, monitorService),
-            Map.entry(DYNAMIC_MAPPING, dynamicMappingService),
-            Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), parametersService),
-            Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), parametersService)
-        );
-    }
-
-    public void setDirectoryServerBaseUri(String directoryServerBaseUri) {
-        this.directoryServerBaseUri = directoryServerBaseUri;
     }
 
     public String getRootDirectories(List<String> types) {
@@ -121,20 +91,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(rootDirectoryAttributes)
             .retrieve()
             .body(String.class);
-    }
-
-    public boolean isElementNameAlreadyExists(String elementName, UUID parentDirectoryUuid, String elementType, UUID excludedElementUuid) {
-        List<ElementAttributes> elements = getDirectoryElements(parentDirectoryUuid, List.of(elementType), false);
-        if (elements.isEmpty()) {
-            return false;
-        }
-        // the real name of a modification is stored in the network modification server, not in the directory
-        if (MODIFICATION.equals(elementType)) {
-            elements = completeElementsAttributes(elements);
-        }
-        return elements.stream()
-            .filter(element -> !element.getElementUuid().equals(excludedElementUuid))
-            .anyMatch(element -> elementName.equals(element.getElementName()));
     }
 
     public String getPath(UUID elementUuid) {
@@ -325,22 +281,6 @@ public class DirectoryService implements IDirectoryElementsService {
         );
     }
 
-    public void notifyDirectoryChanged(UUID elementUuid) {
-        String path = UriComponentsBuilder
-            .fromPath(ELEMENTS_SERVER_ELEMENT_PATH + "/notification?type={update_directory}")
-            .buildAndExpand(elementUuid, NotificationType.UPDATE_DIRECTORY.name())
-            .toUriString();
-
-        restClient.post()
-            .uri(directoryServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
-    }
-
-    private List<ElementAttributes> getDirectoryElements(UUID directoryUuid) {
-        return getDirectoryElements(directoryUuid, null, null);
-    }
-
     public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_DIRECTORIES_ROOT_PATH + "/{directoryUuid}/elements");
         if (types != null) {
@@ -358,48 +298,6 @@ public class DirectoryService implements IDirectoryElementsService {
             .body(new ParameterizedTypeReference<>() { });
 
         return Objects.requireNonNullElse(elementAttributesList, Collections.emptyList());
-    }
-
-    public void deleteElement(UUID id) {
-        ElementAttributes elementAttribute = getElementInfos(id);
-        IDirectoryElementsService service = getGenericService(elementAttribute.getType());
-        service.delete(elementAttribute.getElementUuid());
-    }
-
-    private IDirectoryElementsService getGenericService(String type) {
-        IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
-        if (iDirectoryElementsService == null) {
-            throw new IllegalArgumentException("Unknown element type " + type);
-        }
-        return iDirectoryElementsService;
-    }
-
-    private List<ElementAttributes> completeElementsAttributes(List<ElementAttributes> elements) {
-        Map<String, List<ElementAttributes>> elementAttributesListByType = elements.stream()
-                .collect(Collectors.groupingBy(ElementAttributes::getType));
-        List<ElementAttributes> listOfElements = new ArrayList<>();
-        for (Map.Entry<String, List<ElementAttributes>> elementAttribute : elementAttributesListByType.entrySet()) {
-            IDirectoryElementsService service = getGenericService(elementAttribute.getKey());
-            listOfElements.addAll(service.completeElementAttribute(elementAttribute.getValue()));
-        }
-        return listOfElements;
-    }
-
-    public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
-        List<ElementAttributes> elements = getElementsInfos(ids, elementTypes);
-        List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
-        if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
-            listOfElements = listOfElements.stream()
-                .filter(element -> {
-                    Object equipmentType = element.getSpecificMetadata().get("equipmentType");
-                    if (equipmentType != null) { // could be null for some elements
-                        return equipmentTypes.contains(equipmentType);
-                    }
-                    return true; // keep other elements
-                })
-                .collect(Collectors.toList());
-        }
-        return listOfElements;
     }
 
     public Map<UUID, String> getElementsName(List<UUID> ids) {
@@ -430,11 +328,10 @@ public class DirectoryService implements IDirectoryElementsService {
             .toBodilessEntity();
     }
 
-    // TODO get id/type recursively then do batch delete
     @Override
     public void delete(UUID id) {
-        List<ElementAttributes> elementAttributesList = getDirectoryElements(id);
-        elementAttributesList.forEach(elementAttributes -> deleteElement(elementAttributes.getElementUuid()));
+        // elements are already deleted before,
+        // this function only delete data which is in other services, and there are none for simple directory elements
     }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid) {

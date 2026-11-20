@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
+import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -27,15 +28,15 @@ class FilterServiceTest {
     private static final UUID FILTER_UUID = UUID.randomUUID();
     private static final String FILTER = "{\"name\":\"filter\"}";
 
-    private FilterService filterService;
+    private FilterRestService filterRestService;
     private MockRestServiceServer server;
 
     @BeforeEach
     void setUp() {
         RestClient.Builder restClientBuilder = RestClient.builder();
         server = MockRestServiceServer.bindTo(restClientBuilder).build();
-        filterService = new FilterService(restClientBuilder.build(), new RemoteServicesProperties());
-        filterService.setFilterServerBaseUri(BASE_URI);
+        filterRestService = new FilterRestService(restClientBuilder.build(), new RemoteServicesProperties());
+        filterRestService.setFilterServerBaseUri(BASE_URI);
     }
 
     @Test
@@ -44,7 +45,7 @@ class FilterServiceTest {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess(FILTER, MediaType.APPLICATION_JSON));
 
-        String response = filterService.getFilter(FILTER_UUID);
+        String response = filterRestService.getFilter(FILTER_UUID);
 
         assertEquals(FILTER, response);
         server.verify();
