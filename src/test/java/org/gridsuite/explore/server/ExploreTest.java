@@ -1008,7 +1008,10 @@ class ExploreTest {
 
     @Test
     void testGetElementsName() throws Exception {
-        MvcResult result = mockMvc.perform(get("/v1/explore/elements/name?ids=" + ELEMENT_UUID + "&ids=" + ELEMENT_UUID_2))
+        MvcResult result = mockMvc.perform(
+                get("/v1/explore/elements/name?ids=" + ELEMENT_UUID +
+                        "&ids=" + ELEMENT_UUID_2 +
+                        "&type=" + FILTER))
             .andExpect(status().isOk())
             .andReturn();
         String res = result.getResponse().getContentAsString();

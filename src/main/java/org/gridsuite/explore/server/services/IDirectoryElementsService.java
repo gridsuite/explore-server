@@ -30,6 +30,10 @@ public interface IDirectoryElementsService {
         directoryService.updateElement(elementUuid, elementAttributes);
     }
 
+    default Map<UUID, String> getNames(List<UUID> ids, DirectoryService directoryService) {
+        return directoryService.getElementsName(ids);
+    }
+
     default ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
         elementAttributes.setSpecificMetadata(metadataItem);
         return elementAttributes;

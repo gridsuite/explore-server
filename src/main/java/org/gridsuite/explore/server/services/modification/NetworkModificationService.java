@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author David Braquart <david.braquart at rte-france.com>
@@ -61,6 +62,16 @@ public class NetworkModificationService implements IDirectoryElementsService {
         }
         elementAttributes.setSpecificMetadata(specificServiceMetadata);
         return elementAttributes;
+    }
+
+    @Override
+    public Map<UUID, String> getNames(List<UUID> ids, DirectoryService directoryService) {
+        List<Map<String, Object>> metadataList = networkModificationRestService.getMetadata(ids);
+        return metadataList.stream()
+                .filter(metadata -> metadata.get("id") != null && metadata.get(NetworkModificationRestService.NAME) != null)
+                .collect(Collectors.toMap(
+                        metadata -> UUID.fromString(metadata.get("id").toString()),
+                        metadata -> metadata.get(NetworkModificationRestService.NAME).toString()));
     }
 
     @Override

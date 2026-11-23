@@ -533,6 +533,7 @@ public class ExploreService {
         // create composite modifications
         UUID modificationsUuid = networkModificationRestService.createCompositeModification(modificationUuids, name, rootNetworkTags);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
+        // TODO : attention ici on le crée avec un vrai name au ieu de "" -> ça va causer des problèmes
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(MODIFICATION)::delete);
         return modificationsUuid;
     }
@@ -585,6 +586,22 @@ public class ExploreService {
         List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null);
         elementsAttributes.forEach(this::notifyElementMoved);
 
+    }
+
+    public Map<UUID, String> getElementsName(List<UUID> ids, String type) {
+        if (type != null) {
+            return getGenericService(type).getNames(ids, directoryService);
+        } else {
+            // if the user didn't specify a type, then the types of each elements have to be determined
+            Map<String, List<UUID>> idsByType = directoryService.getElementsInfos(ids, null).stream()
+                    .collect(Collectors.groupingBy(
+                            ElementAttributes::getType,
+                            Collectors.mapping(ElementAttributes::getElementUuid, Collectors.toList())));
+            Map<UUID, String> names = new HashMap<>();
+            idsByType.forEach((elementType, elementIds) ->
+                    names.putAll(getGenericService(elementType).getNames(elementIds, directoryService)));
+            return names;
+        }
     }
 
     public String getUsersIdentities(List<UUID> elementsUuids) {
