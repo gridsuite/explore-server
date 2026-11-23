@@ -94,7 +94,7 @@ public class NetworkModificationRestService {
     public void replaceCompositeModification(UUID compositeModificationId, String newName, String description, List<UUID> modificationUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId + "/replace")
                 .queryParam(NAME, newName)
-                .queryParam(DESCRIPTION, description) // TODO : handle this in network modification server
+                .queryParam(DESCRIPTION, description)
                 .buildAndExpand()
                 .toUriString();
 

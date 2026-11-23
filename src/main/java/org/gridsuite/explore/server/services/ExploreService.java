@@ -179,6 +179,7 @@ public class ExploreService {
         return iDirectoryElementsService;
     }
 
+    // TODO Slimane : à voir avec Slimane
     public void delete(UUID id) {
         ElementAttributes element = directoryService.getElementInfos(id);
         if (DIRECTORY.equals(element.getType())) {
@@ -532,8 +533,9 @@ public class ExploreService {
 
         // create composite modifications
         UUID modificationsUuid = networkModificationRestService.createCompositeModification(modificationUuids, name, rootNetworkTags);
-        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
-        // TODO : attention ici on le crée avec un vrai name au ieu de "" -> ça va causer des problèmes
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, "", MODIFICATION, 0L, description);
+        // TODO Slimane: attention ici on le crée avec un vrai name au ieu de "" -> ça va causer des problèmes.
+        // ET c'est interdit d'avoir des noms d'élément vides y compris "" !!
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(MODIFICATION)::delete);
         return modificationsUuid;
     }
