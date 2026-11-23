@@ -11,6 +11,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
+import com.powsybl.ws.commons.security.PermissionType;
 import lombok.SneakyThrows;
 import mockwebserver3.*;
 import mockwebserver3.junit5.StartStop;
@@ -74,7 +76,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @AutoConfigureMockMvc
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
-@Import(AllowAllAuthorizationTestConfiguration.class)
+@Import(AllowAllAuthTestConfiguration.class)
 class ExploreTest {
     private static final String TEST_FILE = "testCase.xiidm";
     private static final String TEST_FILE_WITH_ERRORS = "testCase_with_errors.xiidm";
