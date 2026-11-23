@@ -421,21 +421,34 @@ public class ExploreService {
 
     public UUID createCompositeModification(List<UUID> modificationUuids, String name,
                                             String description, UUID parentDirectoryUuid, List<String> rootNetworkTags) {
-
-        // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name, rootNetworkTags);
-        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
-        createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
+        // the name is stored in the network modification server too : ask the directory server for the final name
+        // (ex: "name (1)" if "name" already exists) so that the composite is created directly with it
+        String finalName = getCompositeModificationNameCandidate(parentDirectoryUuid, name);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, finalName, rootNetworkTags);
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, finalName, MODIFICATION, 0L, description);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
         return modificationsUuid;
     }
 
-    public UUID duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid) {
-        // create duplicated modification
-        Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateCompositeModifications(List.of(sourceId));
-        UUID newNetworkModification = newModificationsUuids.get(sourceId);
-        // create corresponding directory element
-        duplicateDirectoryElementOrDeleteElement(sourceId, newNetworkModification, parentDirectoryUuid, networkModificationService::delete);
+    public UUID duplicateCompositeModification(UUID sourceId, UUID targetDirectoryId) {
+        // the real name and description of a composite modification are stored in the network modification server
+        // (the directory ones can be outdated after a rename) : the duplicated element is created like a new one from them
+        ElementAttributes sourceElement = directoryService.getElementInfos(sourceId);
+        ElementAttributes sourceWithRealMetadata = networkModificationService.completeElementAttribute(List.of(sourceElement)).stream()
+                .findFirst()
+                .orElse(sourceElement);
+        UUID parentDirectoryUuid = targetDirectoryId != null ? targetDirectoryId : directoryService.getParentDirectoryUuid(sourceId);
+        // like for the creation, the duplicated composite is created directly with its final name (ex: "name (1)")
+        String finalName = getCompositeModificationNameCandidate(parentDirectoryUuid, sourceWithRealMetadata.getElementName());
+
+        UUID newNetworkModification = networkModificationService.duplicateCompositeModifications(Map.of(sourceId, finalName)).get(sourceId);
+        ElementAttributes elementAttributes = new ElementAttributes(newNetworkModification, finalName, MODIFICATION, 0L, sourceWithRealMetadata.getDescription());
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
         return newNetworkModification;
+    }
+
+    private String getCompositeModificationNameCandidate(UUID parentDirectoryUuid, String name) {
+        return Optional.ofNullable(directoryService.getNameCandidate(parentDirectoryUuid, name, MODIFICATION)).orElse(name);
     }
 
     public void assertCanCreateCase() {
