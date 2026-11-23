@@ -233,6 +233,7 @@ public class ExploreController {
     @PreAuthorize("true")
     public ResponseEntity<Map<UUID, String>> getElementsName(@RequestParam("ids") List<UUID> ids) {
         // TODO : attention, ici ce sont les vrais element name non overridés qui sont renvoyés. Est-ce vraiment ce qu'on veut ?
+        // => probablement pas, ils sont affichés par exemple dans les sélecteurs d'objets de config et à l'ouverture ils affichent l'element name (qui ne devrait jamais être utilisé)
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getElementsName(ids));
     }
 
@@ -535,8 +536,9 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canWrite(#id)")
     public ResponseEntity<Void> updateElement(
             @PathVariable UUID id,
+            @RequestParam(value = QUERY_PARAM_TYPE, required = false) String type, // TODO : à utiliser das le front
             @RequestBody ElementAttributes elementAttributes) {
-        exploreService.updateElement(id, elementAttributes);
+        exploreService.updateElement(id, elementAttributes, type);
         return ResponseEntity.ok().build();
     }
 

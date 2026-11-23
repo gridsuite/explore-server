@@ -568,10 +568,9 @@ public class ExploreService {
         }
     }
 
-    public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
-        // TODO set type in updatedElementAttributes from front to avoid a read DB
-        ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        getGenericService(elementsInfos.getType()).updateElement(id, updatedElementAttributes, directoryService);
+    public void updateElement(UUID id, ElementAttributes updatedElementAttributes, String elementType) {
+        String finalElementType = elementType == null ? directoryService.getElementInfos(id).getType() : elementType;
+        getGenericService(finalElementType).updateElement(id, updatedElementAttributes, directoryService);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
