@@ -10,6 +10,7 @@ import lombok.Builder;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Information about an element consuming a shared element (a usage of a shared element in the application)
@@ -18,8 +19,14 @@ import java.util.List;
  */
 @Builder
 public record ReferencingElementInfos(String elementName, String type,
-                                   List<String> path,
+                                   List<PathElement> path,
                                    // only relevant when sharing a network modification within a study
                                    String node,
                                    String ownerLabel, Instant lastModificationDate, String lastModifiedByLabel) {
+
+    /**
+     * A parent directory of the referencing element
+     */
+    public record PathElement(UUID elementUuid, String elementName) {
+    }
 }
