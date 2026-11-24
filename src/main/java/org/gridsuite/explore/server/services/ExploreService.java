@@ -586,6 +586,7 @@ public class ExploreService {
             return null;
         }
         return ReferencingElementInfos.builder()
+                .elementUuid(study.getElementUuid())
                 .elementName(study.getElementName())
                 .type(study.getType())
                 .path(parentDirectoriesByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))

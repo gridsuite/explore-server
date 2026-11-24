@@ -217,6 +217,7 @@ class ReferencingElementInfosTest {
         assertEquals(2, infos.size());
 
         ReferencingElementInfos first = infos.getFirst();
+        assertEquals(STUDY_1_UUID, first.elementUuid());
         assertEquals("node1", first.node());
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
