@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services.study;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.springframework.stereotype.Service;
@@ -15,9 +16,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.STUDY;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@DirectoryElementTypes(STUDY)
 @Service
 public class StudyService implements IDirectoryElementsService {
 

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services.spreadsheet;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.SPREADSHEET_CONFIG;
+
 /**
  * @author Achour BERRAHMA <achour.berrahma at rte-france.com>
  */
+@DirectoryElementTypes(SPREADSHEET_CONFIG)
 @Service
 public class SpreadsheetConfigService implements IDirectoryElementsService {
     SpreadsheetConfigRestService spreadsheetConfigRestService;

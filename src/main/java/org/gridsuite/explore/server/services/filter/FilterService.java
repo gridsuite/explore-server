@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services.filter;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.FILTER;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@DirectoryElementTypes(FILTER)
 @Service
 public class FilterService implements IDirectoryElementsService {
     FilterRestService filterRestService;

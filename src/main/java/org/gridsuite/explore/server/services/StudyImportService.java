@@ -41,8 +41,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.*;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.IMPORT_STUDY_FAILED;
-import static org.gridsuite.explore.server.services.ExploreService.*;
 
 /**
  * @author Ghazwa Rehili <ghazwa.rehili at rte-france.com>
@@ -191,7 +191,7 @@ public class StudyImportService {
             CaseInfos caseInfos = rootNetwork.caseInfos();
             Path caseFile = casesDir.resolve(caseInfos.getCaseUuid().toString()).resolve(caseInfos.getCaseName()).normalize();
             UUID newCaseUuid = caseRestService.importFileCase(caseFile.toFile());
-            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE, 0L, description);
+            ElementAttributes caseElementAttributes = new ElementAttributes(newCaseUuid, caseInfos.getCaseName(), CASE.name(), 0L, description);
             exploreService.createDirectoryElementWithNewNameOrDeleteElement(caseElementAttributes, parentDirectoryUuid, caseRestService::delete);
             caseInfos.setCaseUuid(newCaseUuid);
         });
@@ -200,7 +200,7 @@ public class StudyImportService {
     private UUID createStudy(TreeExportInfos treeExportInfos, String studyName, UUID parentDirectoryUuid, String description) {
         UUID createdStudyUuid = UUID.randomUUID();
         treeExportInfos.setStudyUuid(createdStudyUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY, 0L, description, DirectoryElementStatus.CREATING);
+        ElementAttributes elementAttributes = new ElementAttributes(createdStudyUuid, studyName, STUDY.name(), 0L, description, DirectoryElementStatus.CREATING);
         studyRestService.importStudy(treeExportInfos);
         exploreService.createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
         return createdStudyUuid;
@@ -237,7 +237,7 @@ public class StudyImportService {
         for (ExportedElementInfos filter : filters) {
             UUID newFilterUuid = oldUuidsToNewUuids.get(filter.uuid());
             filterRestService.insertFilter(replaceWithNewUuids(filter.content().toString(), oldUuidsToNewUuids), newFilterUuid);
-            createDirectoryElement(filter, newFilterUuid, FILTER, parentDirectoryUuid, description, filterService::delete);
+            createDirectoryElement(filter, newFilterUuid, FILTER.name(), parentDirectoryUuid, description, filterService::delete);
         }
     }
 
@@ -252,7 +252,7 @@ public class StudyImportService {
                 case FILTERS_CONTINGENCY_LIST_TYPE -> contingencyListRestService.insertFilterBasedContingencyList(newContingencyListUuid, remappedContent);
                 default -> throw new ExploreException(IMPORT_STUDY_FAILED, "Unknown type for contingency list " + contingencyList.uuid());
             }
-            createDirectoryElement(contingencyList, newContingencyListUuid, CONTINGENCY_LIST, parentDirectoryUuid, description, contingencyListService::delete);
+            createDirectoryElement(contingencyList, newContingencyListUuid, CONTINGENCY_LIST.name(), parentDirectoryUuid, description, contingencyListService::delete);
         }
     }
 
@@ -334,7 +334,7 @@ public class StudyImportService {
         String spreadsheetConfigCollection = replaceWithNewUuids(Files.readString(file), oldUuidsToNewUuids);
         studyRestService.setSpreadsheetConfigCollection(studyUuid, spreadsheetConfigCollection);
         UUID newCollectionUuid = spreadsheetConfigCollectionRestService.createSpreadsheetConfigCollection(spreadsheetConfigCollection);
-        ElementAttributes collectionElementAttributes = new ElementAttributes(newCollectionUuid, SPREADSHEET_CONFIG_COLLECTION_ELEMENT_NAME, SPREADSHEET_CONFIG_COLLECTION, 0L, description);
+        ElementAttributes collectionElementAttributes = new ElementAttributes(newCollectionUuid, SPREADSHEET_CONFIG_COLLECTION_ELEMENT_NAME, SPREADSHEET_CONFIG_COLLECTION.name(), 0L, description);
         exploreService.createDirectoryElementWithNewNameOrDeleteElement(collectionElementAttributes, parentDirectoryUuid, spreadsheetConfigCollectionService::delete);
     }
 }

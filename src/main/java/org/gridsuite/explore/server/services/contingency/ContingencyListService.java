@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services.contingency;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.CONTINGENCY_LIST;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@DirectoryElementTypes(CONTINGENCY_LIST)
 @Service
 public class ContingencyListService implements IDirectoryElementsService {
     ContingencyListRestService contingencyListRestService;

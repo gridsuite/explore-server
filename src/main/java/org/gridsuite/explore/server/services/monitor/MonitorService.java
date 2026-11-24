@@ -6,6 +6,7 @@
  */
 package org.gridsuite.explore.server.services.monitor;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.PROCESS_CONFIG;
+
 /**
  * @author Caroline Jeandat {@literal <caroline.jeandat at rte-france.com>}
  */
+@DirectoryElementTypes(PROCESS_CONFIG)
 @Service
 public class MonitorService implements IDirectoryElementsService {
     MonitorRestService monitorRestService;

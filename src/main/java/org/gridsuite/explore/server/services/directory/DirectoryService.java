@@ -25,9 +25,12 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.DIRECTORY;
+
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@DirectoryElementTypes(DIRECTORY)
 @Service
 public class DirectoryService implements IDirectoryElementsService {
 

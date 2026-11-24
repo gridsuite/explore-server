@@ -6,14 +6,18 @@
  */
 package org.gridsuite.explore.server.services.workspace;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.WORKSPACE;
+
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
+@DirectoryElementTypes(WORKSPACE)
 @Service
 public class WorkspaceService implements IDirectoryElementsService {
 

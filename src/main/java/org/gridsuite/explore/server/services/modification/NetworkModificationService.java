@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services.modification;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.gridsuite.explore.server.services.NotificationService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
@@ -17,9 +18,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.MODIFICATION;
+
 /**
  * @author David Braquart <david.braquart at rte-france.com>
  */
+@DirectoryElementTypes(MODIFICATION)
 @Service
 public class NetworkModificationService implements IDirectoryElementsService {
     private final NotificationService notificationService;

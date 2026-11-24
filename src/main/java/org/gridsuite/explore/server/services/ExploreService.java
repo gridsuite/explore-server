@@ -13,32 +13,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.cases.CaseRestService;
-import org.gridsuite.explore.server.services.cases.CaseService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
-import org.gridsuite.explore.server.services.contingency.ContingencyListService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
-import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.dynamic.DynamicMappingRestService;
-import org.gridsuite.explore.server.services.dynamic.DynamicMappingService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
-import org.gridsuite.explore.server.services.filter.FilterService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
-import org.gridsuite.explore.server.services.modification.NetworkModificationService;
 import org.gridsuite.explore.server.services.monitor.MonitorRestService;
-import org.gridsuite.explore.server.services.monitor.MonitorService;
 import org.gridsuite.explore.server.services.parameters.ParametersRestService;
-import org.gridsuite.explore.server.services.parameters.ParametersService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
-import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigRestService;
-import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
-import org.gridsuite.explore.server.services.study.StudyService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
-import org.gridsuite.explore.server.services.workspace.WorkspaceService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -55,6 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATING;
+import static org.gridsuite.explore.server.dto.DirectoryElementType.*;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.ELEMENT_ALREADY_EXISTS;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
@@ -66,19 +57,6 @@ import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLOR
 @Slf4j
 @Service
 public class ExploreService {
-    public static final String STUDY = "STUDY";
-    static final String CASE = "CASE";
-    static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
-    static final String FILTER = "FILTER";
-    public static final String MODIFICATION = "MODIFICATION"; // only for composite modification
-    static final String DIRECTORY = "DIRECTORY";
-    static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
-    static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
-    static final String DIAGRAM_CONFIG = "DIAGRAM_CONFIG";
-    static final String WORKSPACE = "WORKSPACE";
-    static final String PROCESS_CONFIG = "PROCESS_CONFIG";
-    static final String DYNAMIC_MAPPING = "DYNAMIC_MAPPING";
-
     private final DirectoryService directoryService;
     private final StudyRestService studyRestService;
     private final ContingencyListRestService contingencyListRestService;
@@ -98,37 +76,27 @@ public class ExploreService {
     private final UserAdminService userAdminService;
     private final SingleLineDiagramRestService singleLineDiagramRestService;
 
-    private final Map<String, IDirectoryElementsService> genericServices;
+    private final Map<DirectoryElementType, IDirectoryElementsService> genericServices;
 
     public ExploreService(
+            List<IDirectoryElementsService> directoryElementsServices,
             DirectoryService directoryService,
-            StudyService studyService,
             StudyRestService studyRestService,
-            ContingencyListService contingencyListService,
             ContingencyListRestService contingencyListRestService,
-            FilterService filterService,
-            NetworkModificationService networkModificationService,
             NetworkModificationRestService networkModificationRestService,
             FilterRestService filterRestService,
             CaseRestService caseRestService,
-            CaseService caseService,
-            ParametersService parametersService,
             ParametersRestService parametersRestService,
             SpreadsheetConfigRestService spreadsheetConfigRestService,
             UserAdminService userAdminService,
-            SpreadsheetConfigService spreadsheetConfigService,
-            SpreadsheetConfigCollectionService spreadsheetConfigCollectionService,
             SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService,
             WorkspaceRestService workspaceRestService,
             DynamicMappingRestService dynamicMappingRestService,
-            WorkspaceService workspaceService,
             UserIdentityService userIdentityService,
             NotificationService notificationService,
-            SingleLineDiagramService singleLineDiagramService,
-            MonitorService monitorService, MonitorRestService monitorRestService,
-            DynamicMappingService dynamicMappingService,
-            ExploreServerExecutionService exploreServerExecutionService, SingleLineDiagramRestService singleLineDiagramRestService) {
-
+            MonitorRestService monitorRestService,
+            ExploreServerExecutionService exploreServerExecutionService,
+            SingleLineDiagramRestService singleLineDiagramRestService) {
         this.directoryService = directoryService;
         this.studyRestService = studyRestService;
         this.contingencyListRestService = contingencyListRestService;
@@ -146,42 +114,62 @@ public class ExploreService {
         this.monitorRestService = monitorRestService;
         this.exploreServerExecutionService = exploreServerExecutionService;
         this.singleLineDiagramRestService = singleLineDiagramRestService;
-        this.genericServices = Map.ofEntries(
-                Map.entry(FILTER, filterService),
-                Map.entry(CONTINGENCY_LIST, contingencyListService),
-                Map.entry(STUDY, studyService),
-                Map.entry(DIRECTORY, directoryService),
-                Map.entry(MODIFICATION, networkModificationService),
-                Map.entry(CASE, caseService),
-                Map.entry(SPREADSHEET_CONFIG, spreadsheetConfigService),
-                Map.entry(SPREADSHEET_CONFIG_COLLECTION, spreadsheetConfigCollectionService),
-                Map.entry(DIAGRAM_CONFIG, singleLineDiagramService),
-                Map.entry(WORKSPACE, workspaceService),
-                Map.entry(PROCESS_CONFIG, monitorService),
-                Map.entry(DYNAMIC_MAPPING, dynamicMappingService),
-                Map.entry(ParametersType.VOLTAGE_INIT_PARAMETERS.name(), parametersService),
-                Map.entry(ParametersType.SECURITY_ANALYSIS_PARAMETERS.name(), parametersService),
-                Map.entry(ParametersType.LOADFLOW_PARAMETERS.name(), parametersService),
-                Map.entry(ParametersType.SENSITIVITY_PARAMETERS.name(), parametersService),
-                Map.entry(ParametersType.SHORT_CIRCUIT_PARAMETERS.name(), parametersService),
-                Map.entry(ParametersType.PCC_MIN_PARAMETERS.name(), parametersService),
-                Map.entry(ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS.name(), parametersService)
-        );
+        this.genericServices = buildGenericServicesRegistry(directoryElementsServices);
     }
 
-    public IDirectoryElementsService getGenericService(String type) {
-        IDirectoryElementsService iDirectoryElementsService = genericServices.get(type);
-        if (iDirectoryElementsService == null) {
-            throw new IllegalArgumentException("Unknown element type " + type);
+    /**
+     * Maps each element type to the service declaring it through {@link DirectoryElementTypes}.
+     * Fails at startup if a service is not annotated, if two services declare the same type
+     * or if a {@link DirectoryElementType} is handled by no service.
+     */
+    static Map<DirectoryElementType, IDirectoryElementsService> buildGenericServicesRegistry(List<IDirectoryElementsService> services) {
+        Map<DirectoryElementType, IDirectoryElementsService> registry = new EnumMap<>(DirectoryElementType.class);
+        for (IDirectoryElementsService service : services) {
+            for (DirectoryElementType elementType : getDeclaredElementTypes(service)) {
+                IDirectoryElementsService previous = registry.putIfAbsent(elementType, service);
+                if (previous != null) {
+                    throw new IllegalStateException("Element type " + elementType + " is declared by both "
+                            + AopUtils.getTargetClass(previous).getName() + " and " + AopUtils.getTargetClass(service).getName());
+                }
+            }
         }
-        return iDirectoryElementsService;
+        EnumSet<DirectoryElementType> unhandledTypes = EnumSet.complementOf(EnumSet.copyOf(registry.keySet()));
+        if (!unhandledTypes.isEmpty()) {
+            throw new IllegalStateException("No " + IDirectoryElementsService.class.getSimpleName() + " handles element types " + unhandledTypes);
+        }
+        return Collections.unmodifiableMap(registry);
+    }
+
+    private static DirectoryElementType[] getDeclaredElementTypes(IDirectoryElementsService service) {
+        // AopUtils + findMergedAnnotation : resolves the annotation through Spring proxies and Mockito subclass mocks
+        Class<?> serviceClass = AopUtils.getTargetClass(service);
+        DirectoryElementTypes declaration = AnnotatedElementUtils.findMergedAnnotation(serviceClass, DirectoryElementTypes.class);
+        if (declaration == null) {
+            throw new IllegalStateException(serviceClass.getName() + " must be annotated with @" + DirectoryElementTypes.class.getSimpleName());
+        }
+        return declaration.value();
+    }
+
+    public IDirectoryElementsService getGenericService(DirectoryElementType type) {
+        return genericServices.get(type);
+    }
+
+    /**
+     * @param type an element type as received from the directory server or from a request
+     */
+    public IDirectoryElementsService getGenericService(String type) {
+        DirectoryElementType elementType = Arrays.stream(DirectoryElementType.values())
+                .filter(t -> t.name().equals(type))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown element type " + type));
+        return getGenericService(elementType);
     }
 
     public void delete(UUID id) {
         ElementAttributes element = directoryService.getElementInfos(id);
-        if (DIRECTORY.equals(element.getType())) {
+        if (DIRECTORY.name().equals(element.getType())) {
             directoryService.getDirectoryElements(id, null, true).stream()
-                    .filter(e -> !DIRECTORY.equals(e.getType()))
+                    .filter(e -> !DIRECTORY.name().equals(e.getType()))
                     .collect(Collectors.groupingBy(ElementAttributes::getType))
                     .forEach((type, elems) -> elems.forEach(e -> getGenericService(type).delete(e.getElementUuid())));
         } else {
@@ -190,7 +178,7 @@ public class ExploreService {
     }
 
     public UUID createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, 0L, description, CREATING);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY.name(), 0L, description, CREATING);
 
         String elementName = getElementName(caseInfo.caseUuid());
 
@@ -252,14 +240,14 @@ public class ExploreService {
 
     public UUID createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
         UUID uuid = caseRestService.importMultipartCase(caseFile);
-        ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE.name(), 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CASE)::delete);
         return uuid;
     }
 
     public void persistCase(String caseName, UUID caseUuid, String description, UUID parentDirectoryUuid) {
         caseRestService.persistCase(caseUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(caseUuid, caseName, CASE, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(caseUuid, caseName, CASE.name(), 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CASE)::delete);
     }
 
@@ -271,7 +259,7 @@ public class ExploreService {
 
     public UUID duplicateExistingCase(UUID sourceCaseUuid, String caseName, String description, UUID targetDirectoryId) {
         UUID newCaseUuid = caseRestService.duplicateCase(sourceCaseUuid);
-        ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE.name(), 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, targetDirectoryId, getGenericService(CASE)::delete);
         return newCaseUuid;
     }
@@ -286,21 +274,21 @@ public class ExploreService {
     }
 
     public UUID createIdentifierContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST.name(), 0L, description);
         contingencyListRestService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CONTINGENCY_LIST)::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID createFilterBasedContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST.name(), 0L, description);
         contingencyListRestService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(CONTINGENCY_LIST)::delete);
         return elementAttributes.getElementUuid();
     }
 
     public UUID createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER.name(), 0, description);
         filterRestService.insertFilter(filter, elementAttributes.getElementUuid());
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(FILTER)::delete);
         return elementAttributes.getElementUuid();
@@ -435,7 +423,7 @@ public class ExploreService {
 
     public UUID createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid) {
         UUID diagramConfigUuid = singleLineDiagramRestService.createDiagramConfig(diagramConfig);
-        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(DIAGRAM_CONFIG)::delete);
         return diagramConfigUuid;
     }
@@ -454,7 +442,7 @@ public class ExploreService {
 
     public UUID createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
         UUID spreadsheetConfigUuid = spreadsheetConfigRestService.createSpreadsheetConfig(spreadsheetConfigDto);
-        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(SPREADSHEET_CONFIG)::delete);
         return spreadsheetConfigUuid;
     }
@@ -472,7 +460,7 @@ public class ExploreService {
     }
 
     private void createSpreadsheetConfigCollectionElement(UUID spreadsheetConfigUuid, String collectionName, String description, UUID parentDirectoryUuid) {
-        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, collectionName, SPREADSHEET_CONFIG_COLLECTION, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, collectionName, SPREADSHEET_CONFIG_COLLECTION.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(SPREADSHEET_CONFIG_COLLECTION)::delete);
     }
 
@@ -508,7 +496,7 @@ public class ExploreService {
 
     public UUID createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid) {
         UUID newWorkspaceId = workspaceRestService.duplicateWorkspace(workspaceId);
-        ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, 0, description);
+        ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(WORKSPACE)::delete);
         return newWorkspaceId;
     }
@@ -529,7 +517,7 @@ public class ExploreService {
                                             String description, UUID parentDirectoryUuid, List<String> rootNetworkTags) {
         UUID modificationsUuid = networkModificationRestService.createCompositeModification(modificationUuids, name, rootNetworkTags);
         // element names should always be null for the modifications because their names are stored in network modification server
-        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, null, MODIFICATION, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, null, MODIFICATION.name(), 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(MODIFICATION)::delete);
         return modificationsUuid;
     }
@@ -572,7 +560,7 @@ public class ExploreService {
 
     private void notifyElementMoved(ElementAttributes element) {
         // send notification if the study name was updated
-        if (STUDY.equals(element.getType())) {
+        if (STUDY.name().equals(element.getType())) {
             studyRestService.notifyStudyUpdate(element.getElementUuid());
         }
     }
@@ -721,7 +709,7 @@ public class ExploreService {
 
     public UUID createProcessConfig(String name, String processConfig, String description, UUID parentDirectoryUuid) {
         UUID processConfigUuid = monitorRestService.createProcessConfig(processConfig);
-        ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(processConfigUuid, name, PROCESS_CONFIG.name(), 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(PROCESS_CONFIG)::delete);
         return processConfigUuid;
     }
@@ -744,7 +732,7 @@ public class ExploreService {
 
     public UUID createDynamicMapping(String name, String dynamicMapping, String description, UUID parentDirectoryUuid) {
         UUID dynamicMappingUuid = dynamicMappingRestService.createMapping(dynamicMapping);
-        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING, 0L, description);
+        ElementAttributes elementAttributes = new ElementAttributes(dynamicMappingUuid, name, DYNAMIC_MAPPING.name(), 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(DYNAMIC_MAPPING)::delete);
         return dynamicMappingUuid;
     }
@@ -811,7 +799,7 @@ public class ExploreService {
                                          String description,
                                          UUID parentDirectoryUuid) {
         directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
-        if (doesElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
+        if (doesElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION.name(), modificationUuid)) {
             throw new ExploreException(ELEMENT_ALREADY_EXISTS,
                     "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
         }

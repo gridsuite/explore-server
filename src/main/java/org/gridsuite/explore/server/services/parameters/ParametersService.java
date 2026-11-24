@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.services.parameters;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ParametersType;
@@ -14,9 +15,21 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.*;
+
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
+// must stay in sync with ParametersType
+@DirectoryElementTypes({
+    VOLTAGE_INIT_PARAMETERS,
+    SECURITY_ANALYSIS_PARAMETERS,
+    LOADFLOW_PARAMETERS,
+    SENSITIVITY_PARAMETERS,
+    SHORT_CIRCUIT_PARAMETERS,
+    PCC_MIN_PARAMETERS,
+    NETWORK_VISUALIZATIONS_PARAMETERS
+})
 @Service
 public class ParametersService implements IDirectoryElementsService {
 

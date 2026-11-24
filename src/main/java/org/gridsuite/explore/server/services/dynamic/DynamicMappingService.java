@@ -6,14 +6,18 @@
  */
 package org.gridsuite.explore.server.services.dynamic;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.DYNAMIC_MAPPING;
+
 /**
  * @author Thang PHAM <quyet-thang.pham at rte-france.com>
  */
+@DirectoryElementTypes(DYNAMIC_MAPPING)
 @Service
 public class DynamicMappingService implements IDirectoryElementsService {
     DynamicMappingRestService dynamicMappingRestService;

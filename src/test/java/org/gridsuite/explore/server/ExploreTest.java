@@ -67,8 +67,8 @@ import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+import static org.gridsuite.explore.server.dto.DirectoryElementType.MODIFICATION;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
-import static org.gridsuite.explore.server.services.ExploreService.MODIFICATION;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -262,7 +262,7 @@ class ExploreTest {
         String modificationElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(MODIFICATION_UUID, "one modif", "MODIFICATION", USER1, 0L, null));
         String modificationInfosAttributesAsString = mapper.writeValueAsString(List.of(modificationSpecificMetadata));
         String compositeModificationSpecificMetadataAsString = mapper.writeValueAsString(List.of(compositeModificationSpecificMetadata));
-        String compositeModificationAsString = mapper.writeValueAsString(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "a composite", MODIFICATION, USER1, 0, null));
+        String compositeModificationAsString = mapper.writeValueAsString(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "a composite", MODIFICATION.name(), USER1, 0, null));
         String compositeModificationIdAsString = mapper.writeValueAsString(MODIFICATION_UUID);
         String newStudyUuidAsString = mapper.writeValueAsString(STUDY_COPY_UUID);
         String newCaseUuidAsString = mapper.writeValueAsString(CASE_COPY_UUID);
@@ -271,7 +271,7 @@ class ExploreTest {
         String newParametersUuidAsString = mapper.writeValueAsString(PARAMETER_COPY_UUID);
         String newElementUuidAsString = mapper.writeValueAsString(ELEMENT_COPY_UUID);
         String newElementAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, STUDY1, "STUDY", USER1, 0, null));
-        String compositeAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_COMPOSITE_UUID, "a composite", MODIFICATION, USER1, 0, null));
+        String compositeAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_COMPOSITE_UUID, "a composite", MODIFICATION.name(), USER1, 0, null));
         String listElementsAsString = "[" + newElementAttributesAsString + "," + publicStudyAttributesAsString + "]";
         String parentDirectoryPermissions = mapper.writeValueAsString(List.of(
                 new PermissionDTO(false, List.of(UUID.randomUUID(), UUID.randomUUID()), PermissionType.READ),
@@ -282,7 +282,7 @@ class ExploreTest {
         String elementNamesAsString = mapper.writeValueAsString(elementNames);
         String elementAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(PRIVATE_STUDY_UUID, STUDY1, "STUDY", USER1, 0, null)));
         // the directory name of a modification is outdated: its real name ("compositeName") comes from the network modification server
-        String modificationAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "directoryName", MODIFICATION, USER1, 0, null)));
+        String modificationAttributeList = mapper.writeValueAsString(List.of(new ElementAttributes(COMPOSITE_MODIFICATION_UUID, "directoryName", MODIFICATION.name(), USER1, 0, null)));
         String elementAttributeWithModificationList = mapper.writeValueAsString(
                 List.of(new ElementAttributes(MODIFICATION_UUID, "initial modification name", "MODIFICATION", USER1, 0, null)));
 
@@ -1476,13 +1476,13 @@ class ExploreTest {
     void testModificationNameExists(final MockWebServer server) throws Exception {
         // the name stored in the network modification server is used, not the directory one
         mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
-                        PARENT_DIRECTORY_UUID2, "compositeName", MODIFICATION))
+                        PARENT_DIRECTORY_UUID2, "compositeName", MODIFICATION.name()))
                 .andExpect(status().isOk());
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/network-modifications/metadata?ids=" + COMPOSITE_MODIFICATION_UUID)));
 
         mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
-                        PARENT_DIRECTORY_UUID2, "directoryName", MODIFICATION))
+                        PARENT_DIRECTORY_UUID2, "directoryName", MODIFICATION.name()))
                 .andExpect(status().isNoContent());
         TestUtils.getRequestsWithBodyDone(2, server);
     }

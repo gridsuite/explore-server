@@ -6,15 +6,19 @@
  */
 package org.gridsuite.explore.server.services.spreadsheet;
 
+import org.gridsuite.explore.server.services.DirectoryElementTypes;
 import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.dto.DirectoryElementType.SPREADSHEET_CONFIG_COLLECTION;
+
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
+@DirectoryElementTypes(SPREADSHEET_CONFIG_COLLECTION)
 @Service
 public class SpreadsheetConfigCollectionService implements IDirectoryElementsService {
     SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
