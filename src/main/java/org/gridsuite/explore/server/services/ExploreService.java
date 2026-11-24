@@ -96,7 +96,6 @@ public class ExploreService {
     private final ExploreServerExecutionService exploreServerExecutionService;
 
     private final UserAdminService userAdminService;
-    private final SingleLineDiagramService singleLineDiagramService;
     private final SingleLineDiagramRestService singleLineDiagramRestService;
 
     private final Map<String, IDirectoryElementsService> genericServices;
@@ -144,7 +143,6 @@ public class ExploreService {
         this.dynamicMappingRestService = dynamicMappingRestService;
         this.userIdentityService = userIdentityService;
         this.notificationService = notificationService;
-        this.singleLineDiagramService = singleLineDiagramService;
         this.monitorRestService = monitorRestService;
         this.exploreServerExecutionService = exploreServerExecutionService;
         this.singleLineDiagramRestService = singleLineDiagramRestService;
@@ -438,13 +436,13 @@ public class ExploreService {
     public UUID createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid) {
         UUID diagramConfigUuid = singleLineDiagramRestService.createDiagramConfig(diagramConfig);
         ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, 0, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, singleLineDiagramService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(DIAGRAM_CONFIG)::delete);
         return diagramConfigUuid;
     }
 
     public UUID duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId) {
         UUID newConfigUuid = singleLineDiagramRestService.duplicateDiagramConfig(sourceId);
-        duplicateDirectoryElementOrDeleteElement(sourceId, newConfigUuid, targetDirectoryId, singleLineDiagramService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newConfigUuid, targetDirectoryId, getGenericService(DIAGRAM_CONFIG)::delete);
         return newConfigUuid;
     }
 
@@ -511,7 +509,7 @@ public class ExploreService {
     public UUID createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid) {
         UUID newWorkspaceId = workspaceRestService.duplicateWorkspace(workspaceId);
         ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, 0, description);
-        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, workspaceRestService::delete);
+        createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(WORKSPACE)::delete);
         return newWorkspaceId;
     }
 
@@ -523,7 +521,7 @@ public class ExploreService {
 
     public UUID duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
         UUID newWorkspaceId = workspaceRestService.duplicateWorkspace(sourceId);
-        duplicateDirectoryElementOrDeleteElement(sourceId, newWorkspaceId, targetDirectoryId, workspaceRestService::delete);
+        duplicateDirectoryElementOrDeleteElement(sourceId, newWorkspaceId, targetDirectoryId, getGenericService(WORKSPACE)::delete);
         return newWorkspaceId;
     }
 
