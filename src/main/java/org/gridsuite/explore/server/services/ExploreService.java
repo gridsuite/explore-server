@@ -529,12 +529,9 @@ public class ExploreService {
 
     public UUID createCompositeModification(List<UUID> modificationUuids, String name,
                                             String description, UUID parentDirectoryUuid, List<String> rootNetworkTags) {
-
-        // create composite modifications
         UUID modificationsUuid = networkModificationRestService.createCompositeModification(modificationUuids, name, rootNetworkTags);
-        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, "", MODIFICATION, 0L, description);
-        // TODO Slimane: attention ici on le crée avec un vrai name au ieu de "" -> ça va causer des problèmes.
-        // ET c'est interdit d'avoir des noms d'élément vides y compris "" !!
+        // element names should always be null for the modifications because their names are stored in network modification server
+        ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, null, MODIFICATION, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, getGenericService(MODIFICATION)::delete);
         return modificationsUuid;
     }
