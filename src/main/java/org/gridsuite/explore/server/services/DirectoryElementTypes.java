@@ -15,8 +15,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares the directory element types handled by an {@link IDirectoryElementsService} implementation.
- * <p>
+ * Directory element types handled by an {@link IDirectoryElementsService} implementation.
  * Read by {@link ExploreService} at startup to build the element type -> service registry.
  * An annotation is used rather than an interface method so that the registry stays correct
  * when the service is replaced by a Mockito mock in tests.

@@ -8,7 +8,6 @@ package org.gridsuite.explore.server.services;
 
 import com.powsybl.ws.commons.security.PermissionType;
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
@@ -27,6 +26,8 @@ import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.HttpStatus;
@@ -54,7 +55,6 @@ import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLOR
  * @author Etienne Homer <jacques.borsenberger at rte-france.com>
  */
 
-@Slf4j
 @Service
 public class ExploreService {
     private final DirectoryService directoryService;
@@ -73,6 +73,7 @@ public class ExploreService {
     private final DynamicMappingRestService dynamicMappingRestService;
     private final ExploreServerExecutionService exploreServerExecutionService;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExploreService.class);
     private final UserAdminService userAdminService;
     private final SingleLineDiagramRestService singleLineDiagramRestService;
 
@@ -154,9 +155,6 @@ public class ExploreService {
         return genericServices.get(type);
     }
 
-    /**
-     * @param type an element type as received from the directory server or from a request
-     */
     public IDirectoryElementsService getGenericService(String type) {
         DirectoryElementType elementType = Arrays.stream(DirectoryElementType.values())
                 .filter(t -> t.name().equals(type))
@@ -165,6 +163,9 @@ public class ExploreService {
         return getGenericService(elementType);
     }
 
+    /**
+     * Deletes an element and all sub-elements if @param id refers to a directory.
+     */
     public void delete(UUID id) {
         ElementAttributes element = directoryService.getElementInfos(id);
         if (DIRECTORY.name().equals(element.getType())) {
@@ -310,7 +311,7 @@ public class ExploreService {
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
             delete(id);
         } catch (Exception e) {
-            log.error(e.toString(), e);
+            LOGGER.error(e.toString(), e);
         } finally {
             directoryService.deleteDirectoryElement(id);
         }
@@ -329,7 +330,7 @@ public class ExploreService {
                 delete(id);
                 deletedIds.add(id);
             } catch (Exception e) {
-                log.error("Failed to delete element {}", id, e);
+                LOGGER.error("Failed to delete element {}", id, e);
                 failedIds.add(id);
             }
         }
@@ -337,7 +338,7 @@ public class ExploreService {
             try {
                 directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid);
             } catch (Exception e) {
-                log.error("Failed to remove deleted elements {} from directory", deletedIds, e);
+                LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
                 failedIds.addAll(deletedIds);
             }
         }
@@ -830,7 +831,7 @@ public class ExploreService {
                     )
                     .collect(Collectors.toList());
         } catch (ResourceAccessException _) {
-            log.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
+            LOGGER.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
             return elements.stream()
                     .map(element -> specificService.addSpecificMetadata(element, Map.of()))
                     .collect(Collectors.toList());
