@@ -34,9 +34,12 @@ public interface IDirectoryElementsService {
         return directoryService.getElementsName(ids);
     }
 
-    default ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
-        elementAttributes.setSpecificMetadata(metadataItem);
-        return elementAttributes;
+    /**
+     * by default adds specific metadata to an element. May be overriden if the specific metadata have extra effects on the basic metadata
+     */
+    default ElementAttributes addSpecificMetadata(ElementAttributes basicMetadata, Map<String, Object> specificMetadataItem) {
+        basicMetadata.setSpecificMetadata(specificMetadataItem);
+        return basicMetadata;
     }
 
     // by default there are no overriden elements : we just return the basic directory elements

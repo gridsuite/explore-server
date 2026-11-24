@@ -179,7 +179,6 @@ public class ExploreService {
         return iDirectoryElementsService;
     }
 
-    // TODO Slimane : à voir avec Slimane
     public void delete(UUID id) {
         ElementAttributes element = directoryService.getElementInfos(id);
         if (DIRECTORY.equals(element.getType())) {
@@ -842,13 +841,15 @@ public class ExploreService {
         try {
             List<UUID> elementsUuids = elements.stream().map(ElementAttributes::getElementUuid).toList();
             return specificService.getMetadata(elementsUuids).stream()
-                    .map(specificServiceMetadataItem -> specificService.populateMetadataItem(
-                            baseMetadataById.get(getMetadataItemId(specificServiceMetadataItem)), specificServiceMetadataItem))
+                    .map(specificServiceMetadataItem -> specificService.addSpecificMetadata(
+                            baseMetadataById.get(getMetadataItemId(specificServiceMetadataItem)),
+                            specificServiceMetadataItem)
+                    )
                     .collect(Collectors.toList());
         } catch (ResourceAccessException _) {
             log.warn("{} metadata service is unavailable, returning elements with empty specific metadata", elementType);
             return elements.stream()
-                    .map(element -> specificService.populateMetadataItem(element, Map.of()))
+                    .map(element -> specificService.addSpecificMetadata(element, Map.of()))
                     .collect(Collectors.toList());
         }
     }

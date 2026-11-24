@@ -51,17 +51,18 @@ public class NetworkModificationService implements IDirectoryElementsService {
     }
 
     @Override
-    public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> specificServiceMetadata) {
-        if (specificServiceMetadata != null) {
-            if (specificServiceMetadata.get(NetworkModificationRestService.NAME) != null) {
-                elementAttributes.setElementName(specificServiceMetadata.get(NetworkModificationRestService.NAME).toString());
+    public ElementAttributes addSpecificMetadata(ElementAttributes basicMetadata, Map<String, Object> specificMetadataItem) {
+        // for network modifications, base metadata name and description are overriden by the specific metadata
+        if (specificMetadataItem != null) {
+            if (specificMetadataItem.get(NetworkModificationRestService.NAME) != null) {
+                basicMetadata.setElementName(specificMetadataItem.get(NetworkModificationRestService.NAME).toString());
             }
-            if (specificServiceMetadata.get(NetworkModificationRestService.DESCRIPTION) != null) {
-                elementAttributes.setDescription(specificServiceMetadata.get(NetworkModificationRestService.DESCRIPTION).toString());
+            if (specificMetadataItem.get(NetworkModificationRestService.DESCRIPTION) != null) {
+                basicMetadata.setDescription(specificMetadataItem.get(NetworkModificationRestService.DESCRIPTION).toString());
             }
         }
-        elementAttributes.setSpecificMetadata(specificServiceMetadata);
-        return elementAttributes;
+        basicMetadata.setSpecificMetadata(specificMetadataItem);
+        return basicMetadata;
     }
 
     @Override
