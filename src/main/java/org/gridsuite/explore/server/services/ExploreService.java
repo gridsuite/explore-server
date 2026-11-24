@@ -300,7 +300,7 @@ public class ExploreService {
         return newFilterId;
     }
 
-    public CompletableFuture<Void> deleteElementAsync(UUID id) {
+    public CompletableFuture<Void> deleteElement(UUID id) {
         return exploreServerExecutionService.runAsync(() -> doDeleteElement(id));
     }
 

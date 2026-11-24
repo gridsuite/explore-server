@@ -199,7 +199,7 @@ public class ExploreController {
     })
     @PreAuthorize("@authorizationService.canDelete(#elementUuid)")
     public ResponseEntity<Void> deleteElement(@PathVariable("elementUuid") UUID elementUuid) {
-        exploreService.deleteElementAsync(elementUuid);
+        exploreService.deleteElement(elementUuid);
         return ResponseEntity.ok().build();
     }
 

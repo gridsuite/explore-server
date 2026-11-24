@@ -19,6 +19,10 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.DIAGRAM_CONF
 public class SingleLineDiagramService implements IDirectoryElementsService {
     SingleLineDiagramRestService singleLineDiagramRestService;
 
+    public SingleLineDiagramService(SingleLineDiagramRestService singleLineDiagramRestService) {
+        this.singleLineDiagramRestService = singleLineDiagramRestService;
+    }
+
     @Override
     public void delete(UUID configUuid) {
         singleLineDiagramRestService.delete(configUuid);
