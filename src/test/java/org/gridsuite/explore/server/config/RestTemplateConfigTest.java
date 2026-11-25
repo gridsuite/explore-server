@@ -30,11 +30,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
  * @author Achour Berrahma <achour.berrahma at rte-france.com>
  */
 @ExtendWith(SpringExtension.class)
-//NOTE: this surprises given the name AutoConfigureWebClient, but this is not actually web clients,
-// it is builders for webclients, and it's not just webflux webclient,
-// it's also resttemplatebuilder that we need.
-// And other builders are also registered but without consequences, they're just unused.
-// In the future springboot 4.0.0 is supposed to have changed the name to be less surprising
 @AutoConfigureRestClient
 @ContextConfiguration(classes = {RestTemplateConfig.class})
 class RestTemplateConfigTest {
@@ -80,15 +75,8 @@ class RestTemplateConfigTest {
         // Setup mock response - here we expect NOT to see the roles and userId header
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
-                .andExpect(req -> {
-                    // Verify the header isn't present (would throw if present)
-                    if (req.getHeaders().get(HEADER_ROLES) != null) {
-                        throw new AssertionError("Roles header should not be present");
-                    }
-                    if (req.getHeaders().get(HEADER_USER_ID) != null) {
-                        throw new AssertionError("UserId header should not be present");
-                    }
-                })
+                .andExpect(headerDoesNotExist(HEADER_ROLES))
+                .andExpect(headerDoesNotExist(HEADER_USER_ID))
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
 
         // Execute request
@@ -104,11 +92,7 @@ class RestTemplateConfigTest {
         // Setup mock - we don't expect the roles header to be forwarded if empty
         mockServer.expect(requestTo(TEST_ENDPOINT))
                 .andExpect(method(HttpMethod.GET))
-                .andExpect(req -> {
-                    if (req.getHeaders().get(HEADER_ROLES) != null) {
-                        throw new AssertionError("Roles header should not be present when empty");
-                    }
-                })
+                .andExpect(headerDoesNotExist(HEADER_ROLES))
                 .andRespond(MockRestResponseCreators.withSuccess("{\"result\":\"success\"}", MediaType.APPLICATION_JSON));
 
         // Execute request
