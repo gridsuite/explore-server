@@ -10,6 +10,7 @@ import org.gridsuite.explore.server.dto.DirectoryElementType;
 import org.gridsuite.explore.server.services.cases.CaseService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.services.dynamic.DynamicMappingService;
 import org.gridsuite.explore.server.services.filter.FilterService;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +41,7 @@ import static org.mockito.Mockito.mock;
  */
 class DirectoryElementTypesRegistryTest {
 
-    private static final List<Class<? extends IDirectoryElementsService>> SERVICE_CLASSES = List.of(
+    private static final List<Class<? extends AbstractElementsService>> SERVICE_CLASSES = List.of(
             DirectoryService.class,
             StudyService.class,
             CaseService.class,
@@ -55,8 +57,8 @@ class DirectoryElementTypesRegistryTest {
             ParametersService.class
     );
 
-    private static List<IDirectoryElementsService> mockedServices() {
-        return SERVICE_CLASSES.stream().<IDirectoryElementsService>map(c -> mock(c)).collect(Collectors.toCollection(ArrayList::new));
+    private static List<AbstractElementsService> mockedServices() {
+        return SERVICE_CLASSES.stream().<AbstractElementsService>map(c -> mock(c)).collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Test
@@ -71,9 +73,9 @@ class DirectoryElementTypesRegistryTest {
 
     @Test
     void registryResolvesEveryTypeToItsDeclaringServiceEvenWhenMocked() {
-        List<IDirectoryElementsService> services = mockedServices();
+        List<AbstractElementsService> services = mockedServices();
 
-        Map<DirectoryElementType, IDirectoryElementsService> registry = ExploreService.buildGenericServicesRegistry(services);
+        Map<DirectoryElementType, AbstractElementsService> registry = ExploreService.buildGenericServicesRegistry(services);
 
         assertEquals(Set.of(DirectoryElementType.values()), registry.keySet());
         assertInstanceOf(FilterService.class, registry.get(DirectoryElementType.FILTER));
@@ -84,7 +86,7 @@ class DirectoryElementTypesRegistryTest {
 
     @Test
     void registryFailsWhenATypeIsHandledByNoService() {
-        List<IDirectoryElementsService> services = mockedServices();
+        List<AbstractElementsService> services = mockedServices();
         services.removeIf(WorkspaceService.class::isInstance);
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> ExploreService.buildGenericServicesRegistry(services));
@@ -93,7 +95,7 @@ class DirectoryElementTypesRegistryTest {
 
     @Test
     void registryFailsWhenTwoServicesDeclareTheSameType() {
-        List<IDirectoryElementsService> services = Stream.concat(mockedServices().stream(), Stream.of(mock(FilterService.class))).toList();
+        List<AbstractElementsService> services = Stream.concat(mockedServices().stream(), Stream.of(mock(FilterService.class))).toList();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> ExploreService.buildGenericServicesRegistry(services));
         assertTrue(exception.getMessage().contains(DirectoryElementType.FILTER.name()));
@@ -101,8 +103,13 @@ class DirectoryElementTypesRegistryTest {
 
     @Test
     void registryFailsWhenAServiceIsNotAnnotated() {
-        IDirectoryElementsService notAnnotatedService = id -> { };
-        List<IDirectoryElementsService> services = Stream.concat(mockedServices().stream(), Stream.of(notAnnotatedService)).toList();
+        AbstractElementsService notAnnotatedService = new AbstractElementsService(mock(DirectoryRestService.class)) {
+            @Override
+            public void delete(UUID id) {
+                // not needed for this test
+            }
+        };
+        List<AbstractElementsService> services = Stream.concat(mockedServices().stream(), Stream.of(notAnnotatedService)).toList();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> ExploreService.buildGenericServicesRegistry(services));
         assertTrue(exception.getMessage().contains(DirectoryElementTypes.class.getSimpleName()));

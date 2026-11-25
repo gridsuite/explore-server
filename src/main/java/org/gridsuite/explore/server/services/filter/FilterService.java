@@ -6,8 +6,9 @@
  */
 package org.gridsuite.explore.server.services.filter;
 
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,10 +22,11 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.FILTER;
  */
 @DirectoryElementTypes(FILTER)
 @Service
-public class FilterService implements IDirectoryElementsService {
+public class FilterService extends AbstractElementsService {
     FilterRestService filterRestService;
 
-    public FilterService(FilterRestService filterRestService) {
+    public FilterService(FilterRestService filterRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.filterRestService = filterRestService;
     }
 

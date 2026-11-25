@@ -6,8 +6,9 @@
  */
 package org.gridsuite.explore.server.services.workspace;
 
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -19,11 +20,12 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.WORKSPACE;
  */
 @DirectoryElementTypes(WORKSPACE)
 @Service
-public class WorkspaceService implements IDirectoryElementsService {
+public class WorkspaceService extends AbstractElementsService {
 
     WorkspaceRestService workspaceRestService;
 
-    public WorkspaceService(WorkspaceRestService workspaceRestService) {
+    public WorkspaceService(WorkspaceRestService workspaceRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.workspaceRestService = workspaceRestService;
     }
 

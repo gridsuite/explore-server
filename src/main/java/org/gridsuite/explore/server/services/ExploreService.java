@@ -14,7 +14,7 @@ import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
 import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.dynamic.DynamicMappingRestService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
@@ -57,7 +57,7 @@ import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLOR
 
 @Service
 public class ExploreService {
-    private final DirectoryService directoryService;
+    private final DirectoryRestService directoryRestService;
     private final StudyRestService studyRestService;
     private final ContingencyListRestService contingencyListRestService;
     private final NetworkModificationRestService networkModificationRestService;
@@ -77,11 +77,11 @@ public class ExploreService {
     private final UserAdminService userAdminService;
     private final SingleLineDiagramRestService singleLineDiagramRestService;
 
-    private final Map<DirectoryElementType, IDirectoryElementsService> genericServices;
+    private final Map<DirectoryElementType, AbstractElementsService> genericServices;
 
     public ExploreService(
-            List<IDirectoryElementsService> directoryElementsServices,
-            DirectoryService directoryService,
+            List<AbstractElementsService> directoryElementsServices,
+            DirectoryRestService directoryRestService,
             StudyRestService studyRestService,
             ContingencyListRestService contingencyListRestService,
             NetworkModificationRestService networkModificationRestService,
@@ -98,7 +98,7 @@ public class ExploreService {
             MonitorRestService monitorRestService,
             ExploreServerExecutionService exploreServerExecutionService,
             SingleLineDiagramRestService singleLineDiagramRestService) {
-        this.directoryService = directoryService;
+        this.directoryRestService = directoryRestService;
         this.studyRestService = studyRestService;
         this.contingencyListRestService = contingencyListRestService;
         this.networkModificationRestService = networkModificationRestService;
@@ -123,11 +123,11 @@ public class ExploreService {
      * Fails at startup if a service is not annotated, if two services declare the same type
      * or if a {@link DirectoryElementType} is handled by no service.
      */
-    static Map<DirectoryElementType, IDirectoryElementsService> buildGenericServicesRegistry(List<IDirectoryElementsService> services) {
-        Map<DirectoryElementType, IDirectoryElementsService> registry = new EnumMap<>(DirectoryElementType.class);
-        for (IDirectoryElementsService service : services) {
+    static Map<DirectoryElementType, AbstractElementsService> buildGenericServicesRegistry(List<AbstractElementsService> services) {
+        Map<DirectoryElementType, AbstractElementsService> registry = new EnumMap<>(DirectoryElementType.class);
+        for (AbstractElementsService service : services) {
             for (DirectoryElementType elementType : getDeclaredElementTypes(service)) {
-                IDirectoryElementsService previous = registry.putIfAbsent(elementType, service);
+                AbstractElementsService previous = registry.putIfAbsent(elementType, service);
                 if (previous != null) {
                     throw new IllegalStateException("Element type " + elementType + " is declared by both "
                             + AopUtils.getTargetClass(previous).getName() + " and " + AopUtils.getTargetClass(service).getName());
@@ -136,12 +136,12 @@ public class ExploreService {
         }
         EnumSet<DirectoryElementType> unhandledTypes = EnumSet.complementOf(EnumSet.copyOf(registry.keySet()));
         if (!unhandledTypes.isEmpty()) {
-            throw new IllegalStateException("No " + IDirectoryElementsService.class.getSimpleName() + " handles element types " + unhandledTypes);
+            throw new IllegalStateException("No " + AbstractElementsService.class.getSimpleName() + " handles element types " + unhandledTypes);
         }
         return Collections.unmodifiableMap(registry);
     }
 
-    private static DirectoryElementType[] getDeclaredElementTypes(IDirectoryElementsService service) {
+    private static DirectoryElementType[] getDeclaredElementTypes(AbstractElementsService service) {
         // AopUtils + findMergedAnnotation : resolves the annotation through Spring proxies and Mockito subclass mocks
         Class<?> serviceClass = AopUtils.getTargetClass(service);
         DirectoryElementTypes declaration = AnnotatedElementUtils.findMergedAnnotation(serviceClass, DirectoryElementTypes.class);
@@ -151,11 +151,11 @@ public class ExploreService {
         return declaration.value();
     }
 
-    public IDirectoryElementsService getGenericService(DirectoryElementType type) {
+    public AbstractElementsService getGenericService(DirectoryElementType type) {
         return genericServices.get(type);
     }
 
-    public IDirectoryElementsService getGenericService(String type) {
+    public AbstractElementsService getGenericService(String type) {
         DirectoryElementType elementType = Arrays.stream(DirectoryElementType.values())
                 .filter(t -> t.name().equals(type))
                 .findFirst()
@@ -167,9 +167,9 @@ public class ExploreService {
      * Deletes an element and all sub-elements if @param id refers to a directory.
      */
     public void delete(UUID id) {
-        ElementAttributes element = directoryService.getElementInfos(id);
+        ElementAttributes element = directoryRestService.getElementInfos(id);
         if (DIRECTORY.name().equals(element.getType())) {
-            directoryService.getDirectoryElements(id, null, true).stream()
+            directoryRestService.getDirectoryElements(id, null, true).stream()
                     .filter(e -> !DIRECTORY.name().equals(e.getType()))
                     .collect(Collectors.groupingBy(ElementAttributes::getType))
                     .forEach((type, elems) -> elems.forEach(e -> getGenericService(type).delete(e.getElementUuid())));
@@ -193,7 +193,7 @@ public class ExploreService {
         // Two scenarios to handle.
         try {
             // Scenario 1: the study is created from an existing case, so the case is available in the directory server.
-            ElementAttributes caseAttributes = directoryService.getElementInfos(elementUuid);
+            ElementAttributes caseAttributes = directoryRestService.getElementInfos(elementUuid);
             elementName = caseAttributes.getElementName();
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
@@ -206,7 +206,7 @@ public class ExploreService {
     }
 
     public List<ElementAttributes> getElementsMetadata(List<UUID> ids, List<String> elementTypes, List<String> equipmentTypes) {
-        List<ElementAttributes> elements = directoryService.getElementsInfos(ids, elementTypes);
+        List<ElementAttributes> elements = directoryRestService.getElementsInfos(ids, elementTypes);
         List<ElementAttributes> listOfElements = completeElementsAttributes(elements);
 
         if (!CollectionUtils.isEmpty(equipmentTypes) && !listOfElements.isEmpty()) {
@@ -307,13 +307,13 @@ public class ExploreService {
 
     private void doDeleteElement(UUID id) {
         try {
-            directoryService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING);
+            directoryRestService.updateElementsStatus(List.of(id), DirectoryElementStatus.DELETING);
             // FIXME dirty fix to ignore errors and still delete the elements in the directory-server. To delete when handled properly.
             delete(id);
         } catch (Exception e) {
             LOGGER.error(e.toString(), e);
         } finally {
-            directoryService.deleteDirectoryElement(id);
+            directoryRestService.deleteDirectoryElement(id);
         }
     }
 
@@ -322,7 +322,7 @@ public class ExploreService {
     }
 
     private void doDeleteElementsFromDirectory(List<UUID> uuids, UUID parentDirectoryUuid) {
-        directoryService.updateElementsStatus(uuids, DirectoryElementStatus.DELETING);
+        directoryRestService.updateElementsStatus(uuids, DirectoryElementStatus.DELETING);
         List<UUID> deletedIds = new ArrayList<>();
         List<UUID> failedIds = new ArrayList<>();
         for (UUID id : uuids) {
@@ -336,14 +336,14 @@ public class ExploreService {
         }
         if (!deletedIds.isEmpty()) {
             try {
-                directoryService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid);
+                directoryRestService.deleteElementsFromDirectory(deletedIds, parentDirectoryUuid);
             } catch (Exception e) {
                 LOGGER.error("Failed to remove deleted elements {} from directory", deletedIds, e);
                 failedIds.addAll(deletedIds);
             }
         }
         if (!failedIds.isEmpty()) {
-            directoryService.updateElementsStatus(failedIds, DirectoryElementStatus.CREATED);
+            directoryRestService.updateElementsStatus(failedIds, DirectoryElementStatus.CREATED);
         }
     }
 
@@ -355,7 +355,7 @@ public class ExploreService {
         if (StringUtils.isNotBlank(name)) {
             elementAttributes.setElementName(name);
         }
-        directoryService.updateElement(id, elementAttributes);
+        directoryRestService.updateElement(id, elementAttributes);
     }
 
     public void updateContingencyList(UUID id, String content, String name, String description, ContingencyListType contingencyListType) {
@@ -365,7 +365,7 @@ public class ExploreService {
         if (StringUtils.isNotBlank(name)) {
             elementAttributes.setElementName(name);
         }
-        directoryService.updateElement(id, elementAttributes);
+        directoryRestService.updateElement(id, elementAttributes);
     }
 
     public void replaceCompositeModification(UUID id, List<UUID> modificationUuids, String name, String description) {
@@ -393,7 +393,7 @@ public class ExploreService {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(name);
         elementAttributes.setDescription(description);
-        directoryService.updateElement(id, elementAttributes);
+        directoryRestService.updateElement(id, elementAttributes);
     }
 
     private String getProperPath(ContingencyListType contingencyListType) {
@@ -535,7 +535,7 @@ public class ExploreService {
     public void assertCanCreateCase() {
         Integer userMaxAllowedStudiesAndCases = userAdminService.getUserMaxAllowedCases();
         if (userMaxAllowedStudiesAndCases != null) {
-            int userCasesCount = directoryService.getUserCasesCount();
+            int userCasesCount = directoryRestService.getUserCasesCount();
             if (userCasesCount >= userMaxAllowedStudiesAndCases) {
                 throw new ExploreException(EXPLORE_MAX_ELEMENTS_EXCEEDED, "max allowed cases reached", Map.of("limit", userMaxAllowedStudiesAndCases));
             }
@@ -555,8 +555,8 @@ public class ExploreService {
     }
 
     public void updateElement(UUID id, ElementAttributes updatedElementAttributes, String elementType) {
-        String finalElementType = elementType == null ? directoryService.getElementInfos(id).getType() : elementType;
-        getGenericService(finalElementType).updateElement(id, updatedElementAttributes, directoryService);
+        String finalElementType = elementType == null ? directoryRestService.getElementInfos(id).getType() : elementType;
+        getGenericService(finalElementType).updateElement(id, updatedElementAttributes);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
@@ -567,24 +567,24 @@ public class ExploreService {
     }
 
     public void moveElementsDirectory(List<UUID> elementsUuids, UUID targetDirectoryUuid) {
-        directoryService.moveElementsDirectory(elementsUuids, targetDirectoryUuid);
-        List<ElementAttributes> elementsAttributes = directoryService.getElementsInfos(elementsUuids, null);
+        directoryRestService.moveElementsDirectory(elementsUuids, targetDirectoryUuid);
+        List<ElementAttributes> elementsAttributes = directoryRestService.getElementsInfos(elementsUuids, null);
         elementsAttributes.forEach(this::notifyElementMoved);
 
     }
 
     public Map<UUID, String> getElementsName(List<UUID> ids, String type) {
         if (type != null) {
-            return getGenericService(type).getNames(ids, directoryService);
+            return getGenericService(type).getNames(ids);
         } else {
             // if the user didn't specify a type, then the types of each elements have to be determined
-            Map<String, List<UUID>> idsByType = directoryService.getElementsInfos(ids, null).stream()
+            Map<String, List<UUID>> idsByType = directoryRestService.getElementsInfos(ids, null).stream()
                     .collect(Collectors.groupingBy(
                             ElementAttributes::getType,
                             Collectors.mapping(ElementAttributes::getElementUuid, Collectors.toList())));
             Map<UUID, String> names = new HashMap<>();
             idsByType.forEach((elementType, elementIds) ->
-                    names.putAll(getGenericService(elementType).getNames(elementIds, directoryService)));
+                    names.putAll(getGenericService(elementType).getNames(elementIds)));
             return names;
         }
     }
@@ -592,7 +592,7 @@ public class ExploreService {
     public String getUsersIdentities(List<UUID> elementsUuids) {
         // this returns names for owner and lastmodifiedby,
         // if we need it in the future, we can do separate requests.
-        List<String> subs = directoryService.getElementsInfos(elementsUuids, null).stream()
+        List<String> subs = directoryRestService.getElementsInfos(elementsUuids, null).stream()
                 .flatMap(x -> Stream.of(x.getOwner(), x.getLastModifiedBy())).distinct().filter(Objects::nonNull).toList();
         return userIdentityService.getUsersIdentities(subs);
     }
@@ -615,7 +615,7 @@ public class ExploreService {
             return List.of();
         }
 
-        Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfos(studyUuids, null, false)
+        Map<UUID, ElementAttributes> studyByUuid = directoryRestService.getElementsInfos(studyUuids, null, false)
                 .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
         Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = getParentDirectoryNames(studyByUuid.keySet());
         Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());
@@ -655,7 +655,7 @@ public class ExploreService {
      */
     private List<UUID> getReferencedNodeUuids(UUID elementUuid) {
         // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
-        return directoryService.getElementInfos(elementUuid).getReferences().stream()
+        return directoryRestService.getElementInfos(elementUuid).getReferences().stream()
                 .map(ExploreService::getReferencedNodeUuid)
                 .filter(Objects::nonNull)
                 .toList();
@@ -688,7 +688,7 @@ public class ExploreService {
     }
 
     private Map<UUID, List<String>> getParentDirectoryNames(Collection<UUID> elementUuids) {
-        return directoryService.getElementsPaths(List.copyOf(elementUuids)).entrySet().stream()
+        return directoryRestService.getElementsPaths(List.copyOf(elementUuids)).entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     // a path ends with the element itself
                     List<ElementAttributes> elementPath = entry.getValue();
@@ -751,11 +751,11 @@ public class ExploreService {
     }
 
     void createDirectoryElementOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, Consumer<UUID> rollback) {
-        executeWithRollback(() -> directoryService.createElement(elementAttributes, parentDirectoryUuid), elementAttributes.getElementUuid(), rollback);
+        executeWithRollback(() -> directoryRestService.createElement(elementAttributes, parentDirectoryUuid), elementAttributes.getElementUuid(), rollback);
     }
 
     void createDirectoryElementWithNewNameOrDeleteElement(ElementAttributes elementAttributes, UUID parentDirectoryUuid, Consumer<UUID> rollback) {
-        executeWithRollback(() -> directoryService.createElementWithNewName(elementAttributes, parentDirectoryUuid, true), elementAttributes.getElementUuid(), rollback);
+        executeWithRollback(() -> directoryRestService.createElementWithNewName(elementAttributes, parentDirectoryUuid, true), elementAttributes.getElementUuid(), rollback);
     }
 
     private void executeWithRollback(Runnable directoryAction, UUID elementId, Consumer<UUID> rollback) {
@@ -777,14 +777,14 @@ public class ExploreService {
 
     private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId,
                                                           DirectoryElementStatus elementStatus, Consumer<UUID> rollback) {
-        executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
+        executeWithRollback(() -> directoryRestService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
     }
 
     /**
      * returns the directory elements from directory service but possibly overriden with some specific data hold by the objects that override basic elements data
      */
     public List<ElementAttributes> getOverridableDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
-        return directoryService.getDirectoryElements(directoryUuid, types, recursive)
+        return directoryRestService.getDirectoryElements(directoryUuid, types, recursive)
                 .stream()
                 .collect(Collectors.groupingBy(ElementAttributes::getType))
                 .entrySet().stream()
@@ -799,7 +799,7 @@ public class ExploreService {
                                          String name,
                                          String description,
                                          UUID parentDirectoryUuid) {
-        directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
+        directoryRestService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
         if (doesElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION.name(), modificationUuid)) {
             throw new ExploreException(ELEMENT_ALREADY_EXISTS,
                     "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
@@ -817,8 +817,8 @@ public class ExploreService {
     }
 
     private List<ElementAttributes> completeElementsAttributes(String elementType, List<ElementAttributes> elements) {
-        // each service decides how its metadata enrich the element (default: IDirectoryElementsService::setSpecificMetadata)
-        IDirectoryElementsService specificService = getGenericService(elementType);
+        // each service decides how its metadata enrich the element
+        AbstractElementsService specificService = getGenericService(elementType);
 
         Map<String, ElementAttributes> baseMetadataById = elements.stream()
                 .collect(Collectors.toMap(e -> e.getElementUuid().toString(), Function.identity()));

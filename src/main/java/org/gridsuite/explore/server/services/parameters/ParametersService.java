@@ -7,8 +7,9 @@
 package org.gridsuite.explore.server.services.parameters;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.directory.DirectoryService;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.stereotype.Service;
@@ -31,19 +32,18 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.*;
     NETWORK_VISUALIZATIONS_PARAMETERS
 })
 @Service
-public class ParametersService implements IDirectoryElementsService {
+public class ParametersService extends AbstractElementsService {
 
     private final ParametersRestService parametersRestService;
-    private final DirectoryService directoryService;
 
-    public ParametersService(ParametersRestService parametersRestService, DirectoryService directoryService) {
+    public ParametersService(ParametersRestService parametersRestService, DirectoryService directoryService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.parametersRestService = parametersRestService;
-        this.directoryService = directoryService;
     }
 
     @Override
     public void delete(UUID parametersUuid) {
-        ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
+        ElementAttributes elementAttributes = directoryRestService.getElementInfos(parametersUuid);
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
         parametersRestService.delete(parametersUuid, parametersType);
     }

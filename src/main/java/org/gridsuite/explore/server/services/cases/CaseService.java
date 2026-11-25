@@ -7,8 +7,9 @@
 
 package org.gridsuite.explore.server.services.cases;
 
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,10 +20,11 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.CASE;
 
 @DirectoryElementTypes(CASE)
 @Service
-public class CaseService implements IDirectoryElementsService {
+public class CaseService extends AbstractElementsService {
     CaseRestService caseRestService;
 
-    public CaseService(CaseRestService caseRestService) {
+    public CaseService(CaseRestService caseRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.caseRestService = caseRestService;
     }
 

@@ -12,7 +12,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.workspace.WorkspaceRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -62,7 +62,7 @@ class WorkspaceTest {
     private WorkspaceRestService workspaceRestService;
 
     @MockitoBean
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private OutputDestination output;
@@ -115,7 +115,7 @@ class WorkspaceTest {
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
                 .andExpect(status().isCreated());
 
-        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
+        verify(directoryRestService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
         assertEquals(WORKSPACE_UUID, elementAttributesCaptor.getValue().getElementUuid());
     }
 
@@ -129,7 +129,7 @@ class WorkspaceTest {
                         .param("description", "Updated description"))
                 .andExpect(status().isNoContent());
 
-        verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
+        verify(directoryRestService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
         TestUtils.assertElementUpdatedSent(output, WORKSPACE_UUID, USER_ID);
     }
 
@@ -141,7 +141,7 @@ class WorkspaceTest {
                 .andReturn().getResponse().getContentAsString();
         UUID duplicatedWorkspaceId = objectMapper.readValue(result, UUID.class);
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
+        verify(directoryRestService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
         assertEquals(WORKSPACE_UUID, duplicatedWorkspaceId);
     }
 
@@ -152,7 +152,7 @@ class WorkspaceTest {
                 .andReturn().getResponse().getContentAsString();
         UUID createdWorkspaceId = objectMapper.readValue(result, UUID.class);
 
-        verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
+        verify(directoryRestService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
         assertEquals(WORKSPACE_UUID, createdWorkspaceId);
     }
 

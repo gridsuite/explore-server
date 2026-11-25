@@ -6,8 +6,9 @@
  */
 package org.gridsuite.explore.server.services.monitor;
 
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,10 +22,11 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.PROCESS_CONF
  */
 @DirectoryElementTypes(PROCESS_CONFIG)
 @Service
-public class MonitorService implements IDirectoryElementsService {
+public class MonitorService extends AbstractElementsService {
     MonitorRestService monitorRestService;
 
-    public MonitorService(MonitorRestService monitorRestService) {
+    public MonitorService(MonitorRestService monitorRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.monitorRestService = monitorRestService;
     }
 

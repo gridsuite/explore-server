@@ -6,7 +6,7 @@
  */
 package org.gridsuite.explore.server.services;
 
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ class DirectoryServiceTest {
     private RestClient restClient;
 
     @Autowired
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Test
     void testSearchElementsWithSpecialCharacters() {
@@ -46,7 +46,7 @@ class DirectoryServiceTest {
         when(requestSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(String.class)).thenReturn("");
 
-        directoryService.searchElements(userInput, directoryUuid);
+        directoryRestService.searchElements(userInput, directoryUuid);
 
         ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
         verify(requestUriSpec).uri(uriCaptor.capture());

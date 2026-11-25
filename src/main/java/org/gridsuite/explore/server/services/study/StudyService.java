@@ -7,9 +7,9 @@
 package org.gridsuite.explore.server.services.study;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,11 +23,12 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.STUDY;
  */
 @DirectoryElementTypes(STUDY)
 @Service
-public class StudyService implements IDirectoryElementsService {
+public class StudyService extends AbstractElementsService {
 
     StudyRestService studyRestService;
 
-    public StudyService(StudyRestService studyRestService) {
+    public StudyService(StudyRestService studyRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.studyRestService = studyRestService;
     }
 
@@ -42,8 +43,8 @@ public class StudyService implements IDirectoryElementsService {
     }
 
     @Override
-    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes, DirectoryService directoryService) {
-        directoryService.updateElement(elementUuid, elementAttributes);
+    public void updateElement(UUID elementUuid, ElementAttributes elementAttributes) {
+        directoryRestService.updateElement(elementUuid, elementAttributes);
         studyRestService.notifyStudyUpdate(elementUuid);
     }
 }

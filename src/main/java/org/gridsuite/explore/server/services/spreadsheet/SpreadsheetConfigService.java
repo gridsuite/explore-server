@@ -6,8 +6,9 @@
  */
 package org.gridsuite.explore.server.services.spreadsheet;
 
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,10 +22,11 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.SPREADSHEET_
  */
 @DirectoryElementTypes(SPREADSHEET_CONFIG)
 @Service
-public class SpreadsheetConfigService implements IDirectoryElementsService {
+public class SpreadsheetConfigService extends AbstractElementsService {
     SpreadsheetConfigRestService spreadsheetConfigRestService;
 
-    public SpreadsheetConfigService(SpreadsheetConfigRestService spreadsheetConfigRestService) {
+    public SpreadsheetConfigService(SpreadsheetConfigRestService spreadsheetConfigRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.spreadsheetConfigRestService = spreadsheetConfigRestService;
     }
 

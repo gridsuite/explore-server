@@ -7,7 +7,7 @@
 package org.gridsuite.explore.server;
 
 import org.gridsuite.explore.server.services.ExploreService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.filter.FilterService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 class ExploreServiceExceptionTest {
 
     @MockitoBean
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @MockitoBean
     private FilterService filterService;
@@ -57,7 +57,7 @@ class ExploreServiceExceptionTest {
     void testDirectoryServerCrashesWithFilter() {
         // creation
         String creatingErrorMessage = "error when creating element from directory server";
-        when(directoryService.createElement(any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
+        when(directoryRestService.createElement(any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
         doNothing().when(filterRestService).insertFilter(any(), any());
         doNothing().when(filterService).delete(any());
         UUID parentDirectoryUuid = UUID.randomUUID();
@@ -72,7 +72,7 @@ class ExploreServiceExceptionTest {
 
         // duplication
         String duplicateErrorMessage = "error when duplicating element from directory server";
-        when(directoryService.duplicateElement(any(), any(), any(), any())).thenThrow(new RuntimeException(duplicateErrorMessage));
+        when(directoryRestService.duplicateElement(any(), any(), any(), any())).thenThrow(new RuntimeException(duplicateErrorMessage));
         UUID duplicatedFilterId = UUID.randomUUID();
         when(filterRestService.duplicateFilter(any())).thenReturn(duplicatedFilterId);
 
@@ -88,7 +88,7 @@ class ExploreServiceExceptionTest {
     @Test
     void testDirectoryServerCrashesWithNetworkModification() {
         String creatingErrorMessage = "error when creating element from directory server";
-        when(directoryService.createElementWithNewName(any(), any(), anyBoolean())).thenThrow(new RuntimeException(creatingErrorMessage));
+        when(directoryRestService.createElementWithNewName(any(), any(), anyBoolean())).thenThrow(new RuntimeException(creatingErrorMessage));
         UUID createdCompositeModificationId = UUID.randomUUID();
         when(networkModificationRestService.createCompositeModification(anyList(), any(), anyList())).thenReturn(createdCompositeModificationId);
 
@@ -106,7 +106,7 @@ class ExploreServiceExceptionTest {
         // creation
         String creatingErrorMessage = "error when creating element from directory server";
         String deletingErrorMessage = "error when deleting filter element";
-        when(directoryService.createElement(any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
+        when(directoryRestService.createElement(any(), any())).thenThrow(new RuntimeException(creatingErrorMessage));
         doNothing().when(filterRestService).insertFilter(any(), any());
         doThrow(new RuntimeException(deletingErrorMessage)).when(filterService).delete(any());
         UUID parentDirectoryUuid = UUID.randomUUID();

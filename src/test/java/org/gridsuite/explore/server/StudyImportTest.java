@@ -16,7 +16,7 @@ import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.gridsuite.explore.server.services.UserAdminService;
 import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
@@ -76,7 +76,7 @@ class StudyImportTest {
     private CaseRestService caseRestService;
 
     @Autowired
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private UserAdminService userAdminService;
@@ -102,7 +102,7 @@ class StudyImportTest {
         wireMockServer.start();
         studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         caseRestService.setBaseUri(wireMockServer.baseUrl());
-        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        directoryRestService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
         filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());
         contingencyListRestService.setActionsServerBaseUri(wireMockServer.baseUrl());

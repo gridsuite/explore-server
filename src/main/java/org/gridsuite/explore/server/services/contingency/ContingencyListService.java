@@ -6,8 +6,9 @@
  */
 package org.gridsuite.explore.server.services.contingency;
 
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,10 +22,11 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.CONTINGENCY_
  */
 @DirectoryElementTypes(CONTINGENCY_LIST)
 @Service
-public class ContingencyListService implements IDirectoryElementsService {
+public class ContingencyListService extends AbstractElementsService {
     ContingencyListRestService contingencyListRestService;
 
-    public ContingencyListService(ContingencyListRestService contingencyListRestService) {
+    public ContingencyListService(ContingencyListRestService contingencyListRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.contingencyListRestService = contingencyListRestService;
     }
 

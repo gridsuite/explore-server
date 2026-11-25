@@ -18,7 +18,7 @@ import org.gridsuite.explore.server.dto.ReferenceAttributes;
 import org.gridsuite.explore.server.dto.ReferenceContainer;
 import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.UserIdentityService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +59,7 @@ class ReferencingElementInfosTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private StudyRestService studyRestService;
@@ -89,7 +89,7 @@ class ReferencingElementInfosTest {
     void setUp() {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
-        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        directoryRestService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         userIdentityService.setUserIdentityServerBaseUri(wireMockServer.baseUrl());
         stubUsersIdentities();

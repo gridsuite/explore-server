@@ -19,7 +19,7 @@ import org.gridsuite.explore.server.dto.PermissionDTO;
 import org.gridsuite.explore.server.dto.ReferencingElementInfos;
 import org.gridsuite.explore.server.services.ExploreService;
 import org.gridsuite.explore.server.services.StudyImportService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.http.HttpStatus;
@@ -52,12 +52,12 @@ public class ExploreController {
     private static final String QUERY_PARAM_ARCHIVE_FILE = "archiveFile";
 
     private final ExploreService exploreService;
-    private final DirectoryService directoryService;
+    private final DirectoryRestService directoryRestService;
     private final StudyImportService studyImportService;
 
-    public ExploreController(ExploreService exploreService, DirectoryService directoryService, StudyImportService studyImportService) {
+    public ExploreController(ExploreService exploreService, DirectoryRestService directoryRestService, StudyImportService studyImportService) {
         this.exploreService = exploreService;
-        this.directoryService = directoryService;
+        this.directoryRestService = directoryRestService;
         this.studyImportService = studyImportService;
     }
 
@@ -579,7 +579,7 @@ public class ExploreController {
     @ApiResponses(@ApiResponse(responseCode = "200", description = "The root directories"))
     @PreAuthorize("true")
     public ResponseEntity<String> getRootDirectories(@RequestParam(value = "elementTypes", required = false, defaultValue = "") List<String> types) {
-        return ResponseEntity.ok().body(directoryService.getRootDirectories(types));
+        return ResponseEntity.ok().body(directoryRestService.getRootDirectories(types));
     }
 
     @RequestMapping(value = "explore/directories/root-directories", method = RequestMethod.HEAD)
@@ -590,7 +590,7 @@ public class ExploreController {
     })
     @PreAuthorize("true")
     public ResponseEntity<Void> rootDirectoryExists(@RequestParam("directoryName") String directoryName) {
-        return ResponseEntity.status(directoryService.rootDirectoryExists(directoryName)).contentType(MediaType.APPLICATION_JSON).build();
+        return ResponseEntity.status(directoryRestService.rootDirectoryExists(directoryName)).contentType(MediaType.APPLICATION_JSON).build();
     }
 
     @PostMapping(value = "/explore/directories/root-directories", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -598,7 +598,7 @@ public class ExploreController {
     @ApiResponses(@ApiResponse(responseCode = "200", description = "The created root directory"))
     @PreAuthorize("true")
     public ResponseEntity<String> createRootDirectory(@RequestBody String rootDirectoryAttributes) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createRootDirectory(rootDirectoryAttributes));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryRestService.createRootDirectory(rootDirectoryAttributes));
     }
 
     @GetMapping(value = "/explore/directories/{directoryUuid}/elements", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -618,7 +618,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canWrite(#directoryUuid)")
     public ResponseEntity<ElementAttributes> createDirectory(@PathVariable("directoryUuid") UUID directoryUuid,
                                                              @RequestBody ElementAttributes elementAttributes) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.createElement(elementAttributes, directoryUuid));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryRestService.createElement(elementAttributes, directoryUuid));
     }
 
     @GetMapping(value = "/explore/directories/elements/{elementUuid}/path", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -628,7 +628,7 @@ public class ExploreController {
         @ApiResponse(responseCode = "404", description = "The searched element was not found")})
     @PreAuthorize("@authorizationService.canRead(#elementUuid)")
     public ResponseEntity<String> getPath(@PathVariable("elementUuid") UUID elementUuid) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getPath(elementUuid));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryRestService.getPath(elementUuid));
     }
 
     @RequestMapping(method = RequestMethod.HEAD, value = "/explore/elements/checkName")
@@ -647,7 +647,7 @@ public class ExploreController {
         if (elementUuid == null && directoryUuid == null) {
             return ResponseEntity.badRequest().build();
         }
-        UUID parentDirectoryUuid = directoryUuid != null ? directoryUuid : directoryService.getParentDirectoryUuid(elementUuid);
+        UUID parentDirectoryUuid = directoryUuid != null ? directoryUuid : directoryRestService.getParentDirectoryUuid(elementUuid);
         if (parentDirectoryUuid == null) {
             return ResponseEntity.notFound().build();
         }
@@ -663,7 +663,7 @@ public class ExploreController {
     public ResponseEntity<String> elementNameCandidate(@PathVariable("directoryUuid") UUID directoryUuid,
                                                        @PathVariable("elementName") String elementName,
                                                        @RequestParam("type") String type) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryService.getNameCandidate(directoryUuid, elementName, type));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(directoryRestService.getNameCandidate(directoryUuid, elementName, type));
     }
 
     @GetMapping(value = "/explore/directories/elements/indexation-infos", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -674,7 +674,7 @@ public class ExploreController {
             @Parameter(description = "User input") @RequestParam(value = "userInput") String userInput,
             @Parameter(description = "Current directory UUID") @RequestParam(value = "directoryUuid", required = false, defaultValue = "") String directoryUuid) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(directoryService.searchElements(userInput, directoryUuid));
+                .body(directoryRestService.searchElements(userInput, directoryUuid));
     }
 
     @GetMapping(value = "/explore/elements/{elementUuid}")
@@ -686,7 +686,7 @@ public class ExploreController {
     @PreAuthorize("true")
     public ResponseEntity<Void> hasRight(@PathVariable("elementUuid") UUID elementUuid,
                                          @RequestParam(name = "permission") PermissionType permission) {
-        directoryService.checkPermission(List.of(elementUuid), null, permission);
+        directoryRestService.checkPermission(List.of(elementUuid), null, permission);
         return ResponseEntity.ok().build();
     }
 
@@ -724,7 +724,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canRead(#directoryUuid)")
     public ResponseEntity<List<PermissionDTO>> getDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(directoryService.getDirectoryPermissions(directoryUuid));
+                .body(directoryRestService.getDirectoryPermissions(directoryUuid));
     }
 
     @PutMapping(value = "/explore/directories/{directoryUuid}/permissions", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -737,7 +737,7 @@ public class ExploreController {
     @PreAuthorize("@authorizationService.canManage(#directoryUuid)")
     public ResponseEntity<Void> setDirectoryPermissions(@PathVariable("directoryUuid") UUID directoryUuid,
                                                         @RequestBody List<PermissionDTO> permissions) {
-        directoryService.setDirectoryPermissions(directoryUuid, permissions);
+        directoryRestService.setDirectoryPermissions(directoryUuid, permissions);
         return ResponseEntity.ok().build();
     }
 

@@ -7,10 +7,10 @@
 package org.gridsuite.explore.server.services.modification;
 
 import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.services.AbstractElementsService;
 import org.gridsuite.explore.server.services.DirectoryElementTypes;
-import org.gridsuite.explore.server.services.IDirectoryElementsService;
 import org.gridsuite.explore.server.services.NotificationService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -25,11 +25,12 @@ import static org.gridsuite.explore.server.dto.DirectoryElementType.MODIFICATION
  */
 @DirectoryElementTypes(MODIFICATION)
 @Service
-public class NetworkModificationService implements IDirectoryElementsService {
+public class NetworkModificationService extends AbstractElementsService {
     private final NotificationService notificationService;
     private final NetworkModificationRestService networkModificationRestService;
 
-    public NetworkModificationService(NotificationService notificationService, NetworkModificationRestService networkModificationRestService) {
+    public NetworkModificationService(NotificationService notificationService, NetworkModificationRestService networkModificationRestService, DirectoryRestService directoryRestService) {
+        super(directoryRestService);
         this.notificationService = notificationService;
         this.networkModificationRestService = networkModificationRestService;
     }
@@ -45,7 +46,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     }
 
     @Override
-    public void updateElement(UUID modificationToNotifyId, ElementAttributes elementAttributes, DirectoryService directoryService) {
+    public void updateElement(UUID modificationToNotifyId, ElementAttributes elementAttributes) {
         // modificationToNotifyId can be the id of the shared parent modification
         // elementAttributes.getElementUuid() is the real id of the network modification to update
         networkModificationRestService.updateModificationNameAndDescription(
@@ -70,7 +71,7 @@ public class NetworkModificationService implements IDirectoryElementsService {
     }
 
     @Override
-    public Map<UUID, String> getNames(List<UUID> ids, DirectoryService directoryService) {
+    public Map<UUID, String> getNames(List<UUID> ids) {
         List<Map<String, Object>> metadataList = networkModificationRestService.getMetadata(ids);
         return metadataList.stream()
                 .filter(metadata -> metadata.get("id") != null && metadata.get(NetworkModificationRestService.NAME) != null)

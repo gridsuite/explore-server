@@ -23,7 +23,7 @@ import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
 import org.gridsuite.explore.server.services.monitor.MonitorRestService;
@@ -174,7 +174,7 @@ class ExploreTest {
     @Autowired
     private MockMvc mockMvc;
     @MockitoSpyBean
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
     @MockitoSpyBean
     private ExploreService exploreService;
     @Autowired
@@ -218,7 +218,7 @@ class ExploreTest {
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
 
-        directoryService.setDirectoryServerBaseUri(baseUrl);
+        directoryRestService.setDirectoryServerBaseUri(baseUrl);
         studyRestService.setStudyServerBaseUri(baseUrl);
         filterRestService.setFilterServerBaseUri(baseUrl);
         contingencyListRestService.setActionsServerBaseUri(baseUrl);
@@ -232,7 +232,7 @@ class ExploreTest {
         if (testInfo.getTestMethod().map(m -> m.isAnnotationPresent(UsesWireMock.class)).orElse(false)) {
             wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
             wireMockServer.start();
-            directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+            directoryRestService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
             filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());
             studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
         }
@@ -1346,7 +1346,7 @@ class ExploreTest {
         ElementAttributes elementAttributes = new ElementAttributes();
         elementAttributes.setElementName(STUDY1);
         elementAttributes.setType("STUDY");
-        doReturn(elementAttributes).when(directoryService).getElementInfos(FORBIDDEN_ELEMENT_UUID);
+        doReturn(elementAttributes).when(directoryRestService).getElementInfos(FORBIDDEN_ELEMENT_UUID);
         mockMvc.perform(put("/v1/explore/elements/{id}", FORBIDDEN_ELEMENT_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(elementAttributes))
@@ -1564,7 +1564,7 @@ class ExploreTest {
             Object result = invocation.callRealMethod();
             reconciliationDone.countDown();
             return result;
-        }).when(directoryService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.CREATED);
+        }).when(directoryRestService).updateElementsStatus(List.of(FILTER_UUID), DirectoryElementStatus.CREATED);
 
         deleteElements(List.of(FILTER_UUID, PRIVATE_STUDY_UUID), PARENT_DIRECTORY_UUID);
 

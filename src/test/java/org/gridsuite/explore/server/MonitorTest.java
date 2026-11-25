@@ -12,7 +12,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.DirectoryElementStatus;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.directory.DirectoryService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.services.monitor.MonitorRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.gridsuite.explore.server.utils.WireMockUtils;
@@ -72,7 +72,7 @@ class MonitorTest {
     private MonitorRestService monitorRestService;
 
     @MockitoBean
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private OutputDestination output;
@@ -126,7 +126,7 @@ class MonitorTest {
         UUID createdProcessConfigId = objectMapper.readValue(result, UUID.class);
 
         assertEquals(ID, createdProcessConfigId);
-        verify(directoryService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(true));
+        verify(directoryRestService, times(1)).createElementWithNewName(elementAttributesCaptor.capture(), eq(DIRECTORY_ID), eq(true));
         assertEquals(ID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
     }
@@ -145,7 +145,7 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(boolean.class));
+        verify(directoryRestService, times(0)).createElementWithNewName(any(ElementAttributes.class), any(UUID.class), any(boolean.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS, Map.of(), false);
     }
 
@@ -193,7 +193,7 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isOk());
 
-        verify(directoryService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture());
+        verify(directoryRestService, times(1)).updateElement(eq(ID), elementAttributesCaptor.capture());
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
         TestUtils.assertElementUpdatedSent(output, ID, USER_ID);
     }
@@ -211,7 +211,7 @@ class MonitorTest {
                 .content(PROCESS_CONFIG))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(0)).updateElement(any(UUID.class), any(ElementAttributes.class));
+        verify(directoryRestService, times(0)).updateElement(any(UUID.class), any(ElementAttributes.class));
         wireMockUtils.verifyPutRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID, Map.of(), false);
     }
 
@@ -230,7 +230,7 @@ class MonitorTest {
         UUID duplicatedProcessConfigId = objectMapper.readValue(result, UUID.class);
 
         assertEquals(NEW_ID, duplicatedProcessConfigId);
-        verify(directoryService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, CREATED);
+        verify(directoryRestService, times(1)).duplicateElement(ID, NEW_ID, DIRECTORY_ID, CREATED);
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 
@@ -244,7 +244,7 @@ class MonitorTest {
                 .queryParam(QUERY_PARAM_PARENT_DIRECTORY_ID, DIRECTORY_ID.toString()))
             .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(DirectoryElementStatus.class));
+        verify(directoryRestService, times(0)).duplicateElement(any(UUID.class), any(UUID.class), any(UUID.class), any(DirectoryElementStatus.class));
         wireMockUtils.verifyPostRequest(stubId, URL_PROCESS_CONFIGS + "/" + ID + "/duplicate", Map.of(), false);
     }
 }
