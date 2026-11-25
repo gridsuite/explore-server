@@ -498,6 +498,28 @@ public class DirectoryService implements IDirectoryElementsService {
             .toBodilessEntity();
     }
 
+    /**
+     * Get the permissions for a given list of directory elements and a given user.
+     * @param elementUuids uuids of the elements in the directory-server
+     * @return the strongest permission held on each element, an element held no permission at all on and an element
+     * unknown to the directory-server being left out
+     */
+    public Map<UUID, PermissionType> getElementsPermissions(Collection<UUID> elementUuids) {
+        if (elementUuids.isEmpty()) {
+            return Map.of();
+        }
+        var path = UriComponentsBuilder.fromPath(DIRECTORIES_SERVER_ROOT_PATH + DELIMITER + "elements/permissions")
+                .queryParam("ids", elementUuids)
+                .buildAndExpand()
+                .toUriString();
+
+        Map<UUID, PermissionType> permissions = restClient.get()
+                .uri(directoryServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
+        return permissions == null ? Map.of() : permissions;
+    }
+
     public void updateElementsStatus(List<UUID> elementUuids, DirectoryElementStatus status) {
         if (elementUuids == null || elementUuids.isEmpty()) {
             return;
