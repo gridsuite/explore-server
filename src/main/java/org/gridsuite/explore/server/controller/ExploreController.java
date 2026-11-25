@@ -681,6 +681,18 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("true")
+    @GetMapping(value = "/explore/elements/permissions", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get the permission the user holds on each of the given elements, "
+                         + "a directory being read on itself and any other element on its parent directory")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The strongest permission held on each element, "
+                                                             + "the ones held no permission at all on and the unknown ones being left out"),
+    })
+    public ResponseEntity<Map<UUID, PermissionType>> getElementsPermissions(@RequestParam("ids") List<UUID> elementUuids) {
+        return ResponseEntity.ok().body(directoryService.getElementsPermissions(elementUuids));
+    }
+
     @GetMapping(value = "/explore/elements/{elementUuid}/referencing-element-infos", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get the elements using the given shared element")
     @ApiResponses(value = {
