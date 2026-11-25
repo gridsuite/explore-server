@@ -13,6 +13,7 @@ import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.dto.UsersIdentities;
 import org.gridsuite.explore.server.services.*;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +57,7 @@ class UserIdentityTest {
     private UserIdentityService userIdentityService;
 
     @MockitoBean
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     private static final String BASE_URL = "/v1/explore/elements/users-identities";
     private static final String USER_IDENTITY_SERVER_BASE_URL = "/v1/users";
@@ -79,7 +80,7 @@ class UserIdentityTest {
         wireMockServer.start();
         userIdentityService.setUserIdentityServerBaseUri(wireMockServer.baseUrl());
 
-        when(directoryService.getElementsInfos(List.of(ELEMENT_UUID), null)).thenReturn(List.of(new ElementAttributes(
+        when(directoryRestService.getElementsInfos(List.of(ELEMENT_UUID), null)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_UUID,
             ELEMENT_NAME,
             "SOME TYPE",
@@ -87,7 +88,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
+        when(directoryRestService.getElementsInfos(List.of(ELEMENT_UNKNOWN_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_UNKNOWN_SUB_UUID,
             ELEMENT_UNKNOWN_SUB_NAME,
             "SOME TYPE",
@@ -95,7 +96,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
+        when(directoryRestService.getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null)).thenReturn(List.of(new ElementAttributes(
             ELEMENT_EXCEPTION_SUB_UUID,
             "exception",
             "SOME TYPE",
@@ -103,7 +104,7 @@ class UserIdentityTest {
             0L,
             null
         )));
-        when(directoryService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null))
+        when(directoryRestService.getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null))
                 .thenThrow(new RuntimeException(String.format("Element '%s' not found", ELEMENT_NOT_FOUND_UUID)));
     }
 
@@ -136,7 +137,7 @@ class UserIdentityTest {
         assertTrue(usersInfos.contains("userFirstName"));
         assertTrue(usersInfos.contains("userLastName"));
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_UUID), null);
+        verify(directoryRestService, times(1)).getElementsInfos(List.of(ELEMENT_UUID), null);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(SUB)), false);
     }
 
@@ -146,7 +147,7 @@ class UserIdentityTest {
                         .param("ids", ELEMENT_NOT_FOUND_UUID.toString()))
                         .andExpect(status().isInternalServerError());
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null);
+        verify(directoryRestService, times(1)).getElementsInfos(List.of(ELEMENT_NOT_FOUND_UUID), null);
     }
 
     @Test
@@ -159,7 +160,7 @@ class UserIdentityTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> assertInstanceOf(HttpServerErrorException.class, result.getResolvedException()));
 
-        verify(directoryService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null);
+        verify(directoryRestService, times(1)).getElementsInfos(List.of(ELEMENT_EXCEPTION_SUB_UUID), null);
         wireMockUtils.verifyGetRequest(stubId, USER_IDENTITY_SERVER_BASE_URL + "/identities", handleQueryParams(List.of(EXCEPTION_SUB)), false);
     }
 

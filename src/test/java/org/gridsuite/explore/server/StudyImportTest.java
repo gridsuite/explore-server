@@ -12,15 +12,15 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.*;
-import org.gridsuite.explore.server.services.CaseService;
-import org.gridsuite.explore.server.services.ContingencyListService;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.FilterService;
-import org.gridsuite.explore.server.services.NetworkModificationService;
 import org.gridsuite.explore.server.services.RemoteServicesProperties;
-import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
-import org.gridsuite.explore.server.services.StudyService;
 import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
+import org.gridsuite.explore.server.services.contingency.ContingencyListRestService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
+import org.gridsuite.explore.server.services.modification.NetworkModificationRestService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
+import org.gridsuite.explore.server.services.study.StudyRestService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,28 +70,28 @@ class StudyImportTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private StudyService studyService;
+    private StudyRestService studyRestService;
 
     @Autowired
-    private CaseService caseService;
+    private CaseRestService caseRestService;
 
     @Autowired
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private UserAdminService userAdminService;
 
     @Autowired
-    private FilterService filterService;
+    private FilterRestService filterRestService;
 
     @Autowired
-    private ContingencyListService contingencyListService;
+    private ContingencyListRestService contingencyListRestService;
 
     @Autowired
-    private NetworkModificationService networkModificationService;
+    private NetworkModificationRestService networkModificationRestService;
 
     @Autowired
-    private SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
+    private SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
 
     @Autowired
     private RemoteServicesProperties remoteServicesProperties;
@@ -100,14 +100,14 @@ class StudyImportTest {
     void setUp() throws JsonProcessingException {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
-        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
-        caseService.setBaseUri(wireMockServer.baseUrl());
-        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        studyRestService.setStudyServerBaseUri(wireMockServer.baseUrl());
+        caseRestService.setBaseUri(wireMockServer.baseUrl());
+        directoryRestService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         userAdminService.setUserAdminServerBaseUri(wireMockServer.baseUrl());
-        filterService.setFilterServerBaseUri(wireMockServer.baseUrl());
-        contingencyListService.setActionsServerBaseUri(wireMockServer.baseUrl());
-        networkModificationService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
-        spreadsheetConfigCollectionService.setSpreadsheetConfigServerBaseUri(wireMockServer.baseUrl());
+        filterRestService.setFilterServerBaseUri(wireMockServer.baseUrl());
+        contingencyListRestService.setActionsServerBaseUri(wireMockServer.baseUrl());
+        networkModificationRestService.setNetworkModificationServerBaseUri(wireMockServer.baseUrl());
+        spreadsheetConfigCollectionRestService.setSpreadsheetConfigServerBaseUri(wireMockServer.baseUrl());
         remoteServicesProperties.getServices().forEach(service -> service.setBaseUri(wireMockServer.baseUrl()));
 
         // Stub case-server

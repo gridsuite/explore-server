@@ -8,7 +8,7 @@ package org.gridsuite.explore.server.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
-import org.gridsuite.explore.server.services.CaseService;
+import org.gridsuite.explore.server.services.cases.CaseRestService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,27 +29,27 @@ import java.util.UUID;
 @Tag(name = "Explore server - Case")
 public class CaseController {
 
-    private final CaseService caseService;
+    private final CaseRestService caseRestService;
 
-    public CaseController(CaseService caseService) {
-        this.caseService = caseService;
+    public CaseController(CaseRestService caseRestService) {
+        this.caseRestService = caseRestService;
     }
 
     @PostMapping(value = "/cases", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("true")
     public ResponseEntity<UUID> importCase(@RequestPart("file") MultipartFile file) {
-        return ResponseEntity.ok(caseService.importCaseWithoutDirectoryElementCreation(file));
+        return ResponseEntity.ok(caseRestService.importCaseWithoutDirectoryElementCreation(file));
     }
 
     @GetMapping(value = "/cases/{caseUuid}")
     @PreAuthorize("@authorizationService.canRead(#caseUuid)")
     public ResponseEntity<Resource> downloadCase(@PathVariable("caseUuid") UUID caseUuid) {
-        return caseService.downloadCase(caseUuid);
+        return caseRestService.downloadCase(caseUuid);
     }
 
     @GetMapping(value = "/cases/caseBaseName")
     @PreAuthorize("true")
     public ResponseEntity<String> getBaseName(@RequestParam("caseName") String caseName) {
-        return ResponseEntity.ok(caseService.getBaseName(caseName));
+        return ResponseEntity.ok(caseRestService.getBaseName(caseName));
     }
 }

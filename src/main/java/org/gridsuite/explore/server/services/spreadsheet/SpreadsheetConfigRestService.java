@@ -1,13 +1,13 @@
-/**
- * Copyright (c) 2024, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.spreadsheet;
 
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -21,10 +21,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * @author Achour BERRAHMA <achour.berrahma at rte-france.com>
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
  */
 @Service
-public class SpreadsheetConfigService implements IDirectoryElementsService {
+public class SpreadsheetConfigRestService {
 
     private static final String SPREADSHEET_CONFIG_API_VERSION = "v1";
     private static final String DELIMITER = "/";
@@ -35,8 +35,7 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
     @Setter
     private String spreadsheetConfigServerBaseUri;
 
-    @Autowired
-    public SpreadsheetConfigService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+    public SpreadsheetConfigRestService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.spreadsheetConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
         this.restClient = restClient;
     }
@@ -50,11 +49,11 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(spreadsheetConfigServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(config)
-            .retrieve()
-            .body(UUID.class);
+                .uri(spreadsheetConfigServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(config)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public UUID duplicateSpreadsheetConfig(UUID configUuid) {
@@ -66,10 +65,10 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(spreadsheetConfigServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .body(UUID.class);
+                .uri(spreadsheetConfigServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public void updateSpreadsheetConfig(UUID configUuid, String config) {
@@ -82,14 +81,13 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(spreadsheetConfigServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(config)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(spreadsheetConfigServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(config)
+                .retrieve()
+                .toBodilessEntity();
     }
 
-    @Override
     public void delete(UUID configUuid) {
         Objects.requireNonNull(configUuid);
         var path = UriComponentsBuilder
@@ -98,12 +96,11 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.delete()
-            .uri(spreadsheetConfigServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(spreadsheetConfigServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 
-    @Override
     public List<Map<String, Object>> getMetadata(List<UUID> configsUuids) {
         Objects.requireNonNull(configsUuids);
 
@@ -115,8 +112,8 @@ public class SpreadsheetConfigService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(spreadsheetConfigServerBaseUri + path)
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() { });
+                .uri(spreadsheetConfigServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
     }
 }

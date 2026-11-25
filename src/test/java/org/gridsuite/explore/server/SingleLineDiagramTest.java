@@ -5,8 +5,8 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.SingleLineDiagramService;
+import org.gridsuite.explore.server.services.diagram.SingleLineDiagramRestService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.gridsuite.explore.server.utils.WireMockUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -57,10 +57,10 @@ class SingleLineDiagramTest {
     private ObjectMapper mapper;
 
     @Autowired
-    private SingleLineDiagramService singleLineDiagramService;
+    private SingleLineDiagramRestService singleLineDiagramRestService;
 
     @MockitoBean
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private OutputDestination output;
@@ -80,7 +80,7 @@ class SingleLineDiagramTest {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockUtils = new WireMockUtils(wireMockServer);
         wireMockServer.start();
-        singleLineDiagramService.setSingleLineDiagramServerBaseUri(wireMockServer.baseUrl());
+        singleLineDiagramRestService.setSingleLineDiagramServerBaseUri(wireMockServer.baseUrl());
     }
 
     @AfterEach
@@ -110,7 +110,7 @@ class SingleLineDiagramTest {
         UUID createdDiagramConfigId = mapper.readValue(result, UUID.class);
 
         assertEquals(NAD_CONFIG_UUID, createdDiagramConfigId);
-        verify(directoryService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
+        verify(directoryRestService, times(1)).createElement(elementAttributesCaptor.capture(), eq(PARENT_DIRECTORY_UUID));
         assertEquals(NAD_CONFIG_UUID, elementAttributesCaptor.getValue().getElementUuid());
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL, Map.of(), false);
     }
@@ -134,7 +134,7 @@ class SingleLineDiagramTest {
                     .andExpect(status().isNoContent())
                     .andReturn();
 
-        verify(directoryService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture());
+        verify(directoryRestService, times(1)).updateElement(eq(NAD_CONFIG_UUID), elementAttributesCaptor.capture());
         wireMockUtils.verifyPutRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID, Map.of(), false);
         TestUtils.assertElementUpdatedSent(output, NAD_CONFIG_UUID, USER_ID);
     }
@@ -154,7 +154,7 @@ class SingleLineDiagramTest {
         UUID duplicatedDiagramConfigId = mapper.readValue(result, UUID.class);
 
         assertEquals(DUPLICATE_NAD_CONFIG_UUID, duplicatedDiagramConfigId);
-        verify(directoryService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED);
+        verify(directoryRestService, times(1)).duplicateElement(NAD_CONFIG_UUID, DUPLICATE_NAD_CONFIG_UUID, PARENT_DIRECTORY_UUID, CREATED);
         wireMockUtils.verifyPostRequest(stubId, USER_SINGLE_LINE_DIAGRAM_SERVER_BASE_URL + "/" + NAD_CONFIG_UUID + "/duplicate", Map.of(), false);
     }
 }

@@ -8,7 +8,7 @@ package org.gridsuite.explore.server.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.gridsuite.explore.server.ExploreApi;
-import org.gridsuite.explore.server.services.FilterService;
+import org.gridsuite.explore.server.services.filter.FilterRestService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,15 +24,15 @@ import java.util.UUID;
 @Tag(name = "Explore server - Filter")
 public class FilterController {
 
-    private final FilterService filterService;
+    private final FilterRestService filterRestService;
 
-    public FilterController(FilterService filterService) {
-        this.filterService = filterService;
+    public FilterController(FilterRestService filterRestService) {
+        this.filterRestService = filterRestService;
     }
 
     @GetMapping(value = "/filters/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("@authorizationService.canRead(#id)")
     public ResponseEntity<String> getFilter(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(filterService.getFilter(id));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(filterRestService.getFilter(id));
     }
 }

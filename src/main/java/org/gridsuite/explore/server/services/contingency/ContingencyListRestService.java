@@ -1,11 +1,13 @@
-/**
- * Copyright (c) 2021, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.explore.server.services;
+package org.gridsuite.explore.server.services.contingency;
 
+import lombok.Setter;
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -18,34 +20,30 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com>
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
  */
 @Service
-public class ContingencyListService implements IDirectoryElementsService {
+public class ContingencyListRestService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
+    @Setter
     private String actionsServerBaseUri;
     private final RestClient restClient;
 
-    public ContingencyListService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+    public ContingencyListRestService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.actionsServerBaseUri = remoteServicesProperties.getServiceUri("actions-server");
         this.restClient = restClient;
     }
 
-    public void setActionsServerBaseUri(String actionsServerBaseUri) {
-        this.actionsServerBaseUri = actionsServerBaseUri;
-    }
-
-    @Override
     public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
 
         restClient.delete()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     public void insertIdentifierContingencyList(UUID id, String content) {
@@ -54,8 +52,8 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         var request = restClient.post()
-            .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON);
+                .uri(actionsServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON);
         if (content != null) {
             request.body(content);
         }
@@ -64,12 +62,12 @@ public class ContingencyListService implements IDirectoryElementsService {
 
     public void insertFilterBasedContingencyList(UUID id, String content) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists?id={id}")
-            .buildAndExpand(id)
-            .toUriString();
+                .buildAndExpand(id)
+                .toUriString();
 
         var request = restClient.post()
-            .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON);
+                .uri(actionsServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON);
         if (content != null) {
             request.body(content);
         }
@@ -82,20 +80,20 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.post()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .body(UUID.class);
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public UUID duplicateFilterBasedContingencyList(UUID filterContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{uuid}/duplicate")
-            .buildAndExpand(filterContingencyListsId)
-            .toUriString();
+                .buildAndExpand(filterContingencyListsId)
+                .toUriString();
 
         return restClient.post()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .body(UUID.class);
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .body(UUID.class);
     }
 
     public String getIdentifierContingencyList(UUID id) {
@@ -112,12 +110,11 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .body(String.class);
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .body(String.class);
     }
 
-    @Override
     public List<Map<String, Object>> getMetadata(List<UUID> contingencyListsUuids) {
         var ids = contingencyListsUuids.stream().map(UUID::toString).collect(Collectors.joining(","));
         String path = UriComponentsBuilder
@@ -126,9 +123,9 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         return restClient.get()
-            .uri(actionsServerBaseUri + path)
-            .retrieve()
-            .body(new ParameterizedTypeReference<>() { });
+                .uri(actionsServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
     }
 
     public void updateContingencyList(UUID id, String content, String element) {
@@ -137,10 +134,10 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .toUriString();
 
         restClient.put()
-            .uri(actionsServerBaseUri + path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(content)
-            .retrieve()
-            .toBodilessEntity();
+                .uri(actionsServerBaseUri + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(content)
+                .retrieve()
+                .toBodilessEntity();
     }
 }

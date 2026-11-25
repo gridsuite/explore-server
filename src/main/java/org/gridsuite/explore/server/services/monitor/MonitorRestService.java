@@ -1,0 +1,96 @@
+/*
+  Copyright (c) 2026, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package org.gridsuite.explore.server.services.monitor;
+
+import org.gridsuite.explore.server.services.RemoteServicesProperties;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * @author Mathieu DEHARBE <mathieu.deharbe at rte-france.com>
+ */
+@Service
+public class MonitorRestService {
+
+    private static final String MONITOR_API_VERSION = "v1";
+    private static final String DELIMITER = "/";
+    public static final String PROCESS_CONFIGS_PATH = DELIMITER + "process-configs";
+    private static final String UUID_URL = "{uuid}";
+
+    private String monitorServerBaseUri;
+
+    private final RestClient.Builder restClientBuilder;
+
+    private RestClient restClient;
+
+    public MonitorRestService(RestClient.Builder restClientBuilder, RemoteServicesProperties remoteServicesProperties) {
+        this.restClientBuilder = restClientBuilder;
+        this.monitorServerBaseUri = remoteServicesProperties.getServiceUri("monitor-server");
+        this.restClient = restClientBuilder.baseUrl(monitorServerBaseUri + DELIMITER + MONITOR_API_VERSION).build();
+    }
+
+    public void setMonitorServerBaseUri(String monitorServerBaseUri) {
+        this.monitorServerBaseUri = monitorServerBaseUri;
+        this.restClient = restClientBuilder.baseUrl(monitorServerBaseUri + DELIMITER + MONITOR_API_VERSION).build();
+    }
+
+    public UUID createProcessConfig(String processConfig) {
+        return restClient.post()
+                .uri(PROCESS_CONFIGS_PATH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(processConfig)
+                .retrieve()
+                .body(UUID.class);
+    }
+
+    public void updateProcessConfig(UUID uuid, String processConfig) {
+        restClient.put()
+                .uri(PROCESS_CONFIGS_PATH + DELIMITER + UUID_URL, uuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(processConfig)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public String getProcessConfig(UUID uuid) {
+        return restClient.get()
+                .uri(PROCESS_CONFIGS_PATH + DELIMITER + UUID_URL, uuid)
+                .retrieve()
+                .body(String.class);
+    }
+
+    public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid) {
+        return restClient.post()
+                .uri(PROCESS_CONFIGS_PATH + DELIMITER + UUID_URL + DELIMITER + "duplicate", sourceProcessConfigUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(UUID.class);
+    }
+
+    public void delete(UUID id) {
+        restClient.delete()
+                .uri(PROCESS_CONFIGS_PATH + DELIMITER + "{id}", id)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public List<Map<String, Object>> getMetadata(List<UUID> processConfigUuids) {
+        return restClient.get()
+                .uri(uriBuilder ->
+                        uriBuilder.path(PROCESS_CONFIGS_PATH + DELIMITER + "metadata")
+                                .queryParam("ids", processConfigUuids)
+                                .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() { });
+    }
+}

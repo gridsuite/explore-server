@@ -16,9 +16,9 @@ import mockwebserver3.RecordedRequest;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.services.DirectoryService;
-import org.gridsuite.explore.server.services.SpreadsheetConfigCollectionService;
 import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.services.directory.DirectoryRestService;
+import org.gridsuite.explore.server.services.spreadsheet.SpreadsheetConfigCollectionRestService;
 import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,10 +57,10 @@ class SpreadsheetConfigCollectionTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private SpreadsheetConfigCollectionService spreadsheetConfigCollectionService;
+    private SpreadsheetConfigCollectionRestService spreadsheetConfigCollectionRestService;
 
     @Autowired
-    private DirectoryService directoryService;
+    private DirectoryRestService directoryRestService;
 
     @Autowired
     private UserAdminService userAdminService;
@@ -78,8 +78,8 @@ class SpreadsheetConfigCollectionTest {
     @BeforeEach
     void initialize(final MockWebServer mockWebServer) {
         String baseUrl = String.format("http://localhost:%s", mockWebServer.getPort());
-        spreadsheetConfigCollectionService.setSpreadsheetConfigServerBaseUri(baseUrl);
-        directoryService.setDirectoryServerBaseUri(baseUrl);
+        spreadsheetConfigCollectionRestService.setSpreadsheetConfigServerBaseUri(baseUrl);
+        directoryRestService.setDirectoryServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
 
         spreadsheetConfigCollectionJson = "{\"name\":\"" + COLLECTION_NAME + "\",\"description\":\"Test Description\",\"spreadsheetConfigs\":[{\"id\":\"" + UUID.randomUUID() +
