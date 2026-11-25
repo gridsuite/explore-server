@@ -51,7 +51,7 @@ public final class TestUtils {
                 if (request == null) {
                     throw new AssertionError("Expected " + n + " requests, got only " + i);
                 }
-                return new RequestWithBody(request.getPath(), request.getBody().readUtf8());
+                return new RequestWithBody(request.getTarget(), request.getBody() != null ? request.getBody().utf8() : null);
             } catch (InterruptedException e) {
                 throw new UncheckedInterruptedException(e);
             }

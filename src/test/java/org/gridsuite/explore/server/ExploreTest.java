@@ -15,10 +15,10 @@ import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import com.powsybl.ws.commons.security.PermissionType;
 import lombok.SneakyThrows;
 import mockwebserver3.*;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
+import mockwebserver3.junit5.StartStop;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import okio.Buffer;
+import okio.ByteString;
 import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.services.*;
 import org.gridsuite.explore.server.utils.ContingencyListType;
@@ -29,7 +29,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.http.client.reactive.ClientHttpConnectorBuilderCustomizer;
 import org.springframework.boot.http.client.reactive.ReactorClientHttpConnectorBuilder;
@@ -75,7 +74,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@ExtendWith(MockWebServerExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @Import(AllowAllAuthTestConfiguration.class)
@@ -190,6 +188,8 @@ class ExploreTest {
     private UserAdminService userAdminService;
     @Autowired
     private OutputDestination output;
+    @StartStop
+    final MockWebServer server = new MockWebServer();
 
     private WireMockServer wireMockServer;
 
@@ -208,7 +208,7 @@ class ExploreTest {
 
     @SuppressWarnings("checkstyle:MethodLength")
     @BeforeEach
-    void setup(final MockWebServer server, TestInfo testInfo) throws Exception {
+    void setup(TestInfo testInfo) throws Exception {
         // Ask the server for its URL. You'll need this to make HTTP requests.
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
@@ -287,262 +287,369 @@ class ExploreTest {
             @Override
             // TODO Do not add new tests here ! And use WireMockServer instead of MockWebServer for new unit tests.
             public MockResponse dispatch(RecordedRequest request) {
-                String path = Objects.requireNonNull(request.getPath());
-                Buffer body = request.getBody();
+                String path = Objects.requireNonNull(request.getTarget());
+                ByteString body = request.getBody();
                 if (path.matches("/v1/studies/cases/" + NON_EXISTING_CASE_UUID + ".*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(404);
+                    return new MockResponse.Builder().code(404).build();
                 } else if (path.matches("/v1/studies/.*/notification?type=metadata_updated") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/studies/" + PUBLIC_STUDY_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newStudyUuidAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)).body(newStudyUuidAsString).build();
                 } else if (path.matches("/v1/studies.*") && "POST".equals(request.getMethod())) {
-                    String bodyStr = body.readUtf8();
+                    String bodyStr = body.utf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
-                        return new MockResponse(409);
+                        return new MockResponse.Builder().code(409).build();
                     } else {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     }
                 } else if (path.matches("/v1/cases/" + CASE_UUID + "/disableExpiration") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/cases/" + CASE_UUID + "/duplicate.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newCaseUuidAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)).body(newCaseUuidAsString).build();
                 } else if (("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements?allowNewName=false").equals(path) && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), duplicatedCaseElementAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)).body(duplicatedCaseElementAttributesAsString).build();
                 } else if (path.matches("/v1/cases.*") && "POST".equals(request.getMethod())) {
-                    String bodyStr = body.readUtf8();
+                    String bodyStr = body.utf8();
                     if (bodyStr.contains("filename=\"" + TEST_FILE_WITH_ERRORS + "\"")) {  // import file with errors
                         return new MockResponse.Builder().code(409).body("invalid file").build();
                     } else if (bodyStr.contains("filename=\"" + TEST_INCORRECT_FILE + "\"")) {  // import file with errors
                         return new MockResponse.Builder().code(422).body("file with bad extension").build();
                     } else {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                                mapper.writeValueAsString(CASE_COPY_UUID));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(CASE_COPY_UUID))
+                                .build();
                     }
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), privateStudyAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(privateStudyAttributesAsString).build();
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newDirectoryAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(newDirectoryAttributesAsString).build();
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_WITH_ERROR_UUID + "/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(500);
+                    return new MockResponse.Builder().code(500).build();
                 } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), formContingencyListAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(formContingencyListAttributesAsString).build();
                 } else if (("/v1/elements/" + CONTINGENCY_LIST_UUID + "/notification?type=UPDATE_DIRECTORY").equals(path)) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), formContingencyListAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(formContingencyListAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + FILTER_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), filterAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(filterAttributesAsString).build();
                 } else if (("/v1/elements/" + FILTER_UUID + "/notification?type=UPDATE_DIRECTORY").equals(path)) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), filterAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(filterAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + CASE_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), caseElementAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(caseElementAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationElementAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(modificationElementAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), privateStudyAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(privateStudyAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), publicStudyAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(publicStudyAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + PARAMETERS_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parametersElementAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(parametersElementAttributesAsString).build();
                 } else if (path.matches("/v1/elements/" + PROCESS_CONFIG_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), processConfigElementAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(processConfigElementAttributesAsString).build();
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "&elementTypes=FILTER") && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + filterAttributesAsString + "," + filter2AttributesAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + filterAttributesAsString + "," + filter2AttributesAsString + "]").build();
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2 + "," + CASE_UUID + "&elementTypes=FILTER,CASE") && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                            "[" + filterAttributesAsString + "," + filter2AttributesAsString + "," + caseElementAttributesAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + filterAttributesAsString + "," + filter2AttributesAsString + "," + caseElementAttributesAsString + "]").build();
                 } else if (path.matches("/v1/elements\\?ids=" + CASE_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + caseElementAttributesAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + caseElementAttributesAsString + "]").build();
                 } else if (path.matches("/v1/elements\\?ids=" + MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + modificationElementAttributesAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + modificationElementAttributesAsString + "]").build();
                 } else if (path.matches("/v1/elements\\?ids=" + COMPOSITE_MODIFICATION_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + compositeModificationAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + compositeModificationAsString + "]").build();
                 } else if (path.matches("/v1/elements\\?ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + contingencyListMetadataErrorAttributesAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + contingencyListMetadataErrorAttributesAsString + "]").build();
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID + "," + FILTER_UUID_2) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                            "[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + mapper.writeValueAsString(specificMetadata) + "," + mapper.writeValueAsString(specificMetadata2) + "]").build();
                 } else if (path.matches("/v1/elements\\?ids=" + FILTER_UUID + "," + PRIVATE_STUDY_UUID + "," + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listElementsAttributesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(listElementsAttributesAsString).build();
                 } else if (path.matches("/v1/elements\\?ids=" + ELEMENT_UUID + "," + PUBLIC_STUDY_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listElementsAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(listElementsAsString).build();
                 } else if (path.matches("/v1/elements\\?ids=" + PROCESS_CONFIG_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "[" + processConfigElementAttributesAsString + "]");
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body("[" + processConfigElementAttributesAsString + "]").build();
                 } else if (path.matches("/v1/elements/" + ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/elements\\?targetDirectoryUuid=" + PARENT_DIRECTORY_UUID) && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/elements/" + FORBIDDEN_ELEMENT_UUID) && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(403);
+                    return new MockResponse.Builder().code(403).build();
                 } else if (path.matches("/v1/elements/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementUuidAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(newElementUuidAsString).build();
                 } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/elements/names\\?ids=" + ELEMENT_UUID + "&ids=" + ELEMENT_UUID_2 + "&strictMode=false") && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementNamesAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(elementNamesAsString).build();
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_UUID) && "GET".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfFormContingencyListAttributesAsString.replace("elementUuid", "id"));
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(listOfFormContingencyListAttributesAsString.replace("elementUuid", "id")).build();
                 } else if (path.matches("/v1/contingency-lists/metadata[?]ids=" + CONTINGENCY_LIST_METADATA_ERROR_UUID) && "GET".equals(request.getMethod())) {
                     return new MockResponse.Builder()
-                            .socketPolicy(SocketPolicy.DisconnectAfterRequest.INSTANCE)
+                            .onResponseStart(new SocketEffect.CloseSocket())
                             .build();
                 } else if (path.matches("/v1/.*contingency-lists/" + CONTINGENCY_LIST_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newContingencyUuidAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(newContingencyUuidAsString).build();
                 } else if (path.matches("/v1/identifier-contingency-lists.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/filters/" + FILTER_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newFilterUuidAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(newFilterUuidAsString).build();
                 } else if (path.matches("/v1/filters.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/filters\\?id=.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/filters/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/identifier-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/filters-contingency-lists/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newParametersUuidAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(newParametersUuidAsString).build();
                 } else if (path.matches("/v1/parameters.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                            mapper.writeValueAsString(PARAMETERS_CREATED_UUID));
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(mapper.writeValueAsString(PARAMETERS_CREATED_UUID)).build();
                 } else if (path.matches("/v1/parameters.*")) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/network-composite-modifications.*") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(compositeModificationIdAsString).build();
                 } else if (path.matches("/v1/root-directories") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(GENERIC_STRING).build();
                 } else if (path.matches("/v1/network-composite-modifications/.*") && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/network-composite-modifications")) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeModificationIdAsString);
+                    return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                            .body(compositeModificationIdAsString).build();
                 } else if ("GET".equals(request.getMethod())) {
                     if (path.matches("/v1/root-directories[?]elementTypes")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(GENERIC_STRING).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(elementAttributeList).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeWithModificationList);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(elementAttributeWithModificationList).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=STUDY&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), elementAttributeList);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(elementAttributeList).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elements[?]elementTypes=MODIFICATION&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationAttributeList);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(modificationAttributeList).build();
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID2 + "/path")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(GENERIC_STRING).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID2 + "/elementName/newNameCandidate[?]type=type")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(GENERIC_STRING).build();
                     } else if (path.matches("/v1/elements/indexation-infos[?]directoryUuid=directoryUuid&userInput=userInput")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), GENERIC_STRING);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(GENERIC_STRING).build();
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), newElementAttributesAsString);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(newElementAttributesAsString).build();
                     } else if (path.matches("/v1/elements/" + ELEMENT_COMPOSITE_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), compositeAttributesAsString);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(compositeAttributesAsString).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), directoryAttributesAsString);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(directoryAttributesAsString).build();
                     } else if (path.matches("/v1/filters/metadata[?]ids=" + FILTER_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfFilterAttributesAsString.replace("elementUuid", "id"));
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(listOfFilterAttributesAsString.replace("elementUuid", "id")).build();
                     } else if (path.matches("/v1/cases/metadata[?]ids=" + CASE_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), caseInfosAttributesAsString);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(caseInfosAttributesAsString).build();
                     } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + MODIFICATION_UUID)) {
-                        return new MockResponse(200,
-                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                                modificationInfosAttributesAsString);
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(modificationInfosAttributesAsString)
+                                .build();
                     } else if (path.matches("/v1/network-modifications/metadata[?]ids=" + COMPOSITE_MODIFICATION_UUID)) {
-                        return new MockResponse(200,
-                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                                compositeModificationSpecificMetadataAsString);
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(compositeModificationSpecificMetadataAsString)
+                                .build();
                     } else if (path.matches("/v1/containers/" + COMPOSITE_MODIFICATION_UUID + "/network-modifications[?]onlyMetadata=true")) {
-                        return new MockResponse(200,
-                                Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE),
-                                mapper.writeValueAsString(compositeModificationMetadata));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(compositeModificationMetadata))
+                                .build();
                     } else if (path.matches("/v1/studies/metadata[?]ids=" + PRIVATE_STUDY_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(listOfPrivateStudyAttributesAsString.replace("elementUuid", "id"))
+                                .build();
                     } else if (path.matches("/v1/process-configs/metadata[?]ids=" + PROCESS_CONFIG_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(List.of(processConfigSprecificMetadata)));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(List.of(processConfigSprecificMetadata)))
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/quota/state")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(4, 3))));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(4, 3))))
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/quota/state")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(2, 5))));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(2, 5))))
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/quota/state")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(1, 5))));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(1, 5))))
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_NOT_FOUND + "/quota/state")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(0, 5))));
+                        return new MockResponse.Builder().code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(Map.of(QuotaType.CASES, new QuotaState(0, 5))))
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_UNEXPECTED_ERROR + "/quota/state")) {
-                        return new MockResponse(500);
+                        return new MockResponse.Builder().code(500).build();
                     } else if (path.matches("/v1/users/.*/quota/state")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(Collections.emptyMap()));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(Collections.emptyMap()))
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_EXCEEDED + "/cases/count")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "4");
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body("4")
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED + "/cases/count")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "2");
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body("2")
+                                .build();
                     } else if (path.matches("/v1/users/" + USER_WITH_CASE_LIMIT_NOT_EXCEEDED_2 + "/cases/count")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "1");
+                        return new MockResponse.Builder().code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)).body("1").build();
                     } else if (path.matches("/v1/users/.*/cases/count")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "0");
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body("0")
+                                .build();
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID)) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), invalidElementAsString);
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(invalidElementAsString)
+                                .build();
                     } else if (path.matches("/v1/cases-alert-threshold")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "40");
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body("40")
+                                .build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), parentDirectoryPermissions);
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(parentDirectoryPermissions)
+                                .build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
-                        return new MockResponse(403);
+                        return new MockResponse.Builder().code(403).build();
                     } else if (path.matches("/v1/elements/" + ELEMENT_UUID + "/parentId")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), mapper.writeValueAsString(PARENT_DIRECTORY_UUID2));
+                        return new MockResponse.Builder()
+                                .code(200)
+                                .headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                                .body(mapper.writeValueAsString(PARENT_DIRECTORY_UUID2))
+                                .build();
                     } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID + "/parentId")) {
-                        return new MockResponse(404);
+                        return new MockResponse.Builder().code(404).build();
                     } else if (path.matches("/v1/elements/authorized[?]accessType=WRITE&ids=&targetDirectoryUuid=" + PARENT_DIRECTORY_UUID + "&recursiveCheck=false")) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements[?]elementTypes=MODIFICATION&recursive=false")) {
-                        return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), modificationAttributeList);
+                        return new MockResponse.Builder().code(200).headers(Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)).body(modificationAttributeList).build();
                     }
                 } else if ("PUT".equals(request.getMethod())) {
                     if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/permissions")) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID_FORBIDDEN + "/permissions") &&
                             USER_NOT_ALLOWED.equals(request.getHeaders().get(HEADER_USER_ID))) {
-                        return new MockResponse(403);
+                        return new MockResponse.Builder().code(403).build();
                     } else if (path.matches("/v1/network-modifications/" + ELEMENT_COMPOSITE_UUID + "/name-and-description")) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     }
                 } else if ("DELETE".equals(request.getMethod())) {
                     if (path.matches("/v1/filters/" + FILTER_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/studies/" + PRIVATE_STUDY_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/contingency-lists/" + CONTINGENCY_LIST_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/network-modifications\\?uuids=" + MODIFICATION_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + INVALID_ELEMENT_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + PRIVATE_STUDY_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + FILTER_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + CONTINGENCY_LIST_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + PARENT_DIRECTORY_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + PARAMETERS_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements/" + MODIFICATION_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/(process-configs|elements)/" + PROCESS_CONFIG_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/(cases|elements)/" + CASE_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/parameters/" + PARAMETERS_UUID)) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     } else if (path.matches("/v1/elements\\?ids=([^,]+,){2,}[^,]+$")) {
-                        return new MockResponse(200);
+                        return new MockResponse.Builder().code(200).build();
                     }
-                    return new MockResponse(404);
+                    return new MockResponse.Builder().code(404).build();
                 }
 
-                return new MockResponse(418);
+                return new MockResponse.Builder().code(418).build();
             }
         };
         server.setDispatcher(dispatcher);
@@ -563,7 +670,7 @@ class ExploreTest {
         return responseUuid;
     }
 
-    private UUID getCreatedElementUuid(final MockWebServer server) throws Exception {
+    private UUID getCreatedElementUuid() throws Exception {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         var directoryElementRequest = requests.stream()
                 .filter(request -> request.getPath().contains("/elements?allowNewName="))
@@ -634,7 +741,7 @@ class ExploreTest {
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateIdentifierContingencyList(final MockWebServer server) throws Exception {
+    void testCreateIdentifierContingencyList() throws Exception {
         MvcResult result = mockMvc.perform(post("/v1/explore/identifier-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "identifierContingencyListName", PARENT_DIRECTORY_UUID, null)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -643,12 +750,12 @@ class ExploreTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        assertEquals(getCreatedElementUuid(server), getResponseUuid(result));
+        assertEquals(getCreatedElementUuid(), getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateFilterBasedContingencyList(final MockWebServer server) throws Exception {
+    void testCreateFilterBasedContingencyList() throws Exception {
         MvcResult result = mockMvc.perform(post("/v1/explore/filters-contingency-lists/{listName}?parentDirectoryUuid={parentDirectoryUuid}&description={description}",
             "filterBasedContingencyListName", PARENT_DIRECTORY_UUID, null)
             .contentType(MediaType.APPLICATION_JSON)
@@ -657,12 +764,12 @@ class ExploreTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        assertEquals(getCreatedElementUuid(server), getResponseUuid(result));
+        assertEquals(getCreatedElementUuid(), getResponseUuid(result));
     }
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateFilter(final MockWebServer server) throws Exception {
+    void testCreateFilter() throws Exception {
         MvcResult result = mockMvc.perform(post("/v1/explore/filters?name={name}&type={type}&parentDirectoryUuid={parentDirectoryUuid}&description={description}",
                 "contingencyListScriptName", "", PARENT_DIRECTORY_UUID, null)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -671,7 +778,7 @@ class ExploreTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        assertEquals(getCreatedElementUuid(server), getResponseUuid(result));
+        assertEquals(getCreatedElementUuid(), getResponseUuid(result));
     }
 
     @Test
@@ -919,7 +1026,7 @@ class ExploreTest {
     }
 
     @Test
-    void testChangeFilter(final MockWebServer server) throws Exception {
+    void testChangeFilter() throws Exception {
         final String filter = "{\"type\":\"CRITERIA\",\"equipmentFilterForm\":{\"equipmentType\":\"BATTERY\",\"name\":\"test "
                 + "bbs\",\"countries\":[\"BS\"],\"nominalVoltage\":{\"type\":\"LESS_THAN\",\"value1\":545430,\"value2\":null},\"freeProperties\":{\"region\":[\"north\"],\"totallyFree\":[\"6555\"]"
                         + ",\"tso\":[\"ceps\"]}}}";
@@ -932,11 +1039,11 @@ class ExploreTest {
                         .param("description", description))
                 .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters/");
+        verifyFilterOrContingencyUpdateRequests("/v1/filters/");
     }
 
     @Test
-    void testModifyIdentifierContingencyList(final MockWebServer server) throws Exception {
+    void testModifyIdentifierContingencyList() throws Exception {
         final String identifierContingencyList =
                 "{\"identifierContingencyList\":{\"type\":\"identifier\",\"version\":\"1.0\",\"identifiableType\":\"LINE\",\"identifiers\":[{\"type\":\"LIST\","
                         + "\"identifierList\":[{\"type\":\"ID_BASED\",\"identifier\":\"34\"},{\"type\":\"ID_BASED\",\"identifier\":\"qs\"}]}]},\"type\":\"IDENTIFIERS\"}";
@@ -950,11 +1057,11 @@ class ExploreTest {
                         .param("description", description))
                 .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/identifier-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests("/v1/identifier-contingency-lists/");
     }
 
     @Test
-    void testModifyFilterContingencyList(final MockWebServer server) throws Exception {
+    void testModifyFilterContingencyList() throws Exception {
         final String filters = "{\"filters\":[{\"id\":\"uuid1\",\"name\":\"TD_Sensi\",\"equipmentType\":\"TWO_WINDINGS_TRANSFORMER\"},{\"id\":\"uuid2\",\"name\":\"Ligne "
                 + "ARGIA\",\"equipmentType\":\"LINE\"}]}";
         final String name = "filter based contingencyList name";
@@ -967,10 +1074,10 @@ class ExploreTest {
                     .param("description", description))
                 .andExpect(status().isOk());
 
-        verifyFilterOrContingencyUpdateRequests(server, "/v1/filters-contingency-lists/");
+        verifyFilterOrContingencyUpdateRequests("/v1/filters-contingency-lists/");
     }
 
-    private void verifyFilterOrContingencyUpdateRequests(final MockWebServer server, String contingencyOrFilterPath) {
+    private void verifyFilterOrContingencyUpdateRequests(String contingencyOrFilterPath) {
         var requests = TestUtils.getRequestsWithBodyDone(2, server);
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains(contingencyOrFilterPath)), "elementAttributes updated");
         assertTrue(requests.stream().anyMatch(r -> r.getPath().contains("/v1/elements")), "name updated");
@@ -1011,7 +1118,7 @@ class ExploreTest {
     }
 
     @Test
-    void testCreateNetworkCompositeModifications(final MockWebServer server) throws Exception {
+    void testCreateNetworkCompositeModifications() throws Exception {
         List<UUID> modificationUuids = Arrays.asList(MODIFICATION_UUID, UUID.randomUUID());
         MvcResult result = mockMvc.perform(post("/v1/explore/composite-modifications?name={name}&description={description}&parentDirectoryUuid={parentDirectoryUuid}",
                 "nameModif", "descModif", PARENT_DIRECTORY_UUID)
@@ -1346,7 +1453,7 @@ class ExploreTest {
     }
 
     @Test
-    void testGetRootDirectories(final MockWebServer server) throws Exception {
+    void testGetRootDirectories() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/root-directories"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1358,7 +1465,7 @@ class ExploreTest {
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateRootDirectories(final MockWebServer server) throws Exception {
+    void testCreateRootDirectories() throws Exception {
         MvcResult result = mockMvc.perform(post("/v1/explore/directories/root-directories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(GENERIC_STRING)
@@ -1371,7 +1478,7 @@ class ExploreTest {
     }
 
     @Test
-    void testGetDirectoryElements(final MockWebServer server) throws Exception {
+    void testGetDirectoryElements() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1383,7 +1490,7 @@ class ExploreTest {
     }
 
     @Test
-    void testGetDirectoryElementsWithModifications(final MockWebServer server) throws Exception {
+    void testGetDirectoryElementsWithModifications() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elements", PARENT_DIRECTORY_UUID2))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1398,7 +1505,7 @@ class ExploreTest {
 
     @Test
     @WithMockUser(username = USER1)
-    void testCreateDirectory(final MockWebServer server) throws Exception {
+    void testCreateDirectory() throws Exception {
         String newDirectoryAttributesAsString = mapper.writeValueAsString(new ElementAttributes(ELEMENT_UUID, DIRECTORY1, "DIRECTORY", USER1, 0, null));
         MvcResult result = mockMvc.perform(post("/v1/explore/directories/{directoryUuid}/directories", PARENT_DIRECTORY_UUID2)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -1413,7 +1520,7 @@ class ExploreTest {
     }
 
     @Test
-    void testGetElementPath(final MockWebServer server) throws Exception {
+    void testGetElementPath() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/{elementUuid}/path", PARENT_DIRECTORY_UUID2))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1424,7 +1531,7 @@ class ExploreTest {
     }
 
     @Test
-    void testElementExists(final MockWebServer server) throws Exception {
+    void testElementExists() throws Exception {
         mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
                         PARENT_DIRECTORY_UUID2.toString(), STUDY1, "STUDY"))
                 .andExpect(status().isOk());
@@ -1435,7 +1542,7 @@ class ExploreTest {
     }
 
     @Test
-    void testElementExistsWithElementUuidAndNoDirectoryUuid(final MockWebServer server) throws Exception {
+    void testElementExistsWithElementUuidAndNoDirectoryUuid() throws Exception {
         mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&elementName={elementName}&elementType={elementType}",
                         ELEMENT_UUID, STUDY1, "STUDY"))
                 .andExpect(status().isOk());
@@ -1446,7 +1553,7 @@ class ExploreTest {
     }
 
     @Test
-    void testElementNotExists(final MockWebServer server) throws Exception {
+    void testElementNotExists() throws Exception {
         mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
                         PARENT_DIRECTORY_UUID2, "unknownName", "STUDY"))
                 .andExpect(status().isNoContent());
@@ -1455,7 +1562,7 @@ class ExploreTest {
     }
 
     @Test
-    void testElementExistsExcludesRenamedElement(final MockWebServer server) throws Exception {
+    void testElementExistsExcludesRenamedElement() throws Exception {
         // the element being renamed must not conflict with its own name
         mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
                         PRIVATE_STUDY_UUID, PARENT_DIRECTORY_UUID2, STUDY1, "STUDY"))
@@ -1465,7 +1572,7 @@ class ExploreTest {
     }
 
     @Test
-    void testModificationNameExists(final MockWebServer server) throws Exception {
+    void testModificationNameExists() throws Exception {
         // the name stored in the network modification server is used, not the directory one
         mockMvc.perform(head("/v1/explore/elements/checkName?directoryUuid={directoryUuid}&elementName={elementName}&elementType={elementType}",
                         PARENT_DIRECTORY_UUID2, "compositeName", MODIFICATION))
@@ -1490,7 +1597,7 @@ class ExploreTest {
     }
 
     @Test
-    void testElementExistsWithUnknownElementUuid(final MockWebServer server) throws Exception {
+    void testElementExistsWithUnknownElementUuid() throws Exception {
         mockMvc.perform(head("/v1/explore/elements/checkName?elementUuid={elementUuid}&elementName={elementName}&elementType={elementType}",
                         INVALID_ELEMENT_UUID, STUDY1, "STUDY"))
                 .andExpect(status().isNotFound());
@@ -1499,7 +1606,7 @@ class ExploreTest {
     }
 
     @Test
-    void testGetElementNameCandidate(final MockWebServer server) throws Exception {
+    void testGetElementNameCandidate() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/{directoryUuid}/elementName/newNameCandidate?type=type", PARENT_DIRECTORY_UUID2))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1510,7 +1617,7 @@ class ExploreTest {
     }
 
     @Test
-    void testSearchElement(final MockWebServer server) throws Exception {
+    void testSearchElement() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/directories/elements/indexation-infos?userInput=userInput&directoryUuid=directoryUuid"))
                 .andExpect(status().isOk())
                 .andReturn();
