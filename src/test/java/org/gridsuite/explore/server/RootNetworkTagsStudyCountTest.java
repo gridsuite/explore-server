@@ -1,0 +1,155 @@
+/**
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package org.gridsuite.explore.server;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
+import org.gridsuite.explore.server.dto.ElementAttributes;
+import org.gridsuite.explore.server.dto.NodeInfos;
+import org.gridsuite.explore.server.dto.ReferenceAttributes;
+import org.gridsuite.explore.server.dto.ReferenceContainer;
+import org.gridsuite.explore.server.services.DirectoryService;
+import org.gridsuite.explore.server.services.StudyService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(AllowAllAuthTestConfiguration.class)
+class RootNetworkTagsStudyCountTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private DirectoryService directoryService;
+
+    @Autowired
+    private StudyService studyService;
+
+    private WireMockServer wireMockServer;
+
+    private static final UUID SHARED_ELEMENT_UUID = UUID.randomUUID();
+    private static final UUID NODE_1_UUID = UUID.randomUUID();
+    private static final UUID NODE_2_UUID = UUID.randomUUID();
+    private static final UUID NODE_3_UUID = UUID.randomUUID();
+    private static final UUID STUDY_1_UUID = UUID.randomUUID();
+    private static final UUID STUDY_2_UUID = UUID.randomUUID();
+
+    private static final String SHARED_ELEMENT_PATH = "/v1/elements/" + SHARED_ELEMENT_UUID;
+    private static final String NODES_INFOS_PATH = "/v1/nodes/infos";
+    private static final String ROOT_NETWORK_TAGS_PATH = "/v1/studies/root-network-tags";
+
+    @BeforeEach
+    void setUp() {
+        wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+        wireMockServer.start();
+        directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
+        studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (wireMockServer != null) {
+            wireMockServer.stop();
+        }
+    }
+
+    private static ReferenceAttributes reference(ReferenceAttributes.ReferenceType type, UUID rootContainerId, UUID containerId) {
+        return ReferenceAttributes.builder()
+                .referenceId(UUID.randomUUID())
+                .referenceType(type)
+                .referenceContainer(ReferenceContainer.builder()
+                        .rootContainerId(rootContainerId)
+                        .containerId(containerId)
+                        .build())
+                .build();
+    }
+
+    private void stubSharedElementReferences(ReferenceAttributes... references) throws Exception {
+        ElementAttributes sharedElement = new ElementAttributes(SHARED_ELEMENT_UUID, "sharedModification", "MODIFICATION", "owner", 0L, null);
+        sharedElement.setReferences(List.of(references));
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(SHARED_ELEMENT_PATH))
+                .willReturn(WireMock.ok(objectMapper.writeValueAsString(sharedElement))
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
+    }
+
+    private Map<String, Long> getRootNetworkTagsStudyCount() throws Exception {
+        MvcResult result = mockMvc.perform(get("/v1/explore/composite-modifications/{compositeUuid}/root-network-tags/study-count", SHARED_ELEMENT_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() { });
+    }
+
+    @Test
+    void testCountFromReferencedNodes() throws Exception {
+        stubSharedElementReferences(
+                // node 1: at the root of its node, referenced twice
+                reference(ReferenceAttributes.ReferenceType.STUDY_NODE, STUDY_1_UUID, NODE_1_UUID),
+                reference(ReferenceAttributes.ReferenceType.STUDY_NODE, STUDY_1_UUID, NODE_1_UUID),
+                // node 2: inside a composite of the node, in the same study as node 1
+                reference(ReferenceAttributes.ReferenceType.STUDY_NODE_NETWORK_MODIFICATION, NODE_2_UUID, UUID.randomUUID()),
+                reference(ReferenceAttributes.ReferenceType.STUDY_NODE, STUDY_2_UUID, NODE_3_UUID),
+                // not in a study: ignored
+                reference(ReferenceAttributes.ReferenceType.DIRECTORY_NETWORK_MODIFICATION, UUID.randomUUID(), UUID.randomUUID()));
+        wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .willReturn(WireMock.ok(objectMapper.writeValueAsString(List.of(
+                                new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
+                                new NodeInfos(NODE_2_UUID, "node2", STUDY_1_UUID),
+                                new NodeInfos(NODE_3_UUID, "node3", STUDY_2_UUID))))
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH))
+                .willReturn(WireMock.ok(objectMapper.writeValueAsString(Map.of(
+                                STUDY_1_UUID, List.of("R1", "R2"),
+                                STUDY_2_UUID, List.of("R1"))))
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
+
+        // each study counts once for each of its tags
+        assertEquals(Map.of("R1", 2L, "R2", 1L), getRootNetworkTagsStudyCount());
+
+        // each referenced node is asked once, then each study once
+        wireMockServer.verify(1, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
+                .withQueryParam("ids", WireMock.havingExactly(NODE_1_UUID.toString(), NODE_2_UUID.toString(), NODE_3_UUID.toString())));
+        wireMockServer.verify(1, WireMock.postRequestedFor(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH))
+                .withRequestBody(WireMock.equalToJson("[\"" + STUDY_1_UUID + "\", \"" + STUDY_2_UUID + "\"]")));
+    }
+
+    @Test
+    void testElementWithoutStudyReference() throws Exception {
+        stubSharedElementReferences(
+                reference(ReferenceAttributes.ReferenceType.DIRECTORY_NETWORK_MODIFICATION, UUID.randomUUID(), UUID.randomUUID()));
+
+        assertEquals(Map.of(), getRootNetworkTagsStudyCount());
+
+        // no node to count from: the study-server is not reached
+        wireMockServer.verify(0, WireMock.getRequestedFor(WireMock.urlPathEqualTo(NODES_INFOS_PATH)));
+        wireMockServer.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH)));
+    }
+}

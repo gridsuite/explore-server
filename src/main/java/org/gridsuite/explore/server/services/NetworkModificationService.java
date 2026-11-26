@@ -8,19 +8,21 @@ package org.gridsuite.explore.server.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Setter;
+import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 
 /**
  * @author David Braquart <david.braquart at rte-france.com>
@@ -31,37 +33,46 @@ public class NetworkModificationService implements IDirectoryElementsService {
     private static final String DELIMITER = "/";
     public static final String UUIDS = "uuids";
     public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
+    public static final String ROOT_NETWORK_TAGS = "rootNetworkTags";
     public static final String NETWORK_COMPOSITE_MODIFICATIONS_PATH = "network-composite-modifications";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private static final String CONTAINERS_PATH = "containers";
     @Setter
     private String networkModificationServerBaseUri;
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public NetworkModificationService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public NetworkModificationService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
+        this.restClient = restClient;
         this.networkModificationServerBaseUri = remoteServicesProperties.getServiceUri("network-modification-server");
-        this.restTemplate = restTemplate;
     }
 
     public Map<UUID, UUID> duplicateCompositeModifications(List<UUID> modificationUuids) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + "duplication")
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<Map<UUID, UUID>>() { })
-            .getBody();
+
+        return restClient.post()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationUuids)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
-    public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName) {
+    public UUID createCompositeModification(List<UUID> modificationUuids, String compositeModificationName, List<String> rootNetworkTags) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH)
                 .queryParam(NAME, compositeModificationName)
+                .queryParam(ROOT_NETWORK_TAGS, rootNetworkTags)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(modificationUuids, headers), new ParameterizedTypeReference<UUID>() { })
-                .getBody();
+
+        return restClient.post()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationUuids)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void createModification(UUID groupUuid, JsonNode modification) {
@@ -69,10 +80,15 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam("groupUuid", groupUuid)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+
         Map<String, Object> body = Map.of("first", modification, "second", List.of());
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.POST, new HttpEntity<>(body, headers), JsonNode.class).getBody();
+
+        restClient.post()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(body)
+            .retrieve()
+            .body(JsonNode.class);
     }
 
     public void replaceCompositeModification(UUID compositeModificationId, String newName, List<UUID> modificationUuids) {
@@ -80,26 +96,75 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .queryParam(NAME, newName)
                 .buildAndExpand()
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(modificationUuids, headers), Void.class);
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationUuids)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     /**
      * @param newName null if the name shouldn't be updated
+     * @param newDescription null if the description shouldn't be updated
      */
-    public void updateCompositeModification(UUID compositeModificationId, String newName) {
+    public void updateModificationNameAndDescription(UUID compositeModificationId, String newName, String newDescription) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(
-                DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_COMPOSITE_MODIFICATIONS_PATH + DELIMITER + compositeModificationId
+                DELIMITER + NETWORK_MODIFICATION_API_VERSION +
+                        DELIMITER + NETWORK_MODIFICATIONS_PATH +
+                        DELIMITER + compositeModificationId +
+                        DELIMITER + "name-and-description"
                 );
+        String path = uriComponentsBuilder.buildAndExpand().toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Map<String, Object> modificationMetadata = new HashMap<>();
+        modificationMetadata.put("id", compositeModificationId);
         if (newName != null) {
-            uriComponentsBuilder.queryParam(NAME, newName);
+            modificationMetadata.put(NAME, newName);
+        }
+        if (newDescription != null) {
+            modificationMetadata.put(DESCRIPTION, newDescription);
         }
 
-        String path = uriComponentsBuilder.buildAndExpand().toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(headers), Void.class);
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(modificationMetadata)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
+    public void updateCompositeModificationActivation(List<UUID> modificationUuids, boolean active) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)
+                .queryParam(UUIDS, modificationUuids)
+                .queryParam("active", active)
+                .buildAndExpand()
+                .toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
+    public void updateRootNetworkApplicability(List<UUID> modificationUuids, String rootNetworkTag, boolean applicable) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + DELIMITER + "root-network-applicability")
+                .queryParam(UUIDS, modificationUuids)
+                .queryParam("rootNetworkTag", rootNetworkTag)
+                .queryParam("applicable", applicable)
+                .buildAndExpand()
+                .toUriString();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        restClient.put()
+            .uri(networkModificationServerBaseUri + path)
+            .header(HEADER_USER_ID, userId)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
@@ -109,7 +174,10 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .buildAndExpand()
                 .toUriString();
 
-        restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient.delete()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
@@ -119,25 +187,43 @@ public class NetworkModificationService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + "/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+
+        return restClient.get()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
-    public Map<UUID, List<Object>> getCompositeModificationContent(UUID compositeModificationId) {
+    public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         String path = UriComponentsBuilder
                 .fromPath(DELIMITER +
                         NETWORK_MODIFICATION_API_VERSION +
                         DELIMITER +
                         CONTAINERS_PATH +
                         DELIMITER +
+                        "{containerUuid}" +
+                        DELIMITER +
                         NETWORK_MODIFICATIONS_PATH)
-                .queryParam(UUIDS, List.of(compositeModificationId))
                 .queryParam("onlyMetadata", true)
-                .buildAndExpand()
+                .buildAndExpand(compositeModificationId)
                 .toUriString();
-        return restTemplate.exchange(networkModificationServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<Map<UUID, List<Object>>>() {
-                }).getBody();
+        return restClient.get()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
+    }
+
+    @Override
+    public ElementAttributes populateMetadataItem(ElementAttributes elementAttributes, Map<String, Object> metadataItem) {
+        if (metadataItem != null) {
+            if (metadataItem.containsKey(NAME) && metadataItem.get(NAME) != null) {
+                elementAttributes.setElementName(metadataItem.get(NAME).toString());
+            }
+            if (metadataItem.containsKey(DESCRIPTION) && metadataItem.get(DESCRIPTION) != null) {
+                elementAttributes.setDescription(metadataItem.get(DESCRIPTION).toString());
+            }
+        }
+        elementAttributes.setSpecificMetadata(metadataItem);
+        return elementAttributes;
     }
 }

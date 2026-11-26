@@ -7,12 +7,9 @@
 package org.gridsuite.explore.server.services;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -28,11 +25,11 @@ public class ContingencyListService implements IDirectoryElementsService {
     private static final String ACTIONS_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private String actionsServerBaseUri;
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public ContingencyListService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public ContingencyListService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.actionsServerBaseUri = remoteServicesProperties.getServiceUri("actions-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     public void setActionsServerBaseUri(String actionsServerBaseUri) {
@@ -44,41 +41,61 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/{id}")
                 .buildAndExpand(id)
                 .toUriString();
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+
+        restClient.delete()
+            .uri(actionsServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public void insertIdentifierContingencyList(UUID id, String content) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists?id={id}")
                 .buildAndExpand(id)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+
+        var request = restClient.post()
+            .uri(actionsServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON);
+        if (content != null) {
+            request.body(content);
+        }
+        request.retrieve().toBodilessEntity();
     }
 
     public void insertFilterBasedContingencyList(UUID id, String content) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists?id={id}")
             .buildAndExpand(id)
             .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, httpEntity, Void.class);
+
+        var request = restClient.post()
+            .uri(actionsServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON);
+        if (content != null) {
+            request.body(content);
+        }
+        request.retrieve().toBodilessEntity();
     }
 
     public UUID duplicateIdentifierContingencyList(UUID identifierContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/identifier-contingency-lists/{uuid}/duplicate")
                 .buildAndExpand(identifierContingencyListsId)
                 .toUriString();
-        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
+
+        return restClient.post()
+            .uri(actionsServerBaseUri + path)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public UUID duplicateFilterBasedContingencyList(UUID filterContingencyListsId) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + "/filters-contingency-lists/{uuid}/duplicate")
             .buildAndExpand(filterContingencyListsId)
             .toUriString();
-        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.POST, null, UUID.class).getBody();
+
+        return restClient.post()
+            .uri(actionsServerBaseUri + path)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public String getIdentifierContingencyList(UUID id) {
@@ -93,7 +110,11 @@ public class ContingencyListService implements IDirectoryElementsService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + endpoint)
                 .buildAndExpand(id)
                 .toUriString();
-        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null, String.class).getBody();
+
+        return restClient.get()
+            .uri(actionsServerBaseUri + path)
+            .retrieve()
+            .body(String.class);
     }
 
     @Override
@@ -103,18 +124,23 @@ public class ContingencyListService implements IDirectoryElementsService {
                 .fromPath(DELIMITER + ACTIONS_API_VERSION + "/contingency-lists/metadata" + "?ids=" + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Map<String, Object>>>() {
-                }).getBody();
+
+        return restClient.get()
+            .uri(actionsServerBaseUri + path)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() { });
     }
 
     public void updateContingencyList(UUID id, String content, String element) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + ACTIONS_API_VERSION + element)
                 .buildAndExpand(id)
                 .toUriString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.exchange(actionsServerBaseUri + path, HttpMethod.PUT, new HttpEntity<>(content, headers), Void.class);
 
+        restClient.put()
+            .uri(actionsServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(content)
+            .retrieve()
+            .toBodilessEntity();
     }
 }

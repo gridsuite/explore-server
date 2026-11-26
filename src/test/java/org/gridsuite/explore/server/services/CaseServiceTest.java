@@ -15,7 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -34,6 +34,7 @@ class CaseServiceTest {
 
     private static final String BASE_URI = "http://case-server";
     private static final UUID CASE_UUID = UUID.randomUUID();
+    private static final UUID DUPLICATED_CASE_UUID = UUID.randomUUID();
     private static final String CASE_NAME = "network.xiidm";
 
     private CaseService caseService;
@@ -41,9 +42,9 @@ class CaseServiceTest {
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        server = MockRestServiceServer.bindTo(restTemplate).build();
-        caseService = new CaseService(BASE_URI, restTemplate);
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
+        caseService = new CaseService(BASE_URI, restClientBuilder.build());
     }
 
     @Test
@@ -96,6 +97,21 @@ class CaseServiceTest {
         String response = caseService.getBaseName(CASE_NAME);
 
         assertEquals("network", response);
+        server.verify();
+    }
+
+    @Test
+    void duplicateCaseForwardsCaseUuid() {
+        server.expect(once(), requestTo(BASE_URI + "/v1/cases/" + CASE_UUID + "/duplicate"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(
+                        "\"" + DUPLICATED_CASE_UUID + "\"",
+                        MediaType.APPLICATION_JSON
+                ));
+
+        UUID response = caseService.duplicateCase(CASE_UUID);
+
+        assertEquals(DUPLICATED_CASE_UUID, response);
         server.verify();
     }
 }

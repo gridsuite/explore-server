@@ -7,45 +7,47 @@
 package org.gridsuite.explore.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import lombok.SneakyThrows;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
+import mockwebserver3.junit5.StartStop;
 import okhttp3.Headers;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SpreadsheetConfigService;
 import org.gridsuite.explore.server.services.UserAdminService;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * @author Achour BERRAHMA <achour.berrahma at rte-france.com>
  */
-@ExtendWith(MockWebServerExtension.class)
 @SpringBootTest(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
 @AutoConfigureMockMvc
-@Import(AllowAllAuthorizationTestConfiguration.class)
+@Import(AllowAllAuthTestConfiguration.class)
 class SpreadsheetConfigTest {
 
     @Autowired
@@ -63,9 +65,16 @@ class SpreadsheetConfigTest {
     @Autowired
     private UserAdminService userAdminService;
 
+    @Autowired
+    private OutputDestination output;
+
+    @StartStop
+    final MockWebServer mockWebServer = new MockWebServer();
+
     private static final String BASE_URL = "/v1/explore/spreadsheet-configs";
     private static final String SPREADSHEET_CONFIG_SERVER_BASE_URL = "/v1/spreadsheet-configs";
     private static final UUID CONFIG_UUID = UUID.randomUUID();
+    private static final UUID DUPLICATED_CONFIG_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final String USER_ID = "testUser";
     private static final String CONFIG_NAME = "Test Config";
@@ -73,11 +82,12 @@ class SpreadsheetConfigTest {
     private String spreadsheetConfigJson;
 
     @BeforeEach
-    void initialize(final MockWebServer mockWebServer) {
+    void initialize() {
         String baseUrl = String.format("http://localhost:%s", mockWebServer.getPort());
         spreadsheetConfigService.setSpreadsheetConfigServerBaseUri(baseUrl);
         directoryService.setDirectoryServerBaseUri(baseUrl);
         userAdminService.setUserAdminServerBaseUri(baseUrl);
+        output.clear();
 
         spreadsheetConfigJson = "{\"sheetType\":\"GENERATORS\",\"customColumns\":[{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"Custom Column\",\"formula\":\"SUM(A1:A10)\"}]}";
 
@@ -86,18 +96,18 @@ class SpreadsheetConfigTest {
             @SneakyThrows
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                String path = request.getPath();
+                String path = request.getTarget();
                 if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL) && "POST".equals(request.getMethod())) {
-                    return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(CONFIG_UUID));
+                    return new MockResponse.Builder().code(201).headers(Headers.of("Content-Type", "application/json")).body(objectMapper.writeValueAsString(CONFIG_UUID)).build();
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/" + CONFIG_UUID) && "PUT".equals(request.getMethod())) {
-                    return new MockResponse(204);
+                    return new MockResponse.Builder().code(204).build();
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/" + CONFIG_UUID + "/duplicate") && "POST".equals(request.getMethod())) {
-                    return new MockResponse(201, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(UUID.randomUUID()));
+                    return new MockResponse.Builder().code(201).headers(Headers.of("Content-Type", "application/json")).body(objectMapper.writeValueAsString(DUPLICATED_CONFIG_UUID)).build();
                 } else if (path.matches(SPREADSHEET_CONFIG_SERVER_BASE_URL + "/metadata\\?ids=" + CONFIG_UUID)) {
                     Map<String, Object> metadata = new HashMap<>();
                     metadata.put("id", CONFIG_UUID);
                     metadata.put("sheetType", "GENERATORS");
-                    return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(List.of(metadata)));
+                    return new MockResponse.Builder().code(200).headers(Headers.of("Content-Type", "application/json")).body(objectMapper.writeValueAsString(List.of(metadata))).build();
                 } else if (path.matches("/v1/elements\\?ids=.*")) {
                     ElementAttributes elementAttributes = new ElementAttributes(
                             CONFIG_UUID,
@@ -107,35 +117,38 @@ class SpreadsheetConfigTest {
                             0L,
                             null
                     );
-                    return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(List.of(elementAttributes)));
+                    return new MockResponse.Builder().code(200).headers(Headers.of("Content-Type", "application/json")).body(objectMapper.writeValueAsString(List.of(elementAttributes))).build();
                 } else if (path.matches("/v1/directories/.*/elements\\?allowNewName=.*") && "POST".equals(request.getMethod())) {
                     ElementAttributes elementAttributes = new ElementAttributes(CONFIG_UUID, CONFIG_NAME, "SPREADSHEET_CONFIG", USER_ID, 0L, null);
-                    return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(elementAttributes));
+                    return new MockResponse.Builder().code(200).headers(Headers.of("Content-Type", "application/json")).body(objectMapper.writeValueAsString(elementAttributes)).build();
                 } else if (path.matches("/v1/directories/" + PARENT_DIRECTORY_UUID + "/elements")) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/elements/" + CONFIG_UUID) && "PUT".equals(request.getMethod())) {
                     // Mock response for updating element in directory
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 } else if (path.matches("/v1/elements/.*/duplicate\\?newElementUuid=.*")) {
-                    ElementAttributes duplicatedElement = new ElementAttributes(UUID.randomUUID(), CONFIG_NAME + " (copy)", "SPREADSHEET_CONFIG", USER_ID, 0L, null);
-                    return new MockResponse(200, Headers.of("Content-Type", "application/json"), objectMapper.writeValueAsString(duplicatedElement));
+                    ElementAttributes duplicatedElement = new ElementAttributes(DUPLICATED_CONFIG_UUID, CONFIG_NAME + " (copy)", "SPREADSHEET_CONFIG", USER_ID, 0L, null);
+                    return new MockResponse.Builder().code(200).headers(Headers.of("Content-Type", "application/json")).body(objectMapper.writeValueAsString(duplicatedElement)).build();
                 } else if (path.matches("/v1/elements/authorized\\?accessType=.*&ids=.*&targetDirectoryUuid.*")) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder().code(200).build();
                 }
-                return new MockResponse(404);
+                return new MockResponse.Builder().code(404).build();
             }
         });
     }
 
     @Test
     void testCreateSpreadsheetConfig() throws Exception {
-        ResultActions perform = mockMvc.perform(post(BASE_URL)
+        String response = mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(spreadsheetConfigJson)
                 .param("name", CONFIG_NAME)
                 .param("description", "comment")
-                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()));
-        perform.andExpect(status().isCreated());
+                .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(CONFIG_UUID, objectMapper.readValue(response, UUID.class));
     }
 
     @Test
@@ -144,24 +157,30 @@ class SpreadsheetConfigTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spreadsheetConfigJson)
                         .param("name", CONFIG_NAME)
-                        .param("description", "description"))
+                        .param("description", "description")
+                        .header(HEADER_USER_ID, USER_ID))
                 .andExpect(status().isNoContent());
+
+        TestUtils.assertElementUpdatedSent(output, CONFIG_UUID, USER_ID);
     }
 
     @Test
     void testDuplicateSpreadsheetConfig() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + CONFIG_UUID + "/duplicate")
+        String response = mockMvc.perform(post(BASE_URL + "/" + CONFIG_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(DUPLICATED_CONFIG_UUID, objectMapper.readValue(response, UUID.class));
     }
 
     @Test
-    void testCreateSpreadsheetConfigServiceError(final MockWebServer mockWebServer) throws Exception {
+    void testCreateSpreadsheetConfigServiceError() throws Exception {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                return new MockResponse(500);
+                return new MockResponse.Builder().code(500).build();
             }
         });
 
@@ -174,12 +193,12 @@ class SpreadsheetConfigTest {
     }
 
     @Test
-    void testUpdateSpreadsheetConfigServiceError(final MockWebServer mockWebServer) throws Exception {
+    void testUpdateSpreadsheetConfigServiceError() throws Exception {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                return new MockResponse(500);
+                return new MockResponse.Builder().code(500).build();
             }
         });
 
@@ -191,12 +210,12 @@ class SpreadsheetConfigTest {
     }
 
     @Test
-    void testDuplicateSpreadsheetConfigServiceError(final MockWebServer mockWebServer) throws Exception {
+    void testDuplicateSpreadsheetConfigServiceError() throws Exception {
         mockWebServer.setDispatcher(new Dispatcher() {
             @NotNull
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                return new MockResponse(500);
+                return new MockResponse.Builder().code(500).build();
             }
         });
 

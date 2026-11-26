@@ -8,12 +8,9 @@ package org.gridsuite.explore.server.services;
 
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -30,15 +27,15 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
     private static final String DELIMITER = "/";
     private static final String SPREADSHEET_CONFIG_COLLECTIONS_PATH = DELIMITER + SPREADSHEET_CONFIG_API_VERSION + DELIMITER + "spreadsheet-config-collections";
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     @Setter
     private String spreadsheetConfigServerBaseUri;
 
     @Autowired
-    public SpreadsheetConfigCollectionService(RestTemplate restTemplate, RemoteServicesProperties remoteServicesProperties) {
+    public SpreadsheetConfigCollectionService(RestClient restClient, RemoteServicesProperties remoteServicesProperties) {
         this.spreadsheetConfigServerBaseUri = remoteServicesProperties.getServiceUri("study-config-server");
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     public UUID createSpreadsheetConfigCollectionFromConfigIds(List<UUID> configIds) {
@@ -49,12 +46,12 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand()
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
-
-        return restTemplate.postForObject(spreadsheetConfigServerBaseUri + path, httpEntity, UUID.class);
+        return restClient.post()
+            .uri(spreadsheetConfigServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(configIds)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public UUID createSpreadsheetConfigCollection(String collection) {
@@ -65,12 +62,12 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand()
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(collection, headers);
-
-        return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+        return restClient.post()
+            .uri(spreadsheetConfigServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(collection)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public UUID duplicateSpreadsheetConfigCollection(UUID collectionId) {
@@ -81,12 +78,11 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand(collectionId)
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-
-        return restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
+        return restClient.post()
+            .uri(spreadsheetConfigServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void updateSpreadsheetConfigCollection(UUID collectionId, String collection) {
@@ -98,12 +94,12 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand()
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(collection, headers);
-
-        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+        restClient.put()
+            .uri(spreadsheetConfigServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(collection)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public void replaceAllSpreadsheetConfigsInCollection(UUID collectionId, List<UUID> configIds) {
@@ -115,12 +111,12 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand()
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<List<UUID>> httpEntity = new HttpEntity<>(configIds, headers);
-
-        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.PUT, httpEntity, Void.class);
+        restClient.put()
+            .uri(spreadsheetConfigServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(configIds)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     @Override
@@ -132,6 +128,9 @@ public class SpreadsheetConfigCollectionService implements IDirectoryElementsSer
                 .buildAndExpand()
                 .toUriString();
 
-        restTemplate.exchange(spreadsheetConfigServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient.delete()
+            .uri(spreadsheetConfigServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
     }
 }

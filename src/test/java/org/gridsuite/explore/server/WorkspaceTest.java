@@ -10,9 +10,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.powsybl.ws.commons.security.AllowAllAuthTestConfiguration;
 import org.gridsuite.explore.server.dto.ElementAttributes;
 import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.WorkspaceService;
+import org.gridsuite.explore.server.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,16 +24,20 @@ import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.gridsuite.explore.server.ExploreConstants.HEADER_USER_ID;
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,7 +51,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
-@Import(AllowAllAuthorizationTestConfiguration.class)
+@ContextConfiguration(classes = {ExploreApplication.class, TestChannelBinderConfiguration.class})
+@Import(AllowAllAuthTestConfiguration.class)
 class WorkspaceTest {
 
     @Autowired
@@ -60,6 +67,9 @@ class WorkspaceTest {
     @MockitoBean
     private DirectoryService directoryService;
 
+    @Autowired
+    private OutputDestination output;
+
     @Captor
     private ArgumentCaptor<ElementAttributes> elementAttributesCaptor;
 
@@ -71,6 +81,7 @@ class WorkspaceTest {
     private static final UUID SOURCE_WORKSPACE_UUID = UUID.randomUUID();
     private static final UUID PARENT_DIRECTORY_UUID = UUID.randomUUID();
     private static final String WORKSPACE_NAME = "Test Workspace";
+    private static final String USER_ID = "userId";
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
@@ -113,30 +124,39 @@ class WorkspaceTest {
 
     @Test
     void testReplaceWorkspace() throws Exception {
+        output.clear();
         mockMvc.perform(put(BASE_URL + "/{id}", WORKSPACE_UUID)
+                        .header(HEADER_USER_ID, USER_ID)
                         .param("workspaceId", SOURCE_WORKSPACE_UUID.toString())
                         .param("name", WORKSPACE_NAME)
                         .param("description", "Updated description"))
                 .andExpect(status().isNoContent());
 
         verify(directoryService, times(1)).updateElement(eq(WORKSPACE_UUID), elementAttributesCaptor.capture());
+        TestUtils.assertElementUpdatedSent(output, WORKSPACE_UUID, USER_ID);
     }
 
     @Test
     void testDuplicateWorkspace() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
+        String result = mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate")
                         .param("parentDirectoryUuid", PARENT_DIRECTORY_UUID.toString()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID duplicatedWorkspaceId = objectMapper.readValue(result, UUID.class);
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, PARENT_DIRECTORY_UUID, CREATED);
+        assertEquals(WORKSPACE_UUID, duplicatedWorkspaceId);
     }
 
     @Test
     void testDuplicateWorkspaceInSameDirectory() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
-                .andExpect(status().isCreated());
+        String result = mockMvc.perform(post(BASE_URL + "/" + SOURCE_WORKSPACE_UUID + "/duplicate"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID createdWorkspaceId = objectMapper.readValue(result, UUID.class);
 
         verify(directoryService, times(1)).duplicateElement(SOURCE_WORKSPACE_UUID, WORKSPACE_UUID, null, CREATED);
+        assertEquals(WORKSPACE_UUID, createdWorkspaceId);
     }
 
     @Test

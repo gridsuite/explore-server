@@ -7,6 +7,7 @@
 package org.gridsuite.explore.server.controllers;
 
 import org.gridsuite.explore.server.controller.NetworkConversionController;
+import org.gridsuite.explore.server.dto.CompressionType;
 import org.gridsuite.explore.server.services.NetworkConversionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,11 +48,11 @@ class NetworkConversionControllerTest {
     @Test
     void convertCaseForwardsArguments() {
         UUID response = EXPORT_UUID;
-        when(networkConversionService.convertCase(CASE_UUID, "CGMES", "network.zip", "{}")).thenReturn(response);
+        when(networkConversionService.convertCase(CASE_UUID, "CGMES", CompressionType.ZIP, "network.zip", "{}")).thenReturn(response);
 
-        assertSame(response, controller.convertCase(CASE_UUID, "CGMES", "network.zip", "{}").getBody());
+        assertSame(response, controller.convertCase(CASE_UUID, "CGMES", CompressionType.ZIP, "network.zip", "{}").getBody());
 
-        verify(networkConversionService).convertCase(CASE_UUID, "CGMES", "network.zip", "{}");
+        verify(networkConversionService).convertCase(CASE_UUID, "CGMES", CompressionType.ZIP, "network.zip", "{}");
     }
 
     @Test

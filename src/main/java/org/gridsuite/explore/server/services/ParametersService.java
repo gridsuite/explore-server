@@ -13,7 +13,7 @@ import org.gridsuite.explore.server.utils.ParametersType;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
@@ -31,7 +31,7 @@ public class ParametersService implements IDirectoryElementsService {
     private static final String COMPUTATION_PARAMETERS = "/parameters";
     private static final String NETWORK_VISU_PARAMETERS = "/network-visualizations-params";
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final DirectoryService directoryService;
 
@@ -53,71 +53,82 @@ public class ParametersService implements IDirectoryElementsService {
 
     private final RemoteServicesProperties remoteServicesProperties;
 
-    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public ParametersService(RemoteServicesProperties remoteServicesProperties, @Lazy DirectoryService directoryService, RestClient restClient) {
+        this.restClient = restClient;
         this.remoteServicesProperties = remoteServicesProperties;
         this.directoryService = directoryService;
     }
 
     public UUID createParameters(String parameters, ParametersType parametersType) {
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
+        ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
         Objects.requireNonNull(parameters);
 
         var path = UriComponentsBuilder
-                .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl())
+                .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl())
                 .buildAndExpand()
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(parameters, headers);
-
-        UUID parametersUuid;
-
-        parametersUuid = restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, httpEntity, UUID.class).getBody();
-
-        return parametersUuid;
+        return restClient
+            .post()
+            .uri(parametersServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(parameters)
+            .retrieve()
+            .body(UUID.class);
     }
 
     public void updateParameters(UUID parametersUuid, String parameters, ParametersType parametersType) {
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
+        ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
         Objects.requireNonNull(parameters);
 
         var path = UriComponentsBuilder
-                .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
+                .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + "/{parametersUuid}")
                 .buildAndExpand(parametersUuid)
                 .toUriString();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>(parameters, headers);
-
-        restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.PUT, httpEntity, UUID.class);
+        restClient
+            .put()
+            .uri(parametersServerBaseUri + path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(parameters)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     public UUID duplicateParameters(UUID sourceParametersUuid, ParametersType parametersType) {
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
+        ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
         Objects.requireNonNull(sourceParametersUuid);
+
         var path = UriComponentsBuilder
-                    .fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
+                    .fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + DELIMITER + "{uuid}" + DELIMITER + "duplicate")
                     .buildAndExpand(sourceParametersUuid)
                     .toUriString();
 
-        return restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.POST, HttpEntity.EMPTY, UUID.class).getBody();
+        return restClient
+            .post()
+            .uri(parametersServerBaseUri + path)
+            .retrieve()
+            .body(UUID.class);
     }
 
     @Override
     public void delete(UUID parametersUuid) {
         ElementAttributes elementAttributes = directoryService.getElementInfos(parametersUuid);
         ParametersType parametersType = ParametersType.valueOf(elementAttributes.getType());
-        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(genericParametersServices.get(parametersType).getServerName());
-        String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + genericParametersServices.get(parametersType).getParametersBaseUrl() + "/{parametersUuid}")
+        ParameterServerConfig serverConfig = genericParametersServices.get(parametersType);
+        String parametersServerBaseUri = remoteServicesProperties.getServiceUri(serverConfig.getServerName());
+
+        String path = UriComponentsBuilder.fromPath(DELIMITER + SERVER_API_VERSION + serverConfig.getParametersBaseUrl() + "/{parametersUuid}")
                 .buildAndExpand(parametersUuid)
                 .toUriString();
 
-        restTemplate.exchange(parametersServerBaseUri + path, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+        restClient
+            .delete()
+            .uri(parametersServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
     }
-
 }

@@ -5,12 +5,11 @@ import org.gridsuite.explore.server.services.DirectoryService;
 import org.gridsuite.explore.server.services.SupervisionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,8 +27,8 @@ class SupervisionTest {
     @MockitoBean
     private DirectoryService directoryService;
 
-    @MockitoBean
-    private RestTemplate restTemplate;
+    @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
+    private RestClient restClient;
 
     private final ElementAttributes filter = new ElementAttributes(UUID.randomUUID(), "filter", "FILTER", "userId", 0L, null);
     private final ElementAttributes study = new ElementAttributes(UUID.randomUUID(), "study", "STUDY", "userId", 0L, null);
@@ -42,13 +41,12 @@ class SupervisionTest {
         verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
         verify(directoryService, times(1)).deleteElement(study.getElementUuid());
         // deletions of both elements in directory server
-        verify(restTemplate, times(1)).exchange(matches(".*/supervision/.*"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class));
+        verify(restClient).delete();
     }
 
     @Test
     void testDeleteElementsWithErrors() {
         List<UUID> uuidsToDelete = List.of(filter.getElementUuid(), study.getElementUuid());
-
         // one deletion will fail, this test checks deletions does not stop even when one of them is throwing       an exception
         doThrow(new RuntimeException("An error occured when deleting filter")).when(directoryService).deleteElement(filter.getElementUuid());
 
@@ -57,12 +55,12 @@ class SupervisionTest {
         verify(directoryService, times(1)).deleteElement(filter.getElementUuid());
         verify(directoryService, times(1)).deleteElement(study.getElementUuid());
         // deletions of both elements in directory server
-        verify(restTemplate, times(1)).exchange(matches(".*/supervision/.*"), eq(HttpMethod.DELETE), any(HttpEntity.class), eq(Void.class));
+        verify(restClient).delete();
     }
 
     @AfterEach
     void verifyNoMoreInteractionsMocks() {
-        verifyNoMoreInteractions(restTemplate);
+        verifyNoMoreInteractions(restClient);
         verifyNoMoreInteractions(directoryService);
     }
 }

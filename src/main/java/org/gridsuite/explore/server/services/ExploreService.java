@@ -6,22 +6,17 @@
  */
 package org.gridsuite.explore.server.services;
 
+import com.powsybl.ws.commons.security.PermissionType;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.gridsuite.explore.server.dto.CaseAlertThresholdMessage;
-import org.gridsuite.explore.server.dto.CaseInfo;
-import org.gridsuite.explore.server.dto.DirectoryElementStatus;
-import org.gridsuite.explore.server.dto.ElementAttributes;
-import org.gridsuite.explore.server.dto.NodeInfos;
-import org.gridsuite.explore.server.dto.ReferenceAttributes;
-import org.gridsuite.explore.server.dto.ReferencingElementInfos;
-import org.gridsuite.explore.server.dto.UsersIdentities;
+import org.gridsuite.explore.server.dto.*;
 import org.gridsuite.explore.server.error.ExploreException;
 import org.gridsuite.explore.server.utils.ContingencyListType;
 import org.gridsuite.explore.server.utils.ParametersType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATING;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.ELEMENT_ALREADY_EXISTS;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
 
 /**
@@ -47,7 +43,7 @@ public class ExploreService {
     static final String CASE = "CASE";
     static final String CONTINGENCY_LIST = "CONTINGENCY_LIST";
     static final String FILTER = "FILTER";
-    public static final String MODIFICATION = "MODIFICATION";
+    public static final String MODIFICATION = "MODIFICATION"; // only for composite modification
     static final String DIRECTORY = "DIRECTORY";
     static final String SPREADSHEET_CONFIG = "SPREADSHEET_CONFIG";
     static final String SPREADSHEET_CONFIG_COLLECTION = "SPREADSHEET_CONFIG_COLLECTION";
@@ -114,13 +110,14 @@ public class ExploreService {
         this.exploreServerExecutionService = exploreServerExecutionService;
     }
 
-    public void createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
+    public UUID createStudy(String studyName, CaseInfo caseInfo, String description, UUID parentDirectoryUuid, Map<String, Object> importParams, Boolean duplicateCase) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), studyName, STUDY, 0L, description, CREATING);
 
         String elementName = getElementName(caseInfo.caseUuid());
 
         studyService.insertStudyWithExistingCaseFile(elementAttributes.getElementUuid(), caseInfo.caseUuid(), caseInfo.caseFormat(), importParams, duplicateCase, elementName);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, studyService::delete);
+        return elementAttributes.getElementUuid();
     }
 
     private @Nullable String getElementName(UUID elementUuid) {
@@ -140,15 +137,17 @@ public class ExploreService {
         return elementName;
     }
 
-    public void duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
+    public UUID duplicateStudy(UUID sourceStudyUuid, UUID targetDirectoryId) {
         UUID newStudyId = studyService.duplicateStudy(sourceStudyUuid);
         duplicateDirectoryElementOrDeleteElement(sourceStudyUuid, newStudyId, targetDirectoryId, CREATING, studyService::delete);
+        return newStudyId;
     }
 
-    public void createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
+    public UUID createCase(String caseName, MultipartFile caseFile, String description, UUID parentDirectoryUuid) {
         UUID uuid = caseService.importMultipartCase(caseFile);
         ElementAttributes elementAttributes = new ElementAttributes(uuid, caseName, CASE, 0L, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
+        return uuid;
     }
 
     public void persistCase(String caseName, UUID caseUuid, String description, UUID parentDirectoryUuid) {
@@ -157,40 +156,53 @@ public class ExploreService {
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, caseService::delete);
     }
 
-    public void duplicateCase(UUID sourceCaseUuid, UUID targetDirectoryId) {
+    public UUID duplicateCase(UUID sourceCaseUuid, UUID targetDirectoryId) {
         UUID newCaseId = caseService.duplicateCase(sourceCaseUuid);
         duplicateDirectoryElementOrDeleteElement(sourceCaseUuid, newCaseId, targetDirectoryId, caseService::delete);
+        return newCaseId;
     }
 
-    public void duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, ContingencyListType contingencyListType) {
+    public UUID duplicateExistingCase(UUID sourceCaseUuid, String caseName, String description, UUID targetDirectoryId) {
+        UUID newCaseUuid = caseService.duplicateCase(sourceCaseUuid);
+        ElementAttributes elementAttributes = new ElementAttributes(newCaseUuid, caseName, CASE, 0L, description);
+        createDirectoryElementOrDeleteElement(elementAttributes, targetDirectoryId, caseService::delete);
+        return newCaseUuid;
+    }
+
+    public UUID duplicateContingencyList(UUID contingencyListsId, UUID targetDirectoryId, ContingencyListType contingencyListType) {
         UUID newId = switch (contingencyListType) {
             case IDENTIFIERS -> contingencyListService.duplicateIdentifierContingencyList(contingencyListsId);
             case FILTERS -> contingencyListService.duplicateFilterBasedContingencyList(contingencyListsId);
         };
         duplicateDirectoryElementOrDeleteElement(contingencyListsId, newId, targetDirectoryId, contingencyListService::delete);
+        return newId;
     }
 
-    public void createIdentifierContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
+    public UUID createIdentifierContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
         contingencyListService.insertIdentifierContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
+        return elementAttributes.getElementUuid();
     }
 
-    public void createFilterBasedContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
+    public UUID createFilterBasedContingencyList(String listName, String content, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), listName, CONTINGENCY_LIST, 0L, description);
         contingencyListService.insertFilterBasedContingencyList(elementAttributes.getElementUuid(), content);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, contingencyListService::delete);
+        return elementAttributes.getElementUuid();
     }
 
-    public void createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid) {
+    public UUID createFilter(String filter, String filterName, String description, UUID parentDirectoryUuid) {
         ElementAttributes elementAttributes = new ElementAttributes(UUID.randomUUID(), filterName, FILTER, 0, description);
         filterService.insertFilter(filter, elementAttributes.getElementUuid());
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, filterService::delete);
+        return elementAttributes.getElementUuid();
     }
 
-    public void duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId) {
+    public UUID duplicateFilter(UUID sourceFilterId, UUID targetDirectoryId) {
         UUID newFilterId = filterService.duplicateFilter(sourceFilterId);
         duplicateDirectoryElementOrDeleteElement(sourceFilterId, newFilterId, targetDirectoryId, filterService::delete);
+        return newFilterId;
     }
 
     public CompletableFuture<Void> deleteElement(UUID id) {
@@ -265,10 +277,18 @@ public class ExploreService {
         updateElementNameAndDescription(id, name, description);
     }
 
+    public void updateCompositeModificationActivation(UUID compositeModificationId, List<UUID> childrenModificationUuids, boolean active) {
+        networkModificationService.updateCompositeModificationActivation(childrenModificationUuids, active);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
+    public void updateCompositeModificationApplicability(UUID compositeModificationId, List<UUID> childrenModificationUuids, String rootNetworkTag, boolean applicable) {
+        networkModificationService.updateRootNetworkApplicability(childrenModificationUuids, rootNetworkTag, applicable);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
-        Map<UUID, List<Object>> compositeContent = networkModificationService.getCompositeModificationContent(compositeModificationId);
-        List<Object> requestedContent = compositeContent.get(compositeModificationId);
-        return requestedContent != null ? requestedContent : List.of();
+        return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }
 
     private void updateElementNameAndDescription(UUID id, String name, String description) {
@@ -288,52 +308,61 @@ public class ExploreService {
         };
     }
 
-    public void createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid) {
+    public UUID createParameters(String parameters, ParametersType parametersType, String parametersName, String description, UUID parentDirectoryUuid) {
         UUID parametersUuid = parametersService.createParameters(parameters, parametersType);
         ElementAttributes elementAttributes = new ElementAttributes(parametersUuid, parametersName, parametersType.name(), 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, parametersService::delete);
+        return parametersUuid;
     }
 
     public void updateParameters(UUID id, String parameters, ParametersType parametersType, String name, String description) {
         parametersService.updateParameters(id, parameters, parametersType);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
-    public void duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
+    public UUID duplicateParameters(UUID sourceId, UUID targetDirectoryId, ParametersType parametersType) {
         UUID newParametersUuid = parametersService.duplicateParameters(sourceId, parametersType);
         duplicateDirectoryElementOrDeleteElement(sourceId, newParametersUuid, targetDirectoryId, parametersService::delete);
+        return newParametersUuid;
     }
 
-    public void createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid) {
+    public UUID createDiagramConfig(String diagramConfig, String diagramConfigName, String description, UUID parentDirectoryUuid) {
         UUID diagramConfigUuid = singleLineDiagramService.createDiagramConfig(diagramConfig);
         ElementAttributes elementAttributes = new ElementAttributes(diagramConfigUuid, diagramConfigName, DIAGRAM_CONFIG, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, singleLineDiagramService::delete);
+        return diagramConfigUuid;
     }
 
-    public void duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId) {
+    public UUID duplicateDiagramConfig(UUID sourceId, UUID targetDirectoryId) {
         UUID newConfigUuid = singleLineDiagramService.duplicateDiagramConfig(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newConfigUuid, targetDirectoryId, singleLineDiagramService::delete);
+        return newConfigUuid;
     }
 
     public void updateDiagramConfig(UUID id, String diagramConfig, String name, String description) {
         singleLineDiagramService.updateDiagramConfig(id, diagramConfig);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
-    public void createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
+    public UUID createSpreadsheetConfig(String spreadsheetConfigDto, String configName, String description, UUID parentDirectoryUuid) {
         UUID spreadsheetConfigUuid = spreadsheetConfigService.createSpreadsheetConfig(spreadsheetConfigDto);
         ElementAttributes elementAttributes = new ElementAttributes(spreadsheetConfigUuid, configName, SPREADSHEET_CONFIG, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, spreadsheetConfigService::delete);
+        return spreadsheetConfigUuid;
     }
 
-    public void createSpreadsheetConfigCollection(String spreadsheetConfigCollectionDto, String collectionName, String description, UUID parentDirectoryUuid) {
+    public UUID createSpreadsheetConfigCollection(String spreadsheetConfigCollectionDto, String collectionName, String description, UUID parentDirectoryUuid) {
         UUID spreadsheetConfigUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollection(spreadsheetConfigCollectionDto);
         createSpreadsheetConfigCollectionElement(spreadsheetConfigUuid, collectionName, description, parentDirectoryUuid);
+        return spreadsheetConfigUuid;
     }
 
-    public void createSpreadsheetConfigCollectionFromConfigIds(List<UUID> configIds, String collectionName, String description, UUID parentDirectoryUuid) {
+    public UUID createSpreadsheetConfigCollectionFromConfigIds(List<UUID> configIds, String collectionName, String description, UUID parentDirectoryUuid) {
         UUID spreadsheetConfigUuid = spreadsheetConfigCollectionService.createSpreadsheetConfigCollectionFromConfigIds(configIds);
         createSpreadsheetConfigCollectionElement(spreadsheetConfigUuid, collectionName, description, parentDirectoryUuid);
+        return spreadsheetConfigUuid;
     }
 
     private void createSpreadsheetConfigCollectionElement(UUID spreadsheetConfigUuid, String collectionName, String description, UUID parentDirectoryUuid) {
@@ -344,6 +373,7 @@ public class ExploreService {
     public void updateSpreadsheetConfig(UUID id, String spreadsheetConfigDto, String name, String description) {
         spreadsheetConfigService.updateSpreadsheetConfig(id, spreadsheetConfigDto);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
     public void updateSpreadsheetConfigCollection(UUID id, String spreadsheetConfigCollectionDto, String name, String description) {
@@ -358,47 +388,54 @@ public class ExploreService {
         notificationService.emitElementUpdated(id);
     }
 
-    public void duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId) {
+    public UUID duplicateSpreadsheetConfig(UUID sourceId, UUID targetDirectoryId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigService.duplicateSpreadsheetConfig(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, spreadsheetConfigService::delete);
+        return newSpreadsheetConfigUuid;
     }
 
-    public void duplicateSpreadsheetConfigCollection(UUID sourceId, UUID targetDirectoryId) {
+    public UUID duplicateSpreadsheetConfigCollection(UUID sourceId, UUID targetDirectoryId) {
         UUID newSpreadsheetConfigUuid = spreadsheetConfigCollectionService.duplicateSpreadsheetConfigCollection(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newSpreadsheetConfigUuid, targetDirectoryId, spreadsheetConfigCollectionService::delete);
+        return newSpreadsheetConfigUuid;
     }
 
-    public void createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid) {
+    public UUID createWorkspace(UUID workspaceId, String workspaceName, String description, UUID parentDirectoryUuid) {
         UUID newWorkspaceId = workspaceService.duplicateWorkspace(workspaceId);
         ElementAttributes elementAttributes = new ElementAttributes(newWorkspaceId, workspaceName, WORKSPACE, 0, description);
         createDirectoryElementOrDeleteElement(elementAttributes, parentDirectoryUuid, workspaceService::delete);
+        return newWorkspaceId;
     }
 
     public void replaceWorkspace(UUID id, UUID workspaceId, String name, String description) {
         workspaceService.replaceWorkspace(id, workspaceId);
         updateElementNameAndDescription(id, name, description);
+        notificationService.emitElementUpdated(id);
     }
 
-    public void duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
+    public UUID duplicateWorkspace(UUID sourceId, UUID targetDirectoryId) {
         UUID newWorkspaceId = workspaceService.duplicateWorkspace(sourceId);
         duplicateDirectoryElementOrDeleteElement(sourceId, newWorkspaceId, targetDirectoryId, workspaceService::delete);
+        return newWorkspaceId;
     }
 
-    public void createCompositeModification(List<UUID> modificationUuids, String name,
-                                            String description, UUID parentDirectoryUuid) {
+    public UUID createCompositeModification(List<UUID> modificationUuids, String name,
+                                            String description, UUID parentDirectoryUuid, List<String> rootNetworkTags) {
 
         // create composite modifications
-        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name);
+        UUID modificationsUuid = networkModificationService.createCompositeModification(modificationUuids, name, rootNetworkTags);
         ElementAttributes elementAttributes = new ElementAttributes(modificationsUuid, name, MODIFICATION, 0L, description);
         createDirectoryElementWithNewNameOrDeleteElement(elementAttributes, parentDirectoryUuid, networkModificationService::delete);
+        return modificationsUuid;
     }
 
-    public void duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid) {
+    public UUID duplicateCompositeModification(UUID sourceId, UUID parentDirectoryUuid) {
         // create duplicated modification
         Map<UUID, UUID> newModificationsUuids = networkModificationService.duplicateCompositeModifications(List.of(sourceId));
         UUID newNetworkModification = newModificationsUuids.get(sourceId);
         // create corresponding directory element
         duplicateDirectoryElementOrDeleteElement(sourceId, newNetworkModification, parentDirectoryUuid, networkModificationService::delete);
+        return newNetworkModification;
     }
 
     public void assertCanCreateCase() {
@@ -423,23 +460,28 @@ public class ExploreService {
         }
     }
 
-    public void updateElement(UUID id, ElementAttributes elementAttributes) {
-        // The check to know if the  user have the right to update the element is done in the directory-server
-        directoryService.updateElement(id, elementAttributes);
+    public void updateElement(UUID id, ElementAttributes updatedElementAttributes) {
+        // TODO set type in updatedElementAttributes from front to avoid a read DB
         ElementAttributes elementsInfos = directoryService.getElementInfos(id);
-        notifyElementUpdated(elementsInfos);
+        switch (elementsInfos.getType()) {
+            case STUDY -> updateStudy(id, updatedElementAttributes);
+            case MODIFICATION -> updateNetworkModification(id, updatedElementAttributes);
+            default -> directoryService.updateElement(id, updatedElementAttributes);
+        }
     }
 
-    private void notifyElementUpdated(ElementAttributes element) {
-        // send notification if the study name was updated
-        if (STUDY.equals(element.getType())) {
-            studyService.notifyStudyUpdate(element.getElementUuid());
-        }
+    private void updateStudy(UUID id, ElementAttributes updatedElementAttributes) {
+        directoryService.updateElement(id, updatedElementAttributes);
+        studyService.notifyStudyUpdate(id);
+    }
 
-        // the composite modification name has to be updated in order to match the new element name
-        if (MODIFICATION.equals(element.getType())) {
-            networkModificationService.updateCompositeModification(element.getElementUuid(), element.getElementName());
-        }
+    private void updateNetworkModification(UUID modificationToNotifyId, ElementAttributes updatedModificationAttributes) {
+        // modificationToNotifyId can be the id of the shared parent modification
+        // updatedModificationAttributes.getElementUuid() is the real id of the network modification to update
+        networkModificationService.updateModificationNameAndDescription(
+                updatedModificationAttributes.getElementUuid(), updatedModificationAttributes.getElementName(), updatedModificationAttributes.getDescription());
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        notificationService.emitElementMetadataUpdated(modificationToNotifyId, userId);
     }
 
     private void notifyElementMoved(ElementAttributes element) {
@@ -469,11 +511,7 @@ public class ExploreService {
      * Elements the user cannot read are omitted.
      */
     public List<ReferencingElementInfos> getReferencingElementInfos(UUID elementUuid) {
-        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
-        List<UUID> referencedNodeUuids = directoryService.getElementInfos(elementUuid).getReferences().stream()
-                .map(ExploreService::getReferencedNodeUuid)
-                .filter(Objects::nonNull)
-                .toList();
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(elementUuid);
         if (referencedNodeUuids.isEmpty()) {
             return List.of();
         }
@@ -496,6 +534,38 @@ public class ExploreService {
                 .filter(Objects::nonNull)
                 .map(nodeInfos -> toReferencingElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
                         parentDirectoryNamesByStudyUuid, identityBySub))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * For each root network tag, counts the studies using a shared composite: the studies of the nodes referencing it
+     */
+    public Map<String, Long> countStudiesByTagFromSharedComposite(UUID compositeUuid) {
+        List<UUID> referencedNodeUuids = getReferencedNodeUuids(compositeUuid).stream().distinct().toList();
+        if (referencedNodeUuids.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> studyUuids = studyService.getNodesInfos(referencedNodeUuids).stream()
+                .map(NodeInfos::studyUuid)
+                .distinct()
+                .toList();
+        if (studyUuids.isEmpty()) {
+            return Map.of();
+        }
+        // a study counts once for each of its tags
+        return studyService.getRootNetworkTags(studyUuids).values().stream()
+                .flatMap(tags -> tags.stream().distinct())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+    }
+
+    /**
+     * @return the nodes referencing the shared element, once per reference
+     */
+    private List<UUID> getReferencedNodeUuids(UUID elementUuid) {
+        // for now only references resolving to a study node: STUDY_NODE and STUDY_NODE_NETWORK_MODIFICATION
+        return directoryService.getElementInfos(elementUuid).getReferences().stream()
+                .map(ExploreService::getReferencedNodeUuid)
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -561,6 +631,7 @@ public class ExploreService {
     public void updateProcessConfig(UUID uuid, String name, String processConfig, String description) {
         monitorService.updateProcessConfig(uuid, processConfig);
         updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateProcessConfig(UUID sourceProcessConfigUuid, UUID targetDirectoryId) {
@@ -579,6 +650,7 @@ public class ExploreService {
     public void updateDynamicMapping(UUID uuid, String name, String dynamicMapping, String description) {
         dynamicMappingService.updateMapping(uuid, dynamicMapping);
         updateElementNameAndDescription(uuid, name, description);
+        notificationService.emitElementUpdated(uuid);
     }
 
     public UUID duplicateDynamicMapping(UUID sourceDynamicMappingUuid, UUID targetDirectoryId) {
@@ -615,5 +687,38 @@ public class ExploreService {
     private void duplicateDirectoryElementOrDeleteElement(UUID elementToDuplicate, UUID elementDuplicated, UUID targetDirectoryId,
                                                           DirectoryElementStatus elementStatus, Consumer<UUID> rollback) {
         executeWithRollback(() -> directoryService.duplicateElement(elementToDuplicate, elementDuplicated, targetDirectoryId, elementStatus), elementDuplicated, rollback);
+    }
+
+    public List<ElementAttributes> getDirectoryElements(UUID directoryUuid, List<String> types, Boolean recursive) {
+        List<ElementAttributes> elements = directoryService.getDirectoryElements(directoryUuid, types, recursive);
+        List<ElementAttributes> modifications = elements.stream()
+                .filter(element -> MODIFICATION.equals(element.getType()))
+                .toList();
+
+        if (modifications.isEmpty()) {
+            return elements;
+        }
+
+        List<ElementAttributes> directoryElements = elements.stream()
+                .filter(element -> !MODIFICATION.equals(element.getType()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        directoryElements.addAll(networkModificationService.completeElementAttribute(modifications));
+        return elements;
+    }
+
+    public void shareNetworkModification(UUID studyUuid,
+                                         UUID nodeUuid,
+                                         UUID modificationUuid,
+                                         String name,
+                                         String description,
+                                         UUID parentDirectoryUuid) {
+        directoryService.checkPermission(List.of(), parentDirectoryUuid, PermissionType.WRITE, false);
+        if (directoryService.isElementNameAlreadyExists(name, parentDirectoryUuid, MODIFICATION, modificationUuid)) {
+            throw new ExploreException(ELEMENT_ALREADY_EXISTS,
+                    "A composite modification named '" + name + "' already exists in directory", Map.of("elementName", name));
+        }
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        studyService.shareModification(studyUuid, nodeUuid, modificationUuid, name, description, parentDirectoryUuid, userId);
     }
 }
