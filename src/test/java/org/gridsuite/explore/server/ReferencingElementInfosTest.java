@@ -84,15 +84,17 @@ class ReferencingElementInfosTest {
     private static final String ELEMENTS_PATHS_PATH = "/v1/elements/paths";
     private static final String NODES_INFOS_PATH = "/v1/nodes/infos";
     private static final String USERS_IDENTITIES_PATH = "/v1/users/identities";
+    private static final String ROOT_NETWORK_TAGS_PATH = "/v1/studies/root-network-tags";
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
         wireMockServer.start();
         directoryService.setDirectoryServerBaseUri(wireMockServer.baseUrl());
         studyService.setStudyServerBaseUri(wireMockServer.baseUrl());
         userIdentityService.setUserIdentityServerBaseUri(wireMockServer.baseUrl());
         stubUsersIdentities();
+        stubRootNetworkTags(Map.of());
     }
 
     @AfterEach
@@ -158,6 +160,11 @@ class ReferencingElementInfosTest {
                 .willReturn(jsonResponse(sharedElement)));
     }
 
+    private void stubRootNetworkTags(Map<UUID, List<String>> tagsByStudyUuid) throws Exception {
+        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo(ROOT_NETWORK_TAGS_PATH))
+                .willReturn(jsonResponse(tagsByStudyUuid)));
+    }
+
     private void stubNodesInfos(NodeInfos... nodesInfos) throws Exception {
         wireMockServer.stubFor(WireMock.get(WireMock.urlPathEqualTo(NODES_INFOS_PATH))
                 .willReturn(jsonResponse(List.of(nodesInfos))));
@@ -211,6 +218,7 @@ class ReferencingElementInfosTest {
         stubStudiesPaths(Map.of(
                 STUDY_1_UUID, study1Path,
                 STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
+        stubRootNetworkTags(Map.of(STUDY_1_UUID, List.of("A", "B")));
 
         List<ReferencingElementInfos> infos = getReferencingElementInfos();
 
@@ -226,6 +234,7 @@ class ReferencingElementInfosTest {
                 new ReferencingElementInfos.PathElement(study1Path.get(0).getElementUuid(), "root"),
                 new ReferencingElementInfos.PathElement(study1Path.get(1).getElementUuid(), "folder")),
                 first.path());
+        assertEquals(List.of("A", "B"), first.rootNetworkTags());
         assertEquals("John Doe", first.ownerLabel());
         assertEquals(LAST_MODIFICATION_DATE, first.lastModificationDate());
         // unknown identities fall back to the sub itself
@@ -237,6 +246,8 @@ class ReferencingElementInfosTest {
         assertEquals("STUDY", second.type());
         // this study sits directly in the root directory
         assertEquals(List.of("root"), pathNames(second));
+        // a study without root network tags
+        assertEquals(List.of(), second.rootNetworkTags());
         assertEquals("John Doe", second.ownerLabel());
         assertEquals(LAST_MODIFICATION_DATE, second.lastModificationDate());
         assertEquals(MODIFIER_SUB, second.lastModifiedByLabel());

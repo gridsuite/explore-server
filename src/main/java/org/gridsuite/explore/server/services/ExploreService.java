@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import static org.gridsuite.explore.server.dto.DirectoryElementStatus.CREATING;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.ELEMENT_ALREADY_EXISTS;
 import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.EXPLORE_MAX_ELEMENTS_EXCEEDED;
+import static org.gridsuite.explore.server.error.ExploreBusinessErrorCode.ROOT_NETWORK_TAGS_IN_USE;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -287,6 +288,17 @@ public class ExploreService {
         notificationService.emitElementUpdated(compositeModificationId);
     }
 
+    public void deleteCompositeModificationRootNetworkTags(UUID compositeModificationId, List<String> rootNetworkTags) {
+        Map<String, Long> studyCountByTag = countStudiesByTagFromSharedComposite(compositeModificationId);
+        List<String> tagsInUse = rootNetworkTags.stream().filter(studyCountByTag::containsKey).toList();
+        if (!tagsInUse.isEmpty()) {
+            throw new ExploreException(ROOT_NETWORK_TAGS_IN_USE, "Root network tags still used by studies: " + tagsInUse,
+                    Map.of("tags", String.join(", ", tagsInUse)));
+        }
+        networkModificationService.deleteRootNetworkTags(List.of(compositeModificationId), rootNetworkTags);
+        notificationService.emitElementUpdated(compositeModificationId);
+    }
+
     public List<Object> getCompositeModificationContent(UUID compositeModificationId) {
         return networkModificationService.getCompositeModificationContent(compositeModificationId);
     }
@@ -527,13 +539,14 @@ public class ExploreService {
         Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfos(studyUuids, null, false)
                 .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
         Map<UUID, List<ReferencingElementInfos.PathElement>> parentDirectoriesByStudyUuid = getParentDirectories(studyByUuid.keySet());
+        Map<UUID, List<String>> rootNetworkTagsByStudyUuid = studyService.getRootNetworkTags(List.copyOf(studyByUuid.keySet()));
         Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());
 
         return referencedNodeUuids.stream()
                 .map(nodeInfosByUuid::get)
                 .filter(Objects::nonNull)
                 .map(nodeInfos -> toReferencingElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
-                        parentDirectoriesByStudyUuid, identityBySub))
+                        parentDirectoriesByStudyUuid, rootNetworkTagsByStudyUuid, identityBySub))
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -580,6 +593,7 @@ public class ExploreService {
 
     private ReferencingElementInfos toReferencingElementInfos(NodeInfos nodeInfos, ElementAttributes study,
                                                     Map<UUID, List<ReferencingElementInfos.PathElement>> parentDirectoriesByStudyUuid,
+                                                    Map<UUID, List<String>> rootNetworkTagsByStudyUuid,
                                                     Map<String, UsersIdentities.UserIdentity> identityBySub) {
         if (study == null) {
             // the user cannot read this study, or it no longer exists
@@ -591,6 +605,7 @@ public class ExploreService {
                 .type(study.getType())
                 .path(parentDirectoriesByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))
                 .node(nodeInfos.nodeName())
+                .rootNetworkTags(rootNetworkTagsByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))
                 .ownerLabel(UsersIdentities.toLabel(study.getOwner(), identityBySub))
                 .lastModificationDate(study.getLastModificationDate())
                 .lastModifiedByLabel(UsersIdentities.toLabel(study.getLastModifiedBy(), identityBySub))

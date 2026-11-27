@@ -505,6 +505,19 @@ public class ExploreController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping(value = "/explore/composite-modifications/{compositeId}/root-network-tags")
+    @Operation(summary = "Delete root network tags no study uses anymore from a composite modification")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The root network tags have been deleted"),
+        @ApiResponse(responseCode = "409", description = "A study still uses the composite modification with one of the root network tags"),
+    })
+    @PreAuthorize("@authorizationService.canWrite(#compositeId)")
+    public ResponseEntity<Void> deleteCompositeModificationRootNetworkTags(@PathVariable UUID compositeId,
+                                                                           @RequestParam("rootNetworkTags") List<String> rootNetworkTags) {
+        exploreService.deleteCompositeModificationRootNetworkTags(compositeId, rootNetworkTags);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/explore/composite-modifications/{id}/duplicate")
     @Operation(summary = "duplicate modification element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Composite modification has been duplicated and corresponding element created in the directory")})

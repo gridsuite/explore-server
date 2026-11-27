@@ -167,6 +167,22 @@ public class NetworkModificationService implements IDirectoryElementsService {
             .toBodilessEntity();
     }
 
+    /**
+     * Deletes root network tags from the applicabilities of the given modifications, and of the content of the composites
+     */
+    public void deleteRootNetworkTags(List<UUID> modificationUuids, List<String> rootNetworkTags) {
+        String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH + DELIMITER + "root-network-tag")
+                .queryParam(UUIDS, modificationUuids)
+                .queryParam("rootNetworkTags", rootNetworkTags)
+                .buildAndExpand()
+                .toUriString();
+
+        restClient.delete()
+            .uri(networkModificationServerBaseUri + path)
+            .retrieve()
+            .toBodilessEntity();
+    }
+
     @Override
     public void delete(UUID id) {
         String path = UriComponentsBuilder.fromPath(DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER + NETWORK_MODIFICATIONS_PATH)

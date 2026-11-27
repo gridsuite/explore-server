@@ -22,6 +22,8 @@ public record ReferencingElementInfos(UUID elementUuid, String elementName, Stri
                                    List<PathElement> path,
                                    // only relevant when sharing a network modification within a study
                                    String node,
+                                   // root network tags of the study
+                                   List<String> rootNetworkTags,
                                    String ownerLabel, Instant lastModificationDate, String lastModifiedByLabel) {
 
     /**
