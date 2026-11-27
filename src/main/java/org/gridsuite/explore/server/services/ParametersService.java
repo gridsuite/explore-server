@@ -49,6 +49,7 @@ public class ParametersService implements IDirectoryElementsService {
             ParametersType.SENSITIVITY_PARAMETERS, new ParameterServerConfig("sensitivity-analysis-server", COMPUTATION_PARAMETERS),
             ParametersType.SHORT_CIRCUIT_PARAMETERS, new ParameterServerConfig("shortcircuit-server", COMPUTATION_PARAMETERS),
             ParametersType.PCC_MIN_PARAMETERS, new ParameterServerConfig("pcc-min-server", COMPUTATION_PARAMETERS),
+            ParametersType.STATE_ESTIMATION_PARAMETERS, new ParameterServerConfig("state-estimation-server", COMPUTATION_PARAMETERS),
             ParametersType.NETWORK_VISUALIZATIONS_PARAMETERS, new ParameterServerConfig("study-config-server", NETWORK_VISU_PARAMETERS));
 
     private final RemoteServicesProperties remoteServicesProperties;
