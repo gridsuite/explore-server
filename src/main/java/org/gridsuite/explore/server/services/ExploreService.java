@@ -526,14 +526,14 @@ public class ExploreService {
 
         Map<UUID, ElementAttributes> studyByUuid = directoryService.getElementsInfos(studyUuids, null, false)
                 .stream().collect(Collectors.toMap(ElementAttributes::getElementUuid, Function.identity()));
-        Map<UUID, List<String>> parentDirectoryNamesByStudyUuid = getParentDirectoryNames(studyByUuid.keySet());
+        Map<UUID, List<ReferencingElementInfos.PathElement>> parentDirectoriesByStudyUuid = getParentDirectories(studyByUuid.keySet());
         Map<String, UsersIdentities.UserIdentity> identityBySub = getIdentityBySub(studyByUuid.values());
 
         return referencedNodeUuids.stream()
                 .map(nodeInfosByUuid::get)
                 .filter(Objects::nonNull)
                 .map(nodeInfos -> toReferencingElementInfos(nodeInfos, studyByUuid.get(nodeInfos.studyUuid()),
-                        parentDirectoryNamesByStudyUuid, identityBySub))
+                        parentDirectoriesByStudyUuid, identityBySub))
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -579,16 +579,17 @@ public class ExploreService {
     }
 
     private ReferencingElementInfos toReferencingElementInfos(NodeInfos nodeInfos, ElementAttributes study,
-                                                    Map<UUID, List<String>> parentDirectoryNamesByStudyUuid,
+                                                    Map<UUID, List<ReferencingElementInfos.PathElement>> parentDirectoriesByStudyUuid,
                                                     Map<String, UsersIdentities.UserIdentity> identityBySub) {
         if (study == null) {
             // the user cannot read this study, or it no longer exists
             return null;
         }
         return ReferencingElementInfos.builder()
+                .elementUuid(study.getElementUuid())
                 .elementName(study.getElementName())
                 .type(study.getType())
-                .path(parentDirectoryNamesByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))
+                .path(parentDirectoriesByStudyUuid.getOrDefault(study.getElementUuid(), List.of()))
                 .node(nodeInfos.nodeName())
                 .ownerLabel(UsersIdentities.toLabel(study.getOwner(), identityBySub))
                 .lastModificationDate(study.getLastModificationDate())
@@ -596,14 +597,14 @@ public class ExploreService {
                 .build();
     }
 
-    private Map<UUID, List<String>> getParentDirectoryNames(Collection<UUID> elementUuids) {
+    private Map<UUID, List<ReferencingElementInfos.PathElement>> getParentDirectories(Collection<UUID> elementUuids) {
         return directoryService.getElementsPaths(List.copyOf(elementUuids)).entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     // a path ends with the element itself
                     List<ElementAttributes> elementPath = entry.getValue();
                     return elementPath.stream()
                             .limit(Math.max(0, elementPath.size() - 1L))
-                            .map(ElementAttributes::getElementName)
+                            .map(directory -> new ReferencingElementInfos.PathElement(directory.getElementUuid(), directory.getElementName()))
                             .toList();
                 }));
     }

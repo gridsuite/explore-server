@@ -189,6 +189,10 @@ class ReferencingElementInfosTest {
         return path;
     }
 
+    private static List<String> pathNames(ReferencingElementInfos infos) {
+        return infos.path().stream().map(ReferencingElementInfos.PathElement::elementName).toList();
+    }
+
     private List<ReferencingElementInfos> getReferencingElementInfos() throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/explore/elements/{elementUuid}/referencing-element-infos", SHARED_ELEMENT_UUID))
                 .andExpect(status().isOk())
@@ -203,8 +207,9 @@ class ReferencingElementInfosTest {
                 new NodeInfos(NODE_1_UUID, "node1", STUDY_1_UUID),
                 new NodeInfos(NODE_2_UUID, "node2", STUDY_2_UUID));
         stubStudies(studyStub(STUDY_1_UUID, "study1"), studyStub(STUDY_2_UUID, "study2"));
+        List<ElementAttributes> study1Path = pathStub(STUDY_1_UUID, "study1", "root", "folder");
         stubStudiesPaths(Map.of(
-                STUDY_1_UUID, pathStub(STUDY_1_UUID, "study1", "root", "folder"),
+                STUDY_1_UUID, study1Path,
                 STUDY_2_UUID, pathStub(STUDY_2_UUID, "study2", "root")));
 
         List<ReferencingElementInfos> infos = getReferencingElementInfos();
@@ -212,11 +217,15 @@ class ReferencingElementInfosTest {
         assertEquals(2, infos.size());
 
         ReferencingElementInfos first = infos.getFirst();
+        assertEquals(STUDY_1_UUID, first.elementUuid());
         assertEquals("node1", first.node());
         assertEquals("study1", first.elementName());
         assertEquals("STUDY", first.type());
         // the study itself is excluded from its path
-        assertEquals(List.of("root", "folder"), first.path());
+        assertEquals(List.of(
+                new ReferencingElementInfos.PathElement(study1Path.get(0).getElementUuid(), "root"),
+                new ReferencingElementInfos.PathElement(study1Path.get(1).getElementUuid(), "folder")),
+                first.path());
         assertEquals("John Doe", first.ownerLabel());
         assertEquals(LAST_MODIFICATION_DATE, first.lastModificationDate());
         // unknown identities fall back to the sub itself
@@ -227,7 +236,7 @@ class ReferencingElementInfosTest {
         assertEquals("study2", second.elementName());
         assertEquals("STUDY", second.type());
         // this study sits directly in the root directory
-        assertEquals(List.of("root"), second.path());
+        assertEquals(List.of("root"), pathNames(second));
         assertEquals("John Doe", second.ownerLabel());
         assertEquals(LAST_MODIFICATION_DATE, second.lastModificationDate());
         assertEquals(MODIFIER_SUB, second.lastModifiedByLabel());
@@ -316,7 +325,7 @@ class ReferencingElementInfosTest {
         assertEquals("node1", readable.node());
         assertEquals("study1", readable.elementName());
         assertEquals("STUDY", readable.type());
-        assertEquals(List.of("root"), readable.path());
+        assertEquals(List.of("root"), pathNames(readable));
         assertEquals("John Doe", readable.ownerLabel());
         assertEquals(LAST_MODIFICATION_DATE, readable.lastModificationDate());
         assertEquals(MODIFIER_SUB, readable.lastModifiedByLabel());
